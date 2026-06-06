@@ -26,4 +26,9 @@
   - PdfViewerModal.tsx: Adjusted overlay and modal width to align perfectly with the header contents (width: 100%, max-width: 1200px, padding: 0 40px, top: 70px).
   - page.tsx: Integrated new document "2026_Pension_Reform.pdf" on clicking "연금 개혁안 정보" nav link, dynamically passing pdfUrl and title to PdfViewerModal.
   - page.tsx & onboarding/page.tsx: Replaced white/light backgrounds of "2026 개혁안 배지" and onboarding addition buttons ("+ 리스트에 추가하기", "+ 연금저축/보험 추가") with dark indigo background (`rgba(99, 102, 241, 0.15)`) and light contrast label text (`#a5b4fc`).
+- **[Completed]** Story S5-3: Hero Section Simplification & 3-Tier Pension Diagram Integration
+  - page.tsx: Decreased heroSection top padding (from 120px to 50px) to shift the slogan upwards.
+  - page.tsx: Deleted "무료로 3층 연금 설계하기" CTA button and all content elements below it (Stats Row, Features Grid, Trust Card, and Footer) to simplify the viewport.
+  - page.tsx: Added a white frame card container (diagramContainer) with 20px rounding, border, and drop-shadow under the slogan to display the 3-tier structure diagram (pension_structure.png).
+  - page.tsx: Cleaned up and removed all unused styling objects in the styles constant.
 

@@ -36,4 +36,7 @@
   - page.tsx: Shrunk heroTitle font size (from 3.5rem to 2.5rem) and margins, and heroSubtitle font size (from 1.15rem to 1rem) and margins.
   - page.tsx: Decreased padding in heroSection (to 32px 20px 16px 20px) and margin/padding in diagramContainer (to 16px padding, 40px margin) to fit the diagram image perfectly in a single viewport.
   - page.tsx: Safely removed the unused badge styling property from the styles object.
+- **[Completed]** Story S5-5: Local JSON Data Import on Onboarding Wizard
+  - onboarding/page.tsx: Implemented handleLoadData method utilizing FileReader to read the selected backup JSON file and feed it into store.importStoreData.
+  - onboarding/page.tsx: Added a file input element and a styling-matching "📂 불러오기" button in the top-right header section to trigger file selection.
 

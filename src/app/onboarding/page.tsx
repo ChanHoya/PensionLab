@@ -119,6 +119,33 @@ export default function OnboardingPage() {
     a.remove();
   };
 
+  // JSON 데이터 불러오기
+  const handleLoadData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    if (e.target.files && e.target.files[0]) {
+      fileReader.readAsText(e.target.files[0], "UTF-8");
+      fileReader.onload = (event) => {
+        try {
+          const parsedData = JSON.parse(event.target?.result as string);
+          if (
+            parsedData.nationalPension ||
+            parsedData.retirementPensions ||
+            parsedData.personalPensions
+          ) {
+            store.importStoreData(parsedData);
+            alert("성공적으로 백업 데이터를 불러왔습니다!");
+          } else {
+            alert("올바르지 않은 백업 파일 형식입니다.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("파일 읽기 도중 오류가 발생했습니다.");
+        }
+      };
+      e.target.value = "";
+    }
+  };
+
   // Simple auto-calculation helper for National Pension
   const handleSimpleNationalCalculate = (
     months: number,
@@ -216,7 +243,7 @@ export default function OnboardingPage() {
           </Link>
           <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
         </div>
-        {/* 우: 개인정보 안심보장 + JSON저장 + 테마토글 */}
+        {/* 우: 개인정보 안심보장 + JSON저장 + 불러오기 + 테마토글 */}
         <div style={styles.headerRight}>
           <div style={styles.privacyChip}>
             <span style={{ fontSize: "0.9rem" }}>🔒</span>
@@ -225,6 +252,20 @@ export default function OnboardingPage() {
           <button onClick={handleSaveData} style={styles.saveBtn} title="현재 입력 데이터를 JSON으로 저장">
             💾 저장
           </button>
+          <button
+            onClick={() => document.getElementById("import-file-input")?.click()}
+            style={styles.saveBtn}
+            title="저장된 JSON 백업 파일 불러오기"
+          >
+            📂 불러오기
+          </button>
+          <input
+            type="file"
+            id="import-file-input"
+            accept=".json"
+            style={{ display: "none" }}
+            onChange={handleLoadData}
+          />
           <ThemeToggle />
         </div>
       </header>

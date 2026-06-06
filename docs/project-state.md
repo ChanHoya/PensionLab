@@ -52,6 +52,11 @@
   - route.ts: Implemented OAuth2 token request with caching and a 2-stage POST handler supporting Codef 2-Way verification with mock mode support.
   - route.ts: Resolved OAuth token URL to `https://oauth.codef.io/oauth/token`, corrected NPS minwon organization code to `0001`, updated payload parameter to `loginTypeLevel`, and mapped API path to `nps-minwon/my-pension` to ensure real easy auth flows work.
   - onboarding/page.tsx: Added provider dropdown selection and created a controlled interactive UI state machine for smartphone push approval and verification fallback.
+- **[Completed]** Bug Fix: Codef API 2-Way Easy Authentication Troubleshooting
+  - route.ts: Restored correct Codef provider mappings (Kakao=1, Naver=2, PASS=3, Toss=4, KB=6) and fixed PASS telecom checking trigger.
+  - route.ts: Implemented automatic digit sanitization for input phone numbers and identities (removing hyphens/spaces) to prevent API format validation failures.
+  - onboarding/page.tsx: Integrated telecom carrier selection UI for PASS provider and passed it to the sync API payload.
+  - Next.js: Restarted Next.js dev server to properly clear Turbopack .env variable caches.
 
 
 

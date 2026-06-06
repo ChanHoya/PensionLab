@@ -608,10 +608,10 @@ export default function DashboardPage() {
         {/* Row 3.5: Premium Report Banner */}
         <section style={styles.premiumBannerCard} className="premium-card animate-fade-in">
           <div style={styles.premiumBannerLeft}>
-            <span style={styles.premiumBadge}>Premium Service</span>
+            <span style={styles.premiumBadge}>Report Service</span>
             <h3 style={styles.premiumBannerTitle}>AI 은퇴 진단 및 정밀 처방 보고서</h3>
             <p style={styles.premiumBannerDesc}>
-              현재 시뮬레이션 데이터와 AI 전문가 소견을 종합하여 인쇄 및 PDF 저장에 최적화된 프리미엄 은퇴 처방 보고서를 발행합니다. (1회 결제: 5,000원)
+              현재 시뮬레이션 데이터와 AI 전문가 소견을 종합하여 인쇄 및 PDF 저장에 최적화된 은퇴 처방 보고서를 즉시 무료로 확인합니다.
             </p>
           </div>
           <div style={styles.premiumBannerRight}>
@@ -619,9 +619,9 @@ export default function DashboardPage() {
               id="btn-trigger-checkout"
               className="premium-button"
               style={{ padding: "14px 28px" }}
-              onClick={() => setShowCheckoutModal(true)}
+              onClick={() => router.push("/dashboard/report")}
             >
-              📊 처방 보고서 발급받기
+              📊 처방 보고서 바로보기
             </button>
           </div>
         </section>

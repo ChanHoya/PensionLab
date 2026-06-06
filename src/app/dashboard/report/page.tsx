@@ -25,24 +25,20 @@ function ReportContent() {
   const store = usePensionStore();
   const [isMounted, setIsMounted] = useState(false);
 
-  // Get payment query params
-  const orderId = searchParams.get("orderId");
-  const paymentKey = searchParams.get("paymentKey");
-  const amount = searchParams.get("amount");
+  // Get payment query params (optional now)
+  const orderId = searchParams.get("orderId") || "PL-FREE-" + Math.floor(100000 + Math.random() * 900000);
+  const paymentKey = searchParams.get("paymentKey") || "free_access";
+  const amount = searchParams.get("amount") || "0";
 
   useEffect(() => {
     setIsMounted(true);
-    // If someone accesses the page without payment parameters, redirect to dashboard
-    if (!orderId || !paymentKey) {
-      router.push("/dashboard");
-    }
-  }, [orderId, paymentKey, router]);
+  }, []);
 
-  if (!isMounted || !orderId || !paymentKey) {
+  if (!isMounted) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner} />
-        <p style={{ marginTop: 16, color: "var(--text-secondary)" }}>결제 승인 내역을 검증하는 중...</p>
+        <p style={{ marginTop: 16, color: "var(--text-secondary)" }}>보고서 엔진을 준비하는 중...</p>
       </div>
     );
   }
@@ -120,9 +116,9 @@ function ReportContent() {
       <div style={styles.actionBanner} className="no-print">
         <div style={styles.bannerContent}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={styles.tossBadge}>toss payments 결제 완료</span>
+            <span style={styles.tossBadge}>무료 분석 보고서</span>
             <span style={styles.bannerInfo}>
-              주문번호: <strong>{orderId}</strong> | 승인금액: <strong>{Number(amount).toLocaleString()}원</strong>
+              보고서 번호: <strong>{orderId}</strong>
             </span>
           </div>
           <div style={{ display: "flex", gap: 12 }}>
@@ -340,6 +336,40 @@ function ReportContent() {
                   " 자산 분산 측면에서 연금저축을 단순 보험 형태(원금 보장 위주)에서 ETF 거래가 가능한 펀드 형태로 포트폴리오를 전환하여 복리 혜택을 높이시는 것을 추천합니다."
                 )}
               </p>
+            </div>
+
+            <div style={styles.prescriptionItem}>
+              <h4 style={styles.prescTitle}>💊 [개인 맞춤형 노후 연금 인출 & 절세 컨설팅 처방]</h4>
+              <p style={styles.prescBody}>
+                회원님의 기초 프로필(현재 {currentAge}세, 은퇴 {store.simulationParams.retirementAge}세 목표)과 지출 목표를 분석한 결과, 다음의 인출 순서 및 절세 전략을 처방합니다.
+              </p>
+              <ul style={{ ...styles.prescBody, listStyleType: "disc", paddingLeft: "20px", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <li style={{ marginBottom: "6px" }}>
+                  <strong>은퇴 크레바스(소득 공백기) 극복</strong>: {store.simulationParams.retirementAge}세 은퇴 시점부터 국민연금이 개시되는 {store.simulationParams.nationalPensionStartAge}세까지의 
+                  소득 공백기에는 <strong>퇴직연금(IRP)의 퇴직금 재원</strong>을 우선적으로 연금 수령(퇴직소득세 30% 감면)하여 생활비를 충당하고, 사적연금 인출은 최대한 이연할 것을 권장합니다.
+                </li>
+                <li style={{ marginBottom: "6px" }}>
+                  <strong>사적연금 연 1,500만원 분리과세 한도 관리</strong>: 연금저축펀드 및 IRP 추가납입금에서 수령하는 사적연금은 <strong>연간 총 1,500만원 이하</strong>로 수령 기간을 조율하여 신청하십시오. 
+                  연 1,500만원을 초과하면 종합소득세율 합산 또는 16.5% 분리과세가 적용되나, 한도 내에서는 3.3% ~ 5.5%의 저율 연금소득세만 부과되므로 매년 약 100만~150만원 상당의 세금을 아낄 수 있습니다.
+                </li>
+                {store.simulationParams.hasSpouse && (
+                  <li style={{ marginBottom: "6px" }}>
+                    <strong>배우자 공동 연금 설계</strong>: {store.simulationParams.spouseAge ? `배우자(현재 ${store.simulationParams.spouseAge}세)와의 나이 차이를 활용하여` : "배우자와 함께"} 
+                    연금 수령 한도를 각각 인당 연 1,500만원씩 분산하여 인출 한도를 설정하면, 부부 합산 연 3,000만원까지 저율 과세 혜택을 2배로 확장할 수 있습니다.
+                  </li>
+                )}
+                {store.simulationParams.childrenCount > 0 && (
+                  <li style={{ marginBottom: "6px" }}>
+                    <strong>자녀 지원비({(store.simulationParams.childSupportExpense || 0).toLocaleString()}만원) 및 비연금 자산 활용</strong>: 
+                    자녀 지원 예정액에 대비하기 위해, 은퇴 시점 비연금 자산({(store.simulationParams.nonPensionAssets || 0).toLocaleString()}만원) 중 주택 자산이 있다면 <strong>주택연금(종신형)</strong> 활용을 적극 고려하십시오. 
+                    연금 수령액은 건보료나 소득세 부과 대상에서 제외되므로 건보료 피부양자 자격 유지(연 소득 2,000만원 이하)에 매우 유리합니다.
+                  </li>
+                )}
+                <li style={{ marginBottom: "6px" }}>
+                  <strong>의료비 리스크 관리</strong>: 노후 대비 의료비({(store.simulationParams.annualMedicalExpense || 0).toLocaleString()}만원/년) 목적으로는 IRP 계좌의 &apos;의료비 인출&apos; 제도를 활용하십시오. 
+                  본인 부담 의료비가 일정 금액을 초과하는 경우, 연금 수령 한도와 무관하게 연금외수령이 아닌 연금소득(3.3~5.5%)으로 취급되어 중도인출 페널티(16.5%) 없이 세금을 대폭 아낄 수 있습니다.
+                </li>
+              </ul>
             </div>
           </div>
 

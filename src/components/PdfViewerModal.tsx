@@ -25,8 +25,8 @@ export default function PdfViewerModal({ isOpen, onClose }: PdfViewerModalProps)
       setIsLoading(true);
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        // pdfjs-dist v4+ worker 설정
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+        // 로컬 서빙 pdfjs-dist worker 설정
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
         const doc = await pdfjsLib.getDocument({ url: "/Pension_Blueprint.pdf" }).promise;
         if (!cancelled) {
@@ -187,24 +187,28 @@ export default function PdfViewerModal({ isOpen, onClose }: PdfViewerModalProps)
 /* ─── 스타일 ─────────────────────────────────────────── */
 const overlay: React.CSSProperties = {
   position: "fixed",
-  inset: 0,
+  top: "70px",
+  bottom: 0,
+  left: 0,
+  right: 0,
   backgroundColor: "rgba(5, 6, 15, 0.88)",
   backdropFilter: "blur(14px)",
   WebkitBackdropFilter: "blur(14px)",
-  zIndex: 9999,
+  zIndex: 99,
   display: "flex",
-  alignItems: "center",
+  alignItems: "stretch",
   justifyContent: "center",
-  padding: "20px",
+  padding: 0,
 };
 
 const modal: React.CSSProperties = {
-  width: "min(900px, 95vw)",
-  maxHeight: "92vh",
+  width: "100%",
+  height: "100%",
+  maxHeight: "none",
   backgroundColor: "#161728",
-  border: "1px solid rgba(99, 102, 241, 0.25)",
-  borderRadius: "16px",
-  boxShadow: "0 32px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.1)",
+  border: "none",
+  borderRadius: "0px",
+  boxShadow: "none",
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",

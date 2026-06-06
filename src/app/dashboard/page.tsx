@@ -35,6 +35,22 @@ export default function DashboardPage() {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
 
+  // Toss Payments Checkout States
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [payMethod, setPayMethod] = useState<"tosspay" | "card" | "transfer">("tosspay");
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+
+  const handleMockPayment = () => {
+    setPaymentProcessing(true);
+    setTimeout(() => {
+      setPaymentProcessing(false);
+      setShowCheckoutModal(false);
+      const orderId = `order_${Date.now()}`;
+      const paymentKey = `mock_pay_${Math.random().toString(36).substring(2, 11)}`;
+      router.push(`/dashboard/report?orderId=${orderId}&paymentKey=${paymentKey}&amount=5000`);
+    }, 1500);
+  };
+
   const handleAskAI = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim() || aiLoading) return;
@@ -355,6 +371,27 @@ export default function DashboardPage() {
           </div>
         </section>
 
+        {/* Row 3.5: Premium Report Banner */}
+        <section style={styles.premiumBannerCard} className="premium-card animate-fade-in">
+          <div style={styles.premiumBannerLeft}>
+            <span style={styles.premiumBadge}>Premium Service</span>
+            <h3 style={styles.premiumBannerTitle}>AI 은퇴 진단 및 정밀 처방 보고서</h3>
+            <p style={styles.premiumBannerDesc}>
+              현재 시뮬레이션 데이터와 AI 전문가 소견을 종합하여 인쇄 및 PDF 저장에 최적화된 프리미엄 은퇴 처방 보고서를 발행합니다. (1회 결제: 5,000원)
+            </p>
+          </div>
+          <div style={styles.premiumBannerRight}>
+            <button
+              id="btn-trigger-checkout"
+              className="premium-button"
+              style={{ padding: "14px 28px", background: "var(--gradient-secondary)" }}
+              onClick={() => setShowCheckoutModal(true)}
+            >
+              📊 처방 보고서 발급받기
+            </button>
+          </div>
+        </section>
+
         {/* Row 4: AI RAG Q&A Chat */}
         <section style={styles.aiCard} className="premium-card">
           <span style={styles.aiBadge}>AI 실시간 연금 상담실</span>
@@ -483,6 +520,105 @@ export default function DashboardPage() {
                 allowFullScreen
                 style={{ borderRadius: "var(--radius-sm)", border: "none", position: "absolute", top: 0, left: 0 }}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toss Payments Mock Checkout Modal */}
+      {showCheckoutModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowCheckoutModal(false)} className="animate-fade-in">
+          <div style={styles.checkoutModal} onClick={(e) => e.stopPropagation()}>
+            {/* Toss Header */}
+            <div style={styles.tossHeader}>
+              <div style={styles.tossLogo}>toss payments</div>
+              <button style={styles.tossClose} onClick={() => setShowCheckoutModal(false)}>✕</button>
+            </div>
+            
+            {/* Checkout Body */}
+            <div style={styles.tossBody}>
+              <div style={styles.tossOrderSummary}>
+                <span style={styles.tossOrderLabel}>결제할 상품</span>
+                <span style={styles.tossOrderName}>PensionLab AI 은퇴 정밀 처방 보고서</span>
+                <div style={styles.tossPriceRow}>
+                  <span style={styles.tossPriceLabel}>결제 금액</span>
+                  <span style={styles.tossPrice}>5,000 원</span>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div style={styles.tossSectionTitle}>결제 수단 선택</div>
+              <div style={styles.tossMethods}>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.tossMethodBtn,
+                    borderColor: payMethod === "tosspay" ? "#0050ff" : "var(--border)",
+                    backgroundColor: payMethod === "tosspay" ? "rgba(0, 80, 255, 0.05)" : "var(--surface)",
+                    color: payMethod === "tosspay" ? "#0050ff" : "var(--text-primary)",
+                  }}
+                  onClick={() => setPayMethod("tosspay")}
+                >
+                  🔵 토스페이
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.tossMethodBtn,
+                    borderColor: payMethod === "card" ? "#0050ff" : "var(--border)",
+                    backgroundColor: payMethod === "card" ? "rgba(0, 80, 255, 0.05)" : "var(--surface)",
+                    color: payMethod === "card" ? "#0050ff" : "var(--text-primary)",
+                  }}
+                  onClick={() => setPayMethod("card")}
+                >
+                  💳 신용카드
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.tossMethodBtn,
+                    borderColor: payMethod === "transfer" ? "#0050ff" : "var(--border)",
+                    backgroundColor: payMethod === "transfer" ? "rgba(0, 80, 255, 0.05)" : "var(--surface)",
+                    color: payMethod === "transfer" ? "#0050ff" : "var(--text-primary)",
+                  }}
+                  onClick={() => setPayMethod("transfer")}
+                >
+                  🏦 계좌이체
+                </button>
+              </div>
+
+              {payMethod === "tosspay" && (
+                <div style={styles.tossInfoBox}>
+                  토스페이 결제 시 Toss 앱에서 등록하신 카드로 간편하게 결제하실 수 있습니다.
+                </div>
+              )}
+              {payMethod === "card" && (
+                <div style={styles.tossInfoBox}>
+                  국민, 현대, 삼성, 신한 등 국내 모든 신용/체크카드 결제를 지원합니다.
+                </div>
+              )}
+              {payMethod === "transfer" && (
+                <div style={styles.tossInfoBox}>
+                  실시간 은행 계좌 이체를 통해 안전하게 결제하실 수 있습니다.
+                </div>
+              )}
+            </div>
+
+            {/* Checkout Footer */}
+            <div style={styles.tossFooter}>
+              {paymentProcessing ? (
+                <button style={styles.tossPayBtn} disabled>
+                  <span style={{ display: "inline-block", ...styles.miniSpinner, borderTopColor: "#ffffff", verticalAlign: "middle", marginRight: 8 }} /> 결제 승인 중...
+                </button>
+              ) : (
+                <button
+                  id="btn-toss-pay"
+                  style={styles.tossPayBtn}
+                  onClick={handleMockPayment}
+                >
+                  5,000원 안전 결제하기
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -858,5 +994,170 @@ const styles: { [key: string]: React.CSSProperties } = {
     height: 0,
     overflow: "hidden",
     backgroundColor: "#000000",
+  },
+  premiumBannerCard: {
+    padding: "30px 40px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    background: "linear-gradient(135deg, rgba(30, 58, 95, 0.02) 0%, rgba(0, 184, 148, 0.02) 100%)",
+    borderColor: "var(--primary-light)",
+    flexWrap: "wrap",
+    gap: "24px",
+  },
+  premiumBannerLeft: {
+    flex: "1 1 500px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  premiumBannerRight: {
+    flex: "0 0 auto",
+  },
+  premiumBadge: {
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: "var(--secondary-dark)",
+    backgroundColor: "rgba(0, 184, 148, 0.1)",
+    padding: "4px 10px",
+    borderRadius: "var(--radius-full)",
+    width: "fit-content",
+    textTransform: "uppercase",
+    letterSpacing: "1px",
+  },
+  premiumBannerTitle: {
+    fontSize: "1.35rem",
+    fontWeight: 700,
+    color: "var(--primary-dark)",
+  },
+  premiumBannerDesc: {
+    fontSize: "0.95rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.5,
+  },
+  checkoutModal: {
+    width: "100%",
+    maxWidth: "400px",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-md)",
+    boxShadow: "var(--shadow-premium)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  tossHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px 20px",
+    borderBottom: "1px solid var(--border)",
+  },
+  tossLogo: {
+    fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+    fontSize: "1.1rem",
+    fontWeight: 900,
+    color: "#0050ff",
+    letterSpacing: "-0.5px",
+  },
+  tossClose: {
+    background: "none",
+    border: "none",
+    fontSize: "1.1rem",
+    color: "var(--text-muted)",
+    cursor: "pointer",
+  },
+  tossBody: {
+    padding: "24px 20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+  },
+  tossOrderSummary: {
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "var(--background)",
+    padding: "16px",
+    borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--border)",
+  },
+  tossOrderLabel: {
+    fontSize: "0.75rem",
+    color: "var(--text-muted)",
+    fontWeight: 600,
+  },
+  tossOrderName: {
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    marginTop: "4px",
+    marginBottom: "12px",
+  },
+  tossPriceRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderTop: "1px dashed var(--border)",
+    paddingTop: "10px",
+  },
+  tossPriceLabel: {
+    fontSize: "0.85rem",
+    color: "var(--text-secondary)",
+    fontWeight: 600,
+  },
+  tossPrice: {
+    fontSize: "1.1rem",
+    fontWeight: 800,
+    color: "var(--text-primary)",
+  },
+  tossSectionTitle: {
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    color: "var(--text-secondary)",
+  },
+  tossMethods: {
+    display: "flex",
+    gap: "10px",
+  },
+  tossMethodBtn: {
+    flex: 1,
+    padding: "12px 8px",
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    borderRadius: "var(--radius-sm)",
+    border: "1.5px solid var(--border)",
+    cursor: "pointer",
+    transition: "all var(--transition-fast)",
+    textAlign: "center",
+  },
+  tossInfoBox: {
+    fontSize: "0.8rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.4,
+    backgroundColor: "rgba(0, 80, 255, 0.03)",
+    padding: "12px",
+    borderRadius: "var(--radius-sm)",
+    border: "1px solid rgba(0, 80, 255, 0.05)",
+  },
+  tossFooter: {
+    padding: "16px 20px 24px 20px",
+    borderTop: "1px solid var(--border)",
+  },
+  tossPayBtn: {
+    width: "100%",
+    padding: "14px",
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    backgroundColor: "#0050ff",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "var(--radius-sm)",
+    cursor: "pointer",
+    transition: "all var(--transition-fast)",
+    boxShadow: "0 4px 12px rgba(0, 80, 255, 0.2)",
+    textAlign: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
 };

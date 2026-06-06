@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  email               String?  @unique
+  name                String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  onboardingCompleted Boolean  @default(false)
+
+  // Relations
+  nationalPension     NationalPension?
+  basicPension        BasicPension?
+  retirementPensions  RetirementPension[]
+  personalPensions    PersonalPensionSavings[]
+  pensionInsurances   PensionInsurance[]
+  simulationScenarios SimulationScenario[]
+}
+
+model NationalPension {
+  id                            String   @id @default(uuid())
+  userId                        String   @unique
+  user                          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  contributionMonths            Int      // 가입개월수
+  totalPaidAmount               Decimal  @db.Decimal(15, 2) // 총납부금액
+  currentStandardMonthlyIncome  Decimal  @db.Decimal(15, 2) // 현재 기준월소득액
+  expectedTotalContributionMonths Int    // 노령연금 총 예상가입기간월수
+  expectedMonthlyPension        Decimal  @db.Decimal(15, 2) // 예상연금월액
+  totalExpectedPremium          Decimal  @db.Decimal(15, 2) // 총 예상납부보험료
+  basicPensionAmount            Decimal  @db.Decimal(15, 2) // 기본연금액
+  aValue                        Decimal  @db.Decimal(15, 2) // A값 (국민연금 전체 가입자 평균소득)
+  bValue                        Decimal  @db.Decimal(15, 2) // B값 (본인 평균소득)
+  
+  updatedAt                     DateTime @updatedAt
+}
+
+model BasicPension {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  householdType       String   // "SINGLE" | "COUPLE" (단독가구 / 부부가구)
+  recognizedIncome    Decimal  @db.Decimal(15, 2) // 소득인정액
+  expectedEligibility Boolean  // 예상 수급 여부
+  expectedMonthlyAmount Decimal @db.Decimal(15, 2) // 예상 월 수령액
+  
+  updatedAt           DateTime @updatedAt
+}
+
+model RetirementPension {
+  id                  String   @id @default(uuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  pensionType         String   // "DB" | "DC" | "IRP"
+  
+  // DB specific fields (평균월급, 근속연수, 임금상승률)
+  avgSalary           Decimal? @db.Decimal(15, 2)
+  yearsOfService      Int?
+  salaryGrowthRate    Decimal? @db.Decimal(5, 2)
+  
+  // DC/IRP specific fields (총적립금, 본인월납입액, 회사부담금비율/금액, 예상수익률)
+  totalAccumulated    Decimal? @db.Decimal(15, 2)
+  monthlyContribution Decimal? @db.Decimal(15, 2)
+  companyMatchRate    Decimal? @db.Decimal(15, 2)
+  expectedReturnRate  Decimal? @db.Decimal(5, 2)
+  
+  updatedAt           DateTime @updatedAt
+}
+
+model PersonalPensionSavings {
+  id                        String   @id @default(uuid())
+  userId                    String
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  savingsType               String   // "FUND" | "INSURANCE" (연금저축펀드 / 연금저축보험)
+  totalAccumulated          Decimal  @db.Decimal(15, 2) // 총 적립금
+  monthlyAnnualContribution Decimal  @db.Decimal(15, 2) // 월/연 납입액
+  desiredStartAge           Int      // 희망 수령 개시 나이
+  receivingPeriod           Int      // 수령 기간 (년)
+  
+  updatedAt                 DateTime @updatedAt
+}
+
+model PensionInsurance {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  insuranceType         String   // "GENERAL" | "VARIABLE" (일반연금보험 / 변액연금보험 등)
+  totalAccumulated      Decimal  @db.Decimal(15, 2) // 총 납입/적립금
+  monthlyPayment        Decimal  @db.Decimal(15, 2) // 월 납입액
+  paymentPeriod         Int      // 납입 기간 (년)
+  expectedDeclaredRate  Decimal  @db.Decimal(5, 2)  // 예상 공시이율 (%)
+  
+  updatedAt             DateTime @updatedAt
+}
+
+model SimulationScenario {
+  id                       String   @id @default(uuid())
+  userId                   String
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  scenarioName             String   // 시나리오명
+  retirementAge            Int      // 은퇴 희망 나이
+  expectedLifeExpectancy   Int      // 기대수명
+  inflationRate            Decimal  @db.Decimal(5, 2)  // 물가상승률 (%)
+  nationalPensionStartAge  Int      // 국민연금 수령 개시 연령
+  customParams             Json?    // 기타 커스텀 파라미터 JSON
+  
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model ExpertContent {
+  id           String   @id @default(uuid())
+  channelName  String   // 채널명 (연금박사, 박곰희TV 등)
+  videoId      String   @unique // 유튜브 비디오 ID
+  title        String   // 동영상 제목
+  publishDate  DateTime // 게시일
+  transcript   String   @db.Text // 자막 전체 텍스트
+  summary      String   @db.Text // 요약 내용
+  embedding    Unsupported("vector(1536)")? // OpenAI embedding vector
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

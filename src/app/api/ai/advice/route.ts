@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/config/db";
 import { OpenAI } from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Initialize OpenAI client
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
+// Initialize API Clients
+const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY;
+
+let openai: OpenAI | null = null;
+let genAI: GoogleGenerativeAI | null = null;
+
+if (geminiApiKey) {
+  genAI = new GoogleGenerativeAI(geminiApiKey);
+} else if (openaiApiKey) {
+  openai = new OpenAI({ apiKey: openaiApiKey });
+}
 
 export async function POST(request: Request) {
   try {
@@ -17,13 +26,32 @@ export async function POST(request: Request) {
     let answer = "";
     let sources: { title: string; channelName: string; videoId: string }[] = [];
 
-    if (openai) {
-      // 1. Generate query embedding using text-embedding-3-small
-      const embedResponse = await openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: question,
-      });
-      const queryEmbedding = embedResponse.data[0].embedding;
+    if (genAI || openai) {
+      let queryEmbedding: number[] = [];
+
+      if (genAI) {
+        const model = genAI.getGenerativeModel({ model: "gemini-embedding-2" });
+        const result = await model.embedContent(question);
+        queryEmbedding = result.embedding.values;
+
+        // Adjust embedding dimensions to match vector(1536) database schema
+        if (queryEmbedding.length > 1536) {
+          queryEmbedding = queryEmbedding.slice(0, 1536);
+        } else if (queryEmbedding.length < 1536) {
+          const padded = new Array(1536).fill(0);
+          for (let i = 0; i < queryEmbedding.length; i++) {
+            padded[i] = queryEmbedding[i];
+          }
+          queryEmbedding = padded;
+        }
+      } else if (openai) {
+        const embedResponse = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: question,
+        });
+        queryEmbedding = embedResponse.data[0].embedding;
+      }
+
       const queryEmbeddingString = `[${queryEmbedding.join(",")}]`;
 
       // 2. Perform vector search using pgvector cosine distance (<=>)
@@ -48,24 +76,30 @@ export async function POST(request: Request) {
           videoId: m.videoId,
         }));
 
-        // 3. Generate answer grounded in context using gpt-4o-mini
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: "당신은 대한민국 3층 연금 설계 분야의 최고 권위자입니다. 제공된 동영상 자막 자료(참고자료)에 철저히 기반하여 사용자 질문에 정중하게 답변해 주세요. 지침에 없는 내용은 임의로 상상하지 마시고, 인용된 영상 제목과 채널명을 언급해 주세요."
-            },
-            {
-              role: "user",
-              content: `[참고자료]\n${contextText}\n\n[질문]\n${question}`
-            }
-          ],
-          max_tokens: 600,
-          temperature: 0.3,
-        });
-
-        answer = completion.choices[0].message.content || "";
+        // 3. Generate answer grounded in context
+        if (genAI) {
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+          const prompt = `당신은 대한민국 3층 연금 설계 분야의 최고 권위자입니다. 제공된 동영상 자막 자료(참고자료)에 철저히 기반하여 사용자 질문에 정중하게 답변해 주세요. 지침에 없는 내용은 임의로 상상하지 마시고, 인용된 영상 제목과 채널명을 언급해 주세요.\n\n[참고자료]\n${contextText}\n\n[질문]\n${question}`;
+          const result = await model.generateContent(prompt);
+          answer = result.response.text();
+        } else if (openai) {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              {
+                role: "system",
+                content: "당신은 대한민국 3층 연금 설계 분야의 최고 권위자입니다. 제공된 동영상 자막 자료(참고자료)에 철저히 기반하여 사용자 질문에 정중하게 답변해 주세요. 지침에 없는 내용은 임의로 상상하지 마시고, 인용된 영상 제목과 채널명을 언급해 주세요."
+              },
+              {
+                role: "user",
+                content: `[참고자료]\n${contextText}\n\n[질문]\n${question}`
+              }
+            ],
+            max_tokens: 600,
+            temperature: 0.3,
+          });
+          answer = completion.choices[0].message.content || "";
+        }
       } else {
         answer = "죄송합니다. 관련 연금 전문 지식 데이터를 데이터베이스에서 찾을 수 없습니다. 유튜브 자막 크롤링(npm run crawl)을 먼저 실행해 주세요.";
       }

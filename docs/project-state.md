@@ -15,5 +15,5 @@
 - **[Completed]** Story S3-2: JSON Backup Export/Import & Privacy Warning Banner.
 
 ## Active Sprint / Story
-- **Sprint 3**: Local Caching & Data Portability (Completed)
-- **Active Story**: None (All Sprint 3 stories successfully implemented and verified)
+- **Sprint 4**: Render & Vercel Cloud Deployment
+- **Active Story**: S4-1: Prisma Client Generation and Vercel/Render Cloud Deployment Configuration

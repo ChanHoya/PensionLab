@@ -2,6 +2,7 @@ const { PrismaClient } = require("../src/generated/prisma/client");
 const { PrismaPg } = require("@prisma/adapter-pg");
 const { Pool } = require("pg");
 const { OpenAI } = require("openai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const crypto = require("crypto");
 require("dotenv").config();
 
@@ -12,10 +13,20 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// Initialize OpenAI client
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
+// Initialize API Clients
+const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY;
+
+let openai = null;
+let genAI = null;
+
+if (geminiApiKey) {
+  genAI = new GoogleGenerativeAI(geminiApiKey);
+  console.log("Using Google Gemini API...");
+} else if (openaiApiKey) {
+  openai = new OpenAI({ apiKey: openaiApiKey });
+  console.log("Using OpenAI API...");
+}
 
 // Predefined realistic expert contents for fallback seeding or demonstration
 const PREDEFINED_VIDEOS = [
@@ -63,10 +74,34 @@ function generatePseudoEmbedding(seedText) {
 }
 
 async function getEmbedding(text) {
-  if (!openai) {
+  if (!genAI && !openai) {
     // Return pseudo-random fallback embedding
     return generatePseudoEmbedding(text);
   }
+  
+  if (genAI) {
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-embedding-2" });
+      const result = await model.embedContent(text);
+      const embedding = result.embedding.values;
+
+      // Adjust embedding dimensions to match vector(1536) database schema
+      if (embedding.length > 1536) {
+        return embedding.slice(0, 1536);
+      } else if (embedding.length < 1536) {
+        const padded = new Array(1536).fill(0);
+        for (let i = 0; i < embedding.length; i++) {
+          padded[i] = embedding[i];
+        }
+        return padded;
+      }
+      return embedding;
+    } catch (error) {
+      console.error("Gemini Embedding generation failed, falling back to pseudo-random:", error.message);
+      return generatePseudoEmbedding(text);
+    }
+  }
+
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-3-small",
@@ -80,10 +115,23 @@ async function getEmbedding(text) {
 }
 
 async function getSummary(title, transcript) {
-  if (!openai) {
+  if (!genAI && !openai) {
     // Return mock summary
     return `[요약] ${title}에 대한 자막 데이터 분석 요약본입니다.`;
   }
+  
+  if (genAI) {
+    try {
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const prompt = `당신은 은퇴 설계 및 다층 연금 전문가입니다. 제공되는 유튜브 자막 내용을 분석하여 2~3문장의 핵심 요약(핵심 제안 포함)을 작성해 주세요.\n\n제목: ${title}\n자막: ${transcript}`;
+      const result = await model.generateContent(prompt);
+      return result.response.text().trim();
+    } catch (error) {
+      console.error("Gemini Summary generation failed, returning fallback:", error.message);
+      return `[요약] ${title}의 자막 요약입니다.`;
+    }
+  }
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -101,7 +149,7 @@ async function getSummary(title, transcript) {
     });
     return response.choices[0].message.content.trim();
   } catch (error) {
-    console.error("OpenAI Summary generation failed, returning fallback:", error.message);
+    console.error("Summary generation failed, returning fallback:", error.message);
     return `[요약] ${title}의 자막 요약입니다.`;
   }
 }
@@ -123,7 +171,7 @@ async function main() {
     console.log(`\nProcessing Video [${i + 1}]: "${video.title}" (${video.channelName})`);
 
     const id = crypto.randomUUID();
-    const finalSummary = openai ? await getSummary(video.title, video.transcript) : video.summary;
+    const finalSummary = (genAI || openai) ? await getSummary(video.title, video.transcript) : video.summary;
     const embedding = await getEmbedding(video.transcript);
     const embeddingString = `[${embedding.join(",")}]`;
 

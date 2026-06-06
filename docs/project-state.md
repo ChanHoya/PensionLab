@@ -16,5 +16,9 @@
 - **[Completed]** Story S4-1: Prisma Client Generation & Vercel/Render Cloud Deployment Configuration (with DB SSL & Gemini API Support).
 
 ## Active Sprint / Story
-- **Sprint 4**: Render & Vercel Cloud Deployment (Completed)
-- **Active Story**: None (All deployment configurations and guides completed)
+- **Sprint 5**: UI/UX ETF Lens Theme Sync — **COMPLETED**
+- **[Completed]** Story S5-1: CSS Variable Theme Integration for ETF Lens Look & Feel
+  - globals.css: Indigo/Violet/Orange HSL token palette applied
+  - dashboard/page.tsx: All chart colors (PieChart, AreaChart), badge backgrounds, glow effects, AI card, data alert unified to new theme (removed legacy mint green rgba(0, 184, 148))
+  - All hardcoded hex (#4f46e5, var(--info)) replaced with HSL or CSS variable references
+

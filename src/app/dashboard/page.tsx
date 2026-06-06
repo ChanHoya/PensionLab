@@ -178,10 +178,10 @@ export default function DashboardPage() {
   const insuranceLump = store.pensionInsurances.reduce((sum, i) => sum + i.totalAccumulated, 0);
 
   const pieData = [
-    { name: "퇴직연금 (DB)", value: Math.round(dbLump), color: "#1e3a5f" },
-    { name: "퇴직연금 (DC/IRP)", value: Math.round(dcLump), color: "#2c5282" },
-    { name: "개인연금저축", value: Math.round(personalLump), color: "#00b894" },
-    { name: "연금보험", value: Math.round(insuranceLump), color: "#f39c12" },
+    { name: "퇴직연금 (DB)", value: Math.round(dbLump), color: "#312e81" }, // Deep Indigo
+    { name: "퇴직연금 (DC/IRP)", value: Math.round(dcLump), color: "hsl(243, 75%, 55%)" }, // Primary-Light Indigo
+    { name: "개인연금저축", value: Math.round(personalLump), color: "#8b5cf6" }, // Violet/Purple
+    { name: "연금보험", value: Math.round(insuranceLump), color: "#f97316" }, // Orange
   ].filter(item => item.value > 0);
 
   // Fallback if no assets configured yet
@@ -320,12 +320,12 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorBasic" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--info)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="var(--info)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="hsl(243, 75%, 57%)" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="hsl(243, 75%, 57%)" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorRetirement" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2c5282" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#2c5282" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="hsl(243, 75%, 55%)" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="hsl(243, 75%, 55%)" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorPersonal" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="var(--secondary)" stopOpacity={0.8}/>
@@ -342,8 +342,8 @@ export default function DashboardPage() {
                   <Tooltip formatter={(value) => value !== undefined ? `${value} 만원` : ""} labelFormatter={(label) => `${label}세 기준`} />
                   <Legend />
                   <Area type="monotone" dataKey="national" name="국민연금" stackId="1" stroke="var(--primary)" fillOpacity={1} fill="url(#colorNational)" />
-                  <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="var(--info)" fillOpacity={1} fill="url(#colorBasic)" />
-                  <Area type="monotone" dataKey="retirement" name="퇴직연금" stackId="1" stroke="#2c5282" fillOpacity={1} fill="url(#colorRetirement)" />
+                  <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="hsl(243, 75%, 57%)" fillOpacity={1} fill="url(#colorBasic)" />
+                  <Area type="monotone" dataKey="retirement" name="퇴직연금" stackId="1" stroke="hsl(243, 75%, 55%)" fillOpacity={1} fill="url(#colorRetirement)" />
                   <Area type="monotone" dataKey="personal" name="개인연금저축" stackId="1" stroke="var(--secondary)" fillOpacity={1} fill="url(#colorPersonal)" />
                   <Area type="monotone" dataKey="insurance" name="연금보험" stackId="1" stroke="var(--accent)" fillOpacity={1} fill="url(#colorInsurance)" />
                 </AreaChart>
@@ -754,7 +754,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: "-20%",
     width: "60%",
     height: "60%",
-    background: "radial-gradient(circle, rgba(0, 184, 148, 0.04) 0%, rgba(255,255,255,0) 75%)",
+    background: "radial-gradient(circle, rgba(46, 46, 189, 0.04) 0%, rgba(255,255,255,0) 75%)",
     zIndex: 0,
     pointerEvents: "none",
   },
@@ -906,8 +906,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   aiCard: {
     padding: "30px 40px",
-    background: "linear-gradient(135deg, rgba(30, 58, 95, 0.03) 0%, rgba(0, 184, 148, 0.03) 100%)",
-    borderColor: "rgba(0, 184, 148, 0.2)",
+    background: "linear-gradient(135deg, rgba(46, 46, 189, 0.03) 0%, rgba(139, 92, 246, 0.03) 100%)",
+    borderColor: "rgba(139, 92, 246, 0.2)",
     display: "flex",
     flexDirection: "column",
     gap: "12px",
@@ -916,7 +916,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.75rem",
     fontWeight: 700,
     color: "var(--secondary-dark)",
-    backgroundColor: "rgba(0, 184, 148, 0.1)",
+    backgroundColor: "rgba(139, 92, 246, 0.12)",
     padding: "4px 8px",
     borderRadius: "var(--radius-full)",
     width: "fit-content",
@@ -1094,7 +1094,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    background: "linear-gradient(135deg, rgba(30, 58, 95, 0.02) 0%, rgba(0, 184, 148, 0.02) 100%)",
+    background: "linear-gradient(135deg, rgba(46, 46, 189, 0.02) 0%, rgba(139, 92, 246, 0.02) 100%)",
     borderColor: "var(--primary-light)",
     flexWrap: "wrap",
     gap: "24px",
@@ -1112,7 +1112,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.75rem",
     fontWeight: 700,
     color: "var(--secondary-dark)",
-    backgroundColor: "rgba(0, 184, 148, 0.1)",
+    backgroundColor: "rgba(139, 92, 246, 0.12)",
     padding: "4px 10px",
     borderRadius: "var(--radius-full)",
     width: "fit-content",
@@ -1255,8 +1255,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "center",
   },
   topSecurityBanner: {
-    backgroundColor: "rgba(16, 185, 129, 0.06)",
-    border: "1px solid rgba(16, 185, 129, 0.15)",
+    backgroundColor: "rgba(139, 92, 246, 0.06)",
+    border: "1px solid rgba(139, 92, 246, 0.15)",
     borderRadius: "var(--radius-sm)",
     padding: "12px 18px",
     fontSize: "0.85rem",
@@ -1279,8 +1279,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "1.75rem",
   },
   dataAlert: {
-    backgroundColor: "rgba(59, 130, 246, 0.06)",
-    borderLeft: "4px solid var(--info)",
+    backgroundColor: "rgba(46, 46, 189, 0.06)",
+    borderLeft: "4px solid var(--primary)",
     borderRadius: "4px",
     padding: "12px 16px",
     fontSize: "0.85rem",

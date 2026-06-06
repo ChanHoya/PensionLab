@@ -25,4 +25,10 @@ graph TD
   Dashboard[src/app/dashboard/page.tsx] --> Store
   Dashboard --> Calculator
   Calculator --> Store
+
+  %% Sprint 2 Additions
+  Dashboard --> Report[src/app/dashboard/report/page.tsx]
+  Report --> Store
+  Report --> Calculator
+  OnboardingUI --> NPSSyncAPI[src/app/api/pension/nps-sync/route.ts]
 ```

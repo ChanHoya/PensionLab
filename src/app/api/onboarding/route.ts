@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       }
 
       return user;
-    });
+    }, { timeout: 15000 });
 
     return NextResponse.json({ success: true, userId: result.id });
   } catch (error: any) {

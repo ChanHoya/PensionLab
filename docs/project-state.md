@@ -17,16 +17,10 @@
 - **[Completed]** Sprint 5: UI/UX ETF Lens Theme Sync, PDF Viewer fixed, 3-Tier House Chart, and Navigation Highlighting/Alignment.
 - **[Completed]** Sprint 6: National Pension Service (NPS) Codef 2-Way Easy Authentication Integration & UI State Machine.
 - **[Completed]** Sprint 7: 금융감독원(FSS) 통합연금포털 API 2-Way 간편인증 연동 및 UI 개발.
+- **[Completed]** Sprint 8: 대시보드 차트 시각화 UX 개선 & 온보딩 저장 오류 트러블슈팅.
 
 ## Active Sprint / Story
-- **Sprint 8**: 대시보드 차트 시각화 UX 개선 & 온보딩 저장 오류 트러블슈팅 — **COMPLETED**
-  - **[Completed] Story S8-1**: 온보딩 최종 저장 API(`route.ts`) 에러 디버깅 및 Vercel 자동 마이그레이션 배포
-  - **[Completed] Story S8-2**: 대시보드 3층 연금구조 하우스 차트 가운데 정렬 및 가로폭 최적화 (범례 하단 가로 배치)
-  - **[Completed] Story S8-3**: 생애연금 시뮬레이션 AreaChart 폰트 크기 축소 및 다크 테마 커스텀 툴팁(Tooltip) 구현
-
-
-
-
-
-
-
+- **Sprint 9**: 데이터 저장 트랜잭션 안정화 & 대시보드 시각화 색상/필터 최적화 — **PLANNING**
+  - **[Story S9-1]** 온보딩 데이터 저장 Prisma 트랜잭션 타임아웃 연장 ({ timeout: 15000 })
+  - **[Story S9-2]** 대시보드 수령액 시뮬레이션 그래프에서 금액이 0원인 연금 제외 (Area & 범례 필터링)
+  - **[Story S9-3]** 1/2/3층 대시보드 차트 색상 테마 동기화 (패밀리 룩 HSL/HEX 색상 적용) 및 툴팁 나이 뒤 '세' 접미사 추가

@@ -25,6 +25,9 @@ import {
 // Custom Tooltip component for Recharts AreaChart in Dark Theme
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const activePayload = payload.filter((entry: any) => (entry.value || 0) > 0);
+    if (activePayload.length === 0) return null;
+
     return (
       <div style={{
         backgroundColor: "var(--surface)",
@@ -42,9 +45,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           color: "var(--text-primary)",
           borderBottom: "1px solid var(--border)",
           paddingBottom: "6px"
-        }}>{label}</p>
+        }}>{label}세</p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          {payload.map((entry: any, index: number) => (
+          {activePayload.map((entry: any, index: number) => (
             <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: entry.color }} />
@@ -207,6 +210,13 @@ export default function DashboardPage() {
     cashFlows,
   } = simulation;
 
+  // 0원인 연금 항목 필터링 판단
+  const hasNational = cashFlows.some((cf) => (cf.national || 0) > 0);
+  const hasBasic = cashFlows.some((cf) => (cf.basic || 0) > 0);
+  const hasRetirement = cashFlows.some((cf) => (cf.retirement || 0) > 0);
+  const hasPersonal = cashFlows.some((cf) => (cf.personal || 0) > 0);
+  const hasInsurance = cashFlows.some((cf) => (cf.insurance || 0) > 0);
+
   // 3층 구조 수령액 비중 계산 (65세 또는 은퇴나이 중 늦은 시점 기준)
   const targetAge = Math.max(65, store.simulationParams.retirementAge);
   const targetCF = cashFlows.find((cf) => cf.age === targetAge) || 
@@ -349,7 +359,7 @@ export default function DashboardPage() {
               {/* 우측: 범례 및 설명 */}
               <div style={styles.houseLegend}>
                 <div style={styles.legendItem}>
-                  <div style={{ ...styles.legendColorBox, backgroundColor: "#f87171" }} />
+                  <div style={{ ...styles.legendColorBox, backgroundColor: "#f97316" }} />
                   <div style={styles.legendInfo}>
                     <span style={styles.legendTitle}>3층 개인연금 (지붕)</span>
                     <span style={styles.legendValue}>
@@ -367,7 +377,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div style={styles.legendItem}>
-                  <div style={{ ...styles.legendColorBox, backgroundColor: "#60a5fa" }} />
+                  <div style={{ ...styles.legendColorBox, backgroundColor: "#3b82f6" }} />
                   <div style={styles.legendInfo}>
                     <span style={styles.legendTitle}>1층 국민/기초 (토대)</span>
                     <span style={styles.legendValue}>
@@ -392,36 +402,36 @@ export default function DashboardPage() {
                 >
                   <defs>
                     <linearGradient id="colorNational" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorBasic" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#818cf8" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#93c5fd" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#93c5fd" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorRetirement" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#facc15" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#facc15" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorPersonal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorInsurance" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#f87171" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#f87171" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99,102,241,0.12)" />
                   <XAxis dataKey="age" tickLine={false} tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
                   <YAxis tickLine={false} tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Area type="monotone" dataKey="national" name="국민연금" stackId="1" stroke="var(--primary)" fillOpacity={1} fill="url(#colorNational)" />
-                  <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="#818cf8" fillOpacity={1} fill="url(#colorBasic)" />
-                  <Area type="monotone" dataKey="retirement" name="퇴직연금" stackId="1" stroke="#6366f1" fillOpacity={1} fill="url(#colorRetirement)" />
-                  <Area type="monotone" dataKey="personal" name="개인연금저축" stackId="1" stroke="#6366f1" fillOpacity={1} fill="url(#colorPersonal)" />
-                  <Area type="monotone" dataKey="insurance" name="연금보험" stackId="1" stroke="var(--accent)" fillOpacity={1} fill="url(#colorInsurance)" />
+                  <Legend wrapperStyle={{ fontSize: "0.75rem", color: "var(--text-secondary)" }} />
+                  {hasNational && <Area type="monotone" dataKey="national" name="국민연금" stackId="1" stroke="#3b82f6" fillOpacity={1} fill="url(#colorNational)" />}
+                  {hasBasic && <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="#93c5fd" fillOpacity={1} fill="url(#colorBasic)" />}
+                  {hasRetirement && <Area type="monotone" dataKey="retirement" name="퇴직연금" stackId="1" stroke="#facc15" fillOpacity={1} fill="url(#colorRetirement)" />}
+                  {hasPersonal && <Area type="monotone" dataKey="personal" name="개인연금저축" stackId="1" stroke="#f97316" fillOpacity={1} fill="url(#colorPersonal)" />}
+                  {hasInsurance && <Area type="monotone" dataKey="insurance" name="연금보험" stackId="1" stroke="#f87171" fillOpacity={1} fill="url(#colorInsurance)" />}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -1392,7 +1402,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   roofLevel: {
     width: "90%",
-    backgroundColor: "#f87171",
+    backgroundColor: "#f97316",
     clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
     display: "flex",
     alignItems: "flex-end",
@@ -1415,13 +1425,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   baseLevel: {
     width: "100%",
-    backgroundColor: "#60a5fa",
+    backgroundColor: "#3b82f6",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     transition: "all 0.3s ease",
     borderRadius: "4px",
-    borderBottom: "4px solid #2563eb",
+    borderBottom: "4px solid #1d4ed8",
   },
   houseLabel: {
     fontSize: "0.8rem",

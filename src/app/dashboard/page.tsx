@@ -330,7 +330,7 @@ export default function DashboardPage() {
                 {/* 3층 지붕 (개인/보험) */}
                 <div style={{
                   ...styles.roofLevel,
-                  height: `${Math.max(25, pct3 * 1.8)}px`,
+                  height: `${Math.max(30, pct3 * 2.4)}px`,
                   opacity: v3 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>3층 ({pct3}%)</span>
@@ -339,7 +339,7 @@ export default function DashboardPage() {
                 {/* 2층 기둥 (퇴직연금) */}
                 <div style={{
                   ...styles.pillarLevel,
-                  height: `${Math.max(30, pct2 * 1.8)}px`,
+                  height: `${Math.max(35, pct2 * 2.4)}px`,
                   opacity: v2 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>2층 ({pct2}%)</span>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
                 {/* 1층 토대 (국민/기초) */}
                 <div style={{
                   ...styles.baseLevel,
-                  height: `${Math.max(35, pct1 * 1.8)}px`,
+                  height: `${Math.max(40, pct1 * 2.4)}px`,
                   opacity: v1 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>1층 ({pct1}%)</span>
@@ -358,33 +358,39 @@ export default function DashboardPage() {
 
               {/* 우측: 범례 및 설명 */}
               <div style={styles.houseLegend}>
-                <div style={styles.legendItem}>
-                  <div style={{ ...styles.legendColorBox, backgroundColor: "#f97316" }} />
-                  <div style={styles.legendInfo}>
-                    <span style={styles.legendTitle}>3층 개인연금 (지붕)</span>
-                    <span style={styles.legendValue}>
-                      {v3.toLocaleString()} 만원/월
-                    </span>
+                {v1 > 0 && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#3b82f6" }} />
+                    <div style={styles.legendInfo}>
+                      <span style={styles.legendTitle}>1층 국민/기초 (토대)</span>
+                      <span style={styles.legendValue}>
+                        {v1.toLocaleString()} 만원/월
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div style={styles.legendItem}>
-                  <div style={{ ...styles.legendColorBox, backgroundColor: "#facc15" }} />
-                  <div style={styles.legendInfo}>
-                    <span style={styles.legendTitle}>2층 퇴직연금 (기둥)</span>
-                    <span style={styles.legendValue}>
-                      {v2.toLocaleString()} 만원/월
-                    </span>
+                )}
+                {v2 > 0 && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#facc15" }} />
+                    <div style={styles.legendInfo}>
+                      <span style={styles.legendTitle}>2층 퇴직연금 (기둥)</span>
+                      <span style={styles.legendValue}>
+                        {v2.toLocaleString()} 만원/월
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div style={styles.legendItem}>
-                  <div style={{ ...styles.legendColorBox, backgroundColor: "#3b82f6" }} />
-                  <div style={styles.legendInfo}>
-                    <span style={styles.legendTitle}>1층 국민/기초 (토대)</span>
-                    <span style={styles.legendValue}>
-                      {v1.toLocaleString()} 만원/월
-                    </span>
+                )}
+                {v3 > 0 && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#f97316" }} />
+                    <div style={styles.legendInfo}>
+                      <span style={styles.legendTitle}>3층 개인연금 (지붕)</span>
+                      <span style={styles.legendValue}>
+                        {v3.toLocaleString()} 만원/월
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
             </div>
@@ -426,7 +432,7 @@ export default function DashboardPage() {
                   <XAxis dataKey="age" tickLine={false} tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
                   <YAxis tickLine={false} tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: "0.75rem", color: "var(--text-secondary)" }} />
+                  <Legend wrapperStyle={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "16px" }} />
                   {hasNational && <Area type="monotone" dataKey="national" name="국민연금" stackId="1" stroke="#3b82f6" fillOpacity={1} fill="url(#colorNational)" />}
                   {hasBasic && <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="#93c5fd" fillOpacity={1} fill="url(#colorBasic)" />}
                   {hasRetirement && <Area type="monotone" dataKey="retirement" name="퇴직연금" stackId="1" stroke="#facc15" fillOpacity={1} fill="url(#colorRetirement)" />}
@@ -444,6 +450,21 @@ export default function DashboardPage() {
           <p style={styles.chartSubtitle}>조건을 조정하여 연금 그래프의 변화를 실시간으로 확인해 보세요.</p>
           
           <div style={styles.slidersGrid}>
+            <div style={styles.sliderGroup}>
+              <div style={styles.sliderLabelRow}>
+                <label style={styles.sliderLabel}>현재 나이</label>
+                <span style={styles.sliderValue}>{store.simulationParams.currentAge} 세</span>
+              </div>
+              <input
+                type="range"
+                min="20"
+                max="70"
+                value={store.simulationParams.currentAge}
+                onChange={(e) => store.setSimulationParams({ currentAge: Number(e.target.value) })}
+                style={styles.sliderRange}
+              />
+            </div>
+
             <div style={styles.sliderGroup}>
               <div style={styles.sliderLabelRow}>
                 <label style={styles.sliderLabel}>은퇴 나이</label>
@@ -1397,7 +1418,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-end",
-    height: "180px",
+    height: "240px",
     position: "relative",
   },
   roofLevel: {
@@ -1467,12 +1488,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "1px",
   },
   legendTitle: {
-    fontSize: "0.75rem",
+    fontSize: "0.8rem",
     color: "var(--text-muted)",
     fontWeight: 500,
   },
   legendValue: {
-    fontSize: "0.85rem",
+    fontSize: "0.8rem",
     color: "var(--text-primary)",
     fontWeight: 700,
   },

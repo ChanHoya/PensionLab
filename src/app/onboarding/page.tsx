@@ -7,17 +7,18 @@ import { usePensionStore } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const STEPS = [
+  { id: 0, title: "기본 정보 & 재무 목표 (Step 0)", desc: "본인/가족 정보 및 은퇴 생활비 목표 등" },
   { id: 1, title: "국민연금 (1층)", desc: "국민연금 납부 내역 및 예상액" },
   { id: 2, title: "기초연금 (1층)", desc: "기초연금 대상 확인용 정보" },
   { id: 3, title: "퇴직연금 (2층)", desc: "회사 퇴직연금 (DB/DC/IRP)" },
   { id: 4, title: "개인연금 (3층)", desc: "연금저축 및 연금보험" },
-  { id: 5, title: "설계 기준 설정", desc: "희망 은퇴 나이 및 기대수명" },
+  { id: 5, title: "기타 시뮬레이션 설정", desc: "물가상승률 및 국민연금 개시 연령 설정" },
 ];
 
 export default function OnboardingPage() {
   const router = useRouter();
   const store = usePensionStore();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [nationalInputMode, setNationalInputMode] = useState<"SIMPLE" | "DETAILED" | "SYNC">("SIMPLE");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -247,7 +248,7 @@ export default function OnboardingPage() {
   };
 
   const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
   // JSON 백업 저장
@@ -481,12 +482,163 @@ export default function OnboardingPage() {
         <section style={styles.formCard} className="glass">
           <div style={styles.formHeader}>
             <span style={styles.stepBadge}>STEP {currentStep}</span>
-            <h2 style={styles.formTitle}>{STEPS[currentStep - 1].title}</h2>
-            <p style={styles.formDesc}>{STEPS[currentStep - 1].desc}</p>
+            <h2 style={styles.formTitle}>{STEPS[currentStep].title}</h2>
+            <p style={styles.formDesc}>{STEPS[currentStep].desc}</p>
           </div>
 
 
           <div style={styles.formBody}>
+            {/* STEP 0: 기본 정보 및 노후 재무 목표 */}
+            {currentStep === 0 && (
+              <div style={styles.formGroupList} className="animate-fade-in">
+                <div style={styles.infoAlert}>
+                  👤 본인 및 가족 구성원의 정보와 노후 지출 목표를 입력하면 더욱 정확한 시뮬레이션이 가능해집니다.
+                </div>
+                
+                <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>1. 본인 및 가족 정보</h3>
+                <div style={styles.fieldGrid}>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>현재 나이 (세)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.currentAge || ""}
+                      onChange={(e) => store.setSimulationParams({ currentAge: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>희망 은퇴 나이 (세)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.retirementAge || ""}
+                      onChange={(e) => store.setSimulationParams({ retirementAge: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>예상 기대 수명 (세)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.expectedLifeExpectancy || ""}
+                      onChange={(e) => store.setSimulationParams({ expectedLifeExpectancy: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>배우자 유무</label>
+                    <div style={styles.radioGroup}>
+                      <label style={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="hasSpouse"
+                          checked={store.simulationParams.hasSpouse === true}
+                          onChange={() => store.setSimulationParams({ hasSpouse: true })}
+                        />
+                        있음
+                      </label>
+                      <label style={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="hasSpouse"
+                          checked={store.simulationParams.hasSpouse === false}
+                          onChange={() => store.setSimulationParams({ hasSpouse: false, spouseAge: undefined })}
+                        />
+                        없음
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {store.simulationParams.hasSpouse && (
+                  <div style={styles.fieldGrid} className="animate-fade-in">
+                    <div style={styles.fieldRow}>
+                      <label style={styles.label}>배우자 현재 나이 (세)</label>
+                      <input
+                        type="number"
+                        className="premium-input"
+                        placeholder="예: 35"
+                        value={store.simulationParams.spouseAge ?? ""}
+                        onChange={(e) => store.setSimulationParams({ spouseAge: Number(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div style={styles.fieldGrid}>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>자녀 수 (명)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.childrenCount ?? 0}
+                      onChange={(e) => store.setSimulationParams({ childrenCount: Number(e.target.value) })}
+                    />
+                  </div>
+                  {store.simulationParams.childrenCount > 0 && (
+                    <div style={styles.fieldRow}>
+                      <label style={styles.label}>자녀 나이 (쉼표구분, 세)</label>
+                      <input
+                        type="text"
+                        className="premium-input"
+                        placeholder="예: 5, 8"
+                        value={store.simulationParams.childrenAges || ""}
+                        onChange={(e) => store.setSimulationParams({ childrenAges: e.target.value })}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <h3 style={{ ...styles.addFormTitle, marginTop: 20 }}>2. 노후 재무지출 및 자산 목표</h3>
+                <div style={styles.fieldGrid}>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>희망 월 생활비 (만원)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.targetMonthlySpending || ""}
+                      onChange={(e) => store.setSimulationParams({ targetMonthlySpending: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>최소 월 생활비 (만원)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.minMonthlySpending || ""}
+                      onChange={(e) => store.setSimulationParams({ minMonthlySpending: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>자녀 교육/결혼 지원비 총액 (만원)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.childSupportExpense || ""}
+                      onChange={(e) => store.setSimulationParams({ childSupportExpense: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>노후 대비 연간 의료비 (만원)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.annualMedicalExpense || ""}
+                      onChange={(e) => store.setSimulationParams({ annualMedicalExpense: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>은퇴 시점 비연금 자산 규모 (만원)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.nonPensionAssets || ""}
+                      onChange={(e) => store.setSimulationParams({ nonPensionAssets: Number(e.target.value) })}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* STEP 1: 국민연금 */}
             {currentStep === 1 && (
               <div style={styles.formGroupList} className="animate-fade-in">
@@ -1596,24 +1748,6 @@ export default function OnboardingPage() {
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.infoAlert}>
                   ⚙️ 물가상승률 및 은퇴 후 연금 수령 개시 나이 등의 시뮬레이션 기본 파라미터를 설정합니다.
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>희망 은퇴 나이 (세)</label>
-                  <input
-                    type="number"
-                    className="premium-input"
-                    value={store.simulationParams.retirementAge}
-                    onChange={(e) => store.setSimulationParams({ retirementAge: Number(e.target.value) })}
-                  />
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>예상 기대 수명 (세)</label>
-                  <input
-                    type="number"
-                    className="premium-input"
-                    value={store.simulationParams.expectedLifeExpectancy}
-                    onChange={(e) => store.setSimulationParams({ expectedLifeExpectancy: Number(e.target.value) })}
-                  />
                 </div>
                 <div style={styles.fieldRow}>
                   <label style={styles.label}>장기 물가상승률 (%)</label>

@@ -69,10 +69,10 @@ export function runPensionSimulation(
 ): SimulationResult {
   const currentYear = new Date().getFullYear();
 
-  // 1. Dynamic current age inference
+  // 1. Dynamic current age inference or use store param
   const remainingMonthsToPay = Math.max(0, national.expectedTotalContributionMonths - national.contributionMonths);
   const yearsToRetireInferred = Math.ceil(remainingMonthsToPay / 12);
-  const currentAge = Math.max(20, params.retirementAge - yearsToRetireInferred);
+  const currentAge = params.currentAge || Math.max(20, params.retirementAge - yearsToRetireInferred);
   const yearsToRetire = Math.max(0, params.retirementAge - currentAge);
   const expectedLife = params.expectedLifeExpectancy;
 

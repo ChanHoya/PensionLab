@@ -51,10 +51,20 @@ export interface PensionInsuranceState {
 }
 
 export interface SimulationParamsState {
+  currentAge: number;
   retirementAge: number;
   expectedLifeExpectancy: number;
   inflationRate: number; // (%)
   nationalPensionStartAge: number;
+  hasSpouse: boolean;
+  spouseAge?: number;
+  childrenCount: number;
+  childrenAges: string;
+  targetMonthlySpending: number;
+  minMonthlySpending: number;
+  childSupportExpense: number;
+  annualMedicalExpense: number;
+  nonPensionAssets: number;
 }
 
 interface PensionStore {
@@ -110,10 +120,20 @@ const initialBasicPension: BasicPensionState = {
 };
 
 const initialSimulationParams: SimulationParamsState = {
+  currentAge: 35,
   retirementAge: 60,
   expectedLifeExpectancy: 85,
   inflationRate: 2.0,
   nationalPensionStartAge: 65,
+  hasSpouse: false,
+  spouseAge: 35,
+  childrenCount: 0,
+  childrenAges: "",
+  targetMonthlySpending: 300,
+  minMonthlySpending: 200,
+  childSupportExpense: 0,
+  annualMedicalExpense: 0,
+  nonPensionAssets: 0,
 };
 
 export const usePensionStore = create<PensionStore>()(
@@ -210,7 +230,9 @@ export const usePensionStore = create<PensionStore>()(
           retirementPensions: data.retirementPensions || [],
           personalPensions: data.personalPensions || [],
           pensionInsurances: data.pensionInsurances || [],
-          simulationParams: data.simulationParams || initialSimulationParams,
+          simulationParams: data.simulationParams
+            ? { ...initialSimulationParams, ...data.simulationParams }
+            : initialSimulationParams,
         }),
 
       resetStore: () =>

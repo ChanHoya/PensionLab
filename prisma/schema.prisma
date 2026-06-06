@@ -113,10 +113,20 @@ model SimulationScenario {
   user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   scenarioName             String   // 시나리오명
+  currentAge               Int      @default(30) // 현재 나이
   retirementAge            Int      // 은퇴 희망 나이
   expectedLifeExpectancy   Int      // 기대수명
   inflationRate            Decimal  @db.Decimal(5, 2)  // 물가상승률 (%)
   nationalPensionStartAge  Int      // 국민연금 수령 개시 연령
+  hasSpouse                Boolean  @default(false) // 배우자 유무
+  spouseAge                Int?     // 배우자 나이
+  childrenCount            Int      @default(0) // 자녀 수
+  childrenAges             String?  // 자녀 나이 리스트 (예: "25,28")
+  targetMonthlySpending   Int?     // 희망 월 생활비 (만원)
+  minMonthlySpending      Int?     // 최소 월 생활비 (만원)
+  childSupportExpense      Int?     // 자녀 지원 비용 총액 (만원)
+  annualMedicalExpense     Int?     // 노후 대비 연간 의료비 (만원)
+  nonPensionAssets         Int?     // 비연금 자산 규모 (만원)
   customParams             Json?    // 기타 커스텀 파라미터 JSON
   
   createdAt                DateTime @default(now())

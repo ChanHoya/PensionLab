@@ -110,10 +110,20 @@ export async function POST(request: Request) {
           data: {
             userId: user.id,
             scenarioName: "기본 시나리오",
+            currentAge: Number(simulationParams.currentAge) || 30,
             retirementAge: Number(simulationParams.retirementAge) || 60,
             expectedLifeExpectancy: Number(simulationParams.expectedLifeExpectancy) || 85,
             inflationRate: Number(simulationParams.inflationRate) || 2.0,
             nationalPensionStartAge: Number(simulationParams.nationalPensionStartAge) || 65,
+            hasSpouse: Boolean(simulationParams.hasSpouse),
+            spouseAge: simulationParams.spouseAge ? Number(simulationParams.spouseAge) : null,
+            childrenCount: Number(simulationParams.childrenCount) || 0,
+            childrenAges: simulationParams.childrenAges || null,
+            targetMonthlySpending: simulationParams.targetMonthlySpending ? Number(simulationParams.targetMonthlySpending) : null,
+            minMonthlySpending: simulationParams.minMonthlySpending ? Number(simulationParams.minMonthlySpending) : null,
+            childSupportExpense: simulationParams.childSupportExpense ? Number(simulationParams.childSupportExpense) : null,
+            annualMedicalExpense: simulationParams.annualMedicalExpense ? Number(simulationParams.annualMedicalExpense) : null,
+            nonPensionAssets: simulationParams.nonPensionAssets ? Number(simulationParams.nonPensionAssets) : null,
           },
         });
       }

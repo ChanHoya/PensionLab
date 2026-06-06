@@ -17,10 +17,10 @@
 - **[Completed]** Sprint 5: UI/UX ETF Lens Theme Sync, PDF Viewer fixed, 3-Tier House Chart, and Navigation Highlighting/Alignment.
 - **[Completed]** Sprint 6: National Pension Service (NPS) Codef 2-Way Easy Authentication Integration & UI State Machine.
 - **[Completed]** Sprint 7: 금융감독원(FSS) 통합연금포털 API 2-Way 간편인증 연동 및 UI 개발.
-- **[Completed]** Sprint 8: 대시보드 차트 시각화 UX 개선 & 온보딩 저장 오류 트러블슈팅.
+- **[Completed]** Sprint 9: 데이터 저장 트랜잭션 안정화 & 대시보드 시각화 색상/필터 최적화.
 
 ## Active Sprint / Story
-- **Sprint 9**: 데이터 저장 트랜잭션 안정화 & 대시보드 시각화 색상/필터 최적화 — **COMPLETED**
-  - **[Completed] Story S9-1**: 온보딩 데이터 저장 Prisma 트랜잭션 타임아웃 연장 ({ timeout: 15000 })
-  - **[Completed] Story S9-2**: 대시보드 수령액 시뮬레이션 그래프에서 금액이 0원인 연금 제외 (Area & 범례 필터링)
-  - **[Completed] Story S9-3**: 1/2/3층 대시보드 차트 색상 테마 동기화 (패밀리 룩 HSL/HEX 색상 적용) 및 툴팁 나이 뒤 '세' 접미사 추가
+- **Sprint 10**: 온보딩 Step 0 개인/가족/지출 정보 신설 및 대시보드 범례/차트 UX 고도화 — **PLANNING**
+  - **[Story S10-1]** 대시보드 3층 연금구조 하우스 세로폭 확대 및 범례 배치 동기화 (1층 ➔ 2층 ➔ 3층 순서)
+  - **[Story S10-2]** Prisma schema 및 Zustand 스토어에 현재나이, 가족 프로필, 노후 지출 목표 필드 추가 및 로컬 DB 마이그레이션
+  - **[Story S10-3]** 온보딩 Wizard에 `STEP 0` 개인/가족/노후재무설계 입력 단계 신설 및 DB 저장 API 연동

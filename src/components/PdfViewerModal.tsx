@@ -5,9 +5,16 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 interface PdfViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  pdfUrl?: string;
+  title?: string;
 }
 
-export default function PdfViewerModal({ isOpen, onClose }: PdfViewerModalProps) {
+export default function PdfViewerModal({
+  isOpen,
+  onClose,
+  pdfUrl = "/Pension_Blueprint.pdf",
+  title = "서비스 소개"
+}: PdfViewerModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -28,7 +35,7 @@ export default function PdfViewerModal({ isOpen, onClose }: PdfViewerModalProps)
         // 로컬 서빙 pdfjs-dist worker 설정
         pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-        const doc = await pdfjsLib.getDocument({ url: "/Pension_Blueprint.pdf" }).promise;
+        const doc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
         if (!cancelled) {
           setPdfDoc(doc);
           setTotalPages(doc.numPages);
@@ -43,7 +50,7 @@ export default function PdfViewerModal({ isOpen, onClose }: PdfViewerModalProps)
 
     loadPdf();
     return () => { cancelled = true; };
-  }, [isOpen]);
+  }, [isOpen, pdfUrl]);
 
   // 페이지 렌더링
   const renderPage = useCallback(async (pageNum: number) => {
@@ -107,7 +114,7 @@ export default function PdfViewerModal({ isOpen, onClose }: PdfViewerModalProps)
         {/* 헤더 */}
         <div style={header}>
           <div style={headerLeft}>
-            <span style={badge}>📄 서비스 소개</span>
+            <span style={badge}>📄 {title}</span>
             <span style={pageInfo}>
               {totalPages > 0 ? `${currentPage} / ${totalPages}` : "로딩 중..."}
             </span>
@@ -198,17 +205,20 @@ const overlay: React.CSSProperties = {
   display: "flex",
   alignItems: "stretch",
   justifyContent: "center",
-  padding: 0,
+  padding: "0 40px",
 };
 
 const modal: React.CSSProperties = {
   width: "100%",
+  maxWidth: "1200px",
   height: "100%",
   maxHeight: "none",
   backgroundColor: "#161728",
-  border: "none",
+  borderLeft: "1px solid rgba(99, 102, 241, 0.2)",
+  borderRight: "1px solid rgba(99, 102, 241, 0.2)",
+  borderBottom: "1px solid rgba(99, 102, 241, 0.2)",
   borderRadius: "0px",
-  boxShadow: "none",
+  boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",

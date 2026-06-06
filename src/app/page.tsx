@@ -10,7 +10,11 @@ const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
 });
 
 export default function LandingPage() {
-  const [showPdf, setShowPdf] = useState(false);
+  const [pdfConfig, setPdfConfig] = useState({
+    isOpen: false,
+    url: "/Pension_Blueprint.pdf",
+    title: "서비스 소개",
+  });
 
   return (
     <>
@@ -28,12 +32,18 @@ export default function LandingPage() {
             <nav style={styles.navLinks}>
               <button
                 id="btn-service-intro"
-                onClick={() => setShowPdf(true)}
+                onClick={() => setPdfConfig({ isOpen: true, url: "/Pension_Blueprint.pdf", title: "서비스 소개" })}
                 style={styles.navButton}
               >
                 서비스 소개
               </button>
-              <span style={styles.navItem}>연금 개혁안 정보</span>
+              <button
+                id="btn-pension-reform"
+                onClick={() => setPdfConfig({ isOpen: true, url: "/2026_Pension_Reform.pdf", title: "2026 연금 개혁안" })}
+                style={{ ...styles.navItem, background: "none", border: "none", font: "inherit", padding: 0 }}
+              >
+                연금 개혁안 정보
+              </button>
               <span style={styles.navItem}>유튜브 전문가 팁</span>
             </nav>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -152,8 +162,13 @@ export default function LandingPage() {
       </footer>
     </main>
 
-    {/* PDF 서비스 소개 모달 */}
-    <PdfViewerModal isOpen={showPdf} onClose={() => setShowPdf(false)} />
+    {/* PDF 서비스 소개 및 연금 개혁안 모달 */}
+    <PdfViewerModal
+      isOpen={pdfConfig.isOpen}
+      onClose={() => setPdfConfig((prev) => ({ ...prev, isOpen: false }))}
+      pdfUrl={pdfConfig.url}
+      title={pdfConfig.title}
+    />
     </>
   );
 }

@@ -236,37 +236,39 @@ export default function OnboardingPage() {
       <div style={styles.bgGlow2} />
 
       <header style={styles.header}>
-        {/* 좌: 로고 + 부제목 */}
-        <div style={styles.headerLeft}>
-          <Link href="/" style={{ textDecoration: "none" }}>
-            <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
-          </Link>
-          <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
-        </div>
-        {/* 우: 개인정보 안심보장 + JSON저장 + 불러오기 + 테마토글 */}
-        <div style={styles.headerRight}>
-          <div style={styles.privacyChip}>
-            <span style={{ fontSize: "0.9rem" }}>🔒</span>
-            <span><strong>개인정보 안심 보장</strong> — 모든 데이터는 이 기기에만 저장됩니다.</span>
+        <div style={styles.headerContent}>
+          {/* 좌: 로고 + 부제목 */}
+          <div style={styles.headerLeft}>
+            <Link href="/" style={{ textDecoration: "none" }}>
+              <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
+            </Link>
+            <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
           </div>
-          <button onClick={handleSaveData} style={styles.saveBtn} title="현재 입력 데이터를 JSON으로 저장">
-            💾 저장
-          </button>
-          <button
-            onClick={() => document.getElementById("import-file-input")?.click()}
-            style={styles.saveBtn}
-            title="저장된 JSON 백업 파일 불러오기"
-          >
-            📂 불러오기
-          </button>
-          <input
-            type="file"
-            id="import-file-input"
-            accept=".json"
-            style={{ display: "none" }}
-            onChange={handleLoadData}
-          />
-          <ThemeToggle />
+          {/* 우: 개인정보 안심보장 + JSON저장 + 불러오기 + 테마토글 */}
+          <div style={styles.headerRight}>
+            <div style={styles.privacyChip}>
+              <span style={{ fontSize: "0.9rem" }}>🔒</span>
+              <span><strong>개인정보 안심 보장</strong> — 모든 데이터는 이 기기에만 저장됩니다.</span>
+            </div>
+            <button onClick={handleSaveData} style={styles.saveBtn} title="현재 입력 데이터를 JSON으로 저장">
+              💾 저장
+            </button>
+            <button
+              onClick={() => document.getElementById("import-file-input")?.click()}
+              style={styles.saveBtn}
+              title="저장된 JSON 백업 파일 불러오기"
+            >
+              📂 불러오기
+            </button>
+            <input
+              type="file"
+              id="import-file-input"
+              accept=".json"
+              style={{ display: "none" }}
+              onChange={handleLoadData}
+            />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -1027,7 +1029,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     width: "100%",
     minHeight: "100vh",
-    padding: "40px 20px",
+    padding: "0 20px 40px 20px",
     backgroundColor: "var(--background)",
     position: "relative",
     overflow: "hidden",
@@ -1053,14 +1055,24 @@ const styles: { [key: string]: React.CSSProperties } = {
     pointerEvents: "none",
   },
   header: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    position: "sticky",
+    top: 0,
     width: "100%",
-    maxWidth: "1200px",
+    padding: "16px 40px",
+    zIndex: 100,
+    borderBottom: "1px solid var(--border)",
+    backgroundColor: "var(--glass-bg)",
+    backdropFilter: "var(--glass-blur)",
+    WebkitBackdropFilter: "var(--glass-blur)",
     marginBottom: "32px",
-    zIndex: 1,
+  },
+  headerContent: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    maxWidth: "1200px",
+    margin: "0 auto",
+    width: "100%",
     gap: "16px",
     flexWrap: "wrap" as React.CSSProperties["flexWrap"],
   },

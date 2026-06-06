@@ -39,4 +39,8 @@
 - **[Completed]** Story S5-5: Local JSON Data Import on Onboarding Wizard
   - onboarding/page.tsx: Implemented handleLoadData method utilizing FileReader to read the selected backup JSON file and feed it into store.importStoreData.
   - onboarding/page.tsx: Added a file input element and a styling-matching "📂 불러오기" button in the top-right header section to trigger file selection.
+- **[Completed]** Story S5-6: Header Logo Alignment & 3-Tier House Chart Integration
+  - onboarding/page.tsx & dashboard/page.tsx: Removed outer container top margins and adjusted header paddings to 16px to align the PensionLab logo perfectly in Y-axis across all pages.
+  - dashboard/page.tsx: Replaced standard PieChart with a custom HTML/CSS dynamic 3-Tier House Ratio Chart where floor heights scale proportionally based on calculated monthly pension values.
+
 

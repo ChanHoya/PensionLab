@@ -167,29 +167,19 @@ export default function DashboardPage() {
     cashFlows,
   } = simulation;
 
-  // Pie Chart Data: 은퇴 자산 구성 비율
-  const dbLump = store.retirementPensions
-    .filter(r => r.pensionType === "DB")
-    .reduce((sum, r) => sum + (r.avgSalary || 0) * ((r.yearsOfService || 0) + yearsToRetire), 0);
-  const dcLump = store.retirementPensions
-    .filter(r => r.pensionType !== "DB")
-    .reduce((sum, r) => sum + (r.totalAccumulated || 0), 0);
+  // 3층 구조 수령액 비중 계산 (65세 또는 은퇴나이 중 늦은 시점 기준)
+  const targetAge = Math.max(65, store.simulationParams.retirementAge);
+  const targetCF = cashFlows.find((cf) => cf.age === targetAge) || 
+                   cashFlows.find((cf) => cf.age === store.simulationParams.retirementAge) || 
+                   { national: 0, basic: 0, retirement: 0, personal: 0, insurance: 0, total: 1 };
   
-  const personalLump = store.personalPensions.reduce((sum, p) => sum + p.totalAccumulated, 0);
-  const insuranceLump = store.pensionInsurances.reduce((sum, i) => sum + i.totalAccumulated, 0);
-
-  const pieData = [
-    { name: "퇴직연금 (DB)", value: Math.round(dbLump), color: "#4f46e5" },
-    { name: "퇴직연금 (DC/IRP)", value: Math.round(dcLump), color: "#6366f1" },
-    { name: "개인연금저축", value: Math.round(personalLump), color: "#818cf8" },
-    { name: "연금보험", value: Math.round(insuranceLump), color: "#f97316" },
-  ].filter(item => item.value > 0);
-
-  // Fallback if no assets configured yet
-  const hasAssets = pieData.length > 0;
-  const fallbackPieData = [
-    { name: "연금자산 미등록 (수동입력 필요)", value: 1, color: "#cbd5e1" }
-  ];
+  const v1 = (targetCF.national || 0) + (targetCF.basic || 0); // 1층
+  const v2 = (targetCF.retirement || 0); // 2층
+  const v3 = (targetCF.personal || 0) + (targetCF.insurance || 0); // 3층
+  const totalVal = v1 + v2 + v3 || 1;
+  const pct1 = Math.round((v1 / totalVal) * 100);
+  const pct2 = Math.round((v2 / totalVal) * 100);
+  const pct3 = Math.round((v3 / totalVal) * 100);
 
   return (
     <main style={styles.container}>
@@ -279,30 +269,74 @@ export default function DashboardPage() {
 
         {/* Row 2: Charts (Side-by-Side) */}
         <section style={styles.chartsGrid}>
-          {/* Chart 1: Donut Chart */}
-          <div style={styles.chartCard} className="premium-card">
-            <h3 style={styles.chartTitle}>은퇴 자산 구성 비율</h3>
-            <p style={styles.chartSubtitle}>사적 연금 적립 자산의 분산도</p>
-            <div style={styles.chartWrapper}>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={hasAssets ? pieData : fallbackPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {(hasAssets ? pieData : fallbackPieData).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => value !== undefined ? `${Number(value).toLocaleString()} 만원` : ""} />
-                  <Legend verticalAlign="bottom" height={36} />
-                </PieChart>
-              </ResponsiveContainer>
+          {/* Chart 1: 3-Tier Pension House Diagram */}
+          <div style={{ ...styles.chartCard, flex: "1 1 350px", minWidth: "300px" }} className="premium-card">
+            <h3 style={styles.chartTitle}>3층 연금 구조 비중</h3>
+            <p style={styles.chartSubtitle}>은퇴 수령액 기준 ({targetAge}세 시점 월 수령액)</p>
+            <div style={styles.houseChartContainer}>
+              {/* 좌측: 집 형태의 다이나믹 차트 */}
+              <div style={styles.houseDiagramWrapper}>
+                
+                {/* 3층 지붕 (개인/보험) */}
+                <div style={{
+                  ...styles.roofLevel,
+                  height: `${Math.max(25, pct3 * 1.8)}px`,
+                  opacity: v3 > 0 ? 1 : 0.4
+                }}>
+                  <span style={styles.houseLabel}>3층 ({pct3}%)</span>
+                </div>
+
+                {/* 2층 기둥 (퇴직연금) */}
+                <div style={{
+                  ...styles.pillarLevel,
+                  height: `${Math.max(30, pct2 * 1.8)}px`,
+                  opacity: v2 > 0 ? 1 : 0.4
+                }}>
+                  <span style={styles.houseLabel}>2층 ({pct2}%)</span>
+                </div>
+
+                {/* 1층 토대 (국민/기초) */}
+                <div style={{
+                  ...styles.baseLevel,
+                  height: `${Math.max(35, pct1 * 1.8)}px`,
+                  opacity: v1 > 0 ? 1 : 0.4
+                }}>
+                  <span style={styles.houseLabel}>1층 ({pct1}%)</span>
+                </div>
+
+              </div>
+
+              {/* 우측: 범례 및 설명 */}
+              <div style={styles.houseLegend}>
+                <div style={styles.legendItem}>
+                  <div style={{ ...styles.legendColorBox, backgroundColor: "#f87171" }} />
+                  <div style={styles.legendInfo}>
+                    <span style={styles.legendTitle}>3층 개인연금 (지붕)</span>
+                    <span style={styles.legendValue}>
+                      {v3.toLocaleString()} 만원/월
+                    </span>
+                  </div>
+                </div>
+                <div style={styles.legendItem}>
+                  <div style={{ ...styles.legendColorBox, backgroundColor: "#facc15" }} />
+                  <div style={styles.legendInfo}>
+                    <span style={styles.legendTitle}>2층 퇴직연금 (기둥)</span>
+                    <span style={styles.legendValue}>
+                      {v2.toLocaleString()} 만원/월
+                    </span>
+                  </div>
+                </div>
+                <div style={styles.legendItem}>
+                  <div style={{ ...styles.legendColorBox, backgroundColor: "#60a5fa" }} />
+                  <div style={styles.legendInfo}>
+                    <span style={styles.legendTitle}>1층 국민/기초 (토대)</span>
+                    <span style={styles.legendValue}>
+                      {v1.toLocaleString()} 만원/월
+                    </span>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -772,7 +806,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   header: {
     width: "100%",
-    padding: "20px 40px",
+    padding: "16px 40px",
     zIndex: 10,
     borderBottom: "1px solid var(--border)",
     backgroundColor: "var(--glass-bg)",
@@ -1295,5 +1329,97 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     gap: "16px",
     flexWrap: "wrap",
+  },
+  houseChartContainer: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "24px",
+    padding: "16px 8px",
+    height: "230px",
+    width: "100%",
+  },
+  houseDiagramWrapper: {
+    flex: 1.2,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "100%",
+    position: "relative",
+  },
+  roofLevel: {
+    width: "90%",
+    backgroundColor: "#f87171",
+    clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "center",
+    paddingBottom: "4px",
+    transition: "all 0.3s ease",
+    marginBottom: "2px",
+  },
+  pillarLevel: {
+    width: "80%",
+    backgroundColor: "#facc15",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.3s ease",
+    marginBottom: "2px",
+    borderRadius: "4px 4px 0 0",
+    borderLeft: "8px solid #eab308",
+    borderRight: "8px solid #eab308",
+  },
+  baseLevel: {
+    width: "100%",
+    backgroundColor: "#60a5fa",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.3s ease",
+    borderRadius: "4px",
+    borderBottom: "4px solid #2563eb",
+  },
+  houseLabel: {
+    fontSize: "0.8rem",
+    fontWeight: 800,
+    color: "#0f172a",
+    zIndex: 2,
+    textShadow: "0 1px 2px rgba(255, 255, 255, 0.4)",
+    whiteSpace: "nowrap",
+  },
+  houseLegend: {
+    flex: 1.1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  legendItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  legendColorBox: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "3px",
+    flexShrink: 0,
+  },
+  legendInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1px",
+  },
+  legendTitle: {
+    fontSize: "0.75rem",
+    color: "var(--text-muted)",
+    fontWeight: 500,
+  },
+  legendValue: {
+    fontSize: "0.85rem",
+    color: "var(--text-primary)",
+    fontWeight: 700,
   },
 };

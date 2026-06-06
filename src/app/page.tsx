@@ -82,7 +82,7 @@ export default function LandingPage() {
         <div style={styles.featuresGrid}>
           {/* Card 1 */}
           <div style={styles.featureCard} className="premium-card">
-            <div style={{ ...styles.iconContainer, backgroundColor: "rgba(46, 46, 189, 0.1)", color: "var(--primary)" }}>
+            <div style={{ ...styles.iconContainer, backgroundColor: "var(--primary-50)", color: "var(--primary)" }}>
               📊
             </div>
             <h3 style={styles.cardTitle}>3층 연금 통합 대시보드</h3>
@@ -93,7 +93,7 @@ export default function LandingPage() {
 
           {/* Card 2 */}
           <div style={styles.featureCard} className="premium-card">
-            <div style={{ ...styles.iconContainer, backgroundColor: "rgba(139, 92, 246, 0.1)", color: "var(--secondary)" }}>
+            <div style={{ ...styles.iconContainer, backgroundColor: "var(--primary-50)", color: "var(--primary)" }}>
               ⚙️
             </div>
             <h3 style={styles.cardTitle}>2026 개혁안 시뮬레이터</h3>
@@ -157,7 +157,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: "-20%",
     width: "60%",
     height: "60%",
-    background: "radial-gradient(circle, rgba(46, 46, 189, 0.06) 0%, transparent 75%)",
+    background: "radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, transparent 75%)",
     zIndex: 0,
     pointerEvents: "none",
   },
@@ -167,7 +167,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     right: "-20%",
     width: "70%",
     height: "70%",
-    background: "radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 75%)",
+    background: "radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, transparent 75%)",
     zIndex: 0,
     pointerEvents: "none",
   },
@@ -220,12 +220,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "inline-block",
     fontSize: "0.85rem",
     fontWeight: 600,
-    color: "var(--secondary-dark)",
-    backgroundColor: "rgba(139, 92, 246, 0.1)",
+    color: "var(--primary-700)",
+    backgroundColor: "var(--primary-50)",
     padding: "6px 16px",
     borderRadius: "var(--radius-full)",
     marginBottom: "24px",
-    border: "1px solid rgba(139, 92, 246, 0.2)",
+    border: "1px solid var(--primary-200)",
   },
   heroTitle: {
     fontSize: "3.5rem",
@@ -351,8 +351,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "flex-start",
     gap: "24px",
-    backgroundColor: "rgba(139, 92, 246, 0.06)",
-    border: "1px solid rgba(139, 92, 246, 0.2)",
+    backgroundColor: "var(--primary-50)",
+    border: "1px solid var(--primary-100)",
     borderRadius: "var(--radius-md)",
     padding: "32px 40px",
   },

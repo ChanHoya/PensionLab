@@ -359,7 +359,7 @@ export default function OnboardingPage() {
                       <div style={styles.previewGrid}>
                         <div>총 예상 납부보험료: <strong>{store.nationalPension.totalExpectedPremium.toLocaleString()} 만원</strong></div>
                         <div>현재까지 총 납부액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
-                        <div>예상 연금 수령액: <strong style={{ color: "var(--secondary-dark)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
+                        <div>예상 연금 수령액: <strong style={{ color: "var(--primary-700)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
                       </div>
                     </div>
                   </>
@@ -501,7 +501,7 @@ export default function OnboardingPage() {
                           <div>가입 개월수: <strong>{store.nationalPension.contributionMonths} 개월</strong></div>
                           <div>총 납부금액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
                           <div>현재 기준소득월액: <strong>{store.nationalPension.currentStandardMonthlyIncome.toLocaleString()} 만원</strong></div>
-                          <div>예상 연금 월액: <strong style={{ color: "var(--secondary-dark)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
+                          <div>예상 연금 월액: <strong style={{ color: "var(--primary-700)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
                         </div>
                       </div>
                     )}
@@ -553,7 +553,7 @@ export default function OnboardingPage() {
                   <h4 style={styles.previewTitle}>기초연금 예상 수급 결과</h4>
                   <div style={styles.previewGrid}>
                     <div>소득 기준 충족 여부: <strong>{store.basicPension.expectedEligibility ? "충족 (수급 가능)" : "초과 (수급 불가)"}</strong></div>
-                    <div>예상 월 수령액: <strong style={{ color: "var(--secondary-dark)" }}>{store.basicPension.expectedMonthlyAmount} 만원/월</strong></div>
+                    <div>예상 월 수령액: <strong style={{ color: "var(--primary-700)" }}>{store.basicPension.expectedMonthlyAmount} 만원/월</strong></div>
                   </div>
                 </div>
               </div>
@@ -964,7 +964,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: "-10%",
     width: "50%",
     height: "50%",
-    background: "radial-gradient(circle, rgba(0, 184, 148, 0.08) 0%, rgba(255,255,255,0) 70%)",
+    background: "radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(255,255,255,0) 70%)",
     zIndex: 0,
     pointerEvents: "none",
   },
@@ -1090,8 +1090,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   stepBadge: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "var(--secondary-dark)",
-    backgroundColor: "rgba(0, 184, 148, 0.1)",
+    color: "var(--primary-700)",
+    backgroundColor: "var(--primary-50)",
     padding: "4px 8px",
     borderRadius: "var(--radius-full)",
     letterSpacing: "0.5px",
@@ -1133,12 +1133,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: "all var(--transition-fast)",
   },
   infoAlert: {
-    backgroundColor: "rgba(59, 130, 246, 0.08)",
-    borderLeft: "4px solid var(--info)",
+    backgroundColor: "var(--primary-50)",
+    borderLeft: "4px solid var(--primary-400)",
     borderRadius: "4px",
     padding: "12px 16px",
     fontSize: "0.9rem",
-    color: "var(--text-secondary)",
+    color: "var(--primary-700)",
     lineHeight: 1.5,
   },
   fieldRow: {
@@ -1242,9 +1242,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   addBtn: {
     width: "100%",
     padding: "10px",
-    backgroundColor: "rgba(0, 184, 148, 0.08)",
-    border: "1.5px dashed var(--secondary)",
-    color: "var(--secondary-dark)",
+    backgroundColor: "var(--primary-50)",
+    border: "1.5px dashed var(--primary)",
+    color: "var(--primary-700)",
     borderRadius: "var(--radius-sm)",
     fontWeight: 600,
     cursor: "pointer",
@@ -1254,9 +1254,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   addBtnCompact: {
     width: "100%",
     padding: "8px",
-    backgroundColor: "rgba(30, 58, 95, 0.05)",
+    backgroundColor: "var(--primary-50)",
     border: "1px dashed var(--primary)",
-    color: "var(--primary)",
+    color: "var(--primary-700)",
     borderRadius: "var(--radius-sm)",
     fontWeight: 600,
     fontSize: "0.8rem",
@@ -1320,13 +1320,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     animation: "pulse-subtle 1s infinite linear",
   },
   privacyNoticeBanner: {
-    backgroundColor: "rgba(16, 185, 129, 0.08)",
-    border: "1px solid rgba(16, 185, 129, 0.2)",
+    backgroundColor: "var(--primary-50)",
+    border: "1px solid var(--primary-100)",
     borderRadius: "var(--radius-sm)",
     padding: "12px 16px",
     marginBottom: "24px",
     fontSize: "0.85rem",
-    color: "var(--secondary-dark)",
+    color: "var(--primary-700)",
     display: "flex",
     alignItems: "center",
     gap: "8px",

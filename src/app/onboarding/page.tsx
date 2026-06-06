@@ -16,8 +16,43 @@ export default function OnboardingPage() {
   const router = useRouter();
   const store = usePensionStore();
   const [currentStep, setCurrentStep] = useState(1);
-  const [nationalInputMode, setNationalInputMode] = useState<"SIMPLE" | "DETAILED">("SIMPLE");
+  const [nationalInputMode, setNationalInputMode] = useState<"SIMPLE" | "DETAILED" | "SYNC">("SIMPLE");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // NPS Codef Mock Sync States
+  const [npsSyncing, setNpsSyncing] = useState(false);
+  const [npsSynced, setNpsSynced] = useState(false);
+
+  const handleNPSSync = async () => {
+    setNpsSyncing(true);
+    try {
+      const response = await fetch("/api/pension/nps-sync");
+      if (!response.ok) throw new Error("Sync failed");
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setTimeout(() => {
+          store.setNationalPension({
+            contributionMonths: result.data.contributionMonths,
+            totalPaidAmount: result.data.totalPaidAmount,
+            currentStandardMonthlyIncome: result.data.currentStandardMonthlyIncome,
+            expectedTotalContributionMonths: result.data.expectedTotalContributionMonths,
+            expectedMonthlyPension: result.data.expectedMonthlyPension,
+            totalExpectedPremium: result.data.totalExpectedPremium,
+            basicPensionAmount: result.data.basicPensionAmount,
+            aValue: result.data.aValue,
+            bValue: result.data.bValue,
+          });
+          setNpsSyncing(false);
+          setNpsSynced(true);
+        }, 1500);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("NPS 동기화 중 에러가 발생했습니다.");
+      setNpsSyncing(false);
+    }
+  };
 
   // Local state for temporary Retirement Pension inputs
   const [tempRetirement, setTempRetirement] = useState({
@@ -225,9 +260,20 @@ export default function OnboardingPage() {
                   >
                     NPS 공단고서 상세 입력
                   </button>
+                  <button
+                    onClick={() => setNationalInputMode("SYNC")}
+                    style={{
+                      ...styles.tabButton,
+                      borderBottomColor: nationalInputMode === "SYNC" ? "var(--primary)" : "transparent",
+                      color: nationalInputMode === "SYNC" ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                    id="btn-tab-nps-sync"
+                  >
+                    🔐 NPS 간편인증 연동
+                  </button>
                 </div>
 
-                {nationalInputMode === "SIMPLE" ? (
+                {nationalInputMode === "SIMPLE" && (
                   <>
                     <div style={styles.infoAlert}>
                       💡 <strong>가입월수와 소득</strong>을 바탕으로 예상 연금 수령액과 납부액을 자동 모델링합니다.
@@ -294,7 +340,9 @@ export default function OnboardingPage() {
                       </div>
                     </div>
                   </>
-                ) : (
+                )}
+
+                {nationalInputMode === "DETAILED" && (
                   <>
                     <div style={styles.fieldGrid}>
                       <div style={styles.fieldRow}>
@@ -380,6 +428,61 @@ export default function OnboardingPage() {
                       </div>
                     </div>
                   </>
+                )}
+
+                {nationalInputMode === "SYNC" && (
+                  <div style={styles.syncBox} className="animate-fade-in">
+                    <div style={styles.infoAlert}>
+                      🔐 국민연금공단(NPS) 간편인증 연동을 통해 납부 개월 수 및 예상 연금액 등 9대 필수 항목을 자동으로 동기화합니다. (Codef API 시뮬레이터 작동)
+                    </div>
+                    
+                    <div style={styles.syncForm}>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>이름</label>
+                        <input type="text" className="premium-input" placeholder="홍길동" defaultValue="홍길동" />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>휴대폰 번호</label>
+                        <input type="text" className="premium-input" placeholder="010-1234-5678" defaultValue="010-1234-5678" />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>생년월일 (8자리)</label>
+                        <input type="text" className="premium-input" placeholder="19800101" defaultValue="19800101" />
+                      </div>
+
+                      {npsSyncing ? (
+                        <button type="button" className="premium-button" style={{ marginTop: 16, cursor: "not-allowed", width: "100%" }} disabled>
+                          <span style={{ display: "inline-block", ...styles.miniSpinner, borderTopColor: "#ffffff", marginRight: 8, verticalAlign: "middle" }} /> 간편인증 및 연금정보 가져오는 중...
+                        </button>
+                      ) : npsSynced ? (
+                        <button type="button" className="premium-button" style={{ marginTop: 16, background: "var(--success)", width: "100%" }} disabled>
+                          ✓ 국민연금 정보 동기화 완료!
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          id="btn-nps-sync"
+                          className="premium-button"
+                          style={{ marginTop: 16, width: "100%" }}
+                          onClick={handleNPSSync}
+                        >
+                          🔐 국민연금 간편인증 및 동기화 요청
+                        </button>
+                      )}
+                    </div>
+
+                    {npsSynced && (
+                      <div style={styles.previewBox}>
+                        <h4 style={styles.previewTitle}>동기화 완료된 국민연금 정보 (NPS Codef 연동 데이터)</h4>
+                        <div style={styles.previewGrid}>
+                          <div>가입 개월수: <strong>{store.nationalPension.contributionMonths} 개월</strong></div>
+                          <div>총 납부금액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
+                          <div>현재 기준소득월액: <strong>{store.nationalPension.currentStandardMonthlyIncome.toLocaleString()} 만원</strong></div>
+                          <div>예상 연금 월액: <strong style={{ color: "var(--secondary-dark)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -1170,5 +1273,27 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderTop: "1px solid var(--border)",
     paddingTop: "24px",
     marginTop: "20px",
+  },
+  syncBox: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+  },
+  syncForm: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    border: "1px solid var(--border)",
+    padding: "24px",
+    borderRadius: "var(--radius-sm)",
+    backgroundColor: "var(--surface)",
+  },
+  miniSpinner: {
+    width: "16px",
+    height: "16px",
+    border: "2px solid var(--border)",
+    borderTop: "2px solid var(--primary)",
+    borderRadius: "50%",
+    animation: "pulse-subtle 1s infinite linear",
   },
 };

@@ -1,11 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
+import dynamic from "next/dynamic";
+
+const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
+  ssr: false,
+});
 
 export default function LandingPage() {
+  const [showPdf, setShowPdf] = useState(false);
+
   return (
+    <>
     <main style={styles.container}>
       {/* Decorative Blur Backgrounds */}
       <div style={styles.bgGlow1} />
@@ -17,11 +25,17 @@ export default function LandingPage() {
           <Link href="/" style={{ ...styles.logo, textDecoration: "none" }}>
             Pension<span className="gradient-text">Lab</span>
           </Link>
-          <nav style={styles.navLinks}>
-            <span style={styles.navItem}>서비스 소개</span>
-            <span style={styles.navItem}>연금 개혁안 정보</span>
-            <span style={styles.navItem}>유튜브 전문가 팁</span>
-          </nav>
+            <nav style={styles.navLinks}>
+              <button
+                id="btn-service-intro"
+                onClick={() => setShowPdf(true)}
+                style={styles.navButton}
+              >
+                서비스 소개
+              </button>
+              <span style={styles.navItem}>연금 개혁안 정보</span>
+              <span style={styles.navItem}>유튜브 전문가 팁</span>
+            </nav>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <ThemeToggle />
             <Link href="/onboarding" className="premium-button" style={{ padding: "8px 20px", fontSize: "0.9rem" }} id="btn-header-start">
@@ -137,6 +151,10 @@ export default function LandingPage() {
         </p>
       </footer>
     </main>
+
+    {/* PDF 서비스 소개 모달 */}
+    <PdfViewerModal isOpen={showPdf} onClose={() => setShowPdf(false)} />
+    </>
   );
 }
 
@@ -206,6 +224,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "var(--text-secondary)",
     cursor: "pointer",
     transition: "color var(--transition-fast)",
+  },
+  navButton: {
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "#a5b4fc",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+    background: "rgba(99,102,241,0.1)",
+    border: "1px solid rgba(99,102,241,0.25)",
+    borderRadius: "6px",
+    padding: "5px 12px",
   },
   heroSection: {
     display: "flex",

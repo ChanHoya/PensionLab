@@ -13,4 +13,5 @@
 - **[Completed]** Story S2-3: NPS Codef API Sync Mock & Onboarding Integration.
 
 ## Active Sprint / Story
-- Sprint 2 is 100% completed. All core features and simulation mockups are ready.
+- **Sprint 3**: Local Caching & Data Portability
+- **Active Story**: S3-1: Zustand LocalStorage Caching & Hydration Patch

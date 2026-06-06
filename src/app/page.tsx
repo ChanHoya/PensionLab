@@ -57,7 +57,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section style={styles.heroSection} className="animate-fade-in">
-        <span style={styles.badge}>🚀 2026년 국민연금 개혁안 공식 반영</span>
         <h1 style={styles.heroTitle}>
           흩어진 나의 모든 연금 자산,<br />
           <span className="gradient-text">한눈에 설계하고 분석하다</span>
@@ -174,44 +173,33 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
-    padding: "50px 20px 20px 20px",
-    maxWidth: "850px",
+    padding: "32px 20px 16px 20px",
+    maxWidth: "800px",
     zIndex: 1,
   },
-  badge: {
-    display: "inline-block",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    color: "#a5b4fc",
-    backgroundColor: "rgba(99, 102, 241, 0.15)",
-    padding: "6px 16px",
-    borderRadius: "var(--radius-full)",
-    marginBottom: "24px",
-    border: "1px solid rgba(99, 102, 241, 0.3)",
-  },
   heroTitle: {
-    fontSize: "3.5rem",
+    fontSize: "2.5rem",
     fontWeight: 800,
     color: "var(--text-primary)",
-    lineHeight: 1.25,
-    letterSpacing: "-1px",
-    marginBottom: "24px",
+    lineHeight: 1.3,
+    letterSpacing: "-0.5px",
+    marginBottom: "16px",
   },
   heroSubtitle: {
-    fontSize: "1.15rem",
+    fontSize: "1rem",
     color: "var(--text-secondary)",
-    lineHeight: 1.6,
-    marginBottom: "40px",
+    lineHeight: 1.5,
+    marginBottom: "24px",
   },
   diagramContainer: {
     width: "100%",
     maxWidth: "1000px",
     backgroundColor: "#ffffff",
-    padding: "24px",
+    padding: "16px",
     borderRadius: "20px",
     border: "1px solid rgba(99, 102, 241, 0.25)",
     boxShadow: "0 24px 48px rgba(0, 0, 0, 0.4)",
-    margin: "0 auto 60px auto",
+    margin: "0 auto 40px auto",
     zIndex: 1,
   },
   diagramImage: {

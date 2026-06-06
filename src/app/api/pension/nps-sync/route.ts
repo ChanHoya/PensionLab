@@ -5,13 +5,13 @@ let cachedToken: string | null = null;
 let tokenExpiresAt: number = 0;
 
 // Provider mapping for Codef loginTypeLevel
-// 1: 카카오톡, 4: KB국민은행, 5: 통신사(PASS), 6: 네이버, 8: 토스
+// 1: 카카오톡, 2: 네이버, 3: 통신사(PASS), 4: 토스, 6: KB국민은행
 const PROVIDER_DETAIL_MAP: Record<string, string> = {
   kakao: "1",
-  kb: "4",
-  pass: "5",
-  naver: "6",
-  toss: "8",
+  naver: "2",
+  pass: "3",
+  toss: "4",
+  kb: "6",
 };
 
 /**
@@ -57,6 +57,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { userName, phoneNo, identity, provider, telecom, jti, twoWayInfo } = body;
+
+    const cleanPhoneNo = phoneNo ? phoneNo.replace(/[^0-9]/g, "") : "";
+    const cleanIdentity = identity ? identity.replace(/[^0-9]/g, "") : "";
 
     const clientId = process.env.CODEF_CLIENT_ID || "";
     const clientSecret = process.env.CODEF_CLIENT_SECRET || "";
@@ -125,11 +128,11 @@ export async function POST(request: Request) {
         loginType: "5", // 간편인증 코드
         loginTypeLevel: detailCode, // 간편인증 사업자 구분
         userName,
-        phoneNo,
-        identity,
+        phoneNo: cleanPhoneNo,
+        identity: cleanIdentity,
         authMethod: "0",
       };
-      if (detailCode === "5") {
+      if (detailCode === "3") {
         payload.telecom = telecom || "0";
       }
     } else {
@@ -139,14 +142,14 @@ export async function POST(request: Request) {
         loginType: "5",
         loginTypeLevel: detailCode,
         userName,
-        phoneNo,
-        identity,
+        phoneNo: cleanPhoneNo,
+        identity: cleanIdentity,
         authMethod: "0",
         isTwoWay: true,
         jti,
         twoWayInfo,
       };
-      if (detailCode === "5") {
+      if (detailCode === "3") {
         payload.telecom = telecom || "0";
       }
     }

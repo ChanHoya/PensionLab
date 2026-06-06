@@ -247,6 +247,7 @@ export const usePensionStore = create<PensionStore>()(
     }),
     {
       name: "pensionlab-store",
+      version: 2,
     }
   )
 );

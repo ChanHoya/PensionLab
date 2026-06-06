@@ -401,7 +401,7 @@ export default function DashboardPage() {
             <h3 style={styles.chartTitle}>생애 연금 월 수령액 시뮬레이션</h3>
             <p style={styles.chartSubtitle}>나이별 3층 연금 수급 흐름도 (실질 가치 기준)</p>
             <div style={styles.chartWrapper}>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={240}>
                 <AreaChart
                   data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 2)}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -432,7 +432,6 @@ export default function DashboardPage() {
                   <XAxis dataKey="age" tickLine={false} tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
                   <YAxis tickLine={false} tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: "16px" }} />
                   {hasNational && <Area type="monotone" dataKey="national" name="국민연금" stackId="1" stroke="#3b82f6" fillOpacity={1} fill="url(#colorNational)" />}
                   {hasBasic && <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="#93c5fd" fillOpacity={1} fill="url(#colorBasic)" />}
                   {hasRetirement && <Area type="monotone" dataKey="retirement" name="퇴직연금" stackId="1" stroke="#facc15" fillOpacity={1} fill="url(#colorRetirement)" />}
@@ -440,6 +439,40 @@ export default function DashboardPage() {
                   {hasInsurance && <Area type="monotone" dataKey="insurance" name="연금보험" stackId="1" stroke="#f87171" fillOpacity={1} fill="url(#colorInsurance)" />}
                 </AreaChart>
               </ResponsiveContainer>
+
+              {/* 우측 차트 1층 -> 2층 -> 3층 상품 순서 정렬 범례 */}
+              <div style={{ ...styles.houseLegend, marginTop: "12px" }}>
+                {hasNational && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#3b82f6" }} />
+                    <span style={styles.legendTitle}>국민연금</span>
+                  </div>
+                )}
+                {hasBasic && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#93c5fd" }} />
+                    <span style={styles.legendTitle}>기초연금</span>
+                  </div>
+                )}
+                {hasRetirement && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#facc15" }} />
+                    <span style={styles.legendTitle}>퇴직연금</span>
+                  </div>
+                )}
+                {hasPersonal && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#f97316" }} />
+                    <span style={styles.legendTitle}>개인연금저축</span>
+                  </div>
+                )}
+                {hasInsurance && (
+                  <div style={styles.legendItem}>
+                    <div style={{ ...styles.legendColorBox, backgroundColor: "#f87171" }} />
+                    <span style={styles.legendTitle}>연금보험</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -1405,11 +1438,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
-    gap: "24px",
-    padding: "16px 8px",
+    justifyContent: "flex-end",
+    gap: "12px",
+    padding: "0 8px 8px 8px",
     width: "100%",
-    height: "auto",
+    height: "300px",
+    marginTop: "auto",
   },
   houseDiagramWrapper: {
     width: "100%",

@@ -7,7 +7,7 @@ import { usePensionStore } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const STEPS = [
-  { id: 0, title: "기본 정보 & 재무 목표 (Step 0)", desc: "본인/가족 정보 및 은퇴 생활비 목표 등" },
+  { id: 0, title: "기본 정보 & 재무 목표", desc: "본인/가족 정보 및 은퇴 생활비 목표 등" },
   { id: 1, title: "국민연금 (1층)", desc: "국민연금 납부 내역 및 예상액" },
   { id: 2, title: "기초연금 (1층)", desc: "기초연금 대상 확인용 정보" },
   { id: 3, title: "퇴직연금 (2층)", desc: "회사 퇴직연금 (DB/DC/IRP)" },

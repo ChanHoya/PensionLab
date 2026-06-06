@@ -31,4 +31,5 @@ graph TD
   Report --> Store
   Report --> Calculator
   OnboardingUI --> NPSSyncAPI[src/app/api/pension/nps-sync/route.ts]
+  OnboardingUI --> FSSSyncAPI[src/app/api/pension/fss-sync/route.ts]
 ```

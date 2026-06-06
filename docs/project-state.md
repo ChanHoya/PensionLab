@@ -16,47 +16,16 @@
 - **[Completed]** Story S4-1: Prisma Client Generation & Vercel/Render Cloud Deployment Configuration (with DB SSL & Gemini API Support).
 - **[Completed]** Sprint 5: UI/UX ETF Lens Theme Sync, PDF Viewer fixed, 3-Tier House Chart, and Navigation Highlighting/Alignment.
 - **[Completed]** Sprint 6: National Pension Service (NPS) Codef 2-Way Easy Authentication Integration & UI State Machine.
+- **[Completed]** Sprint 7: 금융감독원(FSS) 통합연금포털 API 2-Way 간편인증 연동 및 UI 개발.
 
 ## Active Sprint / Story
-- **Sprint 5**: UI/UX ETF Lens Theme Sync — **COMPLETED**
-- **[Completed]** Story S5-1: CSS Variable Theme Integration for ETF Lens Look & Feel
-  - globals.css: Indigo/Violet/Orange HSL token palette applied
-  - dashboard/page.tsx: All chart colors (PieChart, AreaChart), badge backgrounds, glow effects, AI card, data alert unified to new theme (removed legacy mint green rgba(0, 184, 148))
-  - All hardcoded hex (#4f46e5, var(--info)) replaced with HSL or CSS variable references
-- **[Completed]** Story S5-2: PDF Viewer Load Fix, Aligned Width & PDF Documents Integration
-  - PdfViewerModal.tsx: Configured local pdf.worker.min.mjs path to resolve CDN loading issue.
-  - PdfViewerModal.tsx: Adjusted overlay and modal width to align perfectly with the header contents (width: 100%, max-width: 1200px, padding: 0 40px, top: 70px).
-  - page.tsx: Integrated new document "2026_Pension_Reform.pdf" on clicking "연금 개혁안 정보" nav link, dynamically passing pdfUrl and title to PdfViewerModal.
-  - page.tsx & onboarding/page.tsx: Replaced white/light backgrounds of "2026 개혁안 배지" and onboarding addition buttons ("+ 리스트에 추가하기", "+ 연금저축/보험 추가") with dark indigo background (`rgba(99, 102, 241, 0.15)`) and light contrast label text (`#a5b4fc`).
-- **[Completed]** Story S5-3: Hero Section Simplification & 3-Tier Pension Diagram Integration
-  - page.tsx: Decreased heroSection top padding (from 120px to 50px) to shift the slogan upwards.
-  - page.tsx: Deleted "무료로 3층 연금 설계하기" CTA button and all content elements below it (Stats Row, Features Grid, Trust Card, and Footer) to simplify the viewport.
-  - page.tsx: Added a white frame card container (diagramContainer) with 20px rounding, border, and drop-shadow under the slogan to display the 3-tier structure diagram (pension_structure.png).
-  - page.tsx: Cleaned up and removed all unused styling objects in the styles constant.
-- **[Completed]** Story S5-4: Viewport Optimization for Hero Section
-  - page.tsx: Removed the "2026 국민연금 개혁안 공식 반영" badge box to save vertical space.
-  - page.tsx: Shrunk heroTitle font size (from 3.5rem to 2.5rem) and margins, and heroSubtitle font size (from 1.15rem to 1rem) and margins.
-  - page.tsx: Decreased padding in heroSection (to 32px 20px 16px 20px) and margin/padding in diagramContainer (to 16px padding, 40px margin) to fit the diagram image perfectly in a single viewport.
-  - page.tsx: Safely removed the unused badge styling property from the styles object.
-- **[Completed]** Story S5-5: Local JSON Data Import on Onboarding Wizard
-  - onboarding/page.tsx: Implemented handleLoadData method utilizing FileReader to read the selected backup JSON file and feed it into store.importStoreData.
-  - onboarding/page.tsx: Added a file input element and a styling-matching "📂 불러오기" button in the top-right header section to trigger file selection.
-- **[Completed]** Story S5-6: Header Logo Alignment & 3-Tier House Chart Integration
-  - onboarding/page.tsx & dashboard/page.tsx: Removed outer container top margins and adjusted header paddings to 16px to align the PensionLab logo perfectly in Y-axis across all pages.
-  - dashboard/page.tsx: Replaced standard PieChart with a custom HTML/CSS dynamic 3-Tier House Ratio Chart where floor heights scale proportionally based on calculated monthly pension values.
-- **[Completed]** Story S5-7: Header Navigation Highlight State & Alignments Fix
-  - page.tsx: Managed nav item active selections with `activeMenu` state, eliminating initial highlight borders and showing highlight borders/background only when respective modals are open or mock-selected.
-  - page.tsx: Converted "유튜브 전문가 팁" from `span` to `button` and applied flex `alignItems: "center"` to `navLinks` to fix the vertical misalignment of menu items.
-- **Sprint 6**: National Pension Codef API Integration — **COMPLETED**
-- **[Completed]** Story S6-1: Codef 2-Way Easy Authentication Implementation
-  - route.ts: Implemented OAuth2 token request with caching and a 2-stage POST handler supporting Codef 2-Way verification with mock mode support.
-  - route.ts: Resolved OAuth token URL to `https://oauth.codef.io/oauth/token`, corrected NPS minwon organization code to `0001`, updated payload parameter to `loginTypeLevel`, and mapped API path to `nps-minwon/my-pension` to ensure real easy auth flows work.
-  - onboarding/page.tsx: Added provider dropdown selection and created a controlled interactive UI state machine for smartphone push approval and verification fallback.
-- **[Completed]** Bug Fix: Codef API 2-Way Easy Authentication Troubleshooting
-  - route.ts: Restored correct Codef provider mappings (Kakao=1, Naver=2, PASS=3, Toss=4, KB=6) and fixed PASS telecom checking trigger.
-  - route.ts: Implemented automatic digit sanitization for input phone numbers and identities (removing hyphens/spaces) to prevent API format validation failures.
-  - onboarding/page.tsx: Integrated telecom carrier selection UI for PASS provider and passed it to the sync API payload.
-  - Next.js: Restarted Next.js dev server to properly clear Turbopack .env variable caches.
+- **Sprint 7**: 개인연금 및 퇴직연금(IRP) 계좌 실데이터 연동 (Codef FSS API 2-Way 연동) — **COMPLETED**
+  - **[Completed] Story S7-1**: 금융감독원 통합연금포털 Codef API 간편인증 동기화 및 UI 개발
+    - route.ts: 금융감독원 기관코드("0020") 기반 등록 연금 조회 API 및 2-Way 간편인증 분기 처리, 데이터 자동 정제 로직 구축
+    - onboarding/page.tsx: 퇴직연금 및 개인연금 단계에 FSS 간편인증 탭 및 스마트폰 푸시 본인인증 대기 상태 머신 이식
+    - Zustand: 스크래핑된 계좌 정보(DB/DC/IRP, 개인연금저축, 연금보험)를 파싱하여 스토어에 일괄 바인딩 처리 완료
+
+
 
 
 

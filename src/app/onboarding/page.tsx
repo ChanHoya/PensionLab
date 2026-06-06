@@ -39,6 +39,19 @@ export default function OnboardingPage() {
   const [npsSyncing, setNpsSyncing] = useState(false);
   const [npsSynced, setNpsSynced] = useState(false);
 
+  // FSS Codef API 연동 관련 상태 변수들
+  const [fssInputMode, setFssInputMode] = useState<"MANUAL" | "SYNC">("MANUAL");
+  const [fssName, setFssName] = useState("홍길동");
+  const [fssPhone, setFssPhone] = useState("010-1234-5678");
+  const [fssBirth, setFssBirth] = useState("19800101");
+  const [fssProvider, setFssProvider] = useState("kakao");
+  const [fssTelecom, setFssTelecom] = useState("0");
+  const [fssVerificationPending, setFssVerificationPending] = useState(false);
+  const [fssJti, setFssJti] = useState<string | null>(null);
+  const [fssTwoWayInfo, setFssTwoWayInfo] = useState<any>(null);
+  const [fssSyncing, setFssSyncing] = useState(false);
+  const [fssSynced, setFssSynced] = useState(false);
+
   const handleNPSSync = async () => {
     setNpsSyncing(true);
     try {
@@ -104,6 +117,99 @@ export default function OnboardingPage() {
     setJti(null);
     setTwoWayInfo(null);
     setNpsSyncing(false);
+  };
+
+  const handleFSSSync = async () => {
+    setFssSyncing(true);
+    try {
+      const response = await fetch("/api/pension/fss-sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userName: fssName,
+          phoneNo: fssPhone,
+          identity: fssBirth,
+          provider: fssProvider,
+          telecom: fssProvider === "pass" ? fssTelecom : undefined,
+          jti: fssJti,
+          twoWayInfo: fssTwoWayInfo,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("API 요청에 실패했습니다.");
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.status === "NEED_VERIFICATION") {
+          setFssJti(result.jti);
+          setFssTwoWayInfo(result.twoWayInfo);
+          setFssVerificationPending(true);
+          setFssSyncing(false);
+        } else if (result.status === "SUCCESS" && result.data) {
+          // 1. 퇴직연금 업데이트
+          store.retirementPensions.forEach(p => store.deleteRetirementPension(p.id));
+          result.data.retirementPensions.forEach((p: any) => {
+            store.addRetirementPension({
+              pensionType: p.pensionType,
+              avgSalary: 400,
+              yearsOfService: 10,
+              salaryGrowthRate: 3.0,
+              totalAccumulated: p.totalAccumulated,
+              monthlyContribution: p.monthlyContribution,
+              companyMatchRate: 20,
+              expectedReturnRate: p.expectedReturnRate,
+            });
+          });
+
+          // 2. 개인연금 업데이트
+          store.personalPensions.forEach(p => store.deletePersonalPension(p.id));
+          result.data.personalPensions.forEach((p: any) => {
+            store.addPersonalPension({
+              savingsType: p.savingsType,
+              totalAccumulated: p.totalAccumulated,
+              monthlyAnnualContribution: p.monthlyAnnualContribution,
+              desiredStartAge: p.desiredStartAge || 65,
+              receivingPeriod: p.receivingPeriod || 20,
+            });
+          });
+
+          // 3. 연금보험 업데이트
+          store.pensionInsurances.forEach(p => store.deletePensionInsurance(p.id));
+          result.data.pensionInsurances.forEach((p: any) => {
+            store.addPensionInsurance({
+              insuranceType: p.insuranceType,
+              totalAccumulated: p.totalAccumulated,
+              monthlyPayment: p.monthlyPayment,
+              paymentPeriod: p.paymentPeriod || 10,
+              expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
+            });
+          });
+
+          setFssVerificationPending(false);
+          setFssSyncing(false);
+          setFssSynced(true);
+        }
+      } else {
+        alert(result.message || "금융감독원 연동에 실패했습니다. 입력값을 확인하시거나 잠시 후 다시 시도해 주세요.");
+        setFssSyncing(false);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "FSS 연동 중 에러가 발생했습니다.");
+      setFssSyncing(false);
+    }
+  };
+
+  const handleCancelFSSVerification = () => {
+    setFssVerificationPending(false);
+    setFssJti(null);
+    setFssTwoWayInfo(null);
+    setFssSyncing(false);
   };
 
   // Local state for temporary Retirement Pension inputs
@@ -792,303 +898,695 @@ export default function OnboardingPage() {
             {/* STEP 3: 퇴직연금 */}
             {currentStep === 3 && (
               <div style={styles.formGroupList} className="animate-fade-in">
-                <div style={styles.infoAlert}>
-                  🏢 회사에서 근로자에게 제공하는 2층 퇴직연금 정보입니다. 여러 개 직장/계좌를 추가할 수 있습니다.
-                </div>
-
-                {/* Added Pensions List */}
-                {store.retirementPensions.length > 0 ? (
-                  <div style={styles.addedList}>
-                    {store.retirementPensions.map((p) => (
-                      <div key={p.id} style={styles.addedItem}>
-                        <div>
-                          <strong>{p.pensionType}형 퇴직연금</strong>
-                          {p.pensionType === "DB" ? (
-                            <span> - 근속: {p.yearsOfService}년 / 평균급여: {p.avgSalary}만원</span>
-                          ) : (
-                            <span> - 적립금: {p.totalAccumulated}만원 / 수익률: {p.expectedReturnRate}%</span>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => store.deleteRetirementPension(p.id)}
-                          style={styles.deleteBtn}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={styles.emptyText}>등록된 퇴직연금이 없습니다. 아래에서 정보를 추가해 주세요.</div>
-                )}
-
-                {/* Form to Add Retirement Pension */}
-                <div style={styles.addFormBox}>
-                  <h4 style={styles.addFormTitle}>퇴직연금 추가 등록</h4>
-                  <div style={{ ...styles.fieldRow, marginBottom: 12 }}>
-                    <label style={styles.label}>퇴직연금 유형</label>
-                    <div style={styles.radioGroup}>
-                      <label style={styles.radioLabel}>
-                        <input
-                          type="radio"
-                          name="retirementType"
-                          checked={tempRetirement.pensionType === "DB"}
-                          onChange={() => setTempRetirement({ ...tempRetirement, pensionType: "DB" })}
-                        />
-                        확정급여형 (DB)
-                      </label>
-                      <label style={styles.radioLabel}>
-                        <input
-                          type="radio"
-                          name="retirementType"
-                          checked={tempRetirement.pensionType === "DC"}
-                          onChange={() => setTempRetirement({ ...tempRetirement, pensionType: "DC" })}
-                        />
-                        확정기여형 (DC)
-                      </label>
-                      <label style={styles.radioLabel}>
-                        <input
-                          type="radio"
-                          name="retirementType"
-                          checked={tempRetirement.pensionType === "IRP"}
-                          onChange={() => setTempRetirement({ ...tempRetirement, pensionType: "IRP" })}
-                        />
-                        개인형퇴직연금 (IRP)
-                      </label>
-                    </div>
-                  </div>
-
-                  {tempRetirement.pensionType === "DB" ? (
-                    <div style={styles.fieldGrid}>
-                      <div style={styles.fieldRow}>
-                        <label style={styles.label}>평균월급 (만원)</label>
-                        <input
-                          type="number"
-                          className="premium-input"
-                          value={tempRetirement.avgSalary}
-                          onChange={(e) => setTempRetirement({ ...tempRetirement, avgSalary: Number(e.target.value) })}
-                        />
-                      </div>
-                      <div style={styles.fieldRow}>
-                        <label style={styles.label}>예상 근속연수 (년)</label>
-                        <input
-                          type="number"
-                          className="premium-input"
-                          value={tempRetirement.yearsOfService}
-                          onChange={(e) => setTempRetirement({ ...tempRetirement, yearsOfService: Number(e.target.value) })}
-                        />
-                      </div>
-                      <div style={styles.fieldRow}>
-                        <label style={styles.label}>예상 임금상승률 (%)</label>
-                        <input
-                          type="number"
-                          className="premium-input"
-                          value={tempRetirement.salaryGrowthRate}
-                          onChange={(e) => setTempRetirement({ ...tempRetirement, salaryGrowthRate: Number(e.target.value) })}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={styles.fieldGrid}>
-                      <div style={styles.fieldRow}>
-                        <label style={styles.label}>총 평가금액/적립금 (만원)</label>
-                        <input
-                          type="number"
-                          className="premium-input"
-                          value={tempRetirement.totalAccumulated}
-                          onChange={(e) => setTempRetirement({ ...tempRetirement, totalAccumulated: Number(e.target.value) })}
-                        />
-                      </div>
-                      <div style={styles.fieldRow}>
-                        <label style={styles.label}>본인 월 납입액 (만원)</label>
-                        <input
-                          type="number"
-                          className="premium-input"
-                          value={tempRetirement.monthlyContribution}
-                          onChange={(e) => setTempRetirement({ ...tempRetirement, monthlyContribution: Number(e.target.value) })}
-                        />
-                      </div>
-                      <div style={styles.fieldRow}>
-                        <label style={styles.label}>예상 투자수익률 (%)</label>
-                        <input
-                          type="number"
-                          className="premium-input"
-                          value={tempRetirement.expectedReturnRate}
-                          onChange={(e) => setTempRetirement({ ...tempRetirement, expectedReturnRate: Number(e.target.value) })}
-                        />
-                      </div>
-                    </div>
-                  )}
-
+                <div style={styles.tabContainer}>
                   <button
-                    type="button"
-                    onClick={() => {
-                      store.addRetirementPension(tempRetirement);
-                      alert("퇴직연금이 추가되었습니다.");
+                    onClick={() => setFssInputMode("MANUAL")}
+                    style={{
+                      ...styles.tabButton,
+                      borderBottomColor: fssInputMode === "MANUAL" ? "var(--primary)" : "transparent",
+                      color: fssInputMode === "MANUAL" ? "var(--primary)" : "var(--text-secondary)",
                     }}
-                    style={styles.addBtn}
                   >
-                    + 리스트에 추가하기
+                    수동 입력 등록
+                  </button>
+                  <button
+                    onClick={() => setFssInputMode("SYNC")}
+                    style={{
+                      ...styles.tabButton,
+                      borderBottomColor: fssInputMode === "SYNC" ? "var(--primary)" : "transparent",
+                      color: fssInputMode === "SYNC" ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                    id="btn-tab-fss-sync-3"
+                  >
+                    🔐 금융감독원 통합연금 연동
                   </button>
                 </div>
+
+                {fssInputMode === "MANUAL" && (
+                  <>
+                    <div style={styles.infoAlert}>
+                      🏢 회사에서 근로자에게 제공하는 2층 퇴직연금 정보입니다. 여러 개 직장/계좌를 추가할 수 있습니다.
+                    </div>
+
+                    {/* Added Pensions List */}
+                    {store.retirementPensions.length > 0 ? (
+                      <div style={styles.addedList}>
+                        {store.retirementPensions.map((p) => (
+                          <div key={p.id} style={styles.addedItem}>
+                            <div>
+                              <strong>{p.pensionType}형 퇴직연금</strong>
+                              {p.pensionType === "DB" ? (
+                                <span> - 근속: {p.yearsOfService}년 / 평균급여: {p.avgSalary}만원</span>
+                              ) : (
+                                <span> - 적립금: {p.totalAccumulated}만원 / 수익률: {p.expectedReturnRate}%</span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => store.deleteRetirementPension(p.id)}
+                              style={styles.deleteBtn}
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={styles.emptyText}>등록된 퇴직연금이 없습니다. 아래에서 정보를 추가해 주세요.</div>
+                    )}
+
+                    {/* Form to Add Retirement Pension */}
+                    <div style={styles.addFormBox}>
+                      <h4 style={styles.addFormTitle}>퇴직연금 추가 등록</h4>
+                      <div style={{ ...styles.fieldRow, marginBottom: 12 }}>
+                        <label style={styles.label}>퇴직연금 유형</label>
+                        <div style={styles.radioGroup}>
+                          <label style={styles.radioLabel}>
+                            <input
+                              type="radio"
+                              name="retirementType"
+                              checked={tempRetirement.pensionType === "DB"}
+                              onChange={() => setTempRetirement({ ...tempRetirement, pensionType: "DB" })}
+                            />
+                            확정급여형 (DB)
+                          </label>
+                          <label style={styles.radioLabel}>
+                            <input
+                              type="radio"
+                              name="retirementType"
+                              checked={tempRetirement.pensionType === "DC"}
+                              onChange={() => setTempRetirement({ ...tempRetirement, pensionType: "DC" })}
+                            />
+                            확정기여형 (DC)
+                          </label>
+                          <label style={styles.radioLabel}>
+                            <input
+                              type="radio"
+                              name="retirementType"
+                              checked={tempRetirement.pensionType === "IRP"}
+                              onChange={() => setTempRetirement({ ...tempRetirement, pensionType: "IRP" })}
+                            />
+                            개인형퇴직연금 (IRP)
+                          </label>
+                        </div>
+                      </div>
+
+                      {tempRetirement.pensionType === "DB" ? (
+                        <div style={styles.fieldGrid}>
+                          <div style={styles.fieldRow}>
+                            <label style={styles.label}>평균월급 (만원)</label>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              value={tempRetirement.avgSalary}
+                              onChange={(e) => setTempRetirement({ ...tempRetirement, avgSalary: Number(e.target.value) })}
+                            />
+                          </div>
+                          <div style={styles.fieldRow}>
+                            <label style={styles.label}>예상 근속연수 (년)</label>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              value={tempRetirement.yearsOfService}
+                              onChange={(e) => setTempRetirement({ ...tempRetirement, yearsOfService: Number(e.target.value) })}
+                            />
+                          </div>
+                          <div style={styles.fieldRow}>
+                            <label style={styles.label}>예상 임금상승률 (%)</label>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              value={tempRetirement.salaryGrowthRate}
+                              onChange={(e) => setTempRetirement({ ...tempRetirement, salaryGrowthRate: Number(e.target.value) })}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={styles.fieldGrid}>
+                          <div style={styles.fieldRow}>
+                            <label style={styles.label}>총 평가금액/적립금 (만원)</label>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              value={tempRetirement.totalAccumulated}
+                              onChange={(e) => setTempRetirement({ ...tempRetirement, totalAccumulated: Number(e.target.value) })}
+                            />
+                          </div>
+                          <div style={styles.fieldRow}>
+                            <label style={styles.label}>본인 월 납입액 (만원)</label>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              value={tempRetirement.monthlyContribution}
+                              onChange={(e) => setTempRetirement({ ...tempRetirement, monthlyContribution: Number(e.target.value) })}
+                            />
+                          </div>
+                          <div style={styles.fieldRow}>
+                            <label style={styles.label}>예상 투자수익률 (%)</label>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              value={tempRetirement.expectedReturnRate}
+                              onChange={(e) => setTempRetirement({ ...tempRetirement, expectedReturnRate: Number(e.target.value) })}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          store.addRetirementPension(tempRetirement);
+                          alert("퇴직연금이 추가되었습니다.");
+                        }}
+                        style={styles.addBtn}
+                      >
+                        + 리스트에 추가하기
+                      </button>
+                    </div>
+                  </>
+                )}
+
+                {fssInputMode === "SYNC" && (
+                  <div style={styles.syncBox} className="animate-fade-in">
+                    <div style={styles.infoAlert}>
+                      🔐 금융감독원(FSS) 통합연금포털 간편인증 연동을 통해 가입된 모든 퇴직연금(DB/DC/IRP) 및 개인연금(저축/보험) 계좌를 한 번에 자동으로 동기화합니다.
+                    </div>
+
+                    {fssVerificationPending && (
+                      <div
+                        style={{
+                          ...styles.infoAlert,
+                          backgroundColor: "rgba(245, 158, 11, 0.15)",
+                          borderLeft: "4px solid #f59e0b",
+                          color: "#f3f4f6",
+                          marginBottom: "16px",
+                        }}
+                        className="animate-fade-in"
+                      >
+                        💬 스마트폰(선택하신 간편인증 앱)으로 인증 요청이 발송되었습니다. 휴대폰에서 본인인증을 완료하신 다음 아래 <strong>[인증 완료 확인]</strong> 버튼을 클릭해 주세요.
+                      </div>
+                    )}
+                    
+                    <div style={styles.syncForm}>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>이름</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="홍길동"
+                          value={fssName}
+                          onChange={(e) => setFssName(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>휴대폰 번호</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="010-1234-5678"
+                          value={fssPhone}
+                          onChange={(e) => setFssPhone(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>생년월일 (8자리)</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="19800101"
+                          value={fssBirth}
+                          onChange={(e) => setFssBirth(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>간편인증 기관</label>
+                        <select
+                          className="premium-input"
+                          value={fssProvider}
+                          onChange={(e) => setFssProvider(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            backgroundColor: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-primary)",
+                            fontFamily: "inherit",
+                            fontSize: "0.95rem",
+                            outline: "none"
+                          }}
+                        >
+                          <option value="kakao">카카오톡</option>
+                          <option value="naver">네이버</option>
+                          <option value="pass">PASS</option>
+                          <option value="toss">토스</option>
+                          <option value="kb">KB국민은행</option>
+                        </select>
+                      </div>
+
+                      {fssProvider === "pass" && (
+                        <div style={styles.fieldRow} className="animate-fade-in">
+                          <label style={styles.label}>통신사 구분</label>
+                          <select
+                            className="premium-input"
+                            value={fssTelecom}
+                            onChange={(e) => setFssTelecom(e.target.value)}
+                            disabled={fssVerificationPending || fssSyncing || fssSynced}
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "6px",
+                              backgroundColor: "var(--surface)",
+                              border: "1px solid var(--border)",
+                              color: "var(--text-primary)",
+                              fontFamily: "inherit",
+                              fontSize: "0.95rem",
+                              outline: "none"
+                            }}
+                          >
+                            <option value="0">SKT</option>
+                            <option value="1">KT</option>
+                            <option value="2">LGU+ (알뜰폰 포함)</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {fssSyncing ? (
+                        <button type="button" className="premium-button" style={{ marginTop: 16, cursor: "not-allowed", width: "100%" }} disabled>
+                          <span style={{ display: "inline-block", ...styles.miniSpinner, borderTopColor: "#ffffff", marginRight: 8, verticalAlign: "middle" }} /> 간편인증 및 연금정보 가져오는 중...
+                        </button>
+                      ) : fssSynced ? (
+                        <button type="button" className="premium-button" style={{ marginTop: 16, background: "var(--success)", width: "100%" }} disabled>
+                          ✓ 통합연금 정보 동기화 완료!
+                        </button>
+                      ) : fssVerificationPending ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: 16 }}>
+                          <button
+                            type="button"
+                            id="btn-fss-verify-3"
+                            className="premium-button"
+                            style={{ width: "100%", backgroundColor: "var(--primary)" }}
+                            onClick={handleFSSSync}
+                          >
+                            🔐 인증 완료 확인 (최종 동기화)
+                          </button>
+                          <button
+                            type="button"
+                            className="premium-button"
+                            style={{ width: "100%", backgroundColor: "rgba(239, 68, 68, 0.15)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.3)" }}
+                            onClick={handleCancelFSSVerification}
+                          >
+                            ❌ 인증 취소 및 다시 시도
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          id="btn-fss-sync-3"
+                          className="premium-button"
+                          style={{ marginTop: 16, width: "100%" }}
+                          onClick={handleFSSSync}
+                        >
+                          🔐 통합연금 간편인증 및 동기화 요청
+                        </button>
+                      )}
+                    </div>
+
+                    {fssSynced && (
+                      <div style={styles.previewBox}>
+                        <h4 style={styles.previewTitle}>동기화 완료된 FSS 연금 정보</h4>
+                        <div style={styles.previewGrid}>
+                          <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
+                          <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
+                          <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
+                          <div>총 자산 누계액: <strong style={{ color: "var(--primary-700)" }}>
+                            {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
+                          </strong></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
             {/* STEP 4: 개인연금 및 연금보험 */}
             {currentStep === 4 && (
               <div style={styles.formGroupList} className="animate-fade-in">
-                <div style={styles.infoAlert}>
-                  💰 개인이 추가 가입한 3층 연금입니다. 세액공제형 연금저축과 비과세형 연금보험을 구분하여 등록합니다.
+                <div style={styles.tabContainer}>
+                  <button
+                    onClick={() => setFssInputMode("MANUAL")}
+                    style={{
+                      ...styles.tabButton,
+                      borderBottomColor: fssInputMode === "MANUAL" ? "var(--primary)" : "transparent",
+                      color: fssInputMode === "MANUAL" ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                  >
+                    수동 입력 등록
+                  </button>
+                  <button
+                    onClick={() => setFssInputMode("SYNC")}
+                    style={{
+                      ...styles.tabButton,
+                      borderBottomColor: fssInputMode === "SYNC" ? "var(--primary)" : "transparent",
+                      color: fssInputMode === "SYNC" ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                    id="btn-tab-fss-sync-4"
+                  >
+                    🔐 금융감독원 통합연금 연동
+                  </button>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                  {/* Left Column: Personal Pension Savings */}
-                  <div style={styles.addFormBox}>
-                    <h4 style={styles.addFormTitle}>연금저축 (세제혜택)</h4>
-                    
-                    {store.personalPensions.length > 0 && (
-                      <div style={{ ...styles.addedList, marginBottom: 12 }}>
-                        {store.personalPensions.map((p) => (
-                          <div key={p.id} style={styles.addedItemCompact}>
-                            <span>{p.savingsType} - {p.totalAccumulated}만원</span>
-                            <button type="button" onClick={() => store.deletePersonalPension(p.id)} style={styles.deleteBtnCompact}>✕</button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {fssInputMode === "MANUAL" && (
+                  <>
+                    <div style={styles.infoAlert}>
+                      💰 개인이 추가 가입한 3층 연금입니다. 세액공제형 연금저축과 비과세형 연금보험을 구분하여 등록합니다.
+                    </div>
 
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>유형</label>
-                      <select
-                        className="premium-input"
-                        value={tempPersonal.savingsType}
-                        onChange={(e) => setTempPersonal({ ...tempPersonal, savingsType: e.target.value as "FUND" | "INSURANCE" })}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                      {/* Left Column: Personal Pension Savings */}
+                      <div style={styles.addFormBox}>
+                        <h4 style={styles.addFormTitle}>연금저축 (세제혜택)</h4>
+                        
+                        {store.personalPensions.length > 0 && (
+                          <div style={{ ...styles.addedList, marginBottom: 12 }}>
+                            {store.personalPensions.map((p) => (
+                              <div key={p.id} style={styles.addedItemCompact}>
+                                <span>{p.savingsType} - {p.totalAccumulated}만원</span>
+                                <button type="button" onClick={() => store.deletePersonalPension(p.id)} style={styles.deleteBtnCompact}>✕</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>유형</label>
+                          <select
+                            className="premium-input"
+                            value={tempPersonal.savingsType}
+                            onChange={(e) => setTempPersonal({ ...tempPersonal, savingsType: e.target.value as "FUND" | "INSURANCE" })}
+                          >
+                            <option value="FUND">연금저축펀드</option>
+                            <option value="INSURANCE">연금저축보험</option>
+                          </select>
+                        </div>
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>총 평가금 (만원)</label>
+                          <input
+                            type="number"
+                            className="premium-input"
+                            value={tempPersonal.totalAccumulated}
+                            onChange={(e) => setTempPersonal({ ...tempPersonal, totalAccumulated: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>월/연 납입액 (만원)</label>
+                          <input
+                            type="number"
+                            className="premium-input"
+                            value={tempPersonal.monthlyAnnualContribution}
+                            onChange={(e) => setTempPersonal({ ...tempPersonal, monthlyAnnualContribution: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>희망수령나이 / 기간(년)</label>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              placeholder="개시나이"
+                              value={tempPersonal.desiredStartAge}
+                              onChange={(e) => setTempPersonal({ ...tempPersonal, desiredStartAge: Number(e.target.value) })}
+                            />
+                            <input
+                              type="number"
+                              className="premium-input"
+                              placeholder="수령기간"
+                              value={tempPersonal.receivingPeriod}
+                              onChange={(e) => setTempPersonal({ ...tempPersonal, receivingPeriod: Number(e.target.value) })}
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            store.addPersonalPension(tempPersonal);
+                          }}
+                          style={styles.addBtnCompact}
+                        >
+                          + 연금저축 추가
+                        </button>
+                      </div>
+
+                      {/* Right Column: Pension Insurance */}
+                      <div style={styles.addFormBox}>
+                        <h4 style={styles.addFormTitle}>연금보험 (비과세)</h4>
+
+                        {store.pensionInsurances.length > 0 && (
+                          <div style={{ ...styles.addedList, marginBottom: 12 }}>
+                            {store.pensionInsurances.map((p) => (
+                              <div key={p.id} style={styles.addedItemCompact}>
+                                <span>{p.insuranceType} - {p.totalAccumulated}만원</span>
+                                <button type="button" onClick={() => store.deletePensionInsurance(p.id)} style={styles.deleteBtnCompact}>✕</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>보험 상품 구분</label>
+                          <input
+                            type="text"
+                            className="premium-input"
+                            value={tempInsurance.insuranceType}
+                            onChange={(e) => setTempInsurance({ ...tempInsurance, insuranceType: e.target.value })}
+                          />
+                        </div>
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>총 납입액 (만원)</label>
+                          <input
+                            type="number"
+                            className="premium-input"
+                            value={tempInsurance.totalAccumulated}
+                            onChange={(e) => setTempInsurance({ ...tempInsurance, totalAccumulated: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>월 납입액 (만원)</label>
+                          <input
+                            type="number"
+                            className="premium-input"
+                            value={tempInsurance.monthlyPayment}
+                            onChange={(e) => setTempInsurance({ ...tempInsurance, monthlyPayment: Number(e.target.value) })}
+                          />
+                        </div>
+                        <div style={styles.fieldRowCompact}>
+                          <label style={styles.labelCompact}>납입 기간(년) / 공시이율(%)</label>
+                          <div style={{ display: "flex", gap: 8 }}>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              placeholder="납입기간"
+                              value={tempInsurance.paymentPeriod}
+                              onChange={(e) => setTempInsurance({ ...tempInsurance, paymentPeriod: Number(e.target.value) })}
+                            />
+                            <input
+                              type="number"
+                              className="premium-input"
+                              placeholder="공시이율"
+                              value={tempInsurance.expectedDeclaredRate}
+                              onChange={(e) => setTempInsurance({ ...tempInsurance, expectedDeclaredRate: Number(e.target.value) })}
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            store.addPensionInsurance(tempInsurance);
+                          }}
+                          style={styles.addBtnCompact}
+                        >
+                          + 연금보험 추가
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {fssInputMode === "SYNC" && (
+                  <div style={styles.syncBox} className="animate-fade-in">
+                    <div style={styles.infoAlert}>
+                      🔐 금융감독원(FSS) 통합연금포털 간편인증 연동을 통해 가입된 모든 퇴직연금(DB/DC/IRP) 및 개인연금(저축/보험) 계좌를 한 번에 자동으로 동기화합니다.
+                    </div>
+
+                    {fssVerificationPending && (
+                      <div
+                        style={{
+                          ...styles.infoAlert,
+                          backgroundColor: "rgba(245, 158, 11, 0.15)",
+                          borderLeft: "4px solid #f59e0b",
+                          color: "#f3f4f6",
+                          marginBottom: "16px",
+                        }}
+                        className="animate-fade-in"
                       >
-                        <option value="FUND">연금저축펀드</option>
-                        <option value="INSURANCE">연금저축보험</option>
-                      </select>
-                    </div>
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>총 평가금 (만원)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        value={tempPersonal.totalAccumulated}
-                        onChange={(e) => setTempPersonal({ ...tempPersonal, totalAccumulated: Number(e.target.value) })}
-                      />
-                    </div>
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>월/연 납입액 (만원)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        value={tempPersonal.monthlyAnnualContribution}
-                        onChange={(e) => setTempPersonal({ ...tempPersonal, monthlyAnnualContribution: Number(e.target.value) })}
-                      />
-                    </div>
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>희망수령나이 / 기간(년)</label>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <input
-                          type="number"
-                          className="premium-input"
-                          placeholder="개시나이"
-                          value={tempPersonal.desiredStartAge}
-                          onChange={(e) => setTempPersonal({ ...tempPersonal, desiredStartAge: Number(e.target.value) })}
-                        />
-                        <input
-                          type="number"
-                          className="premium-input"
-                          placeholder="수령기간"
-                          value={tempPersonal.receivingPeriod}
-                          onChange={(e) => setTempPersonal({ ...tempPersonal, receivingPeriod: Number(e.target.value) })}
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        store.addPersonalPension(tempPersonal);
-                      }}
-                      style={styles.addBtnCompact}
-                    >
-                      + 연금저축 추가
-                    </button>
-                  </div>
-
-                  {/* Right Column: Pension Insurance */}
-                  <div style={styles.addFormBox}>
-                    <h4 style={styles.addFormTitle}>연금보험 (비과세)</h4>
-
-                    {store.pensionInsurances.length > 0 && (
-                      <div style={{ ...styles.addedList, marginBottom: 12 }}>
-                        {store.pensionInsurances.map((p) => (
-                          <div key={p.id} style={styles.addedItemCompact}>
-                            <span>{p.insuranceType} - {p.totalAccumulated}만원</span>
-                            <button type="button" onClick={() => store.deletePensionInsurance(p.id)} style={styles.deleteBtnCompact}>✕</button>
-                          </div>
-                        ))}
+                        💬 스마트폰(선택하신 간편인증 앱)으로 인증 요청이 발송되었습니다. 휴대폰에서 본인인증을 완료하신 다음 아래 <strong>[인증 완료 확인]</strong> 버튼을 클릭해 주세요.
                       </div>
                     )}
-
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>보험 상품 구분</label>
-                      <input
-                        type="text"
-                        className="premium-input"
-                        value={tempInsurance.insuranceType}
-                        onChange={(e) => setTempInsurance({ ...tempInsurance, insuranceType: e.target.value })}
-                      />
-                    </div>
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>총 납입액 (만원)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        value={tempInsurance.totalAccumulated}
-                        onChange={(e) => setTempInsurance({ ...tempInsurance, totalAccumulated: Number(e.target.value) })}
-                      />
-                    </div>
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>월 납입액 (만원)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        value={tempInsurance.monthlyPayment}
-                        onChange={(e) => setTempInsurance({ ...tempInsurance, monthlyPayment: Number(e.target.value) })}
-                      />
-                    </div>
-                    <div style={styles.fieldRowCompact}>
-                      <label style={styles.labelCompact}>납입 기간(년) / 공시이율(%)</label>
-                      <div style={{ display: "flex", gap: 8 }}>
+                    
+                    <div style={styles.syncForm}>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>이름</label>
                         <input
-                          type="number"
+                          type="text"
                           className="premium-input"
-                          placeholder="납입기간"
-                          value={tempInsurance.paymentPeriod}
-                          onChange={(e) => setTempInsurance({ ...tempInsurance, paymentPeriod: Number(e.target.value) })}
-                        />
-                        <input
-                          type="number"
-                          className="premium-input"
-                          placeholder="공시이율"
-                          value={tempInsurance.expectedDeclaredRate}
-                          onChange={(e) => setTempInsurance({ ...tempInsurance, expectedDeclaredRate: Number(e.target.value) })}
+                          placeholder="홍길동"
+                          value={fssName}
+                          onChange={(e) => setFssName(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
                         />
                       </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>휴대폰 번호</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="010-1234-5678"
+                          value={fssPhone}
+                          onChange={(e) => setFssPhone(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>생년월일 (8자리)</label>
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="19800101"
+                          value={fssBirth}
+                          onChange={(e) => setFssBirth(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>간편인증 기관</label>
+                        <select
+                          className="premium-input"
+                          value={fssProvider}
+                          onChange={(e) => setFssProvider(e.target.value)}
+                          disabled={fssVerificationPending || fssSyncing || fssSynced}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            backgroundColor: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-primary)",
+                            fontFamily: "inherit",
+                            fontSize: "0.95rem",
+                            outline: "none"
+                          }}
+                        >
+                          <option value="kakao">카카오톡</option>
+                          <option value="naver">네이버</option>
+                          <option value="pass">PASS</option>
+                          <option value="toss">토스</option>
+                          <option value="kb">KB국민은행</option>
+                        </select>
+                      </div>
+
+                      {fssProvider === "pass" && (
+                        <div style={styles.fieldRow} className="animate-fade-in">
+                          <label style={styles.label}>통신사 구분</label>
+                          <select
+                            className="premium-input"
+                            value={fssTelecom}
+                            onChange={(e) => setFssTelecom(e.target.value)}
+                            disabled={fssVerificationPending || fssSyncing || fssSynced}
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "6px",
+                              backgroundColor: "var(--surface)",
+                              border: "1px solid var(--border)",
+                              color: "var(--text-primary)",
+                              fontFamily: "inherit",
+                              fontSize: "0.95rem",
+                              outline: "none"
+                            }}
+                          >
+                            <option value="0">SKT</option>
+                            <option value="1">KT</option>
+                            <option value="2">LGU+ (알뜰폰 포함)</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {fssSyncing ? (
+                        <button type="button" className="premium-button" style={{ marginTop: 16, cursor: "not-allowed", width: "100%" }} disabled>
+                          <span style={{ display: "inline-block", ...styles.miniSpinner, borderTopColor: "#ffffff", marginRight: 8, verticalAlign: "middle" }} /> 간편인증 및 연금정보 가져오는 중...
+                        </button>
+                      ) : fssSynced ? (
+                        <button type="button" className="premium-button" style={{ marginTop: 16, background: "var(--success)", width: "100%" }} disabled>
+                          ✓ 통합연금 정보 동기화 완료!
+                        </button>
+                      ) : fssVerificationPending ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: 16 }}>
+                          <button
+                            type="button"
+                            id="btn-fss-verify-4"
+                            className="premium-button"
+                            style={{ width: "100%", backgroundColor: "var(--primary)" }}
+                            onClick={handleFSSSync}
+                          >
+                            🔐 인증 완료 확인 (최종 동기화)
+                          </button>
+                          <button
+                            type="button"
+                            className="premium-button"
+                            style={{ width: "100%", backgroundColor: "rgba(239, 68, 68, 0.15)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.3)" }}
+                            onClick={handleCancelFSSVerification}
+                          >
+                            ❌ 인증 취소 및 다시 시도
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          id="btn-fss-sync-4"
+                          className="premium-button"
+                          style={{ marginTop: 16, width: "100%" }}
+                          onClick={handleFSSSync}
+                        >
+                          🔐 통합연금 간편인증 및 동기화 요청
+                        </button>
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        store.addPensionInsurance(tempInsurance);
-                      }}
-                      style={styles.addBtnCompact}
-                    >
-                      + 연금보험 추가
-                    </button>
+
+                    {fssSynced && (
+                      <div style={styles.previewBox}>
+                        <h4 style={styles.previewTitle}>동기화 완료된 FSS 연금 정보</h4>
+                        <div style={styles.previewGrid}>
+                          <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
+                          <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
+                          <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
+                          <div>총 자산 누계액: <strong style={{ color: "var(--primary-700)" }}>
+                            {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
+                          </strong></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             )}
 

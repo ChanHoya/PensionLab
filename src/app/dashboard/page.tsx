@@ -22,6 +22,46 @@ import {
   Cell,
 } from "recharts";
 
+// Custom Tooltip component for Recharts AreaChart in Dark Theme
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-sm)",
+        padding: "12px 16px",
+        boxShadow: "var(--shadow-premium)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+      }}>
+        <p style={{
+          margin: "0 0 8px 0",
+          fontSize: "0.8rem",
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          borderBottom: "1px solid var(--border)",
+          paddingBottom: "6px"
+        }}>{label}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: entry.color }} />
+                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{entry.name}</span>
+              </div>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                {entry.value.toLocaleString()} 만원
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const store = usePensionStore();
@@ -270,7 +310,7 @@ export default function DashboardPage() {
         {/* Row 2: Charts (Side-by-Side) */}
         <section style={styles.chartsGrid}>
           {/* Chart 1: 3-Tier Pension House Diagram */}
-          <div style={{ ...styles.chartCard, flex: "1 1 350px", minWidth: "300px" }} className="premium-card">
+          <div style={styles.chartCard} className="premium-card">
             <h3 style={styles.chartTitle}>3층 연금 구조 비중</h3>
             <p style={styles.chartSubtitle}>은퇴 수령액 기준 ({targetAge}세 시점 월 수령액)</p>
             <div style={styles.houseChartContainer}>
@@ -341,11 +381,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Chart 2: Payout Projections */}
-          <div className="premium-card" style={{ flexGrow: 2, ...styles.chartCard }}>
+          <div style={styles.chartCard} className="premium-card">
             <h3 style={styles.chartTitle}>생애 연금 월 수령액 시뮬레이션</h3>
             <p style={styles.chartSubtitle}>나이별 3층 연금 수급 흐름도 (실질 가치 기준)</p>
             <div style={styles.chartWrapper}>
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={300}>
                 <AreaChart
                   data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 2)}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -373,9 +413,9 @@ export default function DashboardPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99,102,241,0.12)" />
-                  <XAxis dataKey="age" tickLine={false} tickFormatter={(age) => `${age}세`} />
-                  <YAxis tickLine={false} tickFormatter={(val) => `${val}만`} />
-                  <Tooltip formatter={(value) => value !== undefined ? `${value} 만원` : ""} labelFormatter={(label) => `${label}세 기준`} />
+                  <XAxis dataKey="age" tickLine={false} tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
+                  <YAxis tickLine={false} tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend />
                   <Area type="monotone" dataKey="national" name="국민연금" stackId="1" stroke="var(--primary)" fillOpacity={1} fill="url(#colorNational)" />
                   <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="#818cf8" fillOpacity={1} fill="url(#colorBasic)" />
@@ -905,7 +945,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   chartWrapper: {
     width: "100%",
-    height: "260px",
+    height: "300px",
     marginTop: "auto",
   },
   slidersCard: {
@@ -1332,21 +1372,22 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   houseChartContainer: {
     display: "flex",
-    flexDirection: "row",
+    flexDirection: "column",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     gap: "24px",
     padding: "16px 8px",
-    height: "230px",
     width: "100%",
+    height: "auto",
   },
   houseDiagramWrapper: {
-    flex: 1.2,
+    width: "100%",
+    maxWidth: "360px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-end",
-    height: "100%",
+    height: "180px",
     position: "relative",
   },
   roofLevel: {
@@ -1391,10 +1432,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     whiteSpace: "nowrap",
   },
   houseLegend: {
-    flex: 1.1,
+    width: "100%",
     display: "flex",
-    flexDirection: "column",
-    gap: "12px",
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: "16px 24px",
+    marginTop: "12px",
   },
   legendItem: {
     display: "flex",

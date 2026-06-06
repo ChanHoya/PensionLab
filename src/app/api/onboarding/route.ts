@@ -122,10 +122,14 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, userId: result.id });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Onboarding API error:", error);
     return NextResponse.json(
-      { success: false, error: "온보딩 데이터를 저장하는 중에 에러가 발생했습니다." },
+      { 
+        success: false, 
+        error: "온보딩 데이터를 저장하는 중에 에러가 발생했습니다.",
+        details: error?.message || String(error)
+      },
       { status: 500 }
     );
   }

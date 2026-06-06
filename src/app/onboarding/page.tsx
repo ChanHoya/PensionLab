@@ -350,7 +350,8 @@ export default function OnboardingPage() {
       });
 
       if (!response.ok) {
-        throw new Error("온보딩 데이터 저장 실패");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || "온보딩 데이터 저장 실패");
       }
 
       const data = await response.json();
@@ -362,9 +363,9 @@ export default function OnboardingPage() {
       });
 
       router.push("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("데이터 저장 도중 에러가 발생했습니다. 로컬 대시보드로 이동합니다.");
+      alert(`데이터 저장 도중 에러가 발생했습니다.\n원인: ${error.message || "네트워크 오류"}\n\n로컬 대시보드로 이동합니다.`);
       router.push("/dashboard");
     } finally {
       setIsSubmitting(false);

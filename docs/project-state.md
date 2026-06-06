@@ -13,7 +13,8 @@
 - **[Completed]** Story S2-3: NPS Codef API Sync Mock & Onboarding Integration.
 - **[Completed]** Story S3-1: Zustand LocalStorage Caching & Hydration Patch.
 - **[Completed]** Story S3-2: JSON Backup Export/Import & Privacy Warning Banner.
+- **[Completed]** Story S4-1: Prisma Client Generation & Vercel/Render Cloud Deployment Configuration (with DB SSL & Gemini API Support).
 
 ## Active Sprint / Story
-- **Sprint 4**: Render & Vercel Cloud Deployment
-- **Active Story**: S4-1: Prisma Client Generation and Vercel/Render Cloud Deployment Configuration
+- **Sprint 4**: Render & Vercel Cloud Deployment (Completed)
+- **Active Story**: None (All deployment configurations and guides completed)

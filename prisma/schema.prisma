@@ -127,6 +127,7 @@ model SimulationScenario {
   childSupportExpense      Int?     // 자녀 지원 비용 총액 (만원)
   annualMedicalExpense     Int?     // 노후 대비 연간 의료비 (만원)
   nonPensionAssets         Int?     // 비연금 자산 규모 (만원)
+  decumulationStrategy     String   @default("DECREASING") // 은퇴 연금 인출 전략 ("DECREASING" | "FLAT")
   customParams             Json?    // 기타 커스텀 파라미터 JSON
   
   createdAt                DateTime @default(now())

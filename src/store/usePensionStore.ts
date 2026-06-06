@@ -65,6 +65,7 @@ export interface SimulationParamsState {
   childSupportExpense: number;
   annualMedicalExpense: number;
   nonPensionAssets: number;
+  decumulationStrategy: "DECREASING" | "FLAT";
 }
 
 interface PensionStore {
@@ -134,6 +135,7 @@ const initialSimulationParams: SimulationParamsState = {
   childSupportExpense: 0,
   annualMedicalExpense: 0,
   nonPensionAssets: 0,
+  decumulationStrategy: "DECREASING",
 };
 
 export const usePensionStore = create<PensionStore>()(

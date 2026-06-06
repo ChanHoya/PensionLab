@@ -124,6 +124,7 @@ export async function POST(request: Request) {
             childSupportExpense: simulationParams.childSupportExpense ? Number(simulationParams.childSupportExpense) : null,
             annualMedicalExpense: simulationParams.annualMedicalExpense ? Number(simulationParams.annualMedicalExpense) : null,
             nonPensionAssets: simulationParams.nonPensionAssets ? Number(simulationParams.nonPensionAssets) : null,
+            decumulationStrategy: simulationParams.decumulationStrategy || "DECREASING",
           },
         });
       }

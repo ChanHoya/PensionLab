@@ -330,7 +330,7 @@ export default function DashboardPage() {
                 {/* 3층 지붕 (개인/보험) */}
                 <div style={{
                   ...styles.roofLevel,
-                  height: `${Math.max(30, pct3 * 2.4)}px`,
+                  height: `${Math.max(35, pct3 * 3.0)}px`,
                   opacity: v3 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>3층 ({pct3}%)</span>
@@ -339,7 +339,7 @@ export default function DashboardPage() {
                 {/* 2층 기둥 (퇴직연금) */}
                 <div style={{
                   ...styles.pillarLevel,
-                  height: `${Math.max(35, pct2 * 2.4)}px`,
+                  height: `${Math.max(40, pct2 * 3.0)}px`,
                   opacity: v2 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>2층 ({pct2}%)</span>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
                 {/* 1층 토대 (국민/기초) */}
                 <div style={{
                   ...styles.baseLevel,
-                  height: `${Math.max(40, pct1 * 2.4)}px`,
+                  height: `${Math.max(45, pct1 * 3.0)}px`,
                   opacity: v1 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>1층 ({pct1}%)</span>
@@ -401,7 +401,7 @@ export default function DashboardPage() {
             <h3 style={styles.chartTitle}>생애 연금 월 수령액 시뮬레이션</h3>
             <p style={styles.chartSubtitle}>나이별 3층 연금 수급 흐름도 (실질 가치 기준)</p>
             <div style={styles.chartWrapper}>
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer width="100%" height={330}>
                 <AreaChart
                   data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 2)}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
@@ -441,7 +441,7 @@ export default function DashboardPage() {
               </ResponsiveContainer>
 
               {/* 우측 차트 1층 -> 2층 -> 3층 상품 순서 정렬 범례 */}
-              <div style={{ ...styles.houseLegend, marginTop: "12px" }}>
+              <div style={{ ...styles.houseLegend, marginTop: "24px" }}>
                 {hasNational && (
                   <div style={styles.legendItem}>
                     <div style={{ ...styles.legendColorBox, backgroundColor: "#3b82f6" }} />
@@ -471,6 +471,25 @@ export default function DashboardPage() {
                     <div style={{ ...styles.legendColorBox, backgroundColor: "#f87171" }} />
                     <span style={styles.legendTitle}>연금보험</span>
                   </div>
+                )}
+              </div>
+
+              {/* 전략 정보 가이드 배너 */}
+              <div style={{
+                marginTop: "16px",
+                padding: "10px 14px",
+                borderRadius: "var(--radius-sm)",
+                backgroundColor: "rgba(99, 102, 241, 0.05)",
+                border: "1px dashed rgba(99, 102, 241, 0.2)",
+                fontSize: "0.75rem",
+                color: "var(--text-muted)",
+                lineHeight: "1.4",
+                textAlign: "center"
+              }}>
+                {store.simulationParams.decumulationStrategy === "DECREASING" ? (
+                  <span>💡 <strong>활동기 집중형 (체감식)</strong>: 소비 활동이 왕성한 은퇴 초반에 수령 비중을 늘리고(120%), 80세 이후 단계적으로 감액(80% ➔ 40%)하는 현실적 은퇴소비 형태(Spending Smile)를 반영했습니다.</span>
+                ) : (
+                  <span>💡 <strong>동일 금액형 (정액식)</strong>: 은퇴 기간 전반에 걸쳐 평생 일정한 금액을 인출하는 고전적인 설계 방식입니다. (인출 조절이 불가능한 공적연금 제외)</span>
                 )}
               </div>
             </div>
@@ -557,6 +576,75 @@ export default function DashboardPage() {
                 onChange={(e) => store.setSimulationParams({ inflationRate: Number(e.target.value) })}
                 style={styles.sliderRange}
               />
+            </div>
+
+            <div style={styles.sliderGroup}>
+              <div style={styles.sliderLabelRow}>
+                <label style={styles.sliderLabel}>은퇴 연금 인출 전략</label>
+                <span style={styles.sliderValue}>
+                  {store.simulationParams.decumulationStrategy === "DECREASING"
+                    ? "활동기 집중형 (체감식)"
+                    : "동일 금액형 (정액식)"}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: "8px", marginTop: "4px", height: "36px" }}>
+                <button
+                  type="button"
+                  onClick={() => store.setSimulationParams({ decumulationStrategy: "DECREASING" })}
+                  style={{
+                    flex: 1,
+                    padding: "0 12px",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                    border: store.simulationParams.decumulationStrategy === "DECREASING"
+                      ? "1px solid #6366f1"
+                      : "1px solid var(--border)",
+                    backgroundColor: store.simulationParams.decumulationStrategy === "DECREASING"
+                      ? "rgba(99, 102, 241, 0.15)"
+                      : "transparent",
+                    color: store.simulationParams.decumulationStrategy === "DECREASING"
+                      ? "var(--text-primary)"
+                      : "var(--text-secondary)",
+                    transition: "all var(--transition-fast)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "4px"
+                  }}
+                >
+                  🔥 활동기 집중형 (추천)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => store.setSimulationParams({ decumulationStrategy: "FLAT" })}
+                  style={{
+                    flex: 1,
+                    padding: "0 12px",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                    border: store.simulationParams.decumulationStrategy === "FLAT"
+                      ? "1px solid #6366f1"
+                      : "1px solid var(--border)",
+                    backgroundColor: store.simulationParams.decumulationStrategy === "FLAT"
+                      ? "rgba(99, 102, 241, 0.15)"
+                      : "transparent",
+                    color: store.simulationParams.decumulationStrategy === "FLAT"
+                      ? "var(--text-primary)"
+                      : "var(--text-secondary)",
+                    transition: "all var(--transition-fast)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "4px"
+                  }}
+                >
+                  ⚖️ 동일 금액형 (정액)
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -993,7 +1081,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   chartCard: {
     padding: "30px",
     flex: 1,
-    minHeight: "380px",
+    minHeight: "460px",
     display: "flex",
     flexDirection: "column",
   },
@@ -1009,7 +1097,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   chartWrapper: {
     width: "100%",
-    height: "300px",
+    height: "380px",
     marginTop: "auto",
   },
   slidersCard: {
@@ -1442,7 +1530,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "12px",
     padding: "0 8px 8px 8px",
     width: "100%",
-    height: "300px",
+    height: "380px",
     marginTop: "auto",
   },
   houseDiagramWrapper: {
@@ -1452,7 +1540,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-end",
-    height: "240px",
+    height: "320px",
     position: "relative",
   },
   roofLevel: {
@@ -1503,7 +1591,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "center",
     flexWrap: "wrap",
     gap: "16px 24px",
-    marginTop: "12px",
+    marginTop: "20px",
   },
   legendItem: {
     display: "flex",

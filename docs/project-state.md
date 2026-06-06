@@ -19,10 +19,12 @@
 - **[Completed]** Sprint 7: 금융감독원(FSS) 통합연금포털 API 2-Way 간편인증 연동 및 UI 개발.
 - **[Completed]** Sprint 9: 데이터 저장 트랜잭션 안정화 & 대시보드 시각화 색상/필터 최적화.
 - **[Completed]** Sprint 10: 온보딩 Step 0 개인/가족/지출 정보 신설 및 대시보드 범례/차트 UX 고도화.
+- **[Completed]** Sprint 11: 활동기 집중형(체감식) 은퇴 연금 인출전략 도입 및 대시보드 차트 레이아웃 2차 고도화.
 
 ## Active Sprint / Story
-- **Sprint 10**: 온보딩 Step 0 개인/가족/지출 정보 신설 및 대시보드 범례/차트 UX 고도화 — **COMPLETED**
-  - **[Story S10-1]** [Completed] 대시보드 3층 연금구조 하우스 세로폭 확대 및 범례 배치 동기화 (1층 ➔ 2층 ➔ 3층 순서)
-  - **[Story S10-2]** [Completed] Prisma schema 및 Zustand 스토어에 현재나이, 가족 프로필, 노후 지출 목표 필드 추가 및 로컬 DB 마이그레이션
-  - **[Story S10-3]** [Completed] 온보딩 Wizard에 `STEP 0` 개인/가족/노후재무설계 입력 단계 신설 및 DB 저장 API 연동
+- **Sprint 11**: 활동기 집중형(체감식) 은퇴 연금 인출전략 도입 및 대시보드 차트 레이아웃 2차 고도화 — **COMPLETED**
+  - **[Story S11-1]** [Completed] `pensionCalculator.ts` 및 Zustand/Prisma 스토어에 체감식 인출 방식(`decumulationStrategy`) 추가 및 DB 마이그레이션 연동
+  - **[Story S11-2]** [Completed] 대시보드 매개변수 조정 영역에 은퇴 인출 전략 토글 제어 컴포넌트 추가 및 체감식 인출 가이드(Spending Smile) 적용
+  - **[Story S11-3]** [Completed] 대시보드 좌우 차트 영역의 세로 크기를 2차 확대(330px ➔ 380px)하고 우측 차트 범례 마진 조정을 통한 레이아웃 밸런스 최적화
+  - **[Story S11-4]** [Completed] 리포트 페이지 및 PDF 시뮬레이션 계산식/차트 영역에 `decumulationStrategy` 값 연동 및 렌더링 동기화
 

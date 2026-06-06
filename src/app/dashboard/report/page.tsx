@@ -62,6 +62,12 @@ function ReportContent() {
     cashFlows,
   } = simulation;
 
+  const hasNational = cashFlows.some((cf) => (cf.national || 0) > 0);
+  const hasBasic = cashFlows.some((cf) => (cf.basic || 0) > 0);
+  const hasRetirement = cashFlows.some((cf) => (cf.retirement || 0) > 0);
+  const hasPersonal = cashFlows.some((cf) => (cf.personal || 0) > 0);
+  const hasInsurance = cashFlows.some((cf) => (cf.insurance || 0) > 0);
+
   // Pie Chart Data: 은퇴 자산 구성 비율
   const dbLump = store.retirementPensions
     .filter(r => r.pensionType === "DB")
@@ -245,8 +251,8 @@ function ReportContent() {
 
             <div style={styles.reportChartCard}>
               <h4 style={styles.reportChartTitle}>연령별 예상 월 연금 수령액 (3층 구조)</h4>
-              <div style={{ height: 200, width: "100%" }}>
-                <ResponsiveContainer width="100%" height="100%">
+              <div style={{ height: 210, width: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <ResponsiveContainer width="100%" height={170}>
                   <AreaChart
                     data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 1)}
                     margin={{ top: 5, right: 10, left: -25, bottom: 0 }}
@@ -254,13 +260,22 @@ function ReportContent() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="age" tickLine={false} style={{ fontSize: "0.75rem" }} />
                     <YAxis tickLine={false} style={{ fontSize: "0.75rem" }} />
-                    <Area type="monotone" dataKey="national" name="국민" stackId="1" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.6} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="basic" name="기초" stackId="1" stroke="var(--info)" fill="var(--info)" fillOpacity={0.6} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="retirement" name="퇴직" stackId="1" stroke="#2c5282" fill="#2c5282" fillOpacity={0.6} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="personal" name="개인" stackId="1" stroke="var(--secondary)" fill="var(--secondary)" fillOpacity={0.6} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="insurance" name="보험" stackId="1" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.6} isAnimationActive={false} />
+                    {hasNational && <Area type="monotone" dataKey="national" name="국민" stackId="1" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.6} isAnimationActive={false} />}
+                    {hasBasic && <Area type="monotone" dataKey="basic" name="기초" stackId="1" stroke="var(--info)" fill="var(--info)" fillOpacity={0.6} isAnimationActive={false} />}
+                    {hasRetirement && <Area type="monotone" dataKey="retirement" name="퇴직" stackId="1" stroke="#2c5282" fill="#2c5282" fillOpacity={0.6} isAnimationActive={false} />}
+                    {hasPersonal && <Area type="monotone" dataKey="personal" name="개인" stackId="1" stroke="var(--secondary)" fill="var(--secondary)" fillOpacity={0.6} isAnimationActive={false} />}
+                    {hasInsurance && <Area type="monotone" dataKey="insurance" name="보험" stackId="1" stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.6} isAnimationActive={false} />}
                   </AreaChart>
                 </ResponsiveContainer>
+                
+                {/* 리포트용 1층 -> 2층 -> 3층 정렬 범례 */}
+                <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap", fontSize: "0.7rem", marginTop: "8px" }}>
+                  {hasNational && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "var(--primary)", borderRadius: "50%" }} />국민</span>}
+                  {hasBasic && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "var(--info)", borderRadius: "50%" }} />기초</span>}
+                  {hasRetirement && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "#2c5282", borderRadius: "50%" }} />퇴직</span>}
+                  {hasPersonal && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "var(--secondary)", borderRadius: "50%" }} />개인</span>}
+                  {hasInsurance && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "var(--accent)", borderRadius: "50%" }} />보험</span>}
+                </div>
               </div>
             </div>
           </div>
@@ -344,6 +359,14 @@ function ReportContent() {
                 회원님의 기초 프로필(현재 {currentAge}세, 은퇴 {store.simulationParams.retirementAge}세 목표)과 지출 목표를 분석한 결과, 다음의 인출 순서 및 절세 전략을 처방합니다.
               </p>
               <ul style={{ ...styles.prescBody, listStyleType: "disc", paddingLeft: "20px", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                <li style={{ marginBottom: "6px" }}>
+                  <strong>인출 패턴 설계 ({store.simulationParams.decumulationStrategy === "DECREASING" ? "활동기 집중형 체감식" : "동일 금액형 정액식"})</strong>: 
+                  {store.simulationParams.decumulationStrategy === "DECREASING" ? (
+                    "소비 활동이 왕성한 은퇴 초반 5년 동안 수령 비중을 120%로 높게 설정하고, 나이가 듦에 따라 100% ➔ 80% ➔ 60% ➔ 40%로 점차 인출액을 축소하는 '활동기 집중형 체감식 인출전략'이 설정되었습니다. 은퇴 초반 적극적인 소비 욕구를 반영하고 고령 시기 자연스러운 소비 감소에 맞춰 노후 자산을 보호하는 가장 합리적인 소비 패턴(Spending Smile)입니다."
+                  ) : (
+                    "매년 동일한 금액을 일정하게 인출하는 '동일 금액형 정액식 인출전략'이 설정되었습니다. 물가상승이나 건강 상태 변화에 따른 지출 변동이 적고 일정한 현금 흐름을 선호하는 고전적인 은퇴 인출 설계 방식입니다."
+                  )}
+                </li>
                 <li style={{ marginBottom: "6px" }}>
                   <strong>은퇴 크레바스(소득 공백기) 극복</strong>: {store.simulationParams.retirementAge}세 은퇴 시점부터 국민연금이 개시되는 {store.simulationParams.nationalPensionStartAge}세까지의 
                   소득 공백기에는 <strong>퇴직연금(IRP)의 퇴직금 재원</strong>을 우선적으로 연금 수령(퇴직소득세 30% 감면)하여 생활비를 충당하고, 사적연금 인출은 최대한 이연할 것을 권장합니다.

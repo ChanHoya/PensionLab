@@ -212,9 +212,26 @@ export function runPensionSimulation(
       basicPayout = basic.expectedMonthlyAmount;
     }
 
+    // 은퇴 후 년수 계산 (체감형 인출 가중치 적용용 - Spending Smile)
+    const yearsSinceRetirement = Math.max(0, age - params.retirementAge);
+    let decumulationMultiplier = 1.0;
+    if (params.decumulationStrategy === "DECREASING" && age >= params.retirementAge) {
+      if (yearsSinceRetirement <= 5) {
+        decumulationMultiplier = 1.2; // 0~5년차 (활동기: 120%)
+      } else if (yearsSinceRetirement <= 10) {
+        decumulationMultiplier = 1.0; // 6~10년차 (안정기: 100%)
+      } else if (yearsSinceRetirement <= 15) {
+        decumulationMultiplier = 0.8; // 11~15년차 (쇠퇴기: 80%)
+      } else if (yearsSinceRetirement <= 20) {
+        decumulationMultiplier = 0.6; // 16~20년차 (보호기: 60%)
+      } else {
+        decumulationMultiplier = 0.4; // 21년차 이후 (초고령 실버기: 40%)
+      }
+    }
+
     // Retirement Pension Payout
     if (age >= params.retirementAge && age < params.retirementAge + retirementAnnuityYears) {
-      retirementPayout = monthlyRetirementPayout;
+      retirementPayout = monthlyRetirementPayout * decumulationMultiplier;
     }
 
     // Personal Pension Savings Payout
@@ -226,7 +243,19 @@ export function runPensionSimulation(
           calculateFV(calculateFVAnnuity(p.monthlyAnnualContribution, p.savingsType === "FUND" ? 4.5 : 2.5, Math.max(0, Math.min(p.desiredStartAge - currentAge, params.retirementAge - currentAge)) * 12), p.savingsType === "FUND" ? 4.5 : 2.5, Math.max(0, p.desiredStartAge - params.retirementAge));
         
         const payout = calculateAnnuityPayout(pLump, p.receivingPeriod, p.savingsType === "FUND" ? 4.5 : 2.5);
-        personalPayout += payout;
+        
+        // 개인연금 수령 시작 후 나이에 맞춰 체감률 적용
+        const yearsSinceStart = Math.max(0, age - p.desiredStartAge);
+        let personalMultiplier = 1.0;
+        if (params.decumulationStrategy === "DECREASING") {
+          if (yearsSinceStart <= 5) personalMultiplier = 1.2;
+          else if (yearsSinceStart <= 10) personalMultiplier = 1.0;
+          else if (yearsSinceStart <= 15) personalMultiplier = 0.8;
+          else if (yearsSinceStart <= 20) personalMultiplier = 0.6;
+          else personalMultiplier = 0.4;
+        }
+
+        personalPayout += payout * personalMultiplier;
       }
     });
 
@@ -239,7 +268,7 @@ export function runPensionSimulation(
           calculateFV(calculateFVAnnuity(i.monthlyPayment, i.expectedDeclaredRate, Math.min(i.paymentPeriod, yearsToRetire) * 12), i.expectedDeclaredRate, Math.max(0, yearsToRetire - Math.min(i.paymentPeriod, yearsToRetire)));
         
         const payout = calculateAnnuityPayout(iLump, payoutYears, i.expectedDeclaredRate);
-        insurancePayout += payout;
+        insurancePayout += payout * decumulationMultiplier;
       }
     });
 

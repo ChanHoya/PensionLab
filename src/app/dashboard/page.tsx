@@ -26,6 +26,43 @@ export default function DashboardPage() {
   const store = usePensionStore();
   const [isMounted, setIsMounted] = useState(false);
 
+  // AI Chat States
+  const [question, setQuestion] = useState("");
+  const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string; sources?: any[] }[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAskAI = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!question.trim() || aiLoading) return;
+
+    const userMsg = question.trim();
+    setQuestion("");
+    setChatHistory((prev) => [...prev, { role: "user", content: userMsg }]);
+    setAiLoading(true);
+
+    try {
+      const res = await fetch("/api/ai/advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMsg }),
+      });
+      if (!res.ok) throw new Error("API request failed");
+      const data = await res.json();
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer, sources: data.sources },
+      ]);
+    } catch (err) {
+      console.error(err);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: "죄송합니다. 답변을 생성하는 중에 오류가 발생했습니다." },
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   // Load from localStorage on mount
   useEffect(() => {
     setIsMounted(true);
@@ -314,27 +351,88 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Row 4: AI Analysis Call */}
+        {/* Row 4: AI RAG Q&A Chat */}
         <section style={styles.aiCard} className="premium-card">
-          <div style={styles.aiCardContent}>
-            <div style={styles.aiTextPart}>
-              <span style={styles.aiBadge}>AI 연금 진단</span>
-              <h3 style={styles.aiTitle}>나의 다층 연금 자산에 대한 AI 맞춤 처방전</h3>
-              <p style={styles.aiDesc}>
-                2026 연금 개혁안 영향 분석과 유튜브 연금 전문가(연금박사 등)들의 수백 편 동영상 자막을 RAG 기술로 비교 분석하여 맞춤 은퇴 절세 및 적립 솔루션을 생성합니다.
-              </p>
-            </div>
-            <div>
+          <span style={styles.aiBadge}>AI 실시간 연금 상담실</span>
+          <h3 style={styles.aiTitle}>유튜브 연금 전문가 기반 RAG Q&A</h3>
+          <p style={styles.aiDesc}>
+            연금박사, 박곰희TV 등 신뢰할 수 있는 전문가들의 동영상 자막 데이터를 벡터 데이터베이스(pgvector)에서 분석하여 정확하고 명쾌한 조언을 해드립니다.
+          </p>
+
+          {/* Chat Window */}
+          <div style={styles.chatWindow}>
+            {chatHistory.length === 0 ? (
+              <div style={styles.chatPlaceholder}>
+                💬 질문을 입력하시면 은퇴 설계 RAG 상담을 시작합니다.<br />
+                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 8, display: "inline-block" }}>
+                  (추천 질문: &quot;국민연금 13% 개편안이 나에게 미치는 영향은?&quot;, &quot;퇴직연금 DB형과 DC형 중 무엇이 유리해?&quot;)
+                </span>
+              </div>
+            ) : (
+              <div style={styles.chatMessages}>
+                {chatHistory.map((chat, idx) => (
+                  <div key={idx} style={chat.role === "user" ? styles.userMessageRow : styles.assistantMessageRow}>
+                    <div style={chat.role === "user" ? styles.userMessageBubble : styles.assistantMessageBubble}>
+                      <div style={{ whiteSpace: "pre-line" }}>{chat.content}</div>
+                      
+                      {chat.sources && chat.sources.length > 0 && (
+                        <div style={styles.sourcesBox}>
+                          <div style={styles.sourcesLabel}>🔗 참고한 전문가 영상 출처:</div>
+                          <div style={styles.sourcesList}>
+                            {chat.sources.map((src, sIdx) => (
+                              <a
+                                key={sIdx}
+                                href={`https://www.youtube.com/watch?v=${src.videoId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={styles.sourceLink}
+                              >
+                                [{src.channelName}] {src.title} ➔
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div style={styles.assistantMessageRow}>
+                    <div style={{ ...styles.assistantMessageBubble, display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={styles.miniSpinner} />
+                      <span>전문가 조언을 분석 중입니다...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Chat Input */}
+            <form onSubmit={handleAskAI} style={styles.chatForm}>
+              <input
+                id="input-ai-question"
+                type="text"
+                className="premium-input"
+                placeholder="연금 개혁, 퇴직연금, 개인연금저축에 대해 질문해 보세요..."
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                disabled={aiLoading}
+                style={{ flexGrow: 1 }}
+              />
               <button
-                onClick={() => {
-                  alert("RAG 기반 AI 보고서 생성 페이지로 이동합니다. (Phase 2 개발 예정)");
-                }}
+                id="btn-ai-send"
+                type="submit"
+                disabled={aiLoading || !question.trim()}
                 className="premium-button"
-                style={{ background: "var(--gradient-secondary)" }}
+                style={{
+                  padding: "10px 20px",
+                  opacity: aiLoading || !question.trim() ? 0.6 : 1,
+                  cursor: aiLoading || !question.trim() ? "not-allowed" : "pointer"
+                }}
               >
-                🤖 AI 맞춤 포트폴리오 분석 시작
+                질문하기
               </button>
-            </div>
+            </form>
           </div>
         </section>
       </div>
@@ -529,17 +627,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "30px 40px",
     background: "linear-gradient(135deg, rgba(30, 58, 95, 0.03) 0%, rgba(0, 184, 148, 0.03) 100%)",
     borderColor: "rgba(0, 184, 148, 0.2)",
-  },
-  aiCardContent: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "40px",
-  },
-  aiTextPart: {
     display: "flex",
     flexDirection: "column",
-    alignItems: "flex-start",
+    gap: "12px",
   },
   aiBadge: {
     fontSize: "0.75rem",
@@ -548,17 +638,110 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: "rgba(0, 184, 148, 0.1)",
     padding: "4px 8px",
     borderRadius: "var(--radius-full)",
-    marginBottom: "10px",
+    width: "fit-content",
   },
   aiTitle: {
     fontSize: "1.35rem",
     fontWeight: 700,
     color: "var(--primary-dark)",
+    marginTop: "4px",
   },
   aiDesc: {
     fontSize: "0.95rem",
     color: "var(--text-secondary)",
     lineHeight: 1.5,
-    marginTop: "8px",
+  },
+  chatWindow: {
+    display: "flex",
+    flexDirection: "column",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-md)",
+    backgroundColor: "var(--surface)",
+    overflow: "hidden",
+    marginTop: "16px",
+    boxShadow: "var(--shadow-sm)",
+  },
+  chatPlaceholder: {
+    padding: "40px 20px",
+    textAlign: "center",
+    color: "var(--text-secondary)",
+    fontSize: "0.95rem",
+    lineHeight: 1.6,
+  },
+  chatMessages: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    padding: "20px",
+    maxHeight: "350px",
+    overflowY: "auto",
+    borderBottom: "1px solid var(--border)",
+    backgroundColor: "var(--background)",
+  },
+  userMessageRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  assistantMessageRow: {
+    display: "flex",
+    justifyContent: "flex-start",
+  },
+  userMessageBubble: {
+    maxWidth: "80%",
+    padding: "12px 16px",
+    borderRadius: "16px 16px 4px 16px",
+    backgroundColor: "var(--primary)",
+    color: "#ffffff",
+    fontSize: "0.95rem",
+    lineHeight: 1.5,
+    boxShadow: "var(--shadow-sm)",
+  },
+  assistantMessageBubble: {
+    maxWidth: "85%",
+    padding: "16px 20px",
+    borderRadius: "16px 16px 16px 4px",
+    backgroundColor: "var(--surface)",
+    color: "var(--text-primary)",
+    fontSize: "0.95rem",
+    lineHeight: 1.6,
+    border: "1px solid var(--border)",
+    boxShadow: "var(--shadow-sm)",
+  },
+  miniSpinner: {
+    width: "16px",
+    height: "16px",
+    border: "2px solid var(--border)",
+    borderTop: "2px solid var(--primary)",
+    borderRadius: "50%",
+    animation: "pulse-subtle 1s infinite linear",
+  },
+  chatForm: {
+    display: "flex",
+    gap: "12px",
+    padding: "16px 20px",
+    backgroundColor: "var(--surface)",
+  },
+  sourcesBox: {
+    marginTop: "12px",
+    paddingTop: "12px",
+    borderTop: "1px dashed var(--border)",
+  },
+  sourcesLabel: {
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    marginBottom: "6px",
+  },
+  sourcesList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  sourceLink: {
+    fontSize: "0.8rem",
+    color: "var(--primary-light)",
+    textDecoration: "none",
+    fontWeight: 500,
+    transition: "color var(--transition-fast)",
   },
 };

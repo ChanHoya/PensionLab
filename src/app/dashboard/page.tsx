@@ -31,6 +31,10 @@ export default function DashboardPage() {
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string; sources?: any[] }[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
 
+  // YouTube Modal States
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
+
   const handleAskAI = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim() || aiLoading) return;
@@ -377,17 +381,26 @@ export default function DashboardPage() {
                       
                       {chat.sources && chat.sources.length > 0 && (
                         <div style={styles.sourcesBox}>
-                          <div style={styles.sourcesLabel}>🔗 참고한 전문가 영상 출처:</div>
+                          <div style={styles.sourcesLabel}>🔗 참고한 전문가 영상 출처 (클릭 시 재생):</div>
                           <div style={styles.sourcesList}>
                             {chat.sources.map((src, sIdx) => (
                               <a
                                 key={sIdx}
                                 href={`https://www.youtube.com/watch?v=${src.videoId}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={styles.sourceLink}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setActiveVideoId(src.videoId);
+                                  setActiveVideoTitle(`[${src.channelName}] ${src.title}`);
+                                }}
+                                style={{
+                                  ...styles.sourceLink,
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                                id={`link-video-${src.videoId}`}
                               >
-                                [{src.channelName}] {src.title} ➔
+                                🎥 [{src.channelName}] {src.title} ➔
                               </a>
                             ))}
                           </div>
@@ -436,6 +449,44 @@ export default function DashboardPage() {
           </div>
         </section>
       </div>
+
+      {/* YouTube Video Player Modal */}
+      {activeVideoId && (
+        <div style={styles.modalOverlay} onClick={() => setActiveVideoId(null)} className="animate-fade-in">
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="glass">
+            <div style={styles.modalHeader}>
+              <h4 style={styles.modalTitle}>{activeVideoTitle}</h4>
+              <button
+                id="btn-close-video"
+                onClick={() => setActiveVideoId(null)}
+                style={styles.modalCloseButton}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "var(--surface-hover)";
+                  e.currentTarget.style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={styles.videoWrapper}>
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`}
+                title={activeVideoTitle}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                style={{ borderRadius: "var(--radius-sm)", border: "none", position: "absolute", top: 0, left: 0 }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -743,5 +794,69 @@ const styles: { [key: string]: React.CSSProperties } = {
     textDecoration: "none",
     fontWeight: 500,
     transition: "color var(--transition-fast)",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    zIndex: 9999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: "800px",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-md)",
+    boxShadow: "var(--shadow-premium)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px 20px",
+    borderBottom: "1px solid var(--border)",
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+  },
+  modalTitle: {
+    fontSize: "1rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    marginRight: "16px",
+    margin: 0,
+  },
+  modalCloseButton: {
+    background: "none",
+    border: "none",
+    fontSize: "1.25rem",
+    color: "var(--text-secondary)",
+    cursor: "pointer",
+    padding: "4px 8px",
+    borderRadius: "var(--radius-sm)",
+    transition: "all var(--transition-fast)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  videoWrapper: {
+    position: "relative",
+    paddingBottom: "56.25%", /* 16:9 Aspect Ratio */
+    height: 0,
+    overflow: "hidden",
+    backgroundColor: "#000000",
   },
 };

@@ -11,7 +11,9 @@
 - **[Completed]** Story S2-1: YouTube Video Player Modal integration in RAG Q&A Chat.
 - **[Completed]** Story S2-2: Premium Report PDF Generation & Toss Payments mock integration.
 - **[Completed]** Story S2-3: NPS Codef API Sync Mock & Onboarding Integration.
+- **[Completed]** Story S3-1: Zustand LocalStorage Caching & Hydration Patch.
+- **[Completed]** Story S3-2: JSON Backup Export/Import & Privacy Warning Banner.
 
 ## Active Sprint / Story
-- **Sprint 3**: Local Caching & Data Portability
-- **Active Story**: S3-1: Zustand LocalStorage Caching & Hydration Patch
+- **Sprint 3**: Local Caching & Data Portability (Completed)
+- **Active Story**: None (All Sprint 3 stories successfully implemented and verified)

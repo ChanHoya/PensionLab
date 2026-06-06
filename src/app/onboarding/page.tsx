@@ -26,19 +26,51 @@ export default function OnboardingPage() {
     setIsMounted(true);
   }, []);
 
-  // NPS Codef Mock Sync States
+  // NPS Codef API 연동 관련 상태 변수들
+  const [syncName, setSyncName] = useState("홍길동");
+  const [syncPhone, setSyncPhone] = useState("010-1234-5678");
+  const [syncBirth, setSyncBirth] = useState("19800101");
+  const [syncProvider, setSyncProvider] = useState("kakao");
+  const [verificationPending, setVerificationPending] = useState(false);
+  const [jti, setJti] = useState<string | null>(null);
+  const [twoWayInfo, setTwoWayInfo] = useState<any>(null);
+
   const [npsSyncing, setNpsSyncing] = useState(false);
   const [npsSynced, setNpsSynced] = useState(false);
 
   const handleNPSSync = async () => {
     setNpsSyncing(true);
     try {
-      const response = await fetch("/api/pension/nps-sync");
-      if (!response.ok) throw new Error("Sync failed");
+      const response = await fetch("/api/pension/nps-sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userName: syncName,
+          phoneNo: syncPhone,
+          identity: syncBirth,
+          provider: syncProvider,
+          jti,
+          twoWayInfo,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("API 요청에 실패했습니다.");
+      }
+
       const result = await response.json();
-      
-      if (result.success && result.data) {
-        setTimeout(() => {
+
+      if (result.success) {
+        if (result.status === "NEED_VERIFICATION") {
+          // 1차 인증 완료 (추가 인증 대기)
+          setJti(result.jti);
+          setTwoWayInfo(result.twoWayInfo);
+          setVerificationPending(true);
+          setNpsSyncing(false);
+        } else if (result.status === "SUCCESS" && result.data) {
+          // 최종 완료
           store.setNationalPension({
             contributionMonths: result.data.contributionMonths,
             totalPaidAmount: result.data.totalPaidAmount,
@@ -50,15 +82,26 @@ export default function OnboardingPage() {
             aValue: result.data.aValue,
             bValue: result.data.bValue,
           });
+          setVerificationPending(false);
           setNpsSyncing(false);
           setNpsSynced(true);
-        }, 1500);
+        }
+      } else {
+        alert(result.message || "국민연금 동기화에 실패했습니다. 입력값을 확인하시거나 잠시 후 다시 시도해 주세요.");
+        setNpsSyncing(false);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("NPS 동기화 중 에러가 발생했습니다.");
+      alert(err.message || "NPS 동기화 중 에러가 발생했습니다.");
       setNpsSyncing(false);
     }
+  };
+
+  const handleCancelVerification = () => {
+    setVerificationPending(false);
+    setJti(null);
+    setTwoWayInfo(null);
+    setNpsSyncing(false);
   };
 
   // Local state for temporary Retirement Pension inputs
@@ -532,21 +575,83 @@ export default function OnboardingPage() {
                 {nationalInputMode === "SYNC" && (
                   <div style={styles.syncBox} className="animate-fade-in">
                     <div style={styles.infoAlert}>
-                      🔐 국민연금공단(NPS) 간편인증 연동을 통해 납부 개월 수 및 예상 연금액 등 9대 필수 항목을 자동으로 동기화합니다. (Codef API 시뮬레이터 작동)
+                      🔐 국민연금공단(NPS) 간편인증 연동을 통해 납부 개월 수 및 예상 연금액 등 9대 필수 항목을 자동으로 동기화합니다. (Codef API 연동 작동)
                     </div>
+
+                    {verificationPending && (
+                      <div
+                        style={{
+                          ...styles.infoAlert,
+                          backgroundColor: "rgba(245, 158, 11, 0.15)",
+                          borderLeft: "4px solid #f59e0b",
+                          color: "#f3f4f6",
+                          marginBottom: "16px",
+                        }}
+                        className="animate-fade-in"
+                      >
+                        💬 스마트폰(선택하신 간편인증 앱)으로 인증 요청이 발송되었습니다. 휴대폰에서 본인인증을 완료하신 다음 아래 <strong>[인증 완료 확인]</strong> 버튼을 클릭해 주세요.
+                      </div>
+                    )}
                     
                     <div style={styles.syncForm}>
                       <div style={styles.fieldRow}>
                         <label style={styles.label}>이름</label>
-                        <input type="text" className="premium-input" placeholder="홍길동" defaultValue="홍길동" />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="홍길동"
+                          value={syncName}
+                          onChange={(e) => setSyncName(e.target.value)}
+                          disabled={verificationPending || npsSyncing || npsSynced}
+                        />
                       </div>
                       <div style={styles.fieldRow}>
                         <label style={styles.label}>휴대폰 번호</label>
-                        <input type="text" className="premium-input" placeholder="010-1234-5678" defaultValue="010-1234-5678" />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="010-1234-5678"
+                          value={syncPhone}
+                          onChange={(e) => setSyncPhone(e.target.value)}
+                          disabled={verificationPending || npsSyncing || npsSynced}
+                        />
                       </div>
                       <div style={styles.fieldRow}>
                         <label style={styles.label}>생년월일 (8자리)</label>
-                        <input type="text" className="premium-input" placeholder="19800101" defaultValue="19800101" />
+                        <input
+                          type="text"
+                          className="premium-input"
+                          placeholder="19800101"
+                          value={syncBirth}
+                          onChange={(e) => setSyncBirth(e.target.value)}
+                          disabled={verificationPending || npsSyncing || npsSynced}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>간편인증 기관</label>
+                        <select
+                          className="premium-input"
+                          value={syncProvider}
+                          onChange={(e) => setSyncProvider(e.target.value)}
+                          disabled={verificationPending || npsSyncing || npsSynced}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "6px",
+                            backgroundColor: "var(--surface)",
+                            border: "1px solid var(--border)",
+                            color: "var(--text-primary)",
+                            fontFamily: "inherit",
+                            fontSize: "0.95rem",
+                            outline: "none"
+                          }}
+                        >
+                          <option value="kakao">카카오톡</option>
+                          <option value="naver">네이버</option>
+                          <option value="pass">PASS</option>
+                          <option value="toss">토스</option>
+                          <option value="kb">KB국민은행</option>
+                        </select>
                       </div>
 
                       {npsSyncing ? (
@@ -557,6 +662,26 @@ export default function OnboardingPage() {
                         <button type="button" className="premium-button" style={{ marginTop: 16, background: "var(--success)", width: "100%" }} disabled>
                           ✓ 국민연금 정보 동기화 완료!
                         </button>
+                      ) : verificationPending ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: 16 }}>
+                          <button
+                            type="button"
+                            id="btn-nps-verify"
+                            className="premium-button"
+                            style={{ width: "100%", backgroundColor: "var(--primary)" }}
+                            onClick={handleNPSSync}
+                          >
+                            🔐 인증 완료 확인 (최종 동기화)
+                          </button>
+                          <button
+                            type="button"
+                            className="premium-button"
+                            style={{ width: "100%", backgroundColor: "rgba(239, 68, 68, 0.15)", color: "#fca5a5", border: "1px solid rgba(239, 68, 68, 0.3)" }}
+                            onClick={handleCancelVerification}
+                          >
+                            ❌ 인증 취소 및 다시 시도
+                          </button>
+                        </div>
                       ) : (
                         <button
                           type="button"

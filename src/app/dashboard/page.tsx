@@ -201,7 +201,7 @@ export default function DashboardPage() {
       <header style={styles.header}>
         <div style={styles.headerContent}>
           <Link href="/" style={styles.logo}>
-            Pension<span style={{ color: "var(--secondary)" }}>Lab</span>
+            Pension<span className="gradient-text">Lab</span>
           </Link>
           <nav style={styles.navLinks}>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>대시보드</span>

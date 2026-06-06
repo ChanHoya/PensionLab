@@ -14,9 +14,9 @@ export default function LandingPage() {
       {/* Navigation Header */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
-          <div style={styles.logo}>
-            Pension<span style={{ color: "var(--secondary)" }}>Lab</span>
-          </div>
+          <Link href="/" style={{ ...styles.logo, textDecoration: "none" }}>
+            Pension<span className="gradient-text">Lab</span>
+          </Link>
           <nav style={styles.navLinks}>
             <span style={styles.navItem}>서비스 소개</span>
             <span style={styles.navItem}>연금 개혁안 정보</span>

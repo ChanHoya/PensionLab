@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { usePensionStore } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -98,6 +99,26 @@ export default function OnboardingPage() {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
+  // JSON 백업 저장
+  const handleSaveData = () => {
+    const data = {
+      exportedAt: new Date().toISOString(),
+      nationalPension: store.nationalPension,
+      basicPension: store.basicPension,
+      retirementPensions: store.retirementPensions,
+      personalPensions: store.personalPensions,
+      pensionInsurances: store.pensionInsurances,
+      simulationParams: store.simulationParams,
+    };
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+    const a = document.createElement("a");
+    a.setAttribute("href", jsonString);
+    a.setAttribute("download", `pensionlab_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   // Simple auto-calculation helper for National Pension
   const handleSimpleNationalCalculate = (
     months: number,
@@ -188,10 +209,23 @@ export default function OnboardingPage() {
       <div style={styles.bgGlow2} />
 
       <header style={styles.header}>
-        <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <ThemeToggle />
+        {/* 좌: 로고 + 부제목 */}
+        <div style={styles.headerLeft}>
+          <Link href="/" style={{ textDecoration: "none" }}>
+            <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
+          </Link>
           <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
+        </div>
+        {/* 우: 개인정보 안심보장 + JSON저장 + 테마토글 */}
+        <div style={styles.headerRight}>
+          <div style={styles.privacyChip}>
+            <span style={{ fontSize: "0.9rem" }}>🔒</span>
+            <span><strong>개인정보 안심 보장</strong> — 모든 데이터는 이 기기에만 저장됩니다.</span>
+          </div>
+          <button onClick={handleSaveData} style={styles.saveBtn} title="현재 입력 데이터를 JSON으로 저장">
+            💾 저장
+          </button>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -256,10 +290,6 @@ export default function OnboardingPage() {
             <p style={styles.formDesc}>{STEPS[currentStep - 1].desc}</p>
           </div>
 
-          {/* Privacy/Local Caching Notice Banner */}
-          <div style={styles.privacyNoticeBanner}>
-            <span>🔒 <strong>개인정보 안심 보장</strong>: 입력하신 모든 연금 설계 정보는 서버에 저장되지 않고 현재 기기(브라우저)에만 안전하게 보관되므로 안심하고 입력해 주세요.</span>
-          </div>
 
           <div style={styles.formBody}>
             {/* STEP 1: 국민연금 */}
@@ -982,21 +1012,69 @@ const styles: { [key: string]: React.CSSProperties } = {
     pointerEvents: "none",
   },
   header: {
-    textAlign: "center",
-    marginBottom: "40px",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    maxWidth: "1200px",
+    marginBottom: "32px",
     zIndex: 1,
+    gap: "16px",
+    flexWrap: "wrap" as React.CSSProperties["flexWrap"],
+  },
+  headerLeft: {
+    display: "flex",
+    flexDirection: "column" as React.CSSProperties["flexDirection"],
+    alignItems: "flex-start",
+    gap: "4px",
+  },
+  headerRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap" as React.CSSProperties["flexWrap"],
+  },
+  privacyChip: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "6px 12px",
+    background: "rgba(99, 102, 241, 0.08)",
+    border: "1px solid rgba(99, 102, 241, 0.2)",
+    borderRadius: "var(--radius-sm)",
+    fontSize: "0.8rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.4,
+    maxWidth: "380px",
+  },
+  saveBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    padding: "7px 14px",
+    background: "rgba(99, 102, 241, 0.12)",
+    border: "1px solid rgba(99, 102, 241, 0.3)",
+    borderRadius: "var(--radius-sm)",
+    color: "#a5b4fc",
+    fontSize: "0.85rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all var(--transition-fast)",
+    whiteSpace: "nowrap" as React.CSSProperties["whiteSpace"],
   },
   logo: {
     fontFamily: "var(--font-sans)",
-    fontSize: "2.5rem",
+    fontSize: "1.8rem",
     fontWeight: 800,
-    color: "var(--primary)",
-    letterSpacing: "-1px",
-    marginBottom: "8px",
+    color: "var(--text-primary)",
+    letterSpacing: "-0.5px",
+    marginBottom: "0",
+    cursor: "pointer",
   },
   subtitle: {
-    fontSize: "1.1rem",
-    color: "var(--text-secondary)",
+    fontSize: "0.9rem",
+    color: "var(--text-muted)",
   },
   wizardContainer: {
     display: "grid",
@@ -1139,13 +1217,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: "all var(--transition-fast)",
   },
   infoAlert: {
-    backgroundColor: "var(--primary-50)",
-    borderLeft: "4px solid var(--primary-400)",
-    borderRadius: "4px",
+    backgroundColor: "rgba(99, 102, 241, 0.07)",
+    border: "1px solid rgba(99, 102, 241, 0.18)",
+    borderLeft: "3px solid rgba(99, 102, 241, 0.6)",
+    borderRadius: "var(--radius-sm)",
     padding: "12px 16px",
-    fontSize: "0.9rem",
-    color: "var(--primary-700)",
-    lineHeight: 1.5,
+    fontSize: "0.875rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.6,
   },
   fieldRow: {
     display: "flex",

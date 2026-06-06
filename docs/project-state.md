@@ -14,6 +14,8 @@
 - **[Completed]** Story S3-1: Zustand LocalStorage Caching & Hydration Patch.
 - **[Completed]** Story S3-2: JSON Backup Export/Import & Privacy Warning Banner.
 - **[Completed]** Story S4-1: Prisma Client Generation & Vercel/Render Cloud Deployment Configuration (with DB SSL & Gemini API Support).
+- **[Completed]** Sprint 5: UI/UX ETF Lens Theme Sync, PDF Viewer fixed, 3-Tier House Chart, and Navigation Highlighting/Alignment.
+- **[Completed]** Sprint 6: National Pension Service (NPS) Codef 2-Way Easy Authentication Integration & UI State Machine.
 
 ## Active Sprint / Story
 - **Sprint 5**: UI/UX ETF Lens Theme Sync — **COMPLETED**

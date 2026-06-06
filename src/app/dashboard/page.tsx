@@ -238,7 +238,7 @@ export default function DashboardPage() {
         {/* Row 1: KPI Summary */}
         <section style={styles.kpiRow} className="animate-fade-in">
           {/* Card 1 */}
-          <div style={styles.kpiCard} className="premium-card">
+          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #6366f1" }} className="premium-card">
             <span style={styles.kpiLabel}>은퇴 후 예상 월 연금액</span>
             <h3 style={styles.kpiValue}>
               <span className="gradient-text">{monthlyAnnuityAtRetirement.toLocaleString()}</span> 만원/월
@@ -247,7 +247,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Card 2 */}
-          <div style={styles.kpiCard} className="premium-card">
+          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #8b5cf6" }} className="premium-card">
             <span style={styles.kpiLabel}>은퇴 시 자산 규모</span>
             <h3 style={styles.kpiValue}>
               {totalAccumulatedAtRetirement >= 10000 
@@ -259,7 +259,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Card 3 */}
-          <div style={styles.kpiCard} className="premium-card">
+          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #ef4444" }} className="premium-card">
             <span style={styles.kpiLabel}>2026 국민연금 개혁 영향</span>
             <h3 style={{ ...styles.kpiValue, color: "var(--danger)" }}>
               + {nationalPensionPremiumIncreaseTotal.toLocaleString()} 만원
@@ -268,7 +268,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Card 4 */}
-          <div style={styles.kpiCard} className="premium-card">
+          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #f97316" }} className="premium-card">
             <span style={styles.kpiLabel}>시뮬레이션 프로필</span>
             <h3 style={styles.kpiValue}>
               {currentAge} 세
@@ -338,7 +338,7 @@ export default function DashboardPage() {
                       <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99,102,241,0.12)" />
                   <XAxis dataKey="age" tickLine={false} tickFormatter={(age) => `${age}세`} />
                   <YAxis tickLine={false} tickFormatter={(val) => `${val}만`} />
                   <Tooltip formatter={(value) => value !== undefined ? `${value} 만원` : ""} labelFormatter={(label) => `${label}세 기준`} />
@@ -480,7 +480,7 @@ export default function DashboardPage() {
             <button
               id="btn-trigger-checkout"
               className="premium-button"
-              style={{ padding: "14px 28px", background: "var(--gradient-secondary)" }}
+              style={{ padding: "14px 28px" }}
               onClick={() => setShowCheckoutModal(true)}
             >
               📊 처방 보고서 발급받기
@@ -751,22 +751,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     animation: "pulse-subtle 1.5s infinite linear", // reuse pulse animation
   },
   bgGlow1: {
-    position: "absolute",
+    position: "fixed",
     top: "-20%",
     left: "-20%",
     width: "60%",
     height: "60%",
-    background: "radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, rgba(255,255,255,0) 75%)",
+    background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)",
     zIndex: 0,
     pointerEvents: "none",
   },
   bgGlow2: {
-    position: "absolute",
+    position: "fixed",
     bottom: "-20%",
     right: "-20%",
     width: "70%",
     height: "70%",
-    background: "radial-gradient(circle, rgba(79, 70, 229, 0.05) 0%, rgba(255,255,255,0) 75%)",
+    background: "radial-gradient(circle, rgba(139,92,246,0.09) 0%, transparent 70%)",
     zIndex: 0,
     pointerEvents: "none",
   },
@@ -775,9 +775,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "20px 40px",
     zIndex: 10,
     borderBottom: "1px solid var(--border)",
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
+    backgroundColor: "var(--glass-bg)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    position: "sticky",
+    top: 0,
   },
   headerContent: {
     display: "flex",
@@ -790,7 +792,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   logo: {
     fontSize: "1.5rem",
     fontWeight: 800,
-    color: "var(--primary)",
+    color: "var(--text-primary)",
     letterSpacing: "-0.5px",
     textDecoration: "none",
   },
@@ -838,7 +840,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   kpiValue: {
     fontSize: "1.75rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "var(--text-primary)",
     margin: "12px 0 6px 0",
   },
   kpiSub: {
@@ -860,7 +862,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   chartTitle: {
     fontSize: "1.2rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "var(--text-primary)",
   },
   chartSubtitle: {
     fontSize: "0.85rem",
@@ -917,8 +919,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   aiBadge: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "var(--primary-700)",
-    backgroundColor: "var(--primary-100)",
+    color: "#a5b4fc",
+    backgroundColor: "rgba(99,102,241,0.15)",
     padding: "4px 8px",
     borderRadius: "var(--radius-full)",
     width: "fit-content",
@@ -926,7 +928,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   aiTitle: {
     fontSize: "1.35rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "var(--text-primary)",
     marginTop: "4px",
   },
   aiDesc: {
@@ -983,7 +985,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     maxWidth: "85%",
     padding: "16px 20px",
     borderRadius: "16px 16px 16px 4px",
-    backgroundColor: "var(--surface)",
+    backgroundColor: "var(--surface-2)",
     color: "var(--text-primary)",
     fontSize: "0.95rem",
     lineHeight: 1.6,
@@ -1097,7 +1099,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     alignItems: "center",
     background: "var(--surface)",
-    borderColor: "var(--primary-light)",
+    borderColor: "rgba(99,102,241,0.3)",
     flexWrap: "wrap",
     gap: "24px",
   },
@@ -1113,8 +1115,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   premiumBadge: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "var(--primary-700)",
-    backgroundColor: "var(--primary-100)",
+    color: "#a5b4fc",
+    backgroundColor: "rgba(99,102,241,0.15)",
     padding: "4px 10px",
     borderRadius: "var(--radius-full)",
     width: "fit-content",
@@ -1124,7 +1126,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   premiumBannerTitle: {
     fontSize: "1.35rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "var(--text-primary)",
   },
   premiumBannerDesc: {
     fontSize: "0.95rem",
@@ -1257,14 +1259,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "center",
   },
   topSecurityBanner: {
-    backgroundColor: "var(--primary-50)",
-    border: "1px solid var(--primary-100)",
+    backgroundColor: "rgba(99, 102, 241, 0.06)",
+    border: "1px solid rgba(99, 102, 241, 0.15)",
+    borderLeft: "3px solid rgba(99, 102, 241, 0.5)",
     borderRadius: "var(--radius-sm)",
     padding: "12px 18px",
     fontSize: "0.85rem",
-    color: "var(--primary-700)",
+    color: "var(--text-secondary)",
     lineHeight: 1.4,
-    boxShadow: "var(--shadow-sm)",
   },
   dataCard: {
     padding: "30px 40px",
@@ -1281,9 +1283,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "1.75rem",
   },
   dataAlert: {
-    backgroundColor: "var(--primary-50)",
-    borderLeft: "4px solid var(--primary)",
-    borderRadius: "4px",
+    backgroundColor: "rgba(99, 102, 241, 0.06)",
+    borderLeft: "3px solid rgba(99, 102, 241, 0.5)",
+    borderRadius: "var(--radius-sm)",
     padding: "12px 16px",
     fontSize: "0.85rem",
     color: "var(--text-secondary)",

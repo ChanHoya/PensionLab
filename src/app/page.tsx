@@ -15,6 +15,14 @@ export default function LandingPage() {
     url: "/Pension_Blueprint.pdf",
     title: "서비스 소개",
   });
+  const [activeMenu, setActiveMenu] = useState<"service-intro" | "pension-reform" | "youtube-tips" | null>(null);
+
+  const getNavStyle = (menuId: "service-intro" | "pension-reform" | "youtube-tips") => {
+    return {
+      ...styles.navButtonBase,
+      ...(activeMenu === menuId ? styles.navButtonActive : styles.navButtonInactive),
+    };
+  };
 
   return (
     <>
@@ -26,26 +34,45 @@ export default function LandingPage() {
       {/* Navigation Header */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
-          <Link href="/" style={{ ...styles.logo, textDecoration: "none" }}>
+          <Link
+            href="/"
+            onClick={() => setActiveMenu(null)}
+            style={{ ...styles.logo, textDecoration: "none" }}
+          >
             Pension<span className="gradient-text">Lab</span>
           </Link>
-            <nav style={styles.navLinks}>
-              <button
-                id="btn-service-intro"
-                onClick={() => setPdfConfig({ isOpen: true, url: "/Pension_Blueprint.pdf", title: "서비스 소개" })}
-                style={styles.navButton}
-              >
-                서비스 소개
-              </button>
-              <button
-                id="btn-pension-reform"
-                onClick={() => setPdfConfig({ isOpen: true, url: "/2026_Pension_Reform.pdf", title: "2026 연금 개혁안" })}
-                style={{ ...styles.navItem, background: "none", border: "none", font: "inherit", padding: 0 }}
-              >
-                연금 개혁안 정보
-              </button>
-              <span style={styles.navItem}>유튜브 전문가 팁</span>
-            </nav>
+          <nav style={styles.navLinks}>
+            <button
+              id="btn-service-intro"
+              onClick={() => {
+                setActiveMenu("service-intro");
+                setPdfConfig({ isOpen: true, url: "/Pension_Blueprint.pdf", title: "서비스 소개" });
+              }}
+              style={getNavStyle("service-intro")}
+            >
+              서비스 소개
+            </button>
+            <button
+              id="btn-pension-reform"
+              onClick={() => {
+                setActiveMenu("pension-reform");
+                setPdfConfig({ isOpen: true, url: "/2026_Pension_Reform.pdf", title: "2026 연금 개혁안" });
+              }}
+              style={getNavStyle("pension-reform")}
+            >
+              연금 개혁안 정보
+            </button>
+            <button
+              id="btn-youtube-tips"
+              onClick={() => {
+                setActiveMenu("youtube-tips");
+                alert("유튜브 전문가 팁은 온보딩 완료 후 대시보드의 'AI 연금 Q&A' 코너에서 관련 동영상과 함께 실시간으로 제공됩니다!\n\n우측 상단의 '시작하기' 버튼을 눌러 연금 설계를 시작해 보세요.");
+              }}
+              style={getNavStyle("youtube-tips")}
+            >
+              유튜브 전문가 팁
+            </button>
+          </nav>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <ThemeToggle />
             <Link href="/onboarding" className="premium-button" style={{ padding: "8px 20px", fontSize: "0.9rem" }} id="btn-header-start">
@@ -82,7 +109,10 @@ export default function LandingPage() {
     {/* PDF 서비스 소개 및 연금 개혁안 모달 */}
     <PdfViewerModal
       isOpen={pdfConfig.isOpen}
-      onClose={() => setPdfConfig((prev) => ({ ...prev, isOpen: false }))}
+      onClose={() => {
+        setPdfConfig((prev) => ({ ...prev, isOpen: false }));
+        setActiveMenu(null);
+      }}
       pdfUrl={pdfConfig.url}
       title={pdfConfig.title}
     />
@@ -149,24 +179,32 @@ const styles: { [key: string]: React.CSSProperties } = {
   navLinks: {
     display: "flex",
     gap: "32px",
+    alignItems: "center",
   },
-  navItem: {
+  navButtonBase: {
     fontSize: "0.95rem",
-    fontWeight: 500,
-    color: "var(--text-secondary)",
-    cursor: "pointer",
-    transition: "color var(--transition-fast)",
-  },
-  navButton: {
-    fontSize: "0.95rem",
-    fontWeight: 600,
-    color: "#a5b4fc",
     cursor: "pointer",
     transition: "all 0.15s ease",
-    background: "rgba(99,102,241,0.1)",
-    border: "1px solid rgba(99,102,241,0.25)",
     borderRadius: "6px",
-    padding: "5px 12px",
+    padding: "6px 14px",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    outline: "none",
+    fontFamily: "inherit",
+    boxSizing: "border-box",
+  },
+  navButtonActive: {
+    color: "#a5b4fc",
+    background: "rgba(99, 102, 241, 0.15)",
+    border: "1px solid rgba(99, 102, 241, 0.3)",
+    fontWeight: 600,
+  },
+  navButtonInactive: {
+    color: "var(--text-secondary)",
+    background: "transparent",
+    border: "1px solid transparent",
+    fontWeight: 500,
   },
   heroSection: {
     display: "flex",

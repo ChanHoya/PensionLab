@@ -42,5 +42,9 @@
 - **[Completed]** Story S5-6: Header Logo Alignment & 3-Tier House Chart Integration
   - onboarding/page.tsx & dashboard/page.tsx: Removed outer container top margins and adjusted header paddings to 16px to align the PensionLab logo perfectly in Y-axis across all pages.
   - dashboard/page.tsx: Replaced standard PieChart with a custom HTML/CSS dynamic 3-Tier House Ratio Chart where floor heights scale proportionally based on calculated monthly pension values.
+- **[Completed]** Story S5-7: Header Navigation Highlight State & Alignments Fix
+  - page.tsx: Managed nav item active selections with `activeMenu` state, eliminating initial highlight borders and showing highlight borders/background only when respective modals are open or mock-selected.
+  - page.tsx: Converted "유튜브 전문가 팁" from `span` to `button` and applied flex `alignItems: "center"` to `navLinks` to fix the vertical misalignment of menu items.
+
 
 

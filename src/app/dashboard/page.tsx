@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 import { runPensionSimulation, CashFlowItem } from "@/services/pensionCalculator";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // Dynamic import of Recharts to prevent SSR hydration errors
 import {
@@ -207,7 +208,8 @@ export default function DashboardPage() {
             <Link href="/simulator" style={styles.navItem}>시뮬레이터</Link>
             <Link href="/news" style={styles.navItem}>정책 뉴스</Link>
           </nav>
-          <div style={{ display: "flex", gap: "12px" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <ThemeToggle />
             <Link href="/onboarding" className="premium-button-secondary" style={{ padding: "8px 16px" }} id="btn-re-onboard">
               정보 재입력
             </Link>

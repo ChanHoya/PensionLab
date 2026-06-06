@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const STEPS = [
   { id: 1, title: "국민연금 (1층)", desc: "국민연금 납부 내역 및 예상액" },
@@ -188,7 +189,10 @@ export default function OnboardingPage() {
 
       <header style={styles.header}>
         <h1 style={styles.logo}>Pension<span style={{ color: "var(--secondary)" }}>Lab</span></h1>
-        <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <ThemeToggle />
+          <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
+        </div>
       </header>
 
       {/* Step Tracker (Responsive Sidebar in Desktop, Header in Mobile) */}

@@ -4,14 +4,14 @@ import { NextResponse } from "next/server";
 let cachedToken: string | null = null;
 let tokenExpiresAt: number = 0;
 
-// Provider mapping for Codef loginTypeDetail
-// 1: 카카오톡, 2: 네이버, 3: PASS, 4: 토스, 6: KB국민은행
+// Provider mapping for Codef loginTypeLevel
+// 1: 카카오톡, 4: KB국민은행, 5: 통신사(PASS), 6: 네이버, 8: 토스
 const PROVIDER_DETAIL_MAP: Record<string, string> = {
   kakao: "1",
-  naver: "2",
-  pass: "3",
-  toss: "4",
-  kb: "6",
+  kb: "4",
+  pass: "5",
+  naver: "6",
+  toss: "8",
 };
 
 /**
@@ -56,7 +56,7 @@ async function getCodefAccessToken(clientId: string, clientSecret: string, isDem
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userName, phoneNo, identity, provider, jti, twoWayInfo } = body;
+    const { userName, phoneNo, identity, provider, telecom, jti, twoWayInfo } = body;
 
     const clientId = process.env.CODEF_CLIENT_ID || "";
     const clientSecret = process.env.CODEF_CLIENT_SECRET || "";
@@ -129,6 +129,9 @@ export async function POST(request: Request) {
         identity,
         authMethod: "0",
       };
+      if (detailCode === "5") {
+        payload.telecom = telecom || "0";
+      }
     } else {
       // 2차 요청 페이로드 (추가인증 완료)
       payload = {
@@ -143,6 +146,9 @@ export async function POST(request: Request) {
         jti,
         twoWayInfo,
       };
+      if (detailCode === "5") {
+        payload.telecom = telecom || "0";
+      }
     }
 
     const codefResponse = await fetch(codefUrl, {

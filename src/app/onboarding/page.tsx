@@ -31,6 +31,7 @@ export default function OnboardingPage() {
   const [syncPhone, setSyncPhone] = useState("010-1234-5678");
   const [syncBirth, setSyncBirth] = useState("19800101");
   const [syncProvider, setSyncProvider] = useState("kakao");
+  const [syncTelecom, setSyncTelecom] = useState("0");
   const [verificationPending, setVerificationPending] = useState(false);
   const [jti, setJti] = useState<string | null>(null);
   const [twoWayInfo, setTwoWayInfo] = useState<any>(null);
@@ -51,6 +52,7 @@ export default function OnboardingPage() {
           phoneNo: syncPhone,
           identity: syncBirth,
           provider: syncProvider,
+          telecom: syncProvider === "pass" ? syncTelecom : undefined,
           jti,
           twoWayInfo,
         }),
@@ -653,6 +655,33 @@ export default function OnboardingPage() {
                           <option value="kb">KB국민은행</option>
                         </select>
                       </div>
+
+                      {syncProvider === "pass" && (
+                        <div style={styles.fieldRow} className="animate-fade-in">
+                          <label style={styles.label}>통신사 구분</label>
+                          <select
+                            className="premium-input"
+                            value={syncTelecom}
+                            onChange={(e) => setSyncTelecom(e.target.value)}
+                            disabled={verificationPending || npsSyncing || npsSynced}
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "6px",
+                              backgroundColor: "var(--surface)",
+                              border: "1px solid var(--border)",
+                              color: "var(--text-primary)",
+                              fontFamily: "inherit",
+                              fontSize: "0.95rem",
+                              outline: "none"
+                            }}
+                          >
+                            <option value="0">SKT</option>
+                            <option value="1">KT</option>
+                            <option value="2">LGU+ (알뜰폰 포함)</option>
+                          </select>
+                        </div>
+                      )}
 
                       {npsSyncing ? (
                         <button type="button" className="premium-button" style={{ marginTop: 16, cursor: "not-allowed", width: "100%" }} disabled>

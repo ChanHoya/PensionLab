@@ -50,6 +50,7 @@
 - **Sprint 6**: National Pension Codef API Integration — **COMPLETED**
 - **[Completed]** Story S6-1: Codef 2-Way Easy Authentication Implementation
   - route.ts: Implemented OAuth2 token request with caching and a 2-stage POST handler supporting Codef 2-Way verification with mock mode support.
+  - route.ts: Resolved OAuth token URL to `https://oauth.codef.io/oauth/token`, corrected NPS minwon organization code to `0001`, updated payload parameter to `loginTypeLevel`, and mapped API path to `nps-minwon/my-pension` to ensure real easy auth flows work.
   - onboarding/page.tsx: Added provider dropdown selection and created a controlled interactive UI state machine for smartphone push approval and verification fallback.
 
 

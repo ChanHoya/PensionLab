@@ -24,7 +24,7 @@ async function getCodefAccessToken(clientId: string, clientSecret: string, isDem
     return cachedToken;
   }
 
-  const tokenUrl = isDemo ? "https://development.codef.io/oauth/token" : "https://api.codef.io/oauth/token";
+  const tokenUrl = "https://oauth.codef.io/oauth/token";
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
   const response = await fetch(tokenUrl, {
@@ -33,7 +33,7 @@ async function getCodefAccessToken(clientId: string, clientSecret: string, isDem
       "Content-Type": "application/x-www-form-urlencoded",
       "Authorization": `Basic ${credentials}`,
     },
-    body: "grant_type=client_credentials",
+    body: "grant_type=client_credentials&scope=read",
   });
 
   if (!response.ok) {
@@ -111,8 +111,8 @@ export async function POST(request: Request) {
     // 2. 실제 Codef API 연동 처리
     const accessToken = await getCodefAccessToken(clientId, clientSecret, isDemo);
     const codefUrl = isDemo
-      ? "https://development.codef.io/v1/kr/public/pp/nps/national-pension"
-      : "https://api.codef.io/v1/kr/public/pp/nps/national-pension";
+      ? "https://development.codef.io/v1/kr/public/pp/nps-minwon/my-pension"
+      : "https://api.codef.io/v1/kr/public/pp/nps-minwon/my-pension";
 
     const detailCode = PROVIDER_DETAIL_MAP[provider] || "1";
 
@@ -121,9 +121,9 @@ export async function POST(request: Request) {
     if (!jti) {
       // 1차 요청 페이로드
       payload = {
-        organization: "0007", // 국민연금공단 코드
+        organization: "0001", // 국민연금공단 (nps-minwon 기관코드)
         loginType: "5", // 간편인증 코드
-        loginTypeDetail: detailCode,
+        loginTypeLevel: detailCode, // 간편인증 사업자 구분
         userName,
         phoneNo,
         identity,
@@ -132,9 +132,9 @@ export async function POST(request: Request) {
     } else {
       // 2차 요청 페이로드 (추가인증 완료)
       payload = {
-        organization: "0007",
+        organization: "0001",
         loginType: "5",
-        loginTypeDetail: detailCode,
+        loginTypeLevel: detailCode,
         userName,
         phoneNo,
         identity,
@@ -161,21 +161,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await codefResponse.json();
+    const rawText = await codefResponse.text();
+    let result;
+    try {
+      result = JSON.parse(decodeURIComponent(rawText));
+    } catch (parseError) {
+      try {
+        result = JSON.parse(rawText);
+      } catch (e) {
+        throw new Error(`Codef API 응답 파싱 실패 (Raw: ${rawText.substring(0, 100)}...)`);
+      }
+    }
+
+    const codefResult = result.result || {};
+    const codefCode = codefResult.code || "";
+    const codefMessage = codefResult.message || "";
 
     // Codef 2Way 추가인증이 필요한 상태 코드
-    if (result.code === "CF-03002") {
+    if (codefCode === "CF-03002") {
       return NextResponse.json({
         success: true,
         status: "NEED_VERIFICATION",
-        message: result.message || "추가 인증이 필요합니다.",
+        message: codefMessage || "추가 인증이 필요합니다.",
         jti: result.data.jti,
         twoWayInfo: result.data.twoWayInfo,
       });
     }
 
     // 성공 코드
-    if (result.code === "CF-00000") {
+    if (codefCode === "CF-00000") {
       const apiData = result.data;
 
       // 실제 응답 필드 파싱 및 국민연금 9대 필수 정보 매핑 가공
@@ -211,8 +225,8 @@ export async function POST(request: Request) {
     // 그 외 에러 코드 처리
     return NextResponse.json({
       success: false,
-      message: result.message || "Codef API 조회 오류가 발생했습니다.",
-      code: result.code,
+      message: codefMessage || "Codef API 조회 오류가 발생했습니다.",
+      code: codefCode,
     });
   } catch (error: any) {
     console.error("NPS Sync Error:", error);

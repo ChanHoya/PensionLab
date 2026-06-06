@@ -1,8 +1,21 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 
 // Simple global memory cache for Codef OAuth token
 let cachedToken: string | null = null;
 let tokenExpiresAt: number = 0;
+
+function logToFile(message: string, data?: any) {
+  try {
+    const logPath = path.resolve(process.cwd(), "nps-sync-debug.log");
+    const timestamp = new Date().toISOString();
+    const formattedData = data ? `\nData: ${JSON.stringify(data, null, 2)}` : "";
+    fs.appendFileSync(logPath, `[${timestamp}] ${message}${formattedData}\n---\n`);
+  } catch (err) {
+    console.error("Failed to write to file log:", err);
+  }
+}
 
 // Provider mapping for Codef loginTypeLevel
 // 1: 카카오톡, 2: 네이버, 3: 통신사(PASS), 4: 토스, 6: KB국민은행
@@ -61,7 +74,7 @@ export async function POST(request: Request) {
     const cleanPhoneNo = phoneNo ? phoneNo.replace(/[^0-9]/g, "") : "";
     const cleanIdentity = identity ? identity.replace(/[^0-9]/g, "") : "";
 
-    console.log("▶ [NPS Sync API] Request Received:", {
+    logToFile("▶ [NPS Sync API] Request Received", {
       userName: userName ? `${userName.charAt(0)}*${userName.slice(2)}` : "",
       provider,
       telecom,
@@ -163,7 +176,7 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log("▶ [NPS Sync API] Sending payload to Codef:", {
+    logToFile("▶ [NPS Sync API] Sending payload to Codef", {
       ...payload,
       userName: payload.userName ? `${payload.userName.charAt(0)}*${payload.userName.slice(2)}` : "",
       phoneNo: payload.phoneNo ? "[MASKED]" : undefined,
@@ -202,7 +215,7 @@ export async function POST(request: Request) {
     const codefCode = codefResult.code || "";
     const codefMessage = codefResult.message || "";
 
-    console.log("◀ [NPS Sync API] Codef API Response received:", {
+    logToFile("◀ [NPS Sync API] Codef API Response received", {
       code: codefCode,
       message: codefMessage,
       hasData: !!result.data,
@@ -261,6 +274,10 @@ export async function POST(request: Request) {
       code: codefCode,
     });
   } catch (error: any) {
+    logToFile("🚨 [NPS Sync API] Error occurred", {
+      message: error.message,
+      stack: error.stack
+    });
     console.error("NPS Sync Error:", error);
     return NextResponse.json({
       success: false,

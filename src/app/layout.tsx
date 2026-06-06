@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={outfit.variable}>
+    <html lang="ko" className={outfit.variable} suppressHydrationWarning>
       <body id="pensionlab-root">
         {children}
       </body>

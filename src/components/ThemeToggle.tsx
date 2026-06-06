@@ -9,8 +9,7 @@ export default function ThemeToggle({ style }: { style?: React.CSSProperties }) 
   useEffect(() => {
     setMounted(true);
     const saved = localStorage.getItem("pensionlab_theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const dark = saved === "dark" || (!saved && prefersDark);
+    const dark = saved !== "light"; // 다크 기본값
     setIsDark(dark);
   }, []);
 

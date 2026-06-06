@@ -188,7 +188,7 @@ export default function OnboardingPage() {
       <div style={styles.bgGlow2} />
 
       <header style={styles.header}>
-        <h1 style={styles.logo}>Pension<span style={{ color: "var(--secondary)" }}>Lab</span></h1>
+        <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <ThemeToggle />
           <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
@@ -216,19 +216,22 @@ export default function OnboardingPage() {
                   onClick={() => setCurrentStep(step.id)}
                   style={{
                     ...styles.stepItem,
-                    borderColor: isActive ? "var(--primary-light)" : "transparent",
-                    background: isActive ? "rgba(30, 58, 95, 0.05)" : "transparent",
+                    borderColor: isActive ? "rgba(99, 102, 241, 0.4)" : "transparent",
+                    background: isActive
+                      ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.10) 100%)"
+                      : "transparent",
                   }}
                 >
                   <div
                     style={{
                       ...styles.stepNumber,
-                      backgroundColor: isCompleted
-                        ? "var(--secondary)"
+                      background: isCompleted
+                        ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
                         : isActive
-                        ? "var(--primary)"
-                        : "var(--border)",
-                      color: isActive || isCompleted ? "#ffffff" : "var(--text-secondary)",
+                        ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
+                        : "var(--surface-hover)",
+                      color: isActive || isCompleted ? "#ffffff" : "var(--text-muted)",
+                      boxShadow: (isActive || isCompleted) ? "0 0 12px rgba(99, 102, 241, 0.4)" : "none",
                     }}
                   >
                     {isCompleted ? "✓" : step.id}
@@ -959,22 +962,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflow: "hidden",
   },
   bgGlow1: {
-    position: "absolute",
-    top: "-10%",
+    position: "fixed",
+    top: "-15%",
     left: "-10%",
-    width: "50%",
-    height: "50%",
-    background: "radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(255,255,255,0) 70%)",
+    width: "55%",
+    height: "55%",
+    background: "radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)",
     zIndex: 0,
     pointerEvents: "none",
   },
   bgGlow2: {
-    position: "absolute",
-    bottom: "-10%",
+    position: "fixed",
+    bottom: "-15%",
     right: "-10%",
     width: "60%",
     height: "60%",
-    background: "radial-gradient(circle, rgba(30, 58, 95, 0.08) 0%, rgba(255,255,255,0) 70%)",
+    background: "radial-gradient(circle, rgba(139, 92, 246, 0.10) 0%, transparent 70%)",
     zIndex: 0,
     pointerEvents: "none",
   },
@@ -1008,10 +1011,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-md)",
     padding: "24px",
-    boxShadow: "var(--shadow-md)",
+    boxShadow: "var(--shadow-lg)",
     display: "flex",
     flexDirection: "column",
     height: "fit-content",
+    position: "sticky",
+    top: "80px",
   },
   progressLabel: {
     display: "flex",
@@ -1031,9 +1036,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: "var(--secondary)",
+    background: "linear-gradient(90deg, #6366f1, #8b5cf6)",
     borderRadius: "var(--radius-full)",
     transition: "width var(--transition-normal)",
+    boxShadow: "0 0 8px rgba(99, 102, 241, 0.5)",
   },
   stepList: {
     display: "flex",
@@ -1099,7 +1105,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   formTitle: {
     fontSize: "1.75rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "var(--text-primary)",
     marginTop: "12px",
   },
   formDesc: {

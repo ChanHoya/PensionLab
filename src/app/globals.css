@@ -2,22 +2,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ================================================================
-   PensionLab Design System — ETF Lens Unified Theme
-   Primary: Indigo (#4f46e5 ~ #4338ca)
-   Accent: Orange (#f97316)
-   Background: Gray-50 / White (light) | Slate-950 / Slate-900 (dark)
+   PensionLab — ETF Lens Exact Dark Theme
+   ETF Lens palette extracted from production:
+   BG:      #0d0e1c  (deepest background)
+   Surface: #161728  (card surface)
+   Elevated:#1c1f35  (elevated card)
+   Border:  #2a2d45  (subtle border)
+   Primary: #6366f1 → #8b5cf6 (indigo→violet gradient, ETF Lens nav)
+   Accent:  #f97316  (orange)
 ================================================================ */
 
 :root {
-  /* Indigo Primary Palette (ETF Lens identical) */
+  /* ── Indigo-Violet palette (ETF Lens exact) ── */
   --primary-50:  #eef2ff;
   --primary-100: #e0e7ff;
   --primary-200: #c7d2fe;
   --primary-300: #a5b4fc;
   --primary-400: #818cf8;
-  --primary-500: #6366f1;
-  --primary-600: #4f46e5;  /* main — indigo-600 */
-  --primary-700: #4338ca;  /* hover */
+  --primary-500: #6366f1;   /* ETF Lens active nav glow */
+  --primary-600: #4f46e5;
+  --primary-700: #4338ca;
   --primary-800: #3730a3;
   --primary-900: #312e81;
 
@@ -25,51 +29,55 @@
   --primary-light: var(--primary-500);
   --primary-dark:  var(--primary-700);
 
-  /* Orange Accent */
-  --accent-h: 24;
-  --accent-s: 95%;
-  --accent-l: 53%;
-  --accent:       hsl(var(--accent-h), var(--accent-s), var(--accent-l));   /* #f97316 */
-  --accent-light: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 10%));
-  --accent-dark:  hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 10%));
+  /* Violet (ETF Lens secondary gradient end) */
+  --violet-400: #a78bfa;
+  --violet-500: #8b5cf6;
+  --violet-600: #7c3aed;
 
-  /* Neutral Grays */
-  --background:    #f9fafb;   /* gray-50 */
-  --surface:       #ffffff;
-  --surface-hover: #f3f4f6;   /* gray-100 */
-  --border:        #e5e7eb;   /* gray-200 */
-  --border-light:  #f3f4f6;
-
-  --text-primary:   #111827;  /* gray-900 */
-  --text-secondary: #4b5563;  /* gray-600 */
-  --text-muted:     #9ca3af;  /* gray-400 */
+  /* Orange accent */
+  --accent:       #f97316;
+  --accent-light: #fb923c;
+  --accent-dark:  #ea6c0a;
 
   /* Semantic */
   --success: #10b981;
   --warning: #f59e0b;
   --danger:  #ef4444;
-  --info:    #3b82f6;
+  --info:    #38bdf8;
+
+  /* ── LIGHT MODE (clean, ETF Lens desktop light feel) ── */
+  --background:    #f8faff;
+  --surface:       #ffffff;
+  --surface-2:     #f3f4f6;
+  --surface-hover: #eef0f6;
+  --border:        #e2e5f0;
+  --border-subtle: #f0f2f8;
+
+  --text-primary:   #0f1127;
+  --text-secondary: #4b5563;
+  --text-muted:     #9ca3af;
 
   /* Gradients */
-  --gradient-primary:  linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%);
-  --gradient-accent:   linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
-  --gradient-hero:     linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #818cf8 100%);
+  --gradient-brand:   linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  --gradient-hero:    linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #a78bfa 100%);
 
-  /* Glass / Surface */
-  --glass-bg:     rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(229, 231, 235, 0.8);
-  --glass-shadow: 0 4px 24px rgba(79, 70, 229, 0.06);
-  --glass-blur:   blur(12px);
+  /* Glass */
+  --glass-bg:     rgba(255, 255, 255, 0.90);
+  --glass-border: rgba(99, 102, 241, 0.12);
+  --glass-shadow: 0 4px 24px rgba(79, 70, 229, 0.07);
+  --glass-blur:   blur(16px);
 
   /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
-  --shadow-premium: 0 25px 50px -12px rgba(79, 70, 229, 0.12);
+  --shadow-xs:      0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:      0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+  --shadow-lg:      0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -2px rgba(0,0,0,0.04);
+  --shadow-xl:      0 20px 25px -5px rgba(0,0,0,0.08), 0 10px 10px -5px rgba(0,0,0,0.03);
+  --shadow-brand:   0 4px 24px rgba(99, 102, 241, 0.25);
+  --shadow-premium: 0 25px 50px -12px rgba(79, 70, 229, 0.15);
 
-  /* Border Radius */
+  /* Geometry */
   --radius-xs:   4px;
   --radius-sm:   8px;
   --radius-md:   12px;
@@ -86,35 +94,38 @@
   --transition-slow:   0.4s  cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Dark Mode ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   DARK MODE — ETF Lens exact color extraction
+   ═══════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
-  --background:    #0f172a;   /* slate-950 */
-  --surface:       #1e293b;   /* slate-800 */
-  --surface-hover: #334155;   /* slate-700 */
-  --border:        #334155;
-  --border-light:  #1e293b;
+  /* Backgrounds — ETF Lens layered dark system */
+  --background:    #0d0e1c;   /* page bg — deepest layer */
+  --surface:       #161728;   /* cards, sidebar */
+  --surface-2:     #1c1f35;   /* elevated cards */
+  --surface-hover: #22263d;   /* hover state */
+  --border:        #2a2d45;   /* subtle border */
+  --border-subtle: #1e2138;   /* very subtle */
 
-  --text-primary:   #f1f5f9;  /* slate-100 */
-  --text-secondary: #94a3b8;  /* slate-400 */
-  --text-muted:     #64748b;  /* slate-500 */
+  --text-primary:   #f0f0f8;  /* near white with slight blue */
+  --text-secondary: #9497b8;  /* muted text */
+  --text-muted:     #5c6080;  /* very muted */
 
-  --glass-bg:     rgba(30, 41, 59, 0.85);
-  --glass-border: rgba(51, 65, 85, 0.8);
-  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  /* Dark glass — ETF Lens nav/header style */
+  --glass-bg:     rgba(22, 23, 40, 0.92);
+  --glass-border: rgba(99, 102, 241, 0.15);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.45);
-  --shadow-premium: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  /* Shadows intensified for dark */
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.4);
+  --shadow-md:      0 4px 12px rgba(0,0,0,0.45);
+  --shadow-lg:      0 10px 25px rgba(0,0,0,0.5);
+  --shadow-xl:      0 20px 40px rgba(0,0,0,0.55);
+  --shadow-brand:   0 4px 24px rgba(99, 102, 241, 0.35);
+  --shadow-premium: 0 25px 50px rgba(0,0,0,0.7);
 }
 
 /* ── Global Reset ──────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
+*, *::before, *::after { box-sizing: border-box; padding: 0; margin: 0; }
 
 html {
   font-size: 16px;
@@ -132,11 +143,7 @@ html, body {
   overflow-x: hidden;
 }
 
-body {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+body { display: flex; flex-direction: column; min-height: 100vh; }
 
 /* ── Custom Scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -153,8 +160,10 @@ body {
   from { transform: translateX(24px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
+  50%       { box-shadow: 0 0 24px rgba(99, 102, 241, 0.7); }
 }
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; }
@@ -164,26 +173,31 @@ body {
 .animate-fade-in  { animation: fadeIn  var(--transition-normal) both; }
 .animate-slide-in { animation: slideIn var(--transition-normal) both; }
 
-/* ── Component Classes ─────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   COMPONENT CLASSES
+   ══════════════════════════════════════════════════════════ */
 
-/* Card */
+/* ── Card (ETF Lens panel style) ───────────────────────── */
 .premium-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition:
-    transform var(--transition-normal),
-    box-shadow var(--transition-normal),
-    border-color var(--transition-normal);
+  transition: transform var(--transition-normal),
+              box-shadow var(--transition-normal),
+              border-color var(--transition-normal);
 }
 .premium-card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
-  border-color: var(--primary-200);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+[data-theme="dark"] .premium-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.15);
 }
 
-/* Glass card */
+/* Glass surface (ETF Lens navbar / modal style) */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
@@ -192,7 +206,7 @@ body {
   box-shadow: var(--glass-shadow);
 }
 
-/* Primary Button — Indigo filled */
+/* ── Primary Button — ETF Lens indigo→violet gradient ─── */
 .premium-button {
   display: inline-flex;
   align-items: center;
@@ -200,26 +214,27 @@ body {
   gap: 6px;
   padding: 10px 20px;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   transition: all var(--transition-fast);
-  background: var(--primary-600);
+  background: var(--gradient-brand);
   color: #ffffff;
-  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
   text-decoration: none;
+  white-space: nowrap;
 }
 .premium-button:hover {
-  background: var(--primary-700);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  filter: brightness(1.12);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
   transform: translateY(-1px);
 }
-.premium-button:active { transform: translateY(0); }
+.premium-button:active { transform: translateY(0); filter: brightness(0.98); }
 
-/* Secondary Button — Ghost with border */
+/* ── Secondary Button ───────────────────────────────────── */
 .premium-button-secondary {
   display: inline-flex;
   align-items: center;
@@ -227,110 +242,138 @@ body {
   gap: 6px;
   padding: 10px 20px;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   cursor: pointer;
   transition: all var(--transition-fast);
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--text-secondary);
   text-decoration: none;
+  white-space: nowrap;
 }
 .premium-button-secondary:hover {
-  border-color: var(--primary-300);
-  color: var(--primary-600);
-  background: var(--primary-50);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: var(--primary-400);
+  background: rgba(99, 102, 241, 0.08);
 }
 
-/* Input */
+/* ── Input (ETF Lens dark form field) ───────────────────── */
 .premium-input {
   width: 100%;
   padding: 10px 14px;
   font-family: var(--font-sans);
   font-size: 0.95rem;
   color: var(--text-primary);
-  background: var(--surface);
+  background: var(--surface-2);
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   outline: none;
 }
+.premium-input::placeholder { color: var(--text-muted); }
 .premium-input:focus {
   border-color: var(--primary-500);
-  box-shadow: 0 0 0 3px var(--primary-100);
-}
-[data-theme="dark"] .premium-input:focus {
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  background: var(--surface);
 }
 
-/* Gradient text */
-.gradient-text {
-  background: var(--gradient-hero);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* ── ETF Lens Nav Tab style (active pill) ───────────────── */
+.nav-tab {
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.nav-tab:hover { color: var(--text-primary); background: var(--surface-hover); }
+.nav-tab.active {
+  color: #ffffff;
+  background: var(--gradient-brand);
+  box-shadow: var(--shadow-brand);
+  font-weight: 600;
 }
 
-/* Indigo badge / chip */
+/* ── Badge / Chip ───────────────────────────────────────── */
 .badge-indigo {
   display: inline-flex;
   align-items: center;
-  padding: 4px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--primary-700);
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary-600);
   background: var(--primary-50);
   border: 1px solid var(--primary-200);
   border-radius: var(--radius-full);
 }
 [data-theme="dark"] .badge-indigo {
-  color: var(--primary-300);
-  background: rgba(79, 70, 229, 0.15);
-  border-color: rgba(79, 70, 229, 0.3);
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
-/* Spinner */
+/* ── Alert / Info Box (ETF Lens insight box style) ──────── */
+.alert-info {
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-left: 3px solid var(--primary-500);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+[data-theme="dark"] .alert-info {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.18);
+  border-left-color: var(--primary-400);
+  color: #9da8d4;
+}
+
+/* ── Gradient Text ──────────────────────────────────────── */
+.gradient-text {
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Spinner ────────────────────────────────────────────── */
 .spinner {
-  width: 18px;
-  height: 18px;
+  width: 18px; height: 18px;
   border: 2px solid var(--border);
-  border-top-color: var(--primary-600);
+  border-top-color: var(--primary-500);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
-/* Info alert box — indigo tinted */
-.alert-info {
-  background: var(--primary-50);
-  border: 1px solid var(--primary-100);
-  border-left: 4px solid var(--primary-500);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  font-size: 0.875rem;
-  color: var(--primary-800);
-  line-height: 1.5;
+/* ── Section title divider ──────────────────────────────── */
+.section-divider {
+  display: flex; align-items: center; gap: 16px;
+  color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em; margin: 24px 0;
 }
-[data-theme="dark"] .alert-info {
-  background: rgba(79, 70, 229, 0.08);
-  border-color: rgba(79, 70, 229, 0.15);
-  border-left-color: var(--primary-500);
-  color: var(--primary-300);
+.section-divider::before,
+.section-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
 }
 
-/* ── Print ─────────────────────────────────────────────── */
+/* ── Print ──────────────────────────────────────────────── */
 @media print {
   body { background: #fff !important; color: #000 !important; }
   .no-print { display: none !important; }
   .print-page {
-    page-break-after: always;
-    box-shadow: none !important;
-    border: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    background: transparent !important;
+    page-break-after: always; box-shadow: none !important;
+    border: none !important; padding: 0 !important; margin: 0 !important;
+    width: 100% !important; max-width: 100% !important; background: transparent !important;
   }
   .print-page:last-child { page-break-after: avoid; }
 }

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface NationalPensionState {
   contributionMonths: number;
@@ -78,6 +79,14 @@ interface PensionStore {
   updatePensionInsurance: (id: string, data: Partial<PensionInsuranceState>) => void;
   deletePensionInsurance: (id: string) => void;
   setSimulationParams: (data: Partial<SimulationParamsState>) => void;
+  importStoreData: (data: {
+    nationalPension: NationalPensionState;
+    basicPension: BasicPensionState;
+    retirementPensions: RetirementPensionState[];
+    personalPensions: PersonalPensionSavingsState[];
+    pensionInsurances: PensionInsuranceState[];
+    simulationParams: SimulationParamsState;
+  }) => void;
   resetStore: () => void;
 }
 
@@ -107,98 +116,115 @@ const initialSimulationParams: SimulationParamsState = {
   nationalPensionStartAge: 65,
 };
 
-export const usePensionStore = create<PensionStore>((set) => ({
-  // Initial States
-  nationalPension: initialNationalPension,
-  basicPension: initialBasicPension,
-  retirementPensions: [],
-  personalPensions: [],
-  pensionInsurances: [],
-  simulationParams: initialSimulationParams,
-
-  // Actions
-  setNationalPension: (data) =>
-    set((state) => ({
-      nationalPension: { ...state.nationalPension, ...data },
-    })),
-
-  setBasicPension: (data) =>
-    set((state) => ({
-      basicPension: { ...state.basicPension, ...data },
-    })),
-
-  addRetirementPension: (pension) =>
-    set((state) => ({
-      retirementPensions: [
-        ...state.retirementPensions,
-        { ...pension, id: crypto.randomUUID() },
-      ],
-    })),
-
-  updateRetirementPension: (id, data) =>
-    set((state) => ({
-      retirementPensions: state.retirementPensions.map((p) =>
-        p.id === id ? { ...p, ...data } : p
-      ),
-    })),
-
-  deleteRetirementPension: (id) =>
-    set((state) => ({
-      retirementPensions: state.retirementPensions.filter((p) => p.id !== id),
-    })),
-
-  addPersonalPension: (pension) =>
-    set((state) => ({
-      personalPensions: [
-        ...state.personalPensions,
-        { ...pension, id: crypto.randomUUID() },
-      ],
-    })),
-
-  updatePersonalPension: (id, data) =>
-    set((state) => ({
-      personalPensions: state.personalPensions.map((p) =>
-        p.id === id ? { ...p, ...data } : p
-      ),
-    })),
-
-  deletePersonalPension: (id) =>
-    set((state) => ({
-      personalPensions: state.personalPensions.filter((p) => p.id !== id),
-    })),
-
-  addPensionInsurance: (insurance) =>
-    set((state) => ({
-      pensionInsurances: [
-        ...state.pensionInsurances,
-        { ...insurance, id: crypto.randomUUID() },
-      ],
-    })),
-
-  updatePensionInsurance: (id, data) =>
-    set((state) => ({
-      pensionInsurances: state.pensionInsurances.map((p) =>
-        p.id === id ? { ...p, ...data } : p
-      ),
-    })),
-
-  deletePensionInsurance: (id) =>
-    set((state) => ({
-      pensionInsurances: state.pensionInsurances.filter((p) => p.id !== id),
-    })),
-
-  setSimulationParams: (data) =>
-    set((state) => ({
-      simulationParams: { ...state.simulationParams, ...data },
-    })),
-
-  resetStore: () =>
-    set({
+export const usePensionStore = create<PensionStore>()(
+  persist(
+    (set) => ({
+      // Initial States
       nationalPension: initialNationalPension,
       basicPension: initialBasicPension,
       retirementPensions: [],
       personalPensions: [],
       pensionInsurances: [],
       simulationParams: initialSimulationParams,
+
+      // Actions
+      setNationalPension: (data) =>
+        set((state) => ({
+          nationalPension: { ...state.nationalPension, ...data },
+        })),
+
+      setBasicPension: (data) =>
+        set((state) => ({
+          basicPension: { ...state.basicPension, ...data },
+        })),
+
+      addRetirementPension: (pension) =>
+        set((state) => ({
+          retirementPensions: [
+            ...state.retirementPensions,
+            { ...pension, id: crypto.randomUUID() },
+          ],
+        })),
+
+      updateRetirementPension: (id, data) =>
+        set((state) => ({
+          retirementPensions: state.retirementPensions.map((p) =>
+            p.id === id ? { ...p, ...data } : p
+          ),
+        })),
+
+      deleteRetirementPension: (id) =>
+        set((state) => ({
+          retirementPensions: state.retirementPensions.filter((p) => p.id !== id),
+        })),
+
+      addPersonalPension: (pension) =>
+        set((state) => ({
+          personalPensions: [
+            ...state.personalPensions,
+            { ...pension, id: crypto.randomUUID() },
+          ],
+        })),
+
+      updatePersonalPension: (id, data) =>
+        set((state) => ({
+          personalPensions: state.personalPensions.map((p) =>
+            p.id === id ? { ...p, ...data } : p
+          ),
+        })),
+
+      deletePersonalPension: (id) =>
+        set((state) => ({
+          personalPensions: state.personalPensions.filter((p) => p.id !== id),
+        })),
+
+      addPensionInsurance: (insurance) =>
+        set((state) => ({
+          pensionInsurances: [
+            ...state.pensionInsurances,
+            { ...insurance, id: crypto.randomUUID() },
+          ],
+        })),
+
+      updatePensionInsurance: (id, data) =>
+        set((state) => ({
+          pensionInsurances: state.pensionInsurances.map((p) =>
+            p.id === id ? { ...p, ...data } : p
+          ),
+        })),
+
+      deletePensionInsurance: (id) =>
+        set((state) => ({
+          pensionInsurances: state.pensionInsurances.filter((p) => p.id !== id),
+        })),
+
+      setSimulationParams: (data) =>
+        set((state) => ({
+          simulationParams: { ...state.simulationParams, ...data },
+        })),
+
+      importStoreData: (data) =>
+        set({
+          nationalPension: data.nationalPension || initialNationalPension,
+          basicPension: data.basicPension || initialBasicPension,
+          retirementPensions: data.retirementPensions || [],
+          personalPensions: data.personalPensions || [],
+          pensionInsurances: data.pensionInsurances || [],
+          simulationParams: data.simulationParams || initialSimulationParams,
+        }),
+
+      resetStore: () =>
+        set({
+          nationalPension: initialNationalPension,
+          basicPension: initialBasicPension,
+          retirementPensions: [],
+          personalPensions: [],
+          pensionInsurances: [],
+          simulationParams: initialSimulationParams,
+        }),
     }),
-}));
+    {
+      name: "pensionlab-store",
+    }
+  )
+);

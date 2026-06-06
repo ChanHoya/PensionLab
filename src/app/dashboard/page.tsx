@@ -51,6 +51,51 @@ export default function DashboardPage() {
     }, 1500);
   };
 
+  const handleExportData = () => {
+    const data = {
+      nationalPension: store.nationalPension,
+      basicPension: store.basicPension,
+      retirementPensions: store.retirementPensions,
+      personalPensions: store.personalPensions,
+      pensionInsurances: store.pensionInsurances,
+      simulationParams: store.simulationParams,
+    };
+    const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+      JSON.stringify(data, null, 2)
+    )}`;
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", jsonString);
+    downloadAnchor.setAttribute("download", `pensionlab_backup_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    if (e.target.files && e.target.files[0]) {
+      fileReader.readAsText(e.target.files[0], "UTF-8");
+      fileReader.onload = (event) => {
+        try {
+          const parsedData = JSON.parse(event.target?.result as string);
+          if (
+            parsedData.nationalPension &&
+            parsedData.basicPension &&
+            parsedData.simulationParams
+          ) {
+            store.importStoreData(parsedData);
+            alert("성공적으로 은퇴 설계 데이터를 복원했습니다!");
+          } else {
+            alert("올바르지 않은 백업 파일 형식입니다.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("파일 읽기 도중 오류가 발생했습니다.");
+        }
+      };
+    }
+  };
+
   const handleAskAI = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim() || aiLoading) return;
@@ -183,6 +228,11 @@ export default function DashboardPage() {
       </header>
 
       <div style={styles.contentBody}>
+        {/* Local Security & Caching Banner */}
+        <div style={styles.topSecurityBanner} className="premium-card animate-fade-in">
+          <span>🔒 <strong>개인정보 안심 보장</strong>: 회원님의 소중한 은퇴 설계 정보는 서버에 전송/저장되지 않으며, 오직 웹 브라우저(LocalStorage)에만 안전하게 보관되므로 유출 걱정 없이 안심하고 이용해 주세요.</span>
+        </div>
+
         {/* Row 1: KPI Summary */}
         <section style={styles.kpiRow} className="animate-fade-in">
           {/* Card 1 */}
@@ -366,6 +416,50 @@ export default function DashboardPage() {
                 value={store.simulationParams.inflationRate}
                 onChange={(e) => store.setSimulationParams({ inflationRate: Number(e.target.value) })}
                 style={styles.sliderRange}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Row 3.2: Local Data Portability Card */}
+        <section style={styles.dataCard} className="premium-card animate-fade-in">
+          <div style={styles.dataHeader}>
+            <div style={styles.dataTitleIcon}>💾</div>
+            <div>
+              <h3 style={styles.chartTitle}>로컬 데이터 관리 및 이전</h3>
+              <p style={styles.chartSubtitle}>기기 간 은퇴 설계 데이터 내보내기 및 가져오기</p>
+            </div>
+          </div>
+          
+          <div style={styles.dataAlert}>
+            🔒 <strong>개인정보 안심 정책</strong>: 본 서비스는 회원님의 은퇴 설계 데이터를 서버 데이터베이스에 수집하지 않으며, 오직 현재 기기의 브라우저(LocalStorage)에만 안전하게 보관합니다. 다른 PC나 모바일 기기에서 이어서 사용하시려면 아래 내보내기/가져오기 기능을 사용해 주세요.
+          </div>
+
+          <div style={styles.dataActions}>
+            <button
+              id="btn-export-data"
+              onClick={handleExportData}
+              className="premium-button"
+              style={{ background: "var(--gradient-primary)", padding: "10px 20px" }}
+            >
+              📤 내 설계 데이터 백업 (JSON 다운로드)
+            </button>
+            
+            <div style={{ display: "inline-block", position: "relative" }}>
+              <button
+                id="btn-import-data"
+                onClick={() => document.getElementById("input-file-import")?.click()}
+                className="premium-button-secondary"
+                style={{ padding: "10px 20px" }}
+              >
+                📥 백업 데이터 복원 (JSON 업로드)
+              </button>
+              <input
+                type="file"
+                id="input-file-import"
+                accept=".json"
+                onChange={handleImportData}
+                style={{ display: "none" }}
               />
             </div>
           </div>
@@ -1159,5 +1253,43 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  },
+  topSecurityBanner: {
+    backgroundColor: "rgba(16, 185, 129, 0.06)",
+    border: "1px solid rgba(16, 185, 129, 0.15)",
+    borderRadius: "var(--radius-sm)",
+    padding: "12px 18px",
+    fontSize: "0.85rem",
+    color: "var(--secondary-dark)",
+    lineHeight: 1.4,
+    boxShadow: "var(--shadow-sm)",
+  },
+  dataCard: {
+    padding: "30px 40px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "20px",
+  },
+  dataHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+  },
+  dataTitleIcon: {
+    fontSize: "1.75rem",
+  },
+  dataAlert: {
+    backgroundColor: "rgba(59, 130, 246, 0.06)",
+    borderLeft: "4px solid var(--info)",
+    borderRadius: "4px",
+    padding: "12px 16px",
+    fontSize: "0.85rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.5,
+  },
+  dataActions: {
+    display: "flex",
+    gap: "16px",
+    flexWrap: "wrap",
   },
 };

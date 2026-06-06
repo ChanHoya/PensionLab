@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 
@@ -18,6 +18,11 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [nationalInputMode, setNationalInputMode] = useState<"SIMPLE" | "DETAILED" | "SYNC">("SIMPLE");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // NPS Codef Mock Sync States
   const [npsSyncing, setNpsSyncing] = useState(false);
@@ -166,6 +171,15 @@ export default function OnboardingPage() {
     }
   };
 
+  if (!isMounted) {
+    return (
+      <div style={styles.loadingContainer}>
+        <div style={styles.spinner} />
+        <p style={{ marginTop: 16, color: "var(--text-secondary)" }}>연금 설계 마법사를 준비하는 중...</p>
+      </div>
+    );
+  }
+
   return (
     <main style={styles.container}>
       {/* Background decoration */}
@@ -233,6 +247,11 @@ export default function OnboardingPage() {
             <span style={styles.stepBadge}>STEP {currentStep}</span>
             <h2 style={styles.formTitle}>{STEPS[currentStep - 1].title}</h2>
             <p style={styles.formDesc}>{STEPS[currentStep - 1].desc}</p>
+          </div>
+
+          {/* Privacy/Local Caching Notice Banner */}
+          <div style={styles.privacyNoticeBanner}>
+            <span>🔒 <strong>개인정보 안심 보장</strong>: 입력하신 모든 연금 설계 정보는 서버에 저장되지 않고 현재 기기(브라우저)에만 안전하게 보관되므로 안심하고 입력해 주세요.</span>
           </div>
 
           <div style={styles.formBody}>
@@ -1295,5 +1314,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderTop: "2px solid var(--primary)",
     borderRadius: "50%",
     animation: "pulse-subtle 1s infinite linear",
+  },
+  privacyNoticeBanner: {
+    backgroundColor: "rgba(16, 185, 129, 0.08)",
+    border: "1px solid rgba(16, 185, 129, 0.2)",
+    borderRadius: "var(--radius-sm)",
+    padding: "12px 16px",
+    marginBottom: "24px",
+    fontSize: "0.85rem",
+    color: "var(--secondary-dark)",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    lineHeight: 1.4,
   },
 };

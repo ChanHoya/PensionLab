@@ -61,6 +61,15 @@ export async function POST(request: Request) {
     const cleanPhoneNo = phoneNo ? phoneNo.replace(/[^0-9]/g, "") : "";
     const cleanIdentity = identity ? identity.replace(/[^0-9]/g, "") : "";
 
+    console.log("▶ [NPS Sync API] Request Received:", {
+      userName: userName ? `${userName.charAt(0)}*${userName.slice(2)}` : "",
+      provider,
+      telecom,
+      hasJti: !!jti,
+      hasPhone: !!phoneNo,
+      hasIdentity: !!identity
+    });
+
     const clientId = process.env.CODEF_CLIENT_ID || "";
     const clientSecret = process.env.CODEF_CLIENT_SECRET || "";
     const apiMode = process.env.CODEF_API_MODE || "development";
@@ -154,6 +163,13 @@ export async function POST(request: Request) {
       }
     }
 
+    console.log("▶ [NPS Sync API] Sending payload to Codef:", {
+      ...payload,
+      userName: payload.userName ? `${payload.userName.charAt(0)}*${payload.userName.slice(2)}` : "",
+      phoneNo: payload.phoneNo ? "[MASKED]" : undefined,
+      identity: payload.identity ? "[MASKED]" : undefined
+    });
+
     const codefResponse = await fetch(codefUrl, {
       method: "POST",
       headers: {
@@ -185,6 +201,13 @@ export async function POST(request: Request) {
     const codefResult = result.result || {};
     const codefCode = codefResult.code || "";
     const codefMessage = codefResult.message || "";
+
+    console.log("◀ [NPS Sync API] Codef API Response received:", {
+      code: codefCode,
+      message: codefMessage,
+      hasData: !!result.data,
+      dataKeys: result.data ? Object.keys(result.data) : []
+    });
 
     // Codef 2Way 추가인증이 필요한 상태 코드
     if (codefCode === "CF-03002") {

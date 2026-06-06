@@ -31,4 +31,9 @@
   - page.tsx: Deleted "무료로 3층 연금 설계하기" CTA button and all content elements below it (Stats Row, Features Grid, Trust Card, and Footer) to simplify the viewport.
   - page.tsx: Added a white frame card container (diagramContainer) with 20px rounding, border, and drop-shadow under the slogan to display the 3-tier structure diagram (pension_structure.png).
   - page.tsx: Cleaned up and removed all unused styling objects in the styles constant.
+- **[Completed]** Story S5-4: Viewport Optimization for Hero Section
+  - page.tsx: Removed the "2026 국민연금 개혁안 공식 반영" badge box to save vertical space.
+  - page.tsx: Shrunk heroTitle font size (from 3.5rem to 2.5rem) and margins, and heroSubtitle font size (from 1.15rem to 1rem) and margins.
+  - page.tsx: Decreased padding in heroSection (to 32px 20px 16px 20px) and margin/padding in diagramContainer (to 16px padding, 40px margin) to fit the diagram image perfectly in a single viewport.
+  - page.tsx: Safely removed the unused badge styling property from the styles object.
 

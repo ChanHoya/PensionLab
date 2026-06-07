@@ -97,7 +97,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
     if (genAI) {
       try {
         const model = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash",
+          model: "gemini-3.5-flash",
           systemInstruction: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다. 사용자의 질문에 대해 분석적이고 전문적인 견해를 제시합니다.",
         });
 

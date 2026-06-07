@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
           // 3. Generate answer grounded in context
           if (genAI) {
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
             const prompt = `당신은 대한민국 3층 연금 설계 분야의 최고 권위자입니다. 제공된 동영상 자막 자료(참고자료)에 철저히 기반하여 사용자 질문에 정중하게 답변해 주세요. 지침에 없는 내용은 임의로 상상하지 마시고, 인용된 영상 제목과 채널명을 언급해 주세요.\n\n[참고자료]\n${contextText}\n\n[질문]\n${question}`;
             const result = await model.generateContent(prompt);
             answer = result.response.text();

@@ -242,10 +242,10 @@ export default function AIAdvisorPage() {
       <div style={styles.contentBody}>
         {/* Title and Intro */}
         <section style={styles.titleSection} className="animate-fade-in">
-          <span style={styles.badge}>Gemini 2.0 Flash Reasoning Advisor</span>
+          <span style={styles.badge}>Gemini 3.5 Flash Reasoning Advisor</span>
           <h2 style={styles.pageTitle}>AI 은퇴 자산 진단 & 리밸런싱 처방</h2>
           <p style={styles.pageSubtitle}>
-            구글의 최신 초거대 AI <strong>Gemini 2.0 Flash</strong>를 통해 회원님의 3층 연금 및 개인 자산을 입체적으로 분석하고 맞춤형 리밸런싱 전략을 도출합니다.
+            구글의 최신 초거대 AI <strong>Gemini 3.5 Flash</strong>를 통해 회원님의 3층 연금 및 개인 자산을 입체적으로 분석하고 맞춤형 리밸런싱 전략을 도출합니다.
           </p>
         </section>
 
@@ -322,7 +322,7 @@ export default function AIAdvisorPage() {
               AI 추론 엔진 가동 중 (Thinking...)
             </h4>
             <p style={{ marginTop: "8px", color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center", maxWidth: "450px", lineHeight: 1.5 }}>
-              Gemini 2.0 Flash 모델이 3층 연금 구조, 은퇴 크레바스 기간 분석, 리밸런싱 포트폴리오 및 연금별 인출 순서 세제 효율성을 입체적으로 추론하고 있습니다. 잠시만 기다려주세요.
+              Gemini 3.5 Flash 모델이 3층 연금 구조, 은퇴 크레바스 기간 분석, 리밸런싱 포트폴리오 및 연금별 인출 순서 세제 효율성을 입체적으로 추론하고 있습니다. 잠시만 기다려주세요.
             </p>
           </div>
         )}
@@ -363,7 +363,7 @@ export default function AIAdvisorPage() {
                 <div>
                   <h3 style={styles.prescriptionTitle}>AI 연금 리밸런싱 종합 처방전</h3>
                   <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                    본 진단은 입력된 자산을 기초로 한 Gemini 2.0 Flash AI의 모델 시뮬레이션 제안서입니다.
+                    본 진단은 입력된 자산을 기초로 한 Gemini 3.5 Flash AI의 모델 시뮬레이션 제안서입니다.
                   </p>
                 </div>
               </div>

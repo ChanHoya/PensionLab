@@ -122,7 +122,7 @@ async function getSummary(title, transcript) {
   
   if (genAI) {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
       const prompt = `당신은 은퇴 설계 및 다층 연금 전문가입니다. 제공되는 유튜브 자막 내용을 분석하여 2~3문장의 핵심 요약(핵심 제안 포함)을 작성해 주세요.\n\n제목: ${title}\n자막: ${transcript}`;
       const result = await model.generateContent(prompt);
       return result.response.text().trim();

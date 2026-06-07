@@ -245,6 +245,7 @@ export default function DashboardPage() {
           </Link>
           <nav style={styles.navLinks}>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>대시보드</span>
+            <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI 포트폴리오 처방</Link>
             <Link href="/simulator" style={styles.navItem}>시뮬레이터</Link>
             <Link href="/news" style={styles.navItem}>정책 뉴스</Link>
           </nav>

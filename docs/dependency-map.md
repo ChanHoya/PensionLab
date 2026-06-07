@@ -32,4 +32,10 @@ graph TD
   Report --> Calculator
   OnboardingUI --> NPSSyncAPI[src/app/api/pension/nps-sync/route.ts]
   OnboardingUI --> FSSSyncAPI[src/app/api/pension/fss-sync/route.ts]
+
+  %% MiniMax AI Advisor (Sprint 12 / MiniMax Integration)
+  Dashboard --> AIAdvisor[src/app/dashboard/ai-advisor/page.tsx]
+  AIAdvisor --> Store
+  AIAdvisor --> Calculator
+  AIAdvisor --> AIAdvisorAPI[src/app/api/ai/advisor/route.ts]
 ```

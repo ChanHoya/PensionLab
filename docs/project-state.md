@@ -20,12 +20,12 @@
 - **[Completed]** Sprint 9: 데이터 저장 트랜잭션 안정화 & 대시보드 시각화 색상/필터 최적화.
 - **[Completed]** Sprint 10: 온보딩 Step 0 개인/가족/지출 정보 신설 및 대시보드 범례/차트 UX 고도화.
 - **[Completed]** Sprint 11: 활동기 집중형(체감식) 은퇴 연금 인출전략 도입 및 대시보드 차트 레이아웃 2차 고도화.
+- **[Completed]** Sprint 12: MiniMax M3 모델 API 연동 및 은퇴 자산 포트폴리오 진단/연금 리밸런싱 처방 기능 개발.
 
 ## Active Sprint / Story
-- **Sprint 11**: 활동기 집중형(체감식) 은퇴 연금 인출전략 도입 및 대시보드 차트 레이아웃 2차 고도화 — **COMPLETED**
-  - **[Story S11-1]** [Completed] `pensionCalculator.ts` 및 Zustand/Prisma 스토어에 체감식 인출 방식(`decumulationStrategy`) 추가 및 DB 마이그레이션 연동
-  - **[Story S11-2]** [Completed] 대시보드 매개변수 조정 영역에 은퇴 인출 전략 토글 제어 컴포넌트 추가 및 체감식 인출 가이드(Spending Smile) 적용
-  - **[Story S11-3]** [Completed] 대시보드 좌우 차트 영역의 세로 크기를 2차 확대(330px ➔ 380px)하고 우측 차트 범례 마진 조정을 통한 레이아웃 밸런스 최적화
-  - **[Story S11-4]** [Completed] 리포트 페이지 및 PDF 시뮬레이션 계산식/차트 영역에 `decumulationStrategy` 값 연동 및 렌더링 동기화
-  - **[Story S11-5]** [Completed] 리포트 페이지 텍스트/범례 폰트 색상을 어두운 검정으로 변경하여 시인성을 극대화하고, AI API 장애 시 로컬 DB 키워드 매칭으로 자동 Fallback하는 RAG 강건성 보강
+- **Sprint 12**: MiniMax M3 모델 API 연동 및 은퇴 자산 포트폴리오 진단/연금 리밸런싱 처방 기능 개발 — **COMPLETED**
+  - **[Story S12-1]** [Completed] MiniMax M3 모델 OpenAI SDK 호환 API 연동 구현 (`src/app/api/ai/advisor/route.ts`)
+  - **[Story S12-2]** [Completed] 대시보드 헤더 메뉴 링크 연동 및 글래스모피즘 기반 AI Advisor UI 페이지 (`src/app/dashboard/ai-advisor/page.tsx`) 구축
+  - **[Story S12-3]** [Completed] MiniMax M3의 고성능 Reasoning 사고 과정(Thinking) 파싱 및 클라이언트 아코디언 렌더링 구현
+  - **[Story S12-4]** [Completed] 로컬 개발 서버 환경 동작 및 렌더링 검증 완료 (TypeScript 빌드 이상 무)
 

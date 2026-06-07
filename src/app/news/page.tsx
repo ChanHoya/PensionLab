@@ -107,7 +107,7 @@ const youtubeArticles: Article[] = [
     date: "2026-06-01",
     author: "연금박사 이재백",
     image: "📺",
-    content: "https://www.youtube.com/watch?v=F3P_8GjD5E8"
+    content: "https://www.youtube.com/watch?v=5FpxK-XmRzY"
   },
   {
     id: "yt-2",
@@ -117,7 +117,7 @@ const youtubeArticles: Article[] = [
     date: "2026-05-28",
     author: "박곰희TV",
     image: "📺",
-    content: "https://www.youtube.com/watch?v=p1hD1d-Q_3g"
+    content: "https://www.youtube.com/watch?v=gQ6vLlhNkiE"
   }
 ];
 
@@ -145,7 +145,7 @@ export default function PolicyNewsPage() {
       } catch (err) {
         console.error("Failed to load real-time news, using mock data:", err);
       }
-      setArticles(mockArticles);
+      setArticles([]);
       setLoading(false);
     }
     
@@ -161,8 +161,12 @@ export default function PolicyNewsPage() {
     );
   }
 
-  // Combine real/mock news with Youtube video recommendations at the end
-  const allArticles = [...articles, ...youtubeArticles];
+  // Combine real-time API news with original mock guide articles (avoiding duplicate titles)
+  const uniqueMockArticles = mockArticles.filter(
+    (mockArt) => !articles.some((realArt) => realArt.title.replace(/\s/g, "") === mockArt.title.replace(/\s/g, ""))
+  );
+
+  const allArticles = [...articles, ...uniqueMockArticles, ...youtubeArticles];
 
   const filteredArticles = selectedCategory === "ALL"
     ? allArticles
@@ -250,7 +254,11 @@ export default function PolicyNewsPage() {
                 onClick={() => handleArticleClick(art)}
                 style={{
                   ...styles.newsCard,
-                  border: art.id.startsWith("yt-") ? "1px dashed rgba(239, 68, 68, 0.4)" : "1px solid var(--border)",
+                  border: art.id.startsWith("yt-") 
+                    ? "1px dashed rgba(239, 68, 68, 0.4)" 
+                    : art.id.startsWith("real-")
+                      ? "1px solid rgba(99, 102, 241, 0.4)"
+                      : "1px solid var(--border)",
                   position: "relative",
                   overflow: "hidden"
                 }}
@@ -271,13 +279,28 @@ export default function PolicyNewsPage() {
                     YOUTUBE 추천
                   </div>
                 )}
+                {art.id.startsWith("real-") && (
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    backgroundColor: "#4f46e5",
+                    color: "#ffffff",
+                    fontSize: "0.6rem",
+                    fontWeight: 800,
+                    padding: "3px 8px",
+                    borderBottomLeftRadius: "var(--radius-sm)"
+                  }}>
+                    실시간 정책
+                  </div>
+                )}
                 <div style={styles.cardHeader}>
                   <span style={styles.cardImage}>{art.image}</span>
                   <span style={{
                     ...styles.cardBadge,
-                    color: art.id.startsWith("yt-") ? "#fca5a5" : "var(--primary-light)",
-                    backgroundColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.08)" : "rgba(99,102,241,0.08)",
-                    borderColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.2)" : "rgba(99,102,241,0.15)"
+                    color: art.id.startsWith("yt-") ? "#fca5a5" : art.id.startsWith("real-") ? "#a5b4fc" : "var(--primary-light)",
+                    backgroundColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.08)" : art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.08)" : "rgba(99,102,241,0.08)",
+                    borderColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.2)" : art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.2)" : "rgba(99,102,241,0.15)"
                   }}>{art.category}</span>
                 </div>
                 <h3 style={styles.cardTitle}>{art.title}</h3>

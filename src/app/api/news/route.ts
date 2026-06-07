@@ -34,6 +34,25 @@ export async function GET() {
         let category: "국민·기초연금" | "퇴직·개인연금" | "자산관리" = "자산관리";
         const combinedText = (title + " " + description).toLowerCase();
         
+        // 1. Strict pension/retirement related keyword check
+        const isTargetTheme = 
+          combinedText.includes("연금") || 
+          combinedText.includes("irp") || 
+          combinedText.includes("세액공제") ||
+          combinedText.includes("은퇴") ||
+          combinedText.includes("노후") ||
+          combinedText.includes("상속") ||
+          combinedText.includes("증여") ||
+          combinedText.includes("자산관리") ||
+          combinedText.includes("자산 관리") ||
+          combinedText.includes("디폴트옵션") ||
+          combinedText.includes("디폴트 옵션") ||
+          combinedText.includes("고령");
+          
+        if (!isTargetTheme) {
+          continue; // Skip unrelated general policy news
+        }
+        
         if (
           combinedText.includes("국민연금") || 
           combinedText.includes("기초연금") || 

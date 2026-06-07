@@ -22,12 +22,11 @@
 - **[Completed]** Sprint 11: 활동기 집중형(체감식) 은퇴 연금 인출전략 도입 및 대시보드 차트 레이아웃 2차 고도화.
 - **[Completed]** Sprint 12: Gemini 2.0 Flash 단일 모델 API 연동 및 은퇴 자산 포트폴리오 진단/연금 리밸런싱 처방 기능 개발, 404 라우트 구현 및 DB 풀링 최적화.
 - **[Completed]** Sprint 13: 시뮬레이터 차트 및 레이아웃 복구, Gemini API 진단 디버깅 최적화, 대한민국 정책브리핑 RSS 실시간 뉴스 연동 및 유튜브 가이드 카드 추가 배치 완료, Gemini 3.5 Flash 최신 모델 마이그레이션.
+- **[Completed]** Sprint 15: 대시보드 리포트 결제/배너 UI 제거, 은퇴 진단 종합 리포트 및 시각 차트 요소를 AI 포트폴리오 처방(AI Advisor) 페이지 내로 통합, html2canvas & jsPDF 연동 처방전 PDF 다운로드 기능 탑재.
 
 ## Active Sprint / Story
-- **Sprint 13**: 시뮬레이터 UI 복구, Gemini 진단 에러 디버그 노출 및 정책 뉴스 실시간 연동 & 유튜브 연계 — **COMPLETED**
-  - **[Story S13-1]** [Completed] 시뮬레이터 페이지 Recharts ResponsiveContainer 높이 붕괴 수정 및 설명글 겹침 현상 해결
-  - **[Story S13-2]** [Completed] 좌/우측 카드 타이틀의 수평 정렬 일치화를 위한 대칭형 `chartTitleContainer` 헤더 구조 적용
-  - **[Story S13-3]** [Completed] Gemini API key 에러 발생 시 구체적인 디버깅 예외 로그를 클라이언트 `thinking` 최상단에 바인딩하여 진단성 강화
-  - **[Story S13-4]** [Completed] 대한민국 정책브리핑 RSS 실시간 뉴스 수집 API (`/api/news`) 구현 및 HTML 정제 가공
-  - **[Story S13-5]** [Completed] 뉴스 상세 모달 내 정책 포털 아웃링크("정책 원문 보기 ➔") 탑재 및 유튜브 전문가 추천 아웃링크 카드 신설
-  - **[Story S13-6]** [Completed] Gemini API의 gemini-2.0-flash 모델 만료에 따른 gemini-3.5-flash 모델 마이그레이션 및 UI 브랜드 교체
+- **Sprint 15**: AI 정밀 처방전 대시보드 시각화 차트 통합 및 PDF 다운로드 기능 개발 — **COMPLETED**
+  - **[Story S15-1]** [Completed] 대시보드(`src/app/dashboard/page.tsx`) 내 프리미엄 리포트 진입 배너 및 Toss Payments 모달 결제창 UI 완전 제거
+  - **[Story S15-2]** [Completed] AI 처방 화면(`src/app/dashboard/ai-advisor/page.tsx`) 내에 은퇴 분석 리포트(PieChart, AreaChart, 등급, 국민연금 개혁 영향 분석) 요소 완전 병합/통합
+  - **[Story S15-3]** [Completed] cdn을 활용한 html2canvas & jsPDF 동적 스크립트 인젝트 및 정밀 처방 보고서 A4 규격 PDF 다운로드 로직 완비
+  - **[Story S15-4]** [Completed] 구형 `/dashboard/report` 라우트 폴더 영구 삭제 및 빌드 무결성 복구

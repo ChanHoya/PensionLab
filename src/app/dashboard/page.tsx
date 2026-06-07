@@ -79,21 +79,7 @@ export default function DashboardPage() {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
 
-  // Toss Payments Checkout States
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [payMethod, setPayMethod] = useState<"tosspay" | "card" | "transfer">("tosspay");
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  const handleMockPayment = () => {
-    setPaymentProcessing(true);
-    setTimeout(() => {
-      setPaymentProcessing(false);
-      setShowCheckoutModal(false);
-      const orderId = `order_${Date.now()}`;
-      const paymentKey = `mock_pay_${Math.random().toString(36).substring(2, 11)}`;
-      router.push(`/dashboard/report?orderId=${orderId}&paymentKey=${paymentKey}&amount=5000`);
-    }, 1500);
-  };
 
   const handleExportData = () => {
     const data = {
@@ -695,26 +681,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Row 3.5: Premium Report Banner */}
-        <section style={styles.premiumBannerCard} className="premium-card animate-fade-in">
-          <div style={styles.premiumBannerLeft}>
-            <span style={styles.premiumBadge}>Report Service</span>
-            <h3 style={styles.premiumBannerTitle}>AI 은퇴 진단 및 정밀 처방 보고서</h3>
-            <p style={styles.premiumBannerDesc}>
-              현재 시뮬레이션 데이터와 AI 전문가 소견을 종합하여 인쇄 및 PDF 저장에 최적화된 은퇴 처방 보고서를 즉시 무료로 확인합니다.
-            </p>
-          </div>
-          <div style={styles.premiumBannerRight}>
-            <button
-              id="btn-trigger-checkout"
-              className="premium-button"
-              style={{ padding: "14px 28px" }}
-              onClick={() => router.push("/dashboard/report")}
-            >
-              📊 처방 보고서 바로보기
-            </button>
-          </div>
-        </section>
+
 
         {/* Row 4: AI RAG Q&A Chat */}
         <section style={styles.aiCard} className="premium-card">
@@ -849,104 +816,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Toss Payments Mock Checkout Modal */}
-      {showCheckoutModal && (
-        <div style={styles.modalOverlay} onClick={() => setShowCheckoutModal(false)} className="animate-fade-in">
-          <div style={styles.checkoutModal} onClick={(e) => e.stopPropagation()}>
-            {/* Toss Header */}
-            <div style={styles.tossHeader}>
-              <div style={styles.tossLogo}>toss payments</div>
-              <button style={styles.tossClose} onClick={() => setShowCheckoutModal(false)}>✕</button>
-            </div>
-            
-            {/* Checkout Body */}
-            <div style={styles.tossBody}>
-              <div style={styles.tossOrderSummary}>
-                <span style={styles.tossOrderLabel}>결제할 상품</span>
-                <span style={styles.tossOrderName}>PensionLab AI 은퇴 정밀 처방 보고서</span>
-                <div style={styles.tossPriceRow}>
-                  <span style={styles.tossPriceLabel}>결제 금액</span>
-                  <span style={styles.tossPrice}>5,000 원</span>
-                </div>
-              </div>
-
-              {/* Payment Methods */}
-              <div style={styles.tossSectionTitle}>결제 수단 선택</div>
-              <div style={styles.tossMethods}>
-                <button
-                  type="button"
-                  style={{
-                    ...styles.tossMethodBtn,
-                    borderColor: payMethod === "tosspay" ? "#0050ff" : "var(--border)",
-                    backgroundColor: payMethod === "tosspay" ? "rgba(0, 80, 255, 0.05)" : "var(--surface)",
-                    color: payMethod === "tosspay" ? "#0050ff" : "var(--text-primary)",
-                  }}
-                  onClick={() => setPayMethod("tosspay")}
-                >
-                  🔵 토스페이
-                </button>
-                <button
-                  type="button"
-                  style={{
-                    ...styles.tossMethodBtn,
-                    borderColor: payMethod === "card" ? "#0050ff" : "var(--border)",
-                    backgroundColor: payMethod === "card" ? "rgba(0, 80, 255, 0.05)" : "var(--surface)",
-                    color: payMethod === "card" ? "#0050ff" : "var(--text-primary)",
-                  }}
-                  onClick={() => setPayMethod("card")}
-                >
-                  💳 신용카드
-                </button>
-                <button
-                  type="button"
-                  style={{
-                    ...styles.tossMethodBtn,
-                    borderColor: payMethod === "transfer" ? "#0050ff" : "var(--border)",
-                    backgroundColor: payMethod === "transfer" ? "rgba(0, 80, 255, 0.05)" : "var(--surface)",
-                    color: payMethod === "transfer" ? "#0050ff" : "var(--text-primary)",
-                  }}
-                  onClick={() => setPayMethod("transfer")}
-                >
-                  🏦 계좌이체
-                </button>
-              </div>
-
-              {payMethod === "tosspay" && (
-                <div style={styles.tossInfoBox}>
-                  토스페이 결제 시 Toss 앱에서 등록하신 카드로 간편하게 결제하실 수 있습니다.
-                </div>
-              )}
-              {payMethod === "card" && (
-                <div style={styles.tossInfoBox}>
-                  국민, 현대, 삼성, 신한 등 국내 모든 신용/체크카드 결제를 지원합니다.
-                </div>
-              )}
-              {payMethod === "transfer" && (
-                <div style={styles.tossInfoBox}>
-                  실시간 은행 계좌 이체를 통해 안전하게 결제하실 수 있습니다.
-                </div>
-              )}
-            </div>
-
-            {/* Checkout Footer */}
-            <div style={styles.tossFooter}>
-              {paymentProcessing ? (
-                <button style={styles.tossPayBtn} disabled>
-                  <span style={{ display: "inline-block", ...styles.miniSpinner, borderTopColor: "#ffffff", verticalAlign: "middle", marginRight: 8 }} /> 결제 승인 중...
-                </button>
-              ) : (
-                <button
-                  id="btn-toss-pay"
-                  style={styles.tossPayBtn}
-                  onClick={handleMockPayment}
-                >
-                  5,000원 안전 결제하기
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

@@ -38,10 +38,10 @@ export default function LandingPage() {
     url: "/Pension_Blueprint.pdf",
     title: "서비스 소개",
   });
-  const [activeMenu, setActiveMenu] = useState<"service-intro" | "pension-library" | "youtube-tips" | null>(null);
+  const [activeMenu, setActiveMenu] = useState<"service-intro" | "pension-library" | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
-  const getNavStyle = (menuId: "service-intro" | "pension-library" | "youtube-tips") => {
+  const getNavStyle = (menuId: "service-intro" | "pension-library") => {
     return {
       ...styles.navButtonBase,
       ...(activeMenu === menuId ? styles.navButtonActive : styles.navButtonInactive),
@@ -86,22 +86,17 @@ export default function LandingPage() {
             >
               연금 정보창고
             </button>
-            <button
-              id="btn-youtube-tips"
-              onClick={() => {
-                setActiveMenu("youtube-tips");
-                alert("유튜브 전문가 팁은 온보딩 완료 후 대시보드의 'AI 연금 Q&A' 코너에서 관련 동영상과 함께 실시간으로 제공됩니다!\n\n우측 상단의 '시작하기' 버튼을 눌러 연금 설계를 시작해 보세요.");
-              }}
-              style={getNavStyle("youtube-tips")}
+            <Link 
+              href="/onboarding" 
+              className="premium-button" 
+              style={{ padding: "8px 20px", fontSize: "0.9rem", textDecoration: "none" }} 
+              id="btn-header-start"
             >
-              유튜브 전문가 팁
-            </button>
+              진단 시작하기
+            </Link>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <ThemeToggle />
-            <Link href="/onboarding" className="premium-button" style={{ padding: "8px 20px", fontSize: "0.9rem" }} id="btn-header-start">
-              시작하기
-            </Link>
           </div>
         </div>
       </header>

@@ -41,8 +41,11 @@ ${pdfText}
 {
   "nationalPension": {
     "contributionMonths": number or null, // 현재 누적 가입 개월수 (예: 120개월 ➔ 120)
+    "totalPaidAmount": number or null, // 현재까지 총 납부 금액 (만원 단위, 예: 130,601,700 원 ➔ 13060)
     "currentStandardMonthlyIncome": number or null, // 현재 기준소득월액 (만원 단위)
-    "expectedMonthlyPension": number or null // 예상 국민연금 월액 (만원 단위, 예: 213만 원 ➔ 213)
+    "expectedTotalContributionMonths": number or null, // 노령연금 총 예상 가입월수 (예: 405개월 ➔ 405)
+    "expectedMonthlyPension": number or null, // 예상 국민연금 월액 (만원 단위, 예: 2,071,230 원 ➔ 207)
+    "totalExpectedPremium": number or null // 예상 납부 보험료 총액 (만원 단위, 예: 149,773,880 원 ➔ 14977)
   },
   "retirementPensions": [
     // 2층 퇴직연금 목록 (DB, DC, IRP 유형 구분)

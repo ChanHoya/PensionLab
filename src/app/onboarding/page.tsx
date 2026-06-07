@@ -105,13 +105,22 @@ export default function OnboardingPage() {
 
       // 3. Zustand store에 데이터 매핑
       if (parsedData.nationalPension) {
+        const months = parsedData.nationalPension.contributionMonths || 0;
+        const totalPaid = parsedData.nationalPension.totalPaidAmount || 0;
+        let income = parsedData.nationalPension.currentStandardMonthlyIncome || 0;
+
+        if (!income && months > 0 && totalPaid > 0) {
+          // 국민연금 보험료율 9% 기준 역산: 소득 = 총납부액 / (개월수 * 0.09)
+          income = Math.round(totalPaid / (months * 0.09));
+        }
+
         store.setNationalPension({
-          contributionMonths: parsedData.nationalPension.contributionMonths || 0,
-          currentStandardMonthlyIncome: parsedData.nationalPension.currentStandardMonthlyIncome || 0,
+          contributionMonths: months,
+          currentStandardMonthlyIncome: income,
           expectedMonthlyPension: parsedData.nationalPension.expectedMonthlyPension || 0,
-          totalPaidAmount: Math.round((parsedData.nationalPension.currentStandardMonthlyIncome || 0) * 0.09 * (parsedData.nationalPension.contributionMonths || 0)),
-          expectedTotalContributionMonths: store.nationalPension.expectedTotalContributionMonths,
-          totalExpectedPremium: store.nationalPension.totalExpectedPremium,
+          totalPaidAmount: totalPaid || Math.round(income * 0.09 * months),
+          expectedTotalContributionMonths: parsedData.nationalPension.expectedTotalContributionMonths || store.nationalPension.expectedTotalContributionMonths,
+          totalExpectedPremium: parsedData.nationalPension.totalExpectedPremium || store.nationalPension.totalExpectedPremium,
           basicPensionAmount: store.nationalPension.basicPensionAmount,
           aValue: store.nationalPension.aValue,
           bValue: store.nationalPension.bValue,

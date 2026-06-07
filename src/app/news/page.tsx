@@ -102,22 +102,22 @@ const youtubeArticles: Article[] = [
   {
     id: "yt-1",
     category: "자산관리",
-    title: "🎥 [유튜브] 연금박사 - 노후 30년 연금자산 설계 및 인출 비법",
-    summary: "은퇴 시점부터 초고령기까지 연금 고갈을 방지하고 매달 안정적으로 인출하는 자산 분배 공식과 은퇴 초반 지출 예산 관리 핵심 꿀팁을 전해드립니다.",
+    title: "🎥 [유튜브] 연금박사 - 10억 목돈보다 월 500만원 연금이 좋은 10가지 이유",
+    summary: "일시금 목돈을 가지고 은퇴하는 것과 종신 평생 연금 흐름을 세팅해 두는 것의 치명적인 차이를 노후 설계 관점에서 쉽게 짚어드립니다.",
     date: "2026-06-01",
     author: "연금박사 이재백",
     image: "📺",
-    content: "https://www.youtube.com/watch?v=5FpxK-XmRzY"
+    content: "https://www.youtube.com/watch?v=kYJ_2wM-eP4"
   },
   {
     id: "yt-2",
     category: "자산관리",
-    title: "🎥 [유튜브] 박곰희TV - 50대 은퇴자를 위한 최적의 사적연금 리밸런싱",
-    summary: "IRP와 연금저축의 한도 확대에 발맞춰, 은퇴 시점에 배당성장형 ETF(SCHD 등)와 TDF를 효율적으로 연계하여 매달 연금 분배금을 창출하는 실전 포트폴리오 셋팅법입니다.",
+    title: "🎥 [유튜브] 박곰희TV - 은퇴 후 매달 월 300만원 연금을 수령하기 위한 필수 자금 규모",
+    summary: "소득 크레바스를 넘고 노후 월 300만원의 안정적 인출 구조를 세우기 위해, 3층 연금(국민, 퇴직, 개인)의 최적 포트폴리오 세팅과 준비 자금을 계산해봅니다.",
     date: "2026-05-28",
     author: "박곰희TV",
     image: "📺",
-    content: "https://www.youtube.com/watch?v=gQ6vLlhNkiE"
+    content: "https://www.youtube.com/watch?v=2n-qU9v9C2c"
   }
 ];
 

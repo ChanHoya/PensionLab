@@ -35,9 +35,16 @@ const parseBoldText = (text: string) => {
   });
 };
 
-// Custom Markdown rendering parser
+// Custom Markdown rendering parser with reasoning cleanup & visual formulas
 const renderMarkdown = (text: string) => {
-  return text.split("\n").map((line, idx) => {
+  if (!text) return null;
+
+  // 1. <think>...</think> block extraction & removal from body rendering
+  let cleanText = text;
+  const thinkRegex = /<think>([\s\S]*?)<\/think>/gi;
+  cleanText = cleanText.replace(thinkRegex, "").trim();
+
+  return cleanText.split("\n").map((line, idx) => {
     const content = line.trim();
     if (!content) return <div key={idx} style={{ height: "12px" }} />;
 
@@ -86,9 +93,75 @@ const renderMarkdown = (text: string) => {
       );
     }
 
-    // Bullet List (-)
+    // Bullet List (-) or (*)
     if (content.startsWith("-") || content.startsWith("*")) {
       const listText = content.replace(/^[-*]\s*/, "");
+      
+      // Detection pattern for equations/conversions
+      const isCalculation = 
+        listText.includes("->") || 
+        listText.includes("=>") || 
+        listText.includes("=") || 
+        listText.includes("≈") || 
+        listText.includes("approx") ||
+        (listText.includes(":") && (listText.includes("만 원") || listText.includes("원") || listText.includes("억") || listText.includes("%")));
+
+      if (isCalculation) {
+        let label = listText;
+        let value = "";
+
+        if (listText.includes("->")) {
+          const splitIdx = listText.indexOf("->");
+          label = listText.substring(0, splitIdx).trim();
+          value = listText.substring(splitIdx + 2).trim();
+        } else if (listText.includes("=>")) {
+          const splitIdx = listText.indexOf("=>");
+          label = listText.substring(0, splitIdx).trim();
+          value = listText.substring(splitIdx + 2).trim();
+        } else if (listText.includes(":")) {
+          const splitIdx = listText.indexOf(":");
+          label = listText.substring(0, splitIdx).trim();
+          value = listText.substring(splitIdx + 1).trim();
+        }
+
+        // Polish LaTeX maths and asterisks
+        const cleanLabel = label.replace(/\$/g, "").replace(/\*\*/g, "").replace(/\*/g, "").trim();
+        const cleanValue = value
+          .replace(/\\times/g, " × ")
+          .replace(/\\approx/g, " ≈ ")
+          .replace(/\$/g, "")
+          .replace(/\*\*/g, "")
+          .replace(/\*/g, "")
+          .trim();
+
+        if (cleanValue) {
+          return (
+            <div
+              key={idx}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+                padding: "14px 18px",
+                backgroundColor: "rgba(99, 102, 241, 0.04)",
+                border: "1px solid rgba(99, 102, 241, 0.12)",
+                borderLeft: "4px solid var(--primary)",
+                borderRadius: "var(--radius-sm)",
+                marginBottom: "10px",
+                marginTop: "4px",
+              }}
+            >
+              <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)", fontWeight: 600 }}>
+                {cleanLabel}
+              </span>
+              <span style={{ fontSize: "1rem", color: "var(--text-primary)", fontWeight: 700, fontFamily: "monospace", display: "flex", alignItems: "center", gap: "6px" }}>
+                📊 <span className="gradient-text">{cleanValue}</span>
+              </span>
+            </div>
+          );
+        }
+      }
+
       return (
         <li
           key={idx}
@@ -318,8 +391,18 @@ export default function AIAdvisorPage() {
         throw new Error(data.error);
       }
 
-      setRecommendation(data.recommendation);
-      setThinking(data.thinking);
+      let recommendationText = data.recommendation || "";
+      let thinkingText = data.thinking || "";
+
+      // 만약 recommendation 본문 텍스트 내에 <think>가 노출되어 있을 경우 추출 및 분리
+      const thinkMatch = recommendationText.match(/<think>([\s\S]*?)<\/think>/i);
+      if (thinkMatch) {
+        thinkingText = thinkMatch[1].trim();
+        recommendationText = recommendationText.replace(/<think>[\s\S]*?<\/think>/i, "").trim();
+      }
+
+      setRecommendation(recommendationText);
+      setThinking(thinkingText);
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || "진단을 받아오는 도중 오류가 발생했습니다.");

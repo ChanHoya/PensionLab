@@ -70,14 +70,7 @@ export default function DashboardPage() {
   const store = usePensionStore();
   const [isMounted, setIsMounted] = useState(false);
 
-  // AI Chat States
-  const [question, setQuestion] = useState("");
-  const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string; sources?: any[] }[]>([]);
-  const [aiLoading, setAiLoading] = useState(false);
 
-  // YouTube Modal States
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-  const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
 
 
 
@@ -126,37 +119,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleAskAI = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!question.trim() || aiLoading) return;
 
-    const userMsg = question.trim();
-    setQuestion("");
-    setChatHistory((prev) => [...prev, { role: "user", content: userMsg }]);
-    setAiLoading(true);
-
-    try {
-      const res = await fetch("/api/ai/advice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userMsg }),
-      });
-      if (!res.ok) throw new Error("API request failed");
-      const data = await res.json();
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "assistant", content: data.answer, sources: data.sources },
-      ]);
-    } catch (err) {
-      console.error(err);
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "assistant", content: "죄송합니다. 답변을 생성하는 중에 오류가 발생했습니다." },
-      ]);
-    } finally {
-      setAiLoading(false);
-    }
-  };
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -683,138 +646,10 @@ export default function DashboardPage() {
 
 
 
-        {/* Row 4: AI RAG Q&A Chat */}
-        <section style={styles.aiCard} className="premium-card">
-          <span style={styles.aiBadge}>AI 실시간 연금 상담실</span>
-          <h3 style={styles.aiTitle}>유튜브 연금 전문가 기반 RAG Q&A</h3>
-          <p style={styles.aiDesc}>
-            연금박사, 박곰희TV 등 신뢰할 수 있는 전문가들의 동영상 자막 데이터를 벡터 데이터베이스(pgvector)에서 분석하여 정확하고 명쾌한 조언을 해드립니다.
-          </p>
 
-          {/* Chat Window */}
-          <div style={styles.chatWindow}>
-            {chatHistory.length === 0 ? (
-              <div style={styles.chatPlaceholder}>
-                💬 질문을 입력하시면 은퇴 설계 RAG 상담을 시작합니다.<br />
-                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 8, display: "inline-block" }}>
-                  (추천 질문: &quot;국민연금 13% 개편안이 나에게 미치는 영향은?&quot;, &quot;퇴직연금 DB형과 DC형 중 무엇이 유리해?&quot;)
-                </span>
-              </div>
-            ) : (
-              <div style={styles.chatMessages}>
-                {chatHistory.map((chat, idx) => (
-                  <div key={idx} style={chat.role === "user" ? styles.userMessageRow : styles.assistantMessageRow}>
-                    <div style={chat.role === "user" ? styles.userMessageBubble : styles.assistantMessageBubble}>
-                      <div style={{ whiteSpace: "pre-line" }}>{chat.content}</div>
-                      
-                      {chat.sources && chat.sources.length > 0 && (
-                        <div style={styles.sourcesBox}>
-                          <div style={styles.sourcesLabel}>🔗 참고한 전문가 영상 출처 (클릭 시 재생):</div>
-                          <div style={styles.sourcesList}>
-                            {chat.sources.map((src, sIdx) => (
-                              <a
-                                key={sIdx}
-                                href={`https://www.youtube.com/watch?v=${src.videoId}`}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setActiveVideoId(src.videoId);
-                                  setActiveVideoTitle(`[${src.channelName}] ${src.title}`);
-                                }}
-                                style={{
-                                  ...styles.sourceLink,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                }}
-                                id={`link-video-${src.videoId}`}
-                              >
-                                🎥 [{src.channelName}] {src.title} ➔
-                              </a>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {aiLoading && (
-                  <div style={styles.assistantMessageRow}>
-                    <div style={{ ...styles.assistantMessageBubble, display: "flex", alignItems: "center", gap: 8 }}>
-                      <div style={styles.miniSpinner} />
-                      <span>전문가 조언을 분석 중입니다...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Chat Input */}
-            <form onSubmit={handleAskAI} style={styles.chatForm}>
-              <input
-                id="input-ai-question"
-                type="text"
-                className="premium-input"
-                placeholder="연금 개혁, 퇴직연금, 개인연금저축에 대해 질문해 보세요..."
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                disabled={aiLoading}
-                style={{ flexGrow: 1 }}
-              />
-              <button
-                id="btn-ai-send"
-                type="submit"
-                disabled={aiLoading || !question.trim()}
-                className="premium-button"
-                style={{
-                  padding: "10px 20px",
-                  opacity: aiLoading || !question.trim() ? 0.6 : 1,
-                  cursor: aiLoading || !question.trim() ? "not-allowed" : "pointer"
-                }}
-              >
-                질문하기
-              </button>
-            </form>
-          </div>
-        </section>
       </div>
 
-      {/* YouTube Video Player Modal */}
-      {activeVideoId && (
-        <div style={styles.modalOverlay} onClick={() => setActiveVideoId(null)} className="animate-fade-in">
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="glass">
-            <div style={styles.modalHeader}>
-              <h4 style={styles.modalTitle}>{activeVideoTitle}</h4>
-              <button
-                id="btn-close-video"
-                onClick={() => setActiveVideoId(null)}
-                style={styles.modalCloseButton}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--surface-hover)";
-                  e.currentTarget.style.color = "var(--text-primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "var(--text-secondary)";
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <div style={styles.videoWrapper}>
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`}
-                title={activeVideoTitle}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                style={{ borderRadius: "var(--radius-sm)", border: "none", position: "absolute", top: 0, left: 0 }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+
 
     </main>
   );

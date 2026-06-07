@@ -21,7 +21,7 @@ const SEED_VIDEOS: Video[] = [
   // 연금박사 (@pension500)
   {
     id: "v-yt-1",
-    videoId: "yP9_V2bE5b8",
+    videoId: "1gu6bB4wQh0",
     channelName: "연금박사",
     channelHandle: "@pension500",
     title: "국민연금 13% 개혁안, 나의 연금 수령액은 어떻게 달라지나?",
@@ -41,7 +41,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-3",
-    videoId: "kYv9G874c7o",
+    videoId: "1gu6bB4wQh0",
     channelName: "연금박사",
     channelHandle: "@pension500",
     title: "기초연금 못 받는 진짜 이유 - 국민연금과의 연계 및 감액 제도 완벽 해설",
@@ -51,7 +51,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-4",
-    videoId: "kYJ_2wM-eP4",
+    videoId: "S01ZqgS3T2o",
     channelName: "연금박사",
     channelHandle: "@pension500",
     title: "10억 목돈보다 월 500만원 연금이 좋은 10가지 이유",
@@ -63,7 +63,7 @@ const SEED_VIDEOS: Video[] = [
   // 박곰희TV (@gomhee)
   {
     id: "v-yt-5",
-    videoId: "tgB1k5kE7c9",
+    videoId: "GjYJg2XJq-w",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "퇴직연금 DB형과 DC형, 나에게 맞는 유리한 선택 기준",
@@ -73,7 +73,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-6",
-    videoId: "2n-qU9v9C2c",
+    videoId: "R5RD3QCkeyl",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "은퇴 후 매달 월 300만원 연금을 수령하기 위한 필수 자금 규모 계산법",
@@ -83,7 +83,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-7",
-    videoId: "gQ6vLlhNkiE",
+    videoId: "CP7BuvbnKIY",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "50대 은퇴자를 위한 최적의 사적연금 리밸런싱 포트폴리오 가이드",
@@ -93,7 +93,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-8",
-    videoId: "yP9_V2bE5b8",
+    videoId: "GjYJg2XJq-w",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "절세계좌 3종 세트(ISA, 연금저축, IRP) 100% 활용법 및 인출 순서",
@@ -105,7 +105,7 @@ const SEED_VIDEOS: Video[] = [
   // 연금이야기 (@PensionStory)
   {
     id: "v-yt-9",
-    videoId: "FqS_W148Mlc",
+    videoId: "k5jG2_j7V4I",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "연금수령방법 총정리 및 절세계좌 최적화 가이드",
@@ -115,7 +115,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-10",
-    videoId: "oV85gP8x6-Q",
+    videoId: "vWdiq3SFJnb",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "연금상담, 많이 묻는 질문 10가지 현답 리포트",
@@ -125,17 +125,17 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-11",
-    videoId: "p5pP6tFp86A",
+    videoId: "k5jG2_j7V4I",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "3040 연금저축, IRP, ISA 절세계좌 스마트 연금 투자 방법",
-    summary: "퇴직연금을 연금으로 수령할 때 직장가입자 혹은 피부양자 자격 유지 조건, 지역가입자 건보료 인상 여부에 대해 세법 개정안을 반영하여 조목조목 짚어드립니다.",
+    summary: "투자 금액별로 절세계좌를 어떻게 활용하고 배분할지에 대한 가이드와 연금 개시 시점의 세제 효율 극대화 순서(ISA ➔ 연금저축 ➔ IRP)를 제안합니다.",
     publishDate: "2026-05-30",
-    category: "건강보험료"
+    category: "연금저축"
   },
   {
     id: "v-yt-12",
-    videoId: "5FpxK-XmRzY",
+    videoId: "vWdiq3SFJnb",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "은퇴 후 건보료 폭탄 피하는 합법적 절세 가이드",
@@ -152,6 +152,15 @@ export default function YoutubeHubPage() {
   const router = useRouter();
   const store = usePensionStore();
 
+  // AI Chat States
+  const [question, setQuestion] = useState("");
+  const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string; sources?: any[] }[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // YouTube Modal States
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -164,6 +173,38 @@ export default function YoutubeHubPage() {
       </div>
     );
   }
+
+  const handleAskAI = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!question.trim() || aiLoading) return;
+
+    const userMsg = question.trim();
+    setQuestion("");
+    setChatHistory((prev) => [...prev, { role: "user", content: userMsg }]);
+    setAiLoading(true);
+
+    try {
+      const res = await fetch("/api/ai/advice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: userMsg }),
+      });
+      if (!res.ok) throw new Error("API request failed");
+      const data = await res.json();
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: data.answer, sources: data.sources },
+      ]);
+    } catch (err) {
+      console.error(err);
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "assistant", content: "죄송합니다. 답변을 생성하는 중에 오류가 발생했습니다." },
+      ]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // Filter videos based on selected channel tab and search query
   const filteredVideos = SEED_VIDEOS.filter((video) => {
@@ -223,7 +264,7 @@ export default function YoutubeHubPage() {
           <div style={styles.tabRow}>
             {[
               { label: "전체 영상", handle: "ALL" },
-              { label: "연금박사 이재백", handle: "@pension500" },
+              { label: "연금박사 이영주", handle: "@pension500" },
               { label: "박곰희TV", handle: "@gomhee" },
               { label: "연금이야기", handle: "@PensionStory" }
             ].map((tab) => (
@@ -279,12 +320,13 @@ export default function YoutubeHubPage() {
             </div>
           ) : (
             filteredVideos.map((video) => (
-              <a
+              <div
                 key={video.id}
-                href={`https://www.youtube.com/watch?v=${video.videoId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.videoCard}
+                onClick={() => {
+                  setActiveVideoId(video.videoId);
+                  setActiveVideoTitle(`[${video.channelName}] ${video.title}`);
+                }}
+                style={{ ...styles.videoCard, cursor: "pointer" }}
                 className="premium-card"
               >
                 {/* Thumbnail Wrapper */}
@@ -316,11 +358,143 @@ export default function YoutubeHubPage() {
                     <span style={styles.watchLinkText}>영상 보러가기 ➔</span>
                   </div>
                 </div>
-              </a>
+              </div>
             ))
           )}
         </section>
+
+        {/* AI RAG Q&A Chat Section - Relocated here */}
+        <section style={{ ...styles.aiCard, marginTop: "60px" }} className="premium-card">
+          <span style={styles.aiBadge}>AI 실시간 연금 상담실</span>
+          <h3 style={styles.aiTitle}>유튜브 연금 전문가 기반 RAG Q&A</h3>
+          <p style={styles.aiDesc}>
+            연금박사, 박곰희TV 등 신뢰할 수 있는 전문가들의 동영상 자막 데이터를 벡터 데이터베이스(pgvector)에서 분석하여 정확하고 명쾌한 조언을 해드립니다.
+          </p>
+
+          {/* Chat Window */}
+          <div style={styles.chatWindow}>
+            {chatHistory.length === 0 ? (
+              <div style={styles.chatPlaceholder}>
+                💬 질문을 입력하시면 은퇴 설계 RAG 상담을 시작합니다.<br />
+                <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: 8, display: "inline-block" }}>
+                  (추천 질문: &quot;국민연금 13% 개편안이 나에게 미치는 영향은?&quot;, &quot;퇴직연금 DB형과 DC형 중 무엇이 유리해?&quot;)
+                </span>
+              </div>
+            ) : (
+              <div style={styles.chatMessages}>
+                {chatHistory.map((chat, idx) => (
+                  <div key={idx} style={chat.role === "user" ? styles.userMessageRow : styles.assistantMessageRow}>
+                    <div style={chat.role === "user" ? styles.userMessageBubble : styles.assistantMessageBubble}>
+                      <div style={{ whiteSpace: "pre-line" }}>{chat.content}</div>
+                      
+                      {chat.sources && chat.sources.length > 0 && (
+                        <div style={styles.sourcesBox}>
+                          <div style={styles.sourcesLabel}>🔗 참고한 전문가 영상 출처 (클릭 시 재생):</div>
+                          <div style={styles.sourcesList}>
+                            {chat.sources.map((src, sIdx) => (
+                              <a
+                                key={sIdx}
+                                href={`https://www.youtube.com/watch?v=${src.videoId}`}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setActiveVideoId(src.videoId);
+                                  setActiveVideoTitle(`[${src.channelName}] ${src.title}`);
+                                }}
+                                style={{
+                                  ...styles.sourceLink,
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                                id={`link-video-${src.videoId}`}
+                              >
+                                🎥 [{src.channelName}] {src.title} ➔
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {aiLoading && (
+                  <div style={styles.assistantMessageRow}>
+                    <div style={{ ...styles.assistantMessageBubble, display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={styles.miniSpinner} />
+                      <span>전문가 조언을 분석 중입니다...</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Chat Input */}
+            <form onSubmit={handleAskAI} style={styles.chatForm}>
+              <input
+                id="input-ai-question"
+                type="text"
+                className="premium-input"
+                placeholder="연금 개혁, 퇴직연금, 개인연금저축에 대해 질문해 보세요..."
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                disabled={aiLoading}
+                style={{ flexGrow: 1 }}
+              />
+              <button
+                id="btn-ai-send"
+                type="submit"
+                disabled={aiLoading || !question.trim()}
+                className="premium-button"
+                style={{
+                  padding: "10px 20px",
+                  opacity: aiLoading || !question.trim() ? 0.6 : 1,
+                  cursor: aiLoading || !question.trim() ? "not-allowed" : "pointer"
+                }}
+              >
+                질문하기
+              </button>
+            </form>
+          </div>
+        </section>
       </div>
+
+      {/* YouTube Video Player Modal */}
+      {activeVideoId && (
+        <div style={styles.modalOverlay} onClick={() => setActiveVideoId(null)} className="animate-fade-in">
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="glass">
+            <div style={styles.modalHeader}>
+              <h4 style={styles.modalTitle}>{activeVideoTitle}</h4>
+              <button
+                id="btn-close-video"
+                onClick={() => setActiveVideoId(null)}
+                style={styles.modalCloseButton}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "var(--surface-hover)";
+                  e.currentTarget.style.color = "var(--text-primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "var(--text-secondary)";
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={styles.videoWrapper}>
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`}
+                title={activeVideoTitle}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                style={{ borderRadius: "var(--radius-sm)", border: "none", position: "absolute", top: 0, left: 0 }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -632,5 +806,190 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderTop: "4px solid var(--primary)",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
+  },
+  aiCard: {
+    padding: "30px 40px",
+    background: "var(--surface)",
+    borderColor: "var(--border)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  aiBadge: {
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: "#a5b4fc",
+    backgroundColor: "rgba(99,102,241,0.15)",
+    padding: "4px 8px",
+    borderRadius: "var(--radius-full)",
+    width: "fit-content",
+  },
+  aiTitle: {
+    fontSize: "1.35rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    marginTop: "4px",
+  },
+  aiDesc: {
+    fontSize: "0.95rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.5,
+  },
+  chatWindow: {
+    display: "flex",
+    flexDirection: "column",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-md)",
+    backgroundColor: "var(--surface)",
+    overflow: "hidden",
+    marginTop: "16px",
+    boxShadow: "var(--shadow-sm)",
+  },
+  chatPlaceholder: {
+    padding: "40px 20px",
+    textAlign: "center",
+    color: "var(--text-secondary)",
+    fontSize: "0.95rem",
+    lineHeight: 1.6,
+  },
+  chatMessages: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    padding: "20px",
+    maxHeight: "350px",
+    overflowY: "auto",
+    borderBottom: "1px solid var(--border)",
+    backgroundColor: "var(--background)",
+  },
+  userMessageRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+  },
+  assistantMessageRow: {
+    display: "flex",
+    justifyContent: "flex-start",
+  },
+  userMessageBubble: {
+    maxWidth: "80%",
+    padding: "12px 16px",
+    borderRadius: "16px 16px 4px 16px",
+    backgroundColor: "var(--primary)",
+    color: "#ffffff",
+    fontSize: "0.95rem",
+    lineHeight: 1.5,
+    boxShadow: "var(--shadow-sm)",
+  },
+  assistantMessageBubble: {
+    maxWidth: "85%",
+    padding: "16px 20px",
+    borderRadius: "16px 16px 16px 4px",
+    backgroundColor: "var(--surface-2)",
+    color: "var(--text-primary)",
+    fontSize: "0.95rem",
+    lineHeight: 1.6,
+    border: "1px solid var(--border)",
+    boxShadow: "var(--shadow-sm)",
+  },
+  miniSpinner: {
+    width: "16px",
+    height: "16px",
+    border: "2px solid var(--border)",
+    borderTop: "2px solid var(--primary)",
+    borderRadius: "50%",
+    animation: "pulse-subtle 1s infinite linear",
+  },
+  chatForm: {
+    display: "flex",
+    gap: "12px",
+    padding: "16px 20px",
+    backgroundColor: "var(--surface)",
+  },
+  sourcesBox: {
+    marginTop: "12px",
+    paddingTop: "12px",
+    borderTop: "1px dashed var(--border)",
+  },
+  sourcesLabel: {
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    marginBottom: "6px",
+  },
+  sourcesList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  sourceLink: {
+    fontSize: "0.8rem",
+    color: "var(--primary-light)",
+    textDecoration: "none",
+    fontWeight: 500,
+    transition: "color var(--transition-fast)",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    zIndex: 9999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: "800px",
+    backgroundColor: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-md)",
+    boxShadow: "var(--shadow-premium)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  modalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px 20px",
+    borderBottom: "1px solid var(--border)",
+    backgroundColor: "rgba(255, 255, 255, 0.03)",
+  },
+  modalTitle: {
+    fontSize: "1rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    marginRight: "16px",
+    margin: 0,
+  },
+  modalCloseButton: {
+    background: "none",
+    border: "none",
+    fontSize: "1.25rem",
+    color: "var(--text-secondary)",
+    cursor: "pointer",
+    padding: "4px 8px",
+    borderRadius: "var(--radius-sm)",
+    transition: "all var(--transition-fast)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  videoWrapper: {
+    position: "relative",
+    paddingBottom: "56.25%", /* 16:9 Aspect Ratio */
+    height: 0,
+    overflow: "hidden",
+    backgroundColor: "#000000",
   }
 };

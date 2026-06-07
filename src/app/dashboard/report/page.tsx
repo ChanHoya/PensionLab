@@ -269,7 +269,7 @@ function ReportContent() {
                 </ResponsiveContainer>
                 
                 {/* 리포트용 1층 -> 2층 -> 3층 정렬 범례 */}
-                <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap", fontSize: "0.7rem", marginTop: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: "10px", flexWrap: "wrap", fontSize: "0.7rem", marginTop: "8px", color: "#374151" }}>
                   {hasNational && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "var(--primary)", borderRadius: "50%" }} />국민</span>}
                   {hasBasic && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "var(--info)", borderRadius: "50%" }} />기초</span>}
                   {hasRetirement && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, backgroundColor: "#2c5282", borderRadius: "50%" }} />퇴직</span>}
@@ -498,6 +498,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     flexDirection: "column",
     position: "relative",
+    color: "#111827",
   },
   reportHeader: {
     display: "flex",
@@ -515,7 +516,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   docId: {
     fontSize: "0.8rem",
-    color: "var(--text-muted)",
+    color: "#6b7280",
     fontFamily: "monospace",
   },
   coverTitleBox: {
@@ -531,7 +532,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   reportTitle: {
     fontSize: "2.5rem",
     fontWeight: 800,
-    color: "var(--primary-dark)",
+    color: "#1e3a8a",
     lineHeight: 1.3,
     marginTop: "12px",
   },
@@ -557,11 +558,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.95rem",
   },
   profileLabel: {
-    color: "var(--text-secondary)",
+    color: "#4b5563",
     fontWeight: 500,
   },
   profileValue: {
-    color: "var(--text-primary)",
+    color: "#111827",
     fontWeight: 700,
   },
   gradeSection: {
@@ -574,7 +575,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   gradeTitle: {
     fontSize: "0.95rem",
     fontWeight: 700,
-    color: "var(--text-secondary)",
+    color: "#4b5563",
     marginBottom: "12px",
   },
   gradeBadge: {
@@ -589,7 +590,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   gradeDesc: {
     marginTop: "16px",
     fontSize: "0.95rem",
-    color: "var(--text-primary)",
+    color: "#111827",
     maxWidth: "400px",
     lineHeight: 1.5,
   },
@@ -619,11 +620,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: "left",
   },
   tableCellLabel: {
-    color: "var(--text-secondary)",
+    color: "#4b5563",
     fontWeight: 600,
   },
   tableCellVal: {
-    color: "var(--text-primary)",
+    color: "#111827",
     fontWeight: 700,
     textAlign: "right",
   },
@@ -635,13 +636,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderTop: "1px solid var(--border)",
     paddingTop: "12px",
     fontSize: "0.75rem",
-    color: "var(--text-muted)",
+    color: "#6b7280",
     textAlign: "center",
   },
   sectionTitle: {
     fontSize: "1.25rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "#1e3a8a",
   },
   miniDivider: {
     height: "2px",
@@ -663,7 +664,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   reportChartTitle: {
     fontSize: "0.85rem",
     fontWeight: 700,
-    color: "var(--text-secondary)",
+    color: "#374151",
     marginBottom: "16px",
   },
   emptyChart: {
@@ -671,7 +672,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "var(--text-muted)",
+    color: "#94a3b8",
     fontSize: "0.85rem",
   },
   reformImpactBox: {
@@ -698,18 +699,18 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   impactLabel: {
     fontSize: "0.75rem",
-    color: "var(--text-secondary)",
+    color: "#4b5563",
     fontWeight: 600,
     marginBottom: "6px",
   },
   impactVal: {
     fontSize: "1.25rem",
     fontWeight: 700,
-    color: "var(--text-primary)",
+    color: "#111827",
   },
   impactSubText: {
     fontSize: "0.8rem",
-    color: "var(--text-secondary)",
+    color: "#4b5563",
     lineHeight: 1.4,
   },
   prescriptionContainer: {
@@ -724,12 +725,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   prescTitle: {
     fontSize: "0.95rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "#1e3a8a",
     marginBottom: "8px",
   },
   prescBody: {
     fontSize: "0.9rem",
-    color: "var(--text-secondary)",
+    color: "#374151",
     lineHeight: 1.6,
   },
   signatureSection: {
@@ -741,17 +742,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   sigDate: {
     fontSize: "0.95rem",
-    color: "var(--text-secondary)",
+    color: "#4b5563",
     marginBottom: "12px",
   },
   sigTitle: {
     fontSize: "1.1rem",
     fontWeight: 700,
-    color: "var(--primary-dark)",
+    color: "#1e3a8a",
   },
   sigStamp: {
     fontSize: "0.75rem",
-    color: "var(--text-muted)",
+    color: "#6b7280",
     marginTop: "8px",
     letterSpacing: "4px",
   },

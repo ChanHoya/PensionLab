@@ -157,7 +157,14 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
 5. 포트폴리오 리밸런싱 설계: 수익률 향상을 위해 위험자산/인컴자산/안전자산 비율을 20:40:40으로 권장합니다.
 6. 구조화된 최종 마크다운 가이드 라인을 생성하여 Fallback 응답으로 바인딩합니다.`;
 
-      recommendation = `⚠️ **[로컬 테스트 모드 - Gemini AI API 키 미등록/연동 실패 상태]**
+      let warningHeader = "⚠️ **[로컬 테스트 모드 - Gemini AI API 키 미등록 상태]**";
+      if (geminiApiErrorDetail.includes("429") || geminiApiErrorDetail.toLowerCase().includes("quota")) {
+        warningHeader = "⚠️ **[구글 Gemini API 무료 할당량(Quota) 초과 상태 - 로컬 Fallback 진단 제공]**\n\n현재 사용 중인 구글 API 키의 무료 호출 제한(429)이 초과되어 실시간 AI 생성이 일시 차단되었습니다. 안정적인 진단을 제공하기 위해 연금 분석 엔진 기반의 로컬 매칭형 처방전을 임시 제공합니다.";
+      } else if (geminiApiErrorDetail) {
+        warningHeader = `⚠️ **[로컬 테스트 모드 - Gemini AI API 연동 실패 상태]**\n\n(상세 에러: ${geminiApiErrorDetail})`;
+      }
+
+      recommendation = `${warningHeader}
 
 회원님의 **3층 연금 구조 및 비연금 금융자산**을 다각도로 분석하여 도출한 리밸런싱 처방전입니다.
 

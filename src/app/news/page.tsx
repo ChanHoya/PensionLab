@@ -98,13 +98,58 @@ TDF는 가입자의 은퇴 목표 시점(예: TDF 2045, TDF 2050)에 맞춰 청�
   }
 ];
 
+const youtubeArticles: Article[] = [
+  {
+    id: "yt-1",
+    category: "자산관리",
+    title: "🎥 [유튜브] 연금박사 - 노후 30년 연금자산 설계 및 인출 비법",
+    summary: "은퇴 시점부터 초고령기까지 연금 고갈을 방지하고 매달 안정적으로 인출하는 자산 분배 공식과 은퇴 초반 지출 예산 관리 핵심 꿀팁을 전해드립니다.",
+    date: "2026-06-01",
+    author: "연금박사 이재백",
+    image: "📺",
+    content: "https://www.youtube.com/watch?v=F3P_8GjD5E8"
+  },
+  {
+    id: "yt-2",
+    category: "자산관리",
+    title: "🎥 [유튜브] 박곰희TV - 50대 은퇴자를 위한 최적의 사적연금 리밸런싱",
+    summary: "IRP와 연금저축의 한도 확대에 발맞춰, 은퇴 시점에 배당성장형 ETF(SCHD 등)와 TDF를 효율적으로 연계하여 매달 연금 분배금을 창출하는 실전 포트폴리오 셋팅법입니다.",
+    date: "2026-05-28",
+    author: "박곰희TV",
+    image: "📺",
+    content: "https://www.youtube.com/watch?v=p1hD1d-Q_3g"
+  }
+];
+
 export default function PolicyNewsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
+    
+    async function fetchNews() {
+      try {
+        const res = await fetch("/api/news");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setArticles(data);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load real-time news, using mock data:", err);
+      }
+      setArticles(mockArticles);
+      setLoading(false);
+    }
+    
+    fetchNews();
   }, []);
 
   if (!isMounted) {
@@ -116,9 +161,20 @@ export default function PolicyNewsPage() {
     );
   }
 
+  // Combine real/mock news with Youtube video recommendations at the end
+  const allArticles = [...articles, ...youtubeArticles];
+
   const filteredArticles = selectedCategory === "ALL"
-    ? mockArticles
-    : mockArticles.filter((art) => art.category === selectedCategory);
+    ? allArticles
+    : allArticles.filter((art) => art.category === selectedCategory);
+
+  const handleArticleClick = (art: Article) => {
+    if (art.id.startsWith("yt-") || art.content.startsWith("https://www.youtube.com")) {
+      window.open(art.content, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setSelectedArticle(art);
+  };
 
   return (
     <main style={styles.container}>
@@ -182,25 +238,63 @@ export default function PolicyNewsPage() {
 
         {/* News Grid */}
         <section style={styles.gridSection} className="animate-fade-in">
-          {filteredArticles.map((art) => (
-            <div
-              key={art.id}
-              onClick={() => setSelectedArticle(art)}
-              style={styles.newsCard}
-              className="premium-card"
-            >
-              <div style={styles.cardHeader}>
-                <span style={styles.cardImage}>{art.image}</span>
-                <span style={styles.cardBadge}>{art.category}</span>
-              </div>
-              <h3 style={styles.cardTitle}>{art.title}</h3>
-              <p style={styles.cardSummary}>{art.summary}</p>
-              <div style={styles.cardFooter}>
-                <span style={styles.cardAuthor}>{art.author}</span>
-                <span style={styles.cardDate}>{art.date}</span>
-              </div>
+          {loading ? (
+            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "40px", color: "var(--text-muted)" }}>
+              <div style={{ ...styles.spinner, margin: "0 auto 16px auto", width: 40, height: 40 }} />
+              <p>실시간 연금 정책 뉴스를 불러오는 중입니다...</p>
             </div>
-          ))}
+          ) : (
+            filteredArticles.map((art) => (
+              <div
+                key={art.id}
+                onClick={() => handleArticleClick(art)}
+                style={{
+                  ...styles.newsCard,
+                  border: art.id.startsWith("yt-") ? "1px dashed rgba(239, 68, 68, 0.4)" : "1px solid var(--border)",
+                  position: "relative",
+                  overflow: "hidden"
+                }}
+                className="premium-card"
+              >
+                {art.id.startsWith("yt-") && (
+                  <div style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    backgroundColor: "#ef4444",
+                    color: "#ffffff",
+                    fontSize: "0.6rem",
+                    fontWeight: 800,
+                    padding: "3px 8px",
+                    borderBottomLeftRadius: "var(--radius-sm)"
+                  }}>
+                    YOUTUBE 추천
+                  </div>
+                )}
+                <div style={styles.cardHeader}>
+                  <span style={styles.cardImage}>{art.image}</span>
+                  <span style={{
+                    ...styles.cardBadge,
+                    color: art.id.startsWith("yt-") ? "#fca5a5" : "var(--primary-light)",
+                    backgroundColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.08)" : "rgba(99,102,241,0.08)",
+                    borderColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.2)" : "rgba(99,102,241,0.15)"
+                  }}>{art.category}</span>
+                </div>
+                <h3 style={styles.cardTitle}>{art.title}</h3>
+                <p style={styles.cardSummary}>{art.summary}</p>
+                <div style={styles.cardFooter}>
+                  <span style={styles.cardAuthor}>{art.author}</span>
+                  <span style={{
+                    ...styles.cardDate,
+                    color: art.id.startsWith("yt-") ? "#ef4444" : "var(--text-muted)",
+                    fontWeight: art.id.startsWith("yt-") ? 700 : 400
+                  }}>
+                    {art.id.startsWith("yt-") ? "영상 보러가기 ➔" : art.date}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
         </section>
 
         {/* Article Detail Modal */}
@@ -223,6 +317,25 @@ export default function PolicyNewsPage() {
                 ))}
               </div>
               <div style={styles.modalFooter}>
+                {(selectedArticle.id.startsWith("real-") || (selectedArticle as any).link) && (
+                  <a
+                    href={(selectedArticle as any).link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="premium-button-secondary"
+                    style={{
+                      padding: "8px 16px",
+                      textDecoration: "none",
+                      marginRight: "10px",
+                      fontSize: "0.85rem",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}
+                  >
+                    📰 정책 원문 보기 ➔
+                  </a>
+                )}
                 <button
                   className="premium-button"
                   onClick={() => setSelectedArticle(null)}

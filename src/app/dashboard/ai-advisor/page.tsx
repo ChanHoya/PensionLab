@@ -41,12 +41,43 @@ const renderMarkdown = (text: string) => {
 
   // 1. <think>...</think> block extraction & removal from body rendering
   let cleanText = text;
-  const thinkRegex = /<think>([\s\S]*?)<\/think>/gi;
-  cleanText = cleanText.replace(thinkRegex, "").trim();
+  
+  // Clean closed think blocks:
+  const thinkRegex = /<think[\s\S]*?<\/think>/gi;
+  cleanText = cleanText.replace(thinkRegex, "");
+
+  // Clean unclosed think blocks or malformed think tags:
+  if (cleanText.includes("<think")) {
+    const thinkIndex = cleanText.indexOf("<think");
+    const closeIndex = cleanText.indexOf("</think>", thinkIndex);
+    if (closeIndex !== -1) {
+      cleanText = cleanText.substring(0, thinkIndex) + cleanText.substring(closeIndex + 8);
+    } else {
+      cleanText = cleanText.substring(0, thinkIndex);
+    }
+  }
+  cleanText = cleanText.trim();
+
+  // 사용자 현황 및 미래자산 평가로 바로 시작하도록 강제 격리
+  const startIdx = cleanText.indexOf("### 1.");
+  if (startIdx !== -1) {
+    cleanText = cleanText.substring(startIdx);
+  }
 
   return cleanText.split("\n").map((line, idx) => {
     const content = line.trim();
-    if (!content) return <div key={idx} style={{ height: "12px" }} />;
+    
+    // 내용이 없는 네모 불릿, 하이픈, 또는 공백 라인 제거
+    const isBulletOnly = 
+      !content || 
+      content === "-" || 
+      content === "*" || 
+      content === "--" || 
+      content === "■" || 
+      content === "■ --" ||
+      content.replace(/[■\-\*\s]+/g, "") === "";
+
+    if (isBulletOnly) return null;
 
     // Heading 3 (###)
     if (content.startsWith("###")) {
@@ -161,6 +192,17 @@ const renderMarkdown = (text: string) => {
           );
         }
       }
+
+      const cleanListText = listText.trim();
+      const isCleanBulletOnly = 
+        !cleanListText || 
+        cleanListText === "-" || 
+        cleanListText === "--" || 
+        cleanListText === "■" || 
+        cleanListText === "■ --" ||
+        cleanListText.replace(/[■\-\*\s]+/g, "") === "";
+
+      if (isCleanBulletOnly) return null;
 
       return (
         <li
@@ -286,6 +328,32 @@ export default function AIAdvisorPage() {
   const pct1 = Math.round((v1 / totalVal) * 100);
   const pct2 = Math.round((v2 / totalVal) * 100);
   const pct3 = Math.round((v3 / totalVal) * 100);
+
+  // Generate premium rate chart data dynamically matching generational speed
+  const currentYear = new Date().getFullYear();
+  const birthYear = currentYear - currentAge;
+  let annualPremiumIncrement = 0.5; // default 30s
+  if (birthYear >= 1998) {
+    annualPremiumIncrement = 0.25;
+  } else if (birthYear >= 1978 && birthYear <= 1987) {
+    annualPremiumIncrement = 0.75;
+  } else if (birthYear <= 1977) {
+    annualPremiumIncrement = 1.0;
+  }
+
+  const premiumChartData = [];
+  let currentRate = 9.0;
+  premiumChartData.push({ year: "25년", rate: 9.0 });
+  for (let year = 2026; year <= 2045; year++) {
+    if (currentRate < 13.0) {
+      currentRate = Math.min(13.0, currentRate + annualPremiumIncrement);
+    }
+    const displayYear = `${year - 2000}년`;
+    premiumChartData.push({ year: displayYear, rate: parseFloat(currentRate.toFixed(2)) });
+    if (currentRate >= 13.0 && year >= 2030) {
+      break;
+    }
+  }
 
   // Living cost assessment (assume standard middle class retirement cost: 2.5 million KRW / month)
   const targetAnnuity = 250; // 250만원
@@ -441,14 +509,14 @@ export default function AIAdvisorPage() {
             <Link href="/dashboard" style={styles.navItem}>
               자산관리
             </Link>
-            <Link href="/youtube" style={styles.navItem}>
-              추천 영상
-            </Link>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>
-              AI 포트폴리오 처방
+              AI포트폴리오 진단
             </span>
             <Link href="/news" style={styles.navItem}>
-              정책 뉴스
+              관련 뉴스
+            </Link>
+            <Link href="/youtube" style={styles.navItem}>
+              추천영상
             </Link>
           </nav>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -628,7 +696,7 @@ export default function AIAdvisorPage() {
                 <div style={styles.chartsGrid}>
                   <div style={styles.chartCol}>
                     <h4 style={styles.chartBlockTitle}>연금 적립 구성 비율</h4>
-                    <div style={{ height: 200, width: "100%" }}>
+                    <div style={{ height: 260, width: "100%" }}>
                       {totalVal > 0 ? (
                         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: "16px", height: "100%", width: "100%", padding: "0 10px" }}>
                           {/* 좌측: 3층 구조 이미지 */}
@@ -637,7 +705,7 @@ export default function AIAdvisorPage() {
                             {v3 > 0 && (
                               <div style={{
                                 ...styles.roofLevel,
-                                height: `${Math.max(20, (pct3 / 100) * 120)}px`,
+                                height: `${Math.max(28, (pct3 / 100) * 200)}px`,
                               }}>
                                 <span style={styles.houseLabel}>3층 ({pct3}%)</span>
                               </div>
@@ -647,7 +715,7 @@ export default function AIAdvisorPage() {
                             {v2 > 0 && (
                               <div style={{
                                 ...styles.pillarLevel,
-                                height: `${Math.max(20, (pct2 / 100) * 120)}px`,
+                                height: `${Math.max(28, (pct2 / 100) * 200)}px`,
                               }}>
                                 <span style={styles.houseLabel}>2층 ({pct2}%)</span>
                               </div>
@@ -657,7 +725,7 @@ export default function AIAdvisorPage() {
                             {v1 > 0 && (
                               <div style={{
                                 ...styles.baseLevel,
-                                height: `${Math.max(20, (pct1 / 100) * 120)}px`,
+                                height: `${Math.max(28, (pct1 / 100) * 200)}px`,
                               }}>
                                 <span style={styles.houseLabel}>1층 ({pct1}%)</span>
                               </div>
@@ -697,8 +765,8 @@ export default function AIAdvisorPage() {
 
                   <div style={styles.chartCol}>
                     <h4 style={styles.chartBlockTitle}>연령별 예상 월 연금 수령액 (3층 구조)</h4>
-                    <div style={{ height: 210, width: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                      <ResponsiveContainer width="100%" height={170}>
+                    <div style={{ height: 240, width: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                      <ResponsiveContainer width="100%" height={200}>
                         <AreaChart
                           data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 1)}
                           margin={{ top: 5, right: 10, left: -25, bottom: 0 }}
@@ -730,14 +798,29 @@ export default function AIAdvisorPage() {
                     2026년부터 실행되는 연금 개혁안에 따라 국민연금 보험료율이 기존 <strong>9.0%</strong>에서 <strong>13.0%</strong>로 인상됩니다.
                   </p>
                   <div style={styles.impactCardRow}>
-                    <div style={styles.impactCard}>
-                      <span style={styles.impactLabel}>인상 가중 보험료율</span>
-                      <span style={styles.impactVal}>+ 4.0%p</span>
+                    <div style={{ ...styles.impactCard, flex: 1.3, display: "flex", flexDirection: "column", height: 160 }}>
+                      <span style={styles.impactLabel}>연도별 국민연금 보험료율 인상 계획 (9% ➔ 13%)</span>
+                      <div style={{ height: 110, width: "100%", marginTop: "6px" }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart
+                            data={premiumChartData}
+                            margin={{ top: 5, right: 5, left: -30, bottom: 0 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.08)" />
+                            <XAxis dataKey="year" tickLine={false} style={{ fontSize: "0.65rem", fill: "var(--text-secondary)" }} />
+                            <YAxis domain={[8, 14]} tickLine={false} style={{ fontSize: "0.65rem", fill: "var(--text-secondary)" }} />
+                            <Area type="monotone" dataKey="rate" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.2} isAnimationActive={false} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
-                    <div style={styles.impactCard}>
-                      <span style={styles.impactLabel}>은퇴 시까지 추가 보험료</span>
-                      <span style={{ ...styles.impactVal, color: "var(--danger)" }}>
+                    <div style={{ ...styles.impactCard, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: 160, gap: "12px" }}>
+                      <span style={{ ...styles.impactLabel, textAlign: "center" }}>은퇴 시까지 추가 납부 예상 보험료</span>
+                      <span style={{ ...styles.impactVal, fontSize: "1.6rem", color: "var(--danger)" }}>
                         {nationalPensionPremiumIncreaseTotal.toLocaleString()} 만원
+                      </span>
+                      <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textAlign: "center" }}>
+                        (연금 개혁 이전 9% 대비 추가분 누적액)
                       </span>
                     </div>
                   </div>
@@ -1280,16 +1363,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     lineHeight: "1.4",
   },
   houseDiagramWrapper: {
-    width: "120px",
+    width: "180px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-end",
-    height: "160px",
+    height: "240px",
     position: "relative",
   },
   roofLevel: {
-    width: "70%",
+    width: "80%",
     backgroundColor: "#f97316",
     borderRadius: "4px 4px 0 0",
     display: "flex",
@@ -1301,7 +1384,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRight: "2px solid #ea580c",
   },
   pillarLevel: {
-    width: "82%",
+    width: "90%",
     backgroundColor: "#facc15",
     display: "flex",
     alignItems: "center",
@@ -1313,7 +1396,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRight: "4px solid #eab308",
   },
   baseLevel: {
-    width: "95%",
+    width: "98%",
     backgroundColor: "#3b82f6",
     display: "flex",
     alignItems: "center",
@@ -1323,7 +1406,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderBottom: "2px solid #1d4ed8",
   },
   houseLabel: {
-    fontSize: "0.7rem",
+    fontSize: "0.85rem",
     fontWeight: 800,
     color: "#0f172a",
     zIndex: 2,

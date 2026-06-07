@@ -233,9 +233,9 @@ export default function YoutubeHubPage() {
           </Link>
           <nav style={styles.navLinks}>
             <Link href="/dashboard" style={styles.navItem}>자산관리</Link>
-            <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>추천 영상</span>
-            <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI 포트폴리오 처방</Link>
-            <Link href="/news" style={styles.navItem}>정책 뉴스</Link>
+            <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI포트폴리오 진단</Link>
+            <Link href="/news" style={styles.navItem}>관련 뉴스</Link>
+            <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>추천영상</span>
           </nav>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <ThemeToggle />

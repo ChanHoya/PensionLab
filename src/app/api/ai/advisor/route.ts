@@ -79,15 +79,23 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
 당신은 대한민국 3층 연금 및 은퇴 자산 포트폴리오를 설계하는 최고 수준의 AI 자산 관리사(Financial Planner)입니다.
 위 데이터를 바탕으로 사용자를 위한 **은퇴 자산 포트폴리오 진단 및 연금 리밸런싱 처방전**을 정밀하게 분석해 주십시오.
 
-반드시 다음 4가지 핵심 영역에 대해 상세한 의견과 개선 방향을 제시해 주세요:
-1. **은퇴 준비도 종합 평가**: 은퇴 시점 예상 총자산과 연금 월 수령액이 목표/최소 생활비 대비 충분한지 분석 (소득 대체율 진단)
-2. **소득 크레바스(소득 공백기) 진단 및 인출 순서 최적화**: 은퇴 나이(${simulationParams.retirementAge}세)부터 국민연금 개시 나이(${simulationParams.nationalPensionStartAge}세) 사이의 소득 공백기 대응 방안 및 세금을 최소화하는 최적의 인출 전략 (퇴직연금, 개인연금, 공적연금의 수령 순서 및 시기 배치)
-3. **자산군 리밸런싱 및 투자 제안**: 남은 은퇴 준비 기간 및 나이를 고려하여, 위험자산과 안전자산의 비율 제안 및 안정적인 배당 흐름을 창출하는 자산군(TDF, 미국 고배당 커버드콜 ETF, 리츠 등) 추천
-4. **인출 전략 맞춤 조언**: 사용자가 선택한 인출 전략(${simulationParams.decumulationStrategy === "DECREASING" ? "활동기 집중형" : "동일 금액형"})에 따른 지출 예산 관리법 및 리스크(장수 리스크, 인플레이션 위험) 방어 가이드
+반드시 다음 5가지 핵심 영역에 대해 상세한 의견과 개선 방향을 제시해 주세요:
+1. **사용자 현황 및 미래자산 평가**: 은퇴 시점 예상 총자산 규모와 연금 월 수령액, 준비 상황에 대한 전반적 진단 및 총평
+2. **은퇴 준비도 종합평가**: 은퇴 후 단계별 필요자금 및 실질 필요자금 산출
+   - 필요자금 산출은 반드시 다음 3가지 단계(활동 단계별)로 구분하여 기간(은퇴 시점부터 기대수명까지의 총 은퇴 생활기간)과 금액을 분석해 주세요:
+     1) 은퇴후 적극 활동기 (은퇴 나이 ~ 75세): 활발한 여가/사회 활동이 수반되는 시기로 목표 생활비의 120% 수준 적용
+     2) 은퇴후 안정 활동기 (75세 ~ 85세): 지출이 안정화되는 시기로 목표 생활비의 80% 수준 적용
+     3) 은퇴후 비활동기 (85세 ~ 기대수명): 의료/간병비 중심의 소극적 시기로 최소 생활비 수준 적용
+   - 국민연금 차감 후 실질 필요액(은퇴자금 부족액)도 위와 동일한 3가지 단계(적극 활동기, 안정 활동기, 비활동기)로 나누어 각각 기간별 필요 자금을 수치 계산하여 산출해 주세요.
+3. **소득 크레바스(소득 공백기) 진단 및 인출 순서 최적화**: 은퇴 나이부터 국민연금 개시 나이 사이의 소득 공백기 대응 방안 및 세금을 최소화하는 최적의 인출 전략 (퇴직연금, 개인연금, 공적연금의 수령 순서 및 시기 배치)
+4. **자산군 리밸런싱 및 투자 제안**: 남은 은퇴 준비 기간 및 나이를 고려하여, 위험자산과 안전자산의 비율 제안 및 안정적인 배당 흐름을 창출하는 자산군(TDF, 미국 고배당 커버드콜 ETF, 리츠 등) 추천
+5. **인출 전략 맞춤 조언**: 사용자가 선택한 인출 전략(활동기 집중형 또는 동일 금액형)에 따른 지출 예산 관리법 및 리스크(장수 리스크, 인플레이션 위험) 방어 가이드
 
 [답변 작성 형식 지침]
-- 당신의 깊이 있는 생각 흐름과 대안 검토 과정은 반드시 \`<think>\`와 \`</think>\` 태그 내에 한글로 자유롭게 상세히 작성해 주십시오.
-- 태그 밖에는 최종 사용자에게 보여줄 가독성 높은 마크다운 형식의 깔끔하고 premium 한 처방전(보고서 스타일)만 작성해 주십시오. 사용자에게 설명하듯 신뢰성 있고 전문적인 어조로 설명해 주세요.
+- 당신의 깊이 있는 생각 흐름과 대안 검토 과정은 반드시 \`<think>\`와 \`</think>\` 태그 내에 한글로 상세히 작성해 주십시오.
+- 인사말, 소개 글, 또는 서론 문장을 완전히 배제하고, \`</think>\` 태그가 닫힌 직후 바로 **"### 1. 사용자 현황 및 미래자산 평가"**로 본문 보고서를 시작해 주십시오.
+- 보고서 내에 빈 항목이나 내용이 없는 불릿 포인트(예: '■ --' 이나 공백으로만 구성된 불릿)는 절대 포함하지 말고, 각 항목의 핵심 내용을 명확히 기술하십시오.
+- 최종 사용자에게 보여줄 가독성 높은 마크다운 형식의 깔끔하고 premium 한 처방전(보고서 스타일)만 작성해 주십시오. 사용자에게 설명하듯 신뢰성 있고 전문적인 어조로 설명해 주세요.
 `;
 
     let fullContent = "";
@@ -98,7 +106,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
       try {
         const model = genAI.getGenerativeModel({
           model: "gemini-3.5-flash",
-          systemInstruction: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다. 사용자의 질문에 대해 분석적이고 전문적인 견해를 제시합니다.",
+          systemInstruction: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다. 인사말 없이 '### 1. 사용자 현황 및 미래자산 평가'로 본문을 즉시 시작하며, 빈 불릿 포인트나 공백 항목을 생성하지 마십시오. 필요자금 분석 및 실질 필요자금 산출은 반드시 은퇴나이~75세(적극활동기), 75~85세(안정활동기), 85세~기대수명(비활동기)의 3단계로 나누어 설명해 주십시오.",
         });
 
         const result = await model.generateContent(prompt);
@@ -116,10 +124,10 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
     let recommendation = "";
 
     if (isAIFlowSuccess && fullContent) {
-      const thinkMatch = fullContent.match(/<think>([\s\S]*?)<\/think>/);
+      const thinkMatch = fullContent.match(/<think[\s\S]*?>([\s\S]*?)(?:<\/think>|$)/i);
       if (thinkMatch) {
         thinking = thinkMatch[1].trim();
-        recommendation = fullContent.replace(/<think>[\s\S]*?<\/think>/, "").trim();
+        recommendation = fullContent.replace(/<think[\s\S]*?>[\s\S]*?(?:<\/think>|$)/i, "").trim();
       } else {
         recommendation = fullContent.trim();
       }
@@ -130,8 +138,8 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
         : `${simulation.totalAccumulatedAtRetirement.toLocaleString()}만원`;
 
       const monthlyAnnuityStr = `${simulation.monthlyAnnuityAtRetirement.toLocaleString()}만원`;
-      const targetSpending = simulationParams.targetMonthlySpending || 300;
-      const minSpending = simulationParams.minMonthlySpending || 200;
+      const targetSpending = simulationParams.targetMonthlySpending || 250;
+      const minSpending = simulationParams.minMonthlySpending || 150;
       const targetPercent = Math.round((simulation.monthlyAnnuityAtRetirement / targetSpending) * 100);
       const minPercent = Math.round((simulation.monthlyAnnuityAtRetirement / minSpending) * 100);
 
@@ -147,15 +155,44 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
         adequacyStatus = "최소 생활비에도 미치지 못해 노후 자산 고갈 위험이 있는 상태입니다. 국민연금 개시 전까지 소득 공백기를 메울 연금 자산의 추가 납입 또는 주택연금 등의 활용이 요구됩니다.";
       }
 
+      // Fallback calculations for the 3 stages
+      const retAge = simulationParams.retirementAge || 60;
+      const lifeExp = simulationParams.expectedLifeExpectancy || 100;
+      const natPension = nationalPension?.expectedMonthlyPension || 0;
+      const natStartAge = simulationParams.nationalPensionStartAge || 65;
+
+      const formatAsset = (val: number) => {
+        return val >= 10000 ? `${(val / 10000).toFixed(2)}억원` : `${val.toLocaleString()}만원`;
+      };
+
+      // 1. 은퇴후 적극 활동기 (은퇴나이 ~ 75세)
+      const stage1Years = Math.max(0, 75 - retAge);
+      const stage1MonthlyNeed = Math.round(targetSpending * 1.2);
+      const stage1PreStartYears = Math.max(0, Math.min(75, natStartAge) - retAge);
+      const stage1PostStartYears = Math.max(0, 75 - Math.max(retAge, natStartAge));
+      const stage1PreStartTotal = stage1PreStartYears * stage1MonthlyNeed * 12;
+      const stage1PostStartTotal = stage1PostStartYears * Math.max(0, stage1MonthlyNeed - natPension) * 12;
+      const stage1TotalNetNeed = stage1PreStartTotal + stage1PostStartTotal;
+
+      // 2. 은퇴후 안정 활동기 (75세 ~ 85세)
+      const stage2Years = Math.max(0, Math.min(lifeExp, 85) - Math.min(lifeExp, 75));
+      const stage2MonthlyNeed = Math.round(targetSpending * 0.8);
+      const stage2TotalNetNeed = stage2Years * Math.max(0, stage2MonthlyNeed - natPension) * 12;
+
+      // 3. 은퇴후 비활동기 (85세 ~ 기대수명)
+      const stage3Years = Math.max(0, lifeExp - Math.max(retAge, 85));
+      const stage3MonthlyNeed = minSpending;
+      const stage3TotalNetNeed = stage3Years * Math.max(0, stage3MonthlyNeed - natPension) * 12;
+
+      const totalNetNeed = stage1TotalNetNeed + stage2TotalNetNeed + stage3TotalNetNeed;
+
       thinking = `[Gemini API 연동 실패/미등록 디버그 정보]
 - 원인: ${geminiApiErrorDetail}
 
 1. 사용자 연령 및 은퇴 시점 시각화: 현재 나이 ${simulation.currentAge}세, 은퇴 희망 ${simulationParams.retirementAge}세로 준비 기간은 ${simulation.yearsToRetire}년입니다.
-2. 3층 연금 및 비연금 자산 집계: 은퇴 시점 총 연금 자산은 ${totalAssetStr}이며, 예상 월 수령액은 ${monthlyAnnuityStr}입니다.
+2. 3층 연금 및 비연금 자산 집계: 은퇴 시점 총연금 자산은 ${totalAssetStr}이며, 예상 월 수령액은 ${monthlyAnnuityStr}입니다.
 3. 소득 크레바스(소득 공백기) 분석: 은퇴 나이 ${simulationParams.retirementAge}세부터 국민연금 개시 ${simulationParams.nationalPensionStartAge}세까지 ${crevasseYears}년의 소득 공백이 식별되었습니다.
-4. 인출 방식 검토: 사용자가 선택한 전략은 '${isDecreasing ? "활동기 집중형 체감식" : "동일 금액형 정액식"}'입니다.
-5. 포트폴리오 리밸런싱 설계: 수익률 향상을 위해 위험자산/인컴자산/안전자산 비율을 20:40:40으로 권장합니다.
-6. 구조화된 최종 마크다운 가이드 라인을 생성하여 Fallback 응답으로 바인딩합니다.`;
+4. 인출 방식 검토: 사용자가 선택한 전략은 '${isDecreasing ? "활동기 집중형 체감식" : "동일 금액형 정액식"}'입니다.`;
 
       let warningHeader = "⚠️ **[로컬 테스트 모드 - Gemini AI API 키 미등록 상태]**";
       if (geminiApiErrorDetail.includes("429") || geminiApiErrorDetail.toLowerCase().includes("quota")) {
@@ -166,11 +203,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
 
       recommendation = `${warningHeader}
 
-회원님의 **3층 연금 구조 및 비연금 금융자산**을 다각도로 분석하여 도출한 리밸런싱 처방전입니다.
-
----
-
-### 1. 은퇴 준비도 종합 평가 (소득 대체율 진단)
+### 1. 사용자 현황 및 미래자산 평가
 회원님의 은퇴 시점 예상 연금 자산 규모는 **${totalAssetStr}**이며, 은퇴 직후 예상되는 월 수령액은 **${monthlyAnnuityStr}**입니다.
 - **목표 생활비(월 ${targetSpending}만원) 대비 달성율**: **${targetPercent}%**
 - **최소 생활비(월 ${minSpending}만원) 대비 달성율**: **${minPercent}%**
@@ -179,16 +212,36 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
 
 ---
 
-### 2. 소득 크레바스(소득 공백기) 진단 및 인출 순서 최적화
-회원님의 은퇴 희망 나이는 **${simulationParams.retirementAge}세**이며, 국민연금 개시 연령은 **${simulationParams.nationalPensionStartAge}세**로, 총 **${crevasseYears}년의 소득 공백기(은퇴 크레바스)**가 존재합니다.
-이 기간 동안 소득 공백을 메우고 세제 혜택을 극대화하기 위한 최적의 인출 순서는 다음과 같습니다:
-1. **1단계 (소득 공백기)**: **퇴직연금(IRP)의 퇴직소득세 감면 재원**을 우선 인출하여 생활비의 기초를 다집니다. (연금 수령 시 퇴직소득세 30% 감면 효과 활용)
-2. **2단계 (공적연금 개시 이후)**: **국민연금(월 ${nationalPension?.expectedMonthlyPension || 0}만원)**과 **기초연금**을 수급하며, 부족한 금액은 **개인연금저축/연금보험**을 통해 연간 1,500만원 분리과세 한도 내에서 인출합니다.
-3. **3단계 (고령기)**: **비연금 자산(${(simulationParams.nonPensionAssets || 0).toLocaleString()}만원)** 중 주택이 있다면 주택연금(종신형)으로 전환하여 건보료 피부양자 자격을 유지하면서 종신 현금 흐름을 확보합니다.
+### 2. 은퇴 준비도 종합평가
+
+#### 필요 자금 산출 (총 ${lifeExp - retAge}년):
+- **은퇴후 적극 활동기 (은퇴나이 ~ 75세, ${stage1Years}년간)**: 목표 생활비의 120% 적용 ➔ **월 ${stage1MonthlyNeed}만원** (연 ${(stage1MonthlyNeed * 12).toLocaleString()}만원)
+- **은퇴후 안정 활동기 (75세 ~ 85세, ${stage2Years}년간)**: 목표 생활비의 80% 적용 ➔ **월 ${stage2MonthlyNeed}만원** (연 ${(stage2MonthlyNeed * 12).toLocaleString()}만원)
+- **은퇴후 비활동기 (85세 ~ 기대수명 ${lifeExp}세, ${stage3Years}년간)**: 최소 생활비 수준 적용 ➔ **월 ${stage3MonthlyNeed}만원** (연 ${(stage3MonthlyNeed * 12).toLocaleString()}만원)
+
+#### 국민연금 차감 후 실질 필요액 (국민연금 월 ${natPension}만원 수령 가정):
+- **은퇴후 적극 활동기 (적극적 여가 소비기, ${stage1Years}년간)**:
+  - 국민연금 개시 전 (${stage1PreStartYears}년간): 월 필요액 **${stage1MonthlyNeed}만원** (연 ${(stage1MonthlyNeed * 12).toLocaleString()}만원) ➔ 총 **${formatAsset(stage1PreStartTotal)}** 필요
+  - 국민연금 개시 후 (${stage1PostStartYears}년간): 월 필요액 **${Math.max(0, stage1MonthlyNeed - natPension)}만원** (연 ${(Math.max(0, stage1MonthlyNeed - natPension) * 12).toLocaleString()}만원) ➔ 총 **${formatAsset(stage1PostStartTotal)}** 필요
+  - 적극 활동기 총 실질 필요액 ➔ **${formatAsset(stage1TotalNetNeed)}**
+- **은퇴후 안정 활동기 (소비 안정화기, ${stage2Years}년간)**:
+  - 월 필요액 **${Math.max(0, stage2MonthlyNeed - natPension)}만원** (연 ${(Math.max(0, stage2MonthlyNeed - natPension) * 12).toLocaleString()}만원) ➔ 총 **${formatAsset(stage2TotalNetNeed)}** 필요
+- **은퇴후 비활동기 (간병/의료비 집중기, ${stage3Years}년간)**:
+  - 월 필요액 **${Math.max(0, stage3MonthlyNeed - natPension)}만원** (연 ${(Math.max(0, stage3MonthlyNeed - natPension) * 12).toLocaleString()}만원) ➔ 총 **${formatAsset(stage3TotalNetNeed)}** 필요
+- **은퇴 생활 전체 총 실질 필요 은퇴자금**: **${formatAsset(totalNetNeed)}**
 
 ---
 
-### 3. 자산군 리밸런싱 및 투자 제안
+### 3. 소득 크레바스(소득 공백기) 진단 및 인출 순서 최적화
+회원님의 은퇴 희망 나이는 **${retAge}세**이며, 국민연금 개시 연령은 **${natStartAge}세**로, 총 **${crevasseYears}년의 소득 공백기(은퇴 크레바스)**가 존재합니다.
+이 기간 동안 소득 공백을 메우고 세제 혜택을 극대화하기 위한 최적의 인출 순서는 다음과 같습니다:
+1. **1단계 (소득 공백기)**: **퇴직연금(IRP)의 퇴직소득세 감면 재원**을 우선 인출하여 생활비의 기초를 다집니다. (연금 수령 시 퇴직소득세 30% 감면 효과 활용)
+2. **2단계 (공적연금 개시 이후)**: **국민연금(월 ${natPension}만원)**과 **기초연금**을 수급하며, 부족한 금액은 **개인연금저축/연금보험**을 통해 연간 1,500만원 분리과세 한도 내에서 인출합니다.
+3. **3단계 (고령기)**: **비연금 자산** 중 주택이 있다면 주택연금(종신형)으로 전환하여 건보료 피부양자 자격을 유지하면서 종신 현금 흐름을 확보합니다.
+
+---
+
+### 4. 자산군 리밸런싱 및 투자 제안
 현 포트폴리오의 투자 수익률을 개선하고 인플레이션을 방어하기 위해 다음과 같은 포트폴리오 리밸런싱을 제안합니다:
 - **안전 자산 (40%)**: 확정금리형 예금 및 단기 채권 ETF (소득 공백기 생활비 인출용 안전 마진 확보)
 - **배당/인컴 자산 (40%)**: 미국 배당성장형 ETF(예: SCHD) 및 글로벌 자산배분형 TDF (물가상승 방어 및 꾸준한 분배금 유입)
@@ -196,9 +249,9 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
 
 ---
 
-### 4. 인출 전략 맞춤 조언 (${isDecreasing ? "활동기 집중형 체감식" : "동일 금액형 정액식"})
+### 5. 인출 전략 맞춤 조언 (${isDecreasing ? "활동기 집중형 체감식" : "동일 금액형 정액식"})
 회원님께서 선택하신 인출 방식은 **${isDecreasing ? "활동기 집중형 (체감식: 은퇴 초반 120% 인출 후 감액)" : "동일 금액형 (정액식)"}**입니다.
-- **인출 관리 처방**: ${isDecreasing ? "은퇴 후 첫 5년 동안은 수령액을 120%로 증액하여 활발한 여행 및 문화 활동에 집중하고, 이후 안정기에 접어들면서 점진적으로 줄여 80세 이후에는 40% 수준으로 관리함으로써 노후 자산의 급격한 고갈을 완벽하게 방어할 수 있습니다." : "매년 일정한 금액을 인출하여 안정적이고 예측 가능한 현금흐름을 가져갈 수 있으나, 물가 상승에 따른 구매력 저하를 방어하기 위해 투자형 자산의 비중 조절이 필요합니다."}
+- **인출 관리 처방**: ${isDecreasing ? "은퇴 후 적극 활동기 동안은 수령액을 120%로 증액하여 활발한 여행 및 문화 활동에 집중하고, 이후 안정기에 접어들면서 점진적으로 줄여 85세 이후 비활동기에는 40% 수준으로 관리함으로써 노후 자산의 급격한 고갈을 완벽하게 방어할 수 있습니다." : "매년 일정한 금액을 인출하여 안정적이고 예측 가능한 현금흐름을 가져갈 수 있으나, 물가 상승에 따른 구매력 저하를 방어하기 위해 투자형 자산의 비중 조절이 필요합니다."}
 - **리스크 관리 방안**: 인출 초기 과도한 시장 하락(시점 위험)에 대비하기 위해 최소 2~3년 치의 생활비는 예금 등 현금성 자산으로 상시 확보할 것을 권장합니다.
 
 *※ 본 보고서는 AI 시뮬레이션 기반 제안서이며, 실제 투자 및 인출 실행 시 전문 세무사/재무 설계사와의 대면 상담을 병행하시길 권장합니다.*`;

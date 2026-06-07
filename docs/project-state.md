@@ -20,15 +20,14 @@
 - **[Completed]** Sprint 9: 데이터 저장 트랜잭션 안정화 & 대시보드 시각화 색상/필터 최적화.
 - **[Completed]** Sprint 10: 온보딩 Step 0 개인/가족/지출 정보 신설 및 대시보드 범례/차트 UX 고도화.
 - **[Completed]** Sprint 11: 활동기 집중형(체감식) 은퇴 연금 인출전략 도입 및 대시보드 차트 레이아웃 2차 고도화.
-- **[Completed]** Sprint 12: MiniMax M3 모델 API 연동 및 은퇴 자산 포트폴리오 진단/연금 리밸런싱 처방 기능 개발, DB 트랜잭션 타임아웃 오류 수정 및 404 라우트 구현.
+- **[Completed]** Sprint 12: Gemini 2.0 Flash 단일 모델 API 연동 및 은퇴 자산 포트폴리오 진단/연금 리밸런싱 처방 기능 개발 (MiniMax 연동 전면 제외), DB 트랜잭션 타임아웃 오류 수정 및 404 라우트 구현.
 
 ## Active Sprint / Story
-- **Sprint 12**: MiniMax M3 모델 API 연동 및 은퇴 자산 포트폴리오 진단/연금 리밸런싱 처방 기능 개발 — **COMPLETED**
-  - **[Story S12-1]** [Completed] MiniMax M3 모델 OpenAI SDK 호환 API 연동 구현 (`src/app/api/ai/advisor/route.ts`)
+- **Sprint 12**: Gemini 2.0 Flash 단일 모델 API 연동 및 은퇴 자산 포트폴리오 진단/연금 리밸런싱 처방 기능 개발 — **COMPLETED**
+  - **[Story S12-1]** [Completed] Gemini 2.0 Flash 모델 API 연동 및 MiniMax 연동 전면 배제 (`src/app/api/ai/advisor/route.ts`)
   - **[Story S12-2]** [Completed] 대시보드 헤더 메뉴 링크 연동 및 글래스모피즘 기반 AI Advisor UI 페이지 (`src/app/dashboard/ai-advisor/page.tsx`) 구축
-  - **[Story S12-3]** [Completed] MiniMax M3의 고성능 Reasoning 사고 과정(Thinking) 파싱 및 클라이언트 아코디언 렌더링 구현
-  - **[Story S12-4]** [Completed] 로컬 개발 서버 환경 동작 및 렌더링 검증 완료 (TypeScript 빌드 이상 무)
+  - **[Story S12-3]** [Completed] Gemini 2.0 Flash AI의 고성능 Reasoning 사고 과정(Thinking) 파싱 및 클라이언트 아코디언 렌더링 구현
+  - **[Story S12-4]** [Completed] Gemini API Key 미등록 시 동작하는 고충실도(High-fidelity) 로컬 진단 생성 Fallback 로직 적용 (오류 방지)
   - **[Story S12-5]** [Completed] 서버리스 환경(Vercel) DB 커넥션 고갈로 인한 `$transaction` 타임아웃 수정 (`src/config/db.ts` 커넥션 풀 최적화)
-  - **[Story S12-6]** [Completed] 개발 환경(MiniMax-M3) 및 운영 환경(Gemini-2.0-flash) 하이브리드 추론 API 연동 및 호환성 보장
-  - **[Story S12-7]** [Completed] 404 오류가 발생하던 `/simulator` 및 `/news` 서비스 페이지 신규 구현 및 네비게이션 연동 완료
+  - **[Story S12-6]** [Completed] 404 오류가 발생하던 `/simulator` 및 `/news` 서비스 페이지 신규 구현 및 네비게이션 연동 완료
 

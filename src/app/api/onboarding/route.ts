@@ -13,6 +13,13 @@ export async function POST(request: Request) {
       simulationParams,
     } = body;
 
+    // 0. Wake up DB connection pool first if cold-started
+    try {
+      await prisma.$executeRawUnsafe("SELECT 1;");
+    } catch (pingErr) {
+      console.warn("DB ping failed, trying transaction anyway:", pingErr);
+    }
+
     // Create user and associated pension records inside a transaction
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create User

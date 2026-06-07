@@ -281,7 +281,7 @@ export default function DashboardPage() {
                 {/* 3층 지붕 (개인/보험) */}
                 <div style={{
                   ...styles.roofLevel,
-                  height: `${Math.max(35, pct3 * 3.0)}px`,
+                  height: `${Math.max(30, (pct3 / 100) * 240)}px`,
                   opacity: v3 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>3층 ({pct3}%)</span>
@@ -290,7 +290,7 @@ export default function DashboardPage() {
                 {/* 2층 기둥 (퇴직연금) */}
                 <div style={{
                   ...styles.pillarLevel,
-                  height: `${Math.max(40, pct2 * 3.0)}px`,
+                  height: `${Math.max(30, (pct2 / 100) * 240)}px`,
                   opacity: v2 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>2층 ({pct2}%)</span>
@@ -299,7 +299,7 @@ export default function DashboardPage() {
                 {/* 1층 토대 (국민/기초) */}
                 <div style={{
                   ...styles.baseLevel,
-                  height: `${Math.max(45, pct1 * 3.0)}px`,
+                  height: `${Math.max(30, (pct1 / 100) * 240)}px`,
                   opacity: v1 > 0 ? 1 : 0.4
                 }}>
                   <span style={styles.houseLabel}>1층 ({pct1}%)</span>
@@ -1250,13 +1250,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: "relative",
   },
   roofLevel: {
-    width: "90%",
+    width: "65%",
     backgroundColor: "#f97316",
-    clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
+    borderRadius: "4px 4px 0 0",
     display: "flex",
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "center",
-    paddingBottom: "4px",
     transition: "all 0.3s ease",
     marginBottom: "2px",
   },
@@ -1268,12 +1267,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "center",
     transition: "all 0.3s ease",
     marginBottom: "2px",
-    borderRadius: "4px 4px 0 0",
+    borderRadius: "0",
     borderLeft: "8px solid #eab308",
     borderRight: "8px solid #eab308",
   },
   baseLevel: {
-    width: "100%",
+    width: "95%",
     backgroundColor: "#3b82f6",
     display: "flex",
     alignItems: "center",

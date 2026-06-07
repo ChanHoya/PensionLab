@@ -335,40 +335,62 @@ export default function OnboardingPage() {
 
   const handleFinish = async () => {
     setIsSubmitting(true);
-    try {
-      // Send onboarding data to the API to register user in DB
-      const response = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nationalPension: store.nationalPension,
-          basicPension: store.basicPension,
-          retirementPensions: store.retirementPensions,
-          personalPensions: store.personalPensions,
-          pensionInsurances: store.pensionInsurances,
-          simulationParams: store.simulationParams,
-        }),
-      });
+    
+    const maxRetries = 3;
+    let attempt = 0;
+    let success = false;
+    let lastError: any = null;
+    let userId = "";
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.details || errorData.error || "온보딩 데이터 저장 실패");
+    while (attempt < maxRetries && !success) {
+      attempt++;
+      try {
+        // Send onboarding data to the API to register user in DB
+        const response = await fetch("/api/onboarding", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nationalPension: store.nationalPension,
+            basicPension: store.basicPension,
+            retirementPensions: store.retirementPensions,
+            personalPensions: store.personalPensions,
+            pensionInsurances: store.pensionInsurances,
+            simulationParams: store.simulationParams,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.details || errorData.error || "온보딩 데이터 저장 실패");
+        }
+
+        const data = await response.json();
+        userId = data.userId;
+        success = true;
+      } catch (err: any) {
+        console.warn(`온보딩 저장 시도 ${attempt}/${maxRetries} 실패:`, err.message);
+        lastError = err;
+        if (attempt < maxRetries) {
+          // DB spin-up 또는 네트워크 안정을 위해 재시도 전 대기 시간 추가 (1.5초)
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
       }
+    }
 
-      const data = await response.json();
+    if (success && userId) {
       // Save userId to localStorage to preserve session
-      localStorage.setItem("pensionlab_user_id", data.userId);
+      localStorage.setItem("pensionlab_user_id", userId);
       
       store.setSimulationParams({
         retirementAge: store.simulationParams.retirementAge,
       });
 
       router.push("/dashboard");
-    } catch (error: any) {
-      console.error(error);
-      alert(`데이터 저장 도중 에러가 발생했습니다.\n원인: ${error.message || "네트워크 오류"}\n\n로컬 대시보드로 이동합니다.`);
+      setIsSubmitting(false);
+    } else {
+      console.error("온보딩 저장 최종 실패:", lastError);
+      alert(`데이터 저장 도중 에러가 발생했습니다.\n원인: ${lastError?.message || "네트워크 오류"}\n\n로컬 대시보드로 이동합니다.`);
       router.push("/dashboard");
-    } finally {
       setIsSubmitting(false);
     }
   };

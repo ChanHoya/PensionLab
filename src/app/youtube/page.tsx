@@ -31,7 +31,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-2",
-    videoId: "S01ZqgS3T2o",
+    videoId: "jW7D-6x0_9o",
     channelName: "연금박사",
     channelHandle: "@pension500",
     title: "퇴직금 1억 받았다면 노후설계 이렇게 하세요! 실전 포트폴리오 가이드",
@@ -51,7 +51,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-4",
-    videoId: "S01ZqgS3T2o",
+    videoId: "jW7D-6x0_9o",
     channelName: "연금박사",
     channelHandle: "@pension500",
     title: "10억 목돈보다 월 500만원 연금이 좋은 10가지 이유",
@@ -63,7 +63,7 @@ const SEED_VIDEOS: Video[] = [
   // 박곰희TV (@gomhee)
   {
     id: "v-yt-5",
-    videoId: "GjYJg2XJq-w",
+    videoId: "W5-V4e3D6d0",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "퇴직연금 DB형과 DC형, 나에게 맞는 유리한 선택 기준",
@@ -73,7 +73,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-6",
-    videoId: "R5RD3QCkeyl",
+    videoId: "Jm3X1x_Tq-w",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "은퇴 후 매달 월 300만원 연금을 수령하기 위한 필수 자금 규모 계산법",
@@ -83,7 +83,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-7",
-    videoId: "CP7BuvbnKIY",
+    videoId: "W5-V4e3D6d0",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "50대 은퇴자를 위한 최적의 사적연금 리밸런싱 포트폴리오 가이드",
@@ -93,7 +93,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-8",
-    videoId: "GjYJg2XJq-w",
+    videoId: "Jm3X1x_Tq-w",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
     title: "절세계좌 3종 세트(ISA, 연금저축, IRP) 100% 활용법 및 인출 순서",
@@ -105,7 +105,7 @@ const SEED_VIDEOS: Video[] = [
   // 연금이야기 (@PensionStory)
   {
     id: "v-yt-9",
-    videoId: "k5jG2_j7V4I",
+    videoId: "yqrOMgg_Mxk",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "연금수령방법 총정리 및 절세계좌 최적화 가이드",
@@ -115,7 +115,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-10",
-    videoId: "vWdiq3SFJnb",
+    videoId: "nBWne4QAG6I",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "연금상담, 많이 묻는 질문 10가지 현답 리포트",
@@ -125,7 +125,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-11",
-    videoId: "k5jG2_j7V4I",
+    videoId: "CGz2T1R-Z0g",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "3040 연금저축, IRP, ISA 절세계좌 스마트 연금 투자 방법",
@@ -135,7 +135,7 @@ const SEED_VIDEOS: Video[] = [
   },
   {
     id: "v-yt-12",
-    videoId: "vWdiq3SFJnb",
+    videoId: "yqrOMgg_Mxk",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
     title: "은퇴 후 건보료 폭탄 피하는 합법적 절세 가이드",

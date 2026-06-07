@@ -649,7 +649,7 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>은퇴 시점 비연금 자산 규모 (만원)</label>
+                    <label style={styles.label}>은퇴 시점 비연금 자산(주식,채권,현금 등) 규모 (만원)</label>
                     <input
                       type="number"
                       className="premium-input"

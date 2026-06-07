@@ -9,15 +9,39 @@ const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
   ssr: false,
 });
 
+const LIBRARY_DOCUMENTS = [
+  {
+    title: "연금 개혁안",
+    url: "/2026_Pension_Reform.pdf",
+    desc: "2026년부터 단계적으로 인상되는 국민연금 보험료율 및 소득대체율 개혁안 상세 분석 가이드"
+  },
+  {
+    title: "연금 조기/정상/연기 수령 비교",
+    url: "/Strategic_Pension_Optimization.pdf",
+    desc: "수령 시점에 따른 실수령액 시뮬레이션 및 개인 노후 사정에 맞춘 최적 수령 전략 보고서"
+  },
+  {
+    title: "ISA/연금저축/IRP 마스터플랜",
+    url: "/2026_Retirement_Defense_Manual.pdf",
+    desc: "세액공제와 비과세 혜택을 극대화하는 장기 노후 자산 관리 핵심 3대 계좌 핵심 운용 매뉴얼"
+  },
+  {
+    title: "장기 생존을 위한 코어-새틀라이트 전략",
+    url: "/The_IRP_Master_Recipe.pdf",
+    desc: "퇴직연금(IRP)의 장기 안정 자산(코어)과 자산 배분 펀드(새틀라이트) 최적 비율 배분 포트폴리오 레시피"
+  }
+];
+
 export default function LandingPage() {
   const [pdfConfig, setPdfConfig] = useState({
     isOpen: false,
     url: "/Pension_Blueprint.pdf",
     title: "서비스 소개",
   });
-  const [activeMenu, setActiveMenu] = useState<"service-intro" | "pension-reform" | "youtube-tips" | null>(null);
+  const [activeMenu, setActiveMenu] = useState<"service-intro" | "pension-library" | "youtube-tips" | null>(null);
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
-  const getNavStyle = (menuId: "service-intro" | "pension-reform" | "youtube-tips") => {
+  const getNavStyle = (menuId: "service-intro" | "pension-library" | "youtube-tips") => {
     return {
       ...styles.navButtonBase,
       ...(activeMenu === menuId ? styles.navButtonActive : styles.navButtonInactive),
@@ -53,14 +77,14 @@ export default function LandingPage() {
               서비스 소개
             </button>
             <button
-              id="btn-pension-reform"
+              id="btn-pension-library"
               onClick={() => {
-                setActiveMenu("pension-reform");
-                setPdfConfig({ isOpen: true, url: "/2026_Pension_Reform.pdf", title: "2026 연금 개혁안" });
+                setActiveMenu("pension-library");
+                setIsLibraryOpen(true);
               }}
-              style={getNavStyle("pension-reform")}
+              style={getNavStyle("pension-library")}
             >
-              연금 개혁안 정보
+              연금 정보창고
             </button>
             <button
               id="btn-youtube-tips"
@@ -106,12 +130,55 @@ export default function LandingPage() {
       </div>
     </main>
 
+    {/* 연금 정보창고 모달 */}
+    {isLibraryOpen && (
+      <div style={styles.libOverlay} onClick={() => { setIsLibraryOpen(false); setActiveMenu(null); }}>
+        <div style={styles.libModal} onClick={(e) => e.stopPropagation()}>
+          <div style={styles.libHeader}>
+            <span style={styles.libTitle}>📚 연금 정보창고</span>
+            <button 
+              onClick={() => { setIsLibraryOpen(false); setActiveMenu(null); }}
+              style={styles.libCloseBtn}
+            >
+              ✕
+            </button>
+          </div>
+          <div style={styles.libBody}>
+            <p style={styles.libSubtitle}>은퇴 자산 설계를 돕는 연금 개혁안 및 자산 배분 전략 마스터 보고서 목록입니다.</p>
+            <div style={styles.libGrid}>
+              {LIBRARY_DOCUMENTS.map((doc, idx) => (
+                <div 
+                  key={idx} 
+                  style={styles.libCard}
+                  className="premium-card animate-fade-in"
+                  onClick={() => {
+                    setIsLibraryOpen(false);
+                    setPdfConfig({ isOpen: true, url: doc.url, title: doc.title });
+                  }}
+                >
+                  <div style={styles.libCardIcon}>📄</div>
+                  <div style={styles.libCardContent}>
+                    <h4 style={styles.libCardTitle}>{doc.title}</h4>
+                    <p style={styles.libCardDesc}>{doc.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* PDF 서비스 소개 및 연금 개혁안 모달 */}
     <PdfViewerModal
       isOpen={pdfConfig.isOpen}
       onClose={() => {
         setPdfConfig((prev) => ({ ...prev, isOpen: false }));
-        setActiveMenu(null);
+        if (activeMenu === "pension-library") {
+          setIsLibraryOpen(true);
+        } else {
+          setActiveMenu(null);
+        }
       }}
       pdfUrl={pdfConfig.url}
       title={pdfConfig.title}
@@ -244,5 +311,100 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: "100%",
     height: "auto",
     borderRadius: "12px",
+  },
+  libOverlay: {
+    position: "fixed",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(5, 6, 15, 0.85)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    zIndex: 999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+  },
+  libModal: {
+    width: "100%",
+    maxWidth: "800px",
+    backgroundColor: "#161728",
+    border: "1px solid rgba(99, 102, 241, 0.25)",
+    borderRadius: "16px",
+    boxShadow: "0 24px 48px rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  libHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "18px 24px",
+    borderBottom: "1px solid rgba(99, 102, 241, 0.15)",
+    backgroundColor: "rgba(22, 23, 40, 0.95)",
+  },
+  libTitle: {
+    fontSize: "1.2rem",
+    fontWeight: 700,
+    color: "#a5b4fc",
+  },
+  libCloseBtn: {
+    background: "transparent",
+    border: "none",
+    color: "var(--text-secondary)",
+    fontSize: "1.2rem",
+    cursor: "pointer",
+  },
+  libBody: {
+    padding: "24px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    maxHeight: "80vh",
+    overflowY: "auto",
+  },
+  libSubtitle: {
+    fontSize: "0.95rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.5,
+    marginBottom: "8px",
+  },
+  libGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "16px",
+  },
+  libCard: {
+    padding: "16px",
+    borderRadius: "12px",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--surface)",
+    cursor: "pointer",
+    display: "flex",
+    gap: "12px",
+    alignItems: "flex-start",
+    transition: "all var(--transition-fast)",
+  },
+  libCardIcon: {
+    fontSize: "1.5rem",
+    marginTop: "2px",
+  },
+  libCardContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  libCardTitle: {
+    fontSize: "1rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+  },
+  libCardDesc: {
+    fontSize: "0.8rem",
+    color: "var(--text-muted)",
+    lineHeight: 1.4,
   },
 };

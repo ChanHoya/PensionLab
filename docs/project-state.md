@@ -27,4 +27,5 @@
   - **[Story S11-2]** [Completed] 대시보드 매개변수 조정 영역에 은퇴 인출 전략 토글 제어 컴포넌트 추가 및 체감식 인출 가이드(Spending Smile) 적용
   - **[Story S11-3]** [Completed] 대시보드 좌우 차트 영역의 세로 크기를 2차 확대(330px ➔ 380px)하고 우측 차트 범례 마진 조정을 통한 레이아웃 밸런스 최적화
   - **[Story S11-4]** [Completed] 리포트 페이지 및 PDF 시뮬레이션 계산식/차트 영역에 `decumulationStrategy` 값 연동 및 렌더링 동기화
+  - **[Story S11-5]** [Completed] 리포트 페이지 텍스트/범례 폰트 색상을 어두운 검정으로 변경하여 시인성을 극대화하고, AI API 장애 시 로컬 DB 키워드 매칭으로 자동 Fallback하는 RAG 강건성 보강
 

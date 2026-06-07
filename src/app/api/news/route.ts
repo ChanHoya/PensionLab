@@ -38,6 +38,34 @@ export async function GET() {
           author = fullTitle.substring(lastDashIndex + 3).trim();
         }
         
+        const lowerTitle = title.toLowerCase();
+        
+        // Filter out advertisement, product promotion, or non-policy commercial news
+        const isCommercial = 
+          lowerTitle.includes("캐시백") || 
+          lowerTitle.includes("캐쉬백") ||
+          lowerTitle.includes("이벤트") ||
+          lowerTitle.includes("돌파") ||
+          lowerTitle.includes("출시") ||
+          lowerTitle.includes("기념") ||
+          lowerTitle.includes("1위") ||
+          lowerTitle.includes("석권") ||
+          lowerTitle.includes("급증") ||
+          lowerTitle.includes("사은품") ||
+          lowerTitle.includes("특판") ||
+          lowerTitle.includes("경품") ||
+          lowerTitle.includes("가입 고객") ||
+          lowerTitle.includes("고객 감사") ||
+          lowerTitle.includes("수수료 면제") ||
+          lowerTitle.includes("업무협약") ||
+          lowerTitle.includes("mou") ||
+          lowerTitle.includes("선정") ||
+          lowerTitle.includes("수상");
+          
+        if (isCommercial) {
+          continue; // Skip commercial and advertisement news
+        }
+        
         const combinedText = (title + " " + description).toLowerCase();
         let category: "국민·기초연금" | "퇴직·개인연금" | "자산관리" = "자산관리";
         
@@ -72,9 +100,15 @@ export async function GET() {
           }
         } catch (_) {}
         
-        // Clean description for summary
-        const summaryCleaned = description
-          .replace(/<[^>]*>?/gm, "")
+        // Clean description for summary, bypassing first HTML link element in Google News RSS description
+        let summaryCleaned = description;
+        const lastBrIndex = description.lastIndexOf("<br/>");
+        if (lastBrIndex !== -1) {
+          summaryCleaned = description.substring(lastBrIndex + 5);
+        }
+        
+        summaryCleaned = summaryCleaned
+          .replace(/<[^>]*>?/gm, "") // Strip any HTML tags completely
           .replace(/&nbsp;/g, " ")
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")

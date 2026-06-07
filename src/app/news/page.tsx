@@ -248,75 +248,112 @@ export default function PolicyNewsPage() {
               <p>실시간 연금 정책 뉴스를 불러오는 중입니다...</p>
             </div>
           ) : (
-            filteredArticles.map((art) => (
-              <div
-                key={art.id}
-                onClick={() => handleArticleClick(art)}
-                style={{
-                  ...styles.newsCard,
-                  border: art.id.startsWith("yt-") 
-                    ? "1px dashed rgba(239, 68, 68, 0.4)" 
-                    : art.id.startsWith("real-")
+            filteredArticles.map((art) => {
+              const isYoutube = art.id.startsWith("yt-");
+              
+              if (isYoutube) {
+                return (
+                  <a
+                    key={art.id}
+                    href={art.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      ...styles.newsCard,
+                      border: "1px dashed rgba(239, 68, 68, 0.4)",
+                      position: "relative",
+                      overflow: "hidden",
+                      textDecoration: "none",
+                      display: "flex",
+                      flexDirection: "column"
+                    }}
+                    className="premium-card"
+                  >
+                    <div style={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      backgroundColor: "#ef4444",
+                      color: "#ffffff",
+                      fontSize: "0.6rem",
+                      fontWeight: 800,
+                      padding: "3px 8px",
+                      borderBottomLeftRadius: "var(--radius-sm)"
+                    }}>
+                      YOUTUBE 추천
+                    </div>
+                    <div style={styles.cardHeader}>
+                      <span style={styles.cardImage}>{art.image}</span>
+                      <span style={{
+                        ...styles.cardBadge,
+                        color: "#fca5a5",
+                        backgroundColor: "rgba(239, 68, 68, 0.08)",
+                        borderColor: "rgba(239, 68, 68, 0.2)"
+                      }}>{art.category}</span>
+                    </div>
+                    <h3 style={styles.cardTitle}>{art.title}</h3>
+                    <p style={styles.cardSummary}>{art.summary}</p>
+                    <div style={styles.cardFooter}>
+                      <span style={styles.cardAuthor}>{art.author}</span>
+                      <span style={{
+                        ...styles.cardDate,
+                        color: "#ef4444",
+                        fontWeight: 700
+                      }}>
+                        영상 보러가기 ➔
+                      </span>
+                    </div>
+                  </a>
+                );
+              }
+              
+              return (
+                <div
+                  key={art.id}
+                  onClick={() => handleArticleClick(art)}
+                  style={{
+                    ...styles.newsCard,
+                    border: art.id.startsWith("real-")
                       ? "1px solid rgba(99, 102, 241, 0.4)"
                       : "1px solid var(--border)",
-                  position: "relative",
-                  overflow: "hidden"
-                }}
-                className="premium-card"
-              >
-                {art.id.startsWith("yt-") && (
-                  <div style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    backgroundColor: "#ef4444",
-                    color: "#ffffff",
-                    fontSize: "0.6rem",
-                    fontWeight: 800,
-                    padding: "3px 8px",
-                    borderBottomLeftRadius: "var(--radius-sm)"
-                  }}>
-                    YOUTUBE 추천
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                  className="premium-card"
+                >
+                  {art.id.startsWith("real-") && (
+                    <div style={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      backgroundColor: "#4f46e5",
+                      color: "#ffffff",
+                      fontSize: "0.6rem",
+                      fontWeight: 800,
+                      padding: "3px 8px",
+                      borderBottomLeftRadius: "var(--radius-sm)"
+                    }}>
+                      실시간 정책
+                    </div>
+                  )}
+                  <div style={styles.cardHeader}>
+                    <span style={styles.cardImage}>{art.image}</span>
+                    <span style={{
+                      ...styles.cardBadge,
+                      color: art.id.startsWith("real-") ? "#a5b4fc" : "var(--primary-light)",
+                      backgroundColor: art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.08)" : "rgba(99,102,241,0.08)",
+                      borderColor: art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.2)" : "rgba(99,102,241,0.15)"
+                    }}>{art.category}</span>
                   </div>
-                )}
-                {art.id.startsWith("real-") && (
-                  <div style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    backgroundColor: "#4f46e5",
-                    color: "#ffffff",
-                    fontSize: "0.6rem",
-                    fontWeight: 800,
-                    padding: "3px 8px",
-                    borderBottomLeftRadius: "var(--radius-sm)"
-                  }}>
-                    실시간 정책
+                  <h3 style={styles.cardTitle}>{art.title}</h3>
+                  <p style={styles.cardSummary}>{art.summary}</p>
+                  <div style={styles.cardFooter}>
+                    <span style={styles.cardAuthor}>{art.author}</span>
+                    <span style={styles.cardDate}>{art.date}</span>
                   </div>
-                )}
-                <div style={styles.cardHeader}>
-                  <span style={styles.cardImage}>{art.image}</span>
-                  <span style={{
-                    ...styles.cardBadge,
-                    color: art.id.startsWith("yt-") ? "#fca5a5" : art.id.startsWith("real-") ? "#a5b4fc" : "var(--primary-light)",
-                    backgroundColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.08)" : art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.08)" : "rgba(99,102,241,0.08)",
-                    borderColor: art.id.startsWith("yt-") ? "rgba(239, 68, 68, 0.2)" : art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.2)" : "rgba(99,102,241,0.15)"
-                  }}>{art.category}</span>
                 </div>
-                <h3 style={styles.cardTitle}>{art.title}</h3>
-                <p style={styles.cardSummary}>{art.summary}</p>
-                <div style={styles.cardFooter}>
-                  <span style={styles.cardAuthor}>{art.author}</span>
-                  <span style={{
-                    ...styles.cardDate,
-                    color: art.id.startsWith("yt-") ? "#ef4444" : "var(--text-muted)",
-                    fontWeight: art.id.startsWith("yt-") ? 700 : 400
-                  }}>
-                    {art.id.startsWith("yt-") ? "영상 보러가기 ➔" : art.date}
-                  </span>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </section>
 

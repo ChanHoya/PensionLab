@@ -92,6 +92,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
 
     let fullContent = "";
     let isAIFlowSuccess = false;
+    let geminiApiErrorDetail = "";
 
     if (genAI) {
       try {
@@ -103,9 +104,12 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
         const result = await model.generateContent(prompt);
         fullContent = result.response.text();
         isAIFlowSuccess = true;
-      } catch (aiError) {
+      } catch (aiError: any) {
         console.error("Gemini API call failed, falling back to local diagnosis generator:", aiError);
+        geminiApiErrorDetail = aiError.message || String(aiError);
       }
+    } else {
+      geminiApiErrorDetail = "GEMINI_API_KEY 환경변수가 정의되지 않았습니다. .env 파일을 다시 확인하시고, 새로 등록하셨다면 개발 서버(npm run dev)를 반드시 재시작해 주십시오.";
     }
 
     let thinking = "";
@@ -143,7 +147,10 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
         adequacyStatus = "최소 생활비에도 미치지 못해 노후 자산 고갈 위험이 있는 상태입니다. 국민연금 개시 전까지 소득 공백기를 메울 연금 자산의 추가 납입 또는 주택연금 등의 활용이 요구됩니다.";
       }
 
-      thinking = `1. 사용자 연령 및 은퇴 시점 시각화: 현재 나이 ${simulation.currentAge}세, 은퇴 희망 ${simulationParams.retirementAge}세로 준비 기간은 ${simulation.yearsToRetire}년입니다.
+      thinking = `[Gemini API 연동 실패/미등록 디버그 정보]
+- 원인: ${geminiApiErrorDetail}
+
+1. 사용자 연령 및 은퇴 시점 시각화: 현재 나이 ${simulation.currentAge}세, 은퇴 희망 ${simulationParams.retirementAge}세로 준비 기간은 ${simulation.yearsToRetire}년입니다.
 2. 3층 연금 및 비연금 자산 집계: 은퇴 시점 총 연금 자산은 ${totalAssetStr}이며, 예상 월 수령액은 ${monthlyAnnuityStr}입니다.
 3. 소득 크레바스(소득 공백기) 분석: 은퇴 나이 ${simulationParams.retirementAge}세부터 국민연금 개시 ${simulationParams.nationalPensionStartAge}세까지 ${crevasseYears}년의 소득 공백이 식별되었습니다.
 4. 인출 방식 검토: 사용자가 선택한 전략은 '${isDecreasing ? "활동기 집중형 체감식" : "동일 금액형 정액식"}'입니다.

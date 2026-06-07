@@ -149,8 +149,12 @@ export default function SimulatorSandboxPage() {
           
           {/* Left Panel: Sliders & Adjustments */}
           <div style={styles.leftPanel} className="premium-card">
-            <h3 style={styles.panelTitle}>시뮬레이션 변수 세부 조정</h3>
-            <p style={styles.panelSubtitle}>슬라이더를 드래그하여 시나리오를 변경해 보세요.</p>
+            <div style={styles.chartTitleContainer}>
+              <div>
+                <h3 style={styles.panelTitle}>시뮬레이션 변수 세부 조정</h3>
+                <p style={styles.panelSubtitle}>슬라이더를 드래그하여 시나리오를 변경해 보세요.</p>
+              </div>
+            </div>
             
             <div style={styles.sliderGroup}>
               <div style={styles.sliderLabelRow}>
@@ -305,7 +309,7 @@ export default function SimulatorSandboxPage() {
               </div>
             </div>
 
-            <div style={{ flexGrow: 1, minHeight: "330px" }}>
+            <div style={{ height: "330px", width: "100%", position: "relative" }}>
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
                   data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 2)}
@@ -515,7 +519,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   panelSubtitle: {
     fontSize: "0.8rem",
     color: "var(--text-muted)",
-    marginTop: "-16px",
+    marginTop: "4px",
   },
   sliderGroup: {
     display: "flex",

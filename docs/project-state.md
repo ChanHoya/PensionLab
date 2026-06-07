@@ -25,13 +25,14 @@
 - **[Completed]** Sprint 15: 대시보드 리포트 결제/배너 UI 제거, 은퇴 진단 종합 리포트 및 시각 차트 요소를 AI 포트폴리오 처방(AI Advisor) 페이지 내로 통합, html2canvas & jsPDF 연동 처방전 PDF 다운로드 기능 탑재.
 - **[Completed]** Sprint 15-2: 유튜브 RAG Q&A 이설 및 종합처방전 시각화 고도화.
 - **[Completed]** Sprint 16: AI 종합 처방전 시각 차트 최적화 및 3단계 은퇴 평가 개편.
+- **[Completed]** Sprint 17: 통합연금 PDF 업로드 자동 파싱 및 3층 간편인증 연동 탭 숨김 처리.
 
 ## Active Sprint / Story
-- **Sprint 16**: AI 종합 처방전 시각 차트 최적화 및 3단계 은퇴 평가 개편 — **COMPLETED**
-  - **[Story S16-1]** [Completed] 3층 구조 연금 주택 차트의 크기를 180px x 240px로 확대하여 박스 면적 가독성 개선
-  - **[Story S16-2]** [Completed] 마크다운 렌더러에서 `<think>` 및 기타 추론 찌꺼기 텍스트 차단 및 빈 네모 불릿 필터링 로직 강화
-  - **[Story S16-3]** [Completed] 은퇴 준비도 종합평가의 필요자금 및 국민연금 차감 후 실질 필요액을 3단계(적극활동기/안정활동기/비활동기) 분석 구조로 개편 (Gemini API 프롬프트 및 로컬 fallback 개선)
-  - **[Story S16-4]** [Completed] 네비게이션 헤더 메뉴 명칭 및 순서를 '자산관리 > AI포트폴리오 진단 > 관련 뉴스 > 추천영상'으로 전면 개편 및 관련 4개 파일 일괄 수정 완료
-  - **[Story S16-5]** [Completed] API 라우트 프롬프트 지침 내 인라인 코드용 백틱 이스케이프 오류 해결 및 빌드 무결성 확보 완료
+- **Sprint 17**: 통합연금 PDF 업로드 자동 파싱 및 3층 간편인증 연동 탭 숨김 처리 — **COMPLETED**
+  - **[Story S17-1]** [Completed] 1층(국민연금), 2층(퇴직연금), 3층(개인연금) 온보딩 내 기존 Codef API Easy Auth 간편인증 탭 제거(숨김 처리) 및 `📄 금융감독원 통합연금 자료 등록` 탭 신설
+  - **[Story S17-2]** [Completed] 통합연금포털 링크(100lifeplan.fss.or.kr) 제공 및 암호 해제 안내 가이드 배너 구현
+  - **[Story S17-3]** [Completed] 클라이언트 브라우저에서 `pdfjs-dist`를 동적 로드하여 PDF 텍스트를 고속 추출하는 헬퍼 핸들러 완성
+  - **[Story S17-4]** [Completed] `/api/pension/pdf-parse` API 엔드포인트를 구현하여 추출한 PDF 텍스트를 `gemini-3.5-flash` 모델을 통해 정확하게 구조화된 JSON 데이터로 파싱하고 Zustand store에 일괄 바인딩 완료
+  - **[Story S17-5]** [Completed] Zustand Store에 `setRetirementPensions`, `setPersonalPensions`, `setPensionInsurances` 액션을 신설하여 타입 에러를 수정하고 프로덕션 빌드 무결성 확인
 
 

@@ -32,6 +32,8 @@ graph TD
   Report --> Calculator
   OnboardingUI --> NPSSyncAPI[src/app/api/pension/nps-sync/route.ts]
   OnboardingUI --> FSSSyncAPI[src/app/api/pension/fss-sync/route.ts]
+  OnboardingUI --> PDFParseAPI[src/app/api/pension/pdf-parse/route.ts]
+  PDFParseAPI --> GeminiAPI[Google Gemini API]
 
   %% MiniMax AI Advisor (Sprint 12 / MiniMax Integration)
   Dashboard --> AIAdvisor[src/app/dashboard/ai-advisor/page.tsx]

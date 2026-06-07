@@ -19,9 +19,14 @@ export default function OnboardingPage() {
   const router = useRouter();
   const store = usePensionStore();
   const [currentStep, setCurrentStep] = useState(0);
-  const [nationalInputMode, setNationalInputMode] = useState<"SIMPLE" | "DETAILED" | "SYNC">("SIMPLE");
+  const [nationalInputMode, setNationalInputMode] = useState<"SIMPLE" | "DETAILED" | "PDF" | "SYNC">("SIMPLE");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  // PDF 파싱 관련 상태 변수들
+  const [pdfParsing, setPdfParsing] = useState(false);
+  const [pdfParsed, setPdfParsed] = useState(false);
+  const [pdfError, setPdfError] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -41,7 +46,7 @@ export default function OnboardingPage() {
   const [npsSynced, setNpsSynced] = useState(false);
 
   // FSS Codef API 연동 관련 상태 변수들
-  const [fssInputMode, setFssInputMode] = useState<"MANUAL" | "SYNC">("MANUAL");
+  const [fssInputMode, setFssInputMode] = useState<"MANUAL" | "PDF" | "SYNC">("MANUAL");
   const [fssName, setFssName] = useState("홍길동");
   const [fssPhone, setFssPhone] = useState("010-1234-5678");
   const [fssBirth, setFssBirth] = useState("19800101");
@@ -52,6 +57,217 @@ export default function OnboardingPage() {
   const [fssTwoWayInfo, setFssTwoWayInfo] = useState<any>(null);
   const [fssSyncing, setFssSyncing] = useState(false);
   const [fssSynced, setFssSynced] = useState(false);
+
+  const handlePdfUpload = async (file: File) => {
+    setPdfParsing(true);
+    setPdfError("");
+    setPdfParsed(false);
+
+    try {
+      // 1. pdfjs-dist 동적 로드
+      const pdfjs = await import("pdfjs-dist");
+      
+      // worker 설정: 패키지 자체 버전을 활용하여 호환 cdn 지정
+      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      let fullText = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += pageText + "\n";
+      }
+
+      const cleanText = fullText.trim();
+      if (!cleanText) {
+        throw new Error("PDF에서 텍스트를 추출할 수 없습니다. 보안 비밀번호가 해제된 PDF 파일인지 확인해 주세요.");
+      }
+
+      // 2. 백엔드 API 호출하여 AI 파싱 요청
+      const res = await fetch("/api/pension/pdf-parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfText: cleanText }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "AI 분석 도중 오류가 발생했습니다.");
+      }
+
+      const parsedData = await res.json();
+
+      // 3. Zustand store에 데이터 매핑
+      if (parsedData.nationalPension) {
+        store.setNationalPension({
+          contributionMonths: parsedData.nationalPension.contributionMonths || 0,
+          currentStandardMonthlyIncome: parsedData.nationalPension.currentStandardMonthlyIncome || 0,
+          expectedMonthlyPension: parsedData.nationalPension.expectedMonthlyPension || 0,
+          totalPaidAmount: Math.round((parsedData.nationalPension.currentStandardMonthlyIncome || 0) * 0.09 * (parsedData.nationalPension.contributionMonths || 0)),
+          expectedTotalContributionMonths: store.nationalPension.expectedTotalContributionMonths,
+          totalExpectedPremium: store.nationalPension.totalExpectedPremium,
+          basicPensionAmount: store.nationalPension.basicPensionAmount,
+          aValue: store.nationalPension.aValue,
+          bValue: store.nationalPension.bValue,
+        });
+      }
+
+      if (parsedData.retirementPensions && parsedData.retirementPensions.length > 0) {
+        store.setRetirementPensions([]);
+        parsedData.retirementPensions.forEach((p: any) => {
+          store.addRetirementPension({
+            pensionType: p.pensionType || "DC",
+            avgSalary: p.avgSalary || 0,
+            yearsOfService: p.yearsOfService || 0,
+            salaryGrowthRate: p.salaryGrowthRate || 3.0,
+            totalAccumulated: p.totalAccumulated || 0,
+            monthlyContribution: p.monthlyContribution || 0,
+            expectedReturnRate: p.expectedReturnRate || 3.0,
+            companyMatchRate: 0,
+          });
+        });
+      }
+
+      if (parsedData.personalPensions && parsedData.personalPensions.length > 0) {
+        store.setPersonalPensions([]);
+        parsedData.personalPensions.forEach((p: any) => {
+          store.addPersonalPension({
+            savingsType: p.savingsType || "FUND",
+            totalAccumulated: p.totalAccumulated || 0,
+            monthlyAnnualContribution: p.monthlyAnnualContribution || 0,
+            desiredStartAge: p.desiredStartAge || 65,
+            receivingPeriod: p.receivingPeriod || 20,
+          });
+        });
+      }
+
+      if (parsedData.pensionInsurances && parsedData.pensionInsurances.length > 0) {
+        store.setPensionInsurances([]);
+        parsedData.pensionInsurances.forEach((p: any) => {
+          store.addPensionInsurance({
+            insuranceType: p.insuranceType || "SAVING",
+            totalAccumulated: p.totalAccumulated || 0,
+            monthlyPayment: p.monthlyPayment || 0,
+            paymentPeriod: p.paymentPeriod || 10,
+            expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
+          });
+        });
+      }
+
+      setPdfParsed(true);
+      alert("🎉 금융감독원 통합연금 PDF 자료 분석이 완료되어 모든 연금 데이터가 자동으로 채워졌습니다!");
+    } catch (err: any) {
+      console.error(err);
+      setPdfError(err.message || "PDF 파일을 분석하는 중 예기치 못한 에러가 발생했습니다.");
+    } finally {
+      setPdfParsing(false);
+    }
+  };
+
+  const renderPdfUploadSection = () => {
+    return (
+      <div style={styles.pdfUploadBox} className="animate-fade-in">
+        <div style={styles.infoAlert}>
+          📄 <strong>금융감독원 통합연금포털 PDF 등록</strong>
+          <p style={{ fontSize: "0.85rem", marginTop: 4, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            통합연금포털에서 다운로드받은 PDF 파일을 등록하시면 1층(국민연금), 2층(퇴직연금), 3층(개인연금) 정보가 한 번에 자동 입력됩니다.
+          </p>
+          <p style={{ fontSize: "0.8rem", marginTop: 4, color: "var(--warning)", lineHeight: 1.5 }}>
+            ⚠️ 다운로드 시 설정된 PDF 비밀번호(보통 생년월일 6자리 또는 설정한 비밀번호)를 반드시 해제(인쇄용 PDF 저장 등으로 무암호화)한 후 업로드해주셔야 자동 파싱이 가능합니다.
+          </p>
+        </div>
+
+        <div style={styles.portalGuideCard}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+            <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>금융감독원 통합연금포털 바로가기</span>
+            <a 
+              href="https://100lifeplan.fss.or.kr" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{
+                color: "var(--primary-light)",
+                fontWeight: 700,
+                textDecoration: "underline",
+                fontSize: "0.9rem"
+              }}
+            >
+              100lifeplan.fss.or.kr
+            </a>
+          </div>
+        </div>
+
+        <div 
+          style={{
+            ...styles.dropZone,
+            borderColor: pdfParsing ? "var(--primary)" : "rgba(99, 102, 241, 0.3)",
+          }}
+        >
+          {pdfParsing ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <div style={styles.miniSpinner} />
+              <span style={{ fontSize: "0.95rem", color: "var(--text-primary)", fontWeight: 700 }}>
+                통합연금 PDF 데이터를 추출하여 AI 분석 중입니다...
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: "2.5rem" }}>📥</span>
+              <span style={{ fontSize: "0.95rem", color: "var(--text-secondary)", textAlign: "center", maxWidth: "320px", lineHeight: 1.4 }}>
+                이곳에 통합연금 PDF 파일을 드래그하여 놓거나 아래 버튼을 클릭하여 선택하세요.
+              </span>
+              <input
+                type="file"
+                accept=".pdf"
+                style={{ display: "none" }}
+                id="pdf-file-input"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    await handlePdfUpload(file);
+                  }
+                }}
+              />
+              <button 
+                type="button" 
+                className="premium-button"
+                style={{ padding: "8px 20px", fontSize: "0.85rem", marginTop: 4 }}
+                onClick={() => document.getElementById("pdf-file-input")?.click()}
+              >
+                파일 선택하기
+              </button>
+            </div>
+          )}
+        </div>
+
+        {pdfError && (
+          <div style={{ ...styles.errorBanner, marginTop: 16 }}>
+            <span style={{ marginRight: 8 }}>⚠️</span> <span>{pdfError}</span>
+          </div>
+        )}
+
+        {pdfParsed && (
+          <div style={{ ...styles.previewBox, marginTop: 16, borderLeft: "4px solid var(--success)" }} className="animate-fade-in">
+            <h4 style={{ ...styles.previewTitle, color: "var(--success-light)" }}>✓ 연금 정보 자동 연동 완료</h4>
+            <div style={{ ...styles.previewGrid, fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 8 }}>
+              <div>국민연금: <strong>{store.nationalPension.contributionMonths > 0 ? `${store.nationalPension.contributionMonths}개월 (예상 ${store.nationalPension.expectedMonthlyPension}만원/월)` : "정보 없음"}</strong></div>
+              <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length}개</strong></div>
+              <div>개인연금 계좌수: <strong>{store.personalPensions.length}개</strong></div>
+              <div>연금보험 계좌수: <strong>{store.pensionInsurances.length}개</strong></div>
+            </div>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 10 }}>
+              * 각 단계별 메뉴 탭에서 상세 내용을 확인하고 보완할 수 있습니다.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const handleNPSSync = async () => {
     setNpsSyncing(true);
@@ -686,15 +902,15 @@ export default function OnboardingPage() {
                     NPS 공단고서 상세 입력
                   </button>
                   <button
-                    onClick={() => setNationalInputMode("SYNC")}
+                    onClick={() => setNationalInputMode("PDF")}
                     style={{
                       ...styles.tabButton,
-                      borderBottomColor: nationalInputMode === "SYNC" ? "var(--primary)" : "transparent",
-                      color: nationalInputMode === "SYNC" ? "var(--primary)" : "var(--text-secondary)",
+                      borderBottomColor: nationalInputMode === "PDF" ? "var(--primary)" : "transparent",
+                      color: nationalInputMode === "PDF" ? "var(--primary)" : "var(--text-secondary)",
                     }}
-                    id="btn-tab-nps-sync"
+                    id="btn-tab-nps-pdf"
                   >
-                    🔐 NPS 간편인증 연동
+                    📄 금융감독원 통합연금 자료 등록
                   </button>
                 </div>
 
@@ -1018,6 +1234,8 @@ export default function OnboardingPage() {
                     )}
                   </div>
                 )}
+
+                {nationalInputMode === "PDF" && renderPdfUploadSection()}
               </div>
             )}
 
@@ -1085,15 +1303,15 @@ export default function OnboardingPage() {
                     수동 입력 등록
                   </button>
                   <button
-                    onClick={() => setFssInputMode("SYNC")}
+                    onClick={() => setFssInputMode("PDF")}
                     style={{
                       ...styles.tabButton,
-                      borderBottomColor: fssInputMode === "SYNC" ? "var(--primary)" : "transparent",
-                      color: fssInputMode === "SYNC" ? "var(--primary)" : "var(--text-secondary)",
+                      borderBottomColor: fssInputMode === "PDF" ? "var(--primary)" : "transparent",
+                      color: fssInputMode === "PDF" ? "var(--primary)" : "var(--text-secondary)",
                     }}
-                    id="btn-tab-fss-sync-3"
+                    id="btn-tab-fss-pdf-3"
                   >
-                    🔐 금융감독원 통합연금 연동
+                    📄 금융감독원 통합연금 자료 등록
                   </button>
                 </div>
 
@@ -1409,6 +1627,8 @@ export default function OnboardingPage() {
                     )}
                   </div>
                 )}
+
+                {fssInputMode === "PDF" && renderPdfUploadSection()}
               </div>
             )}
 
@@ -1427,15 +1647,15 @@ export default function OnboardingPage() {
                     수동 입력 등록
                   </button>
                   <button
-                    onClick={() => setFssInputMode("SYNC")}
+                    onClick={() => setFssInputMode("PDF")}
                     style={{
                       ...styles.tabButton,
-                      borderBottomColor: fssInputMode === "SYNC" ? "var(--primary)" : "transparent",
-                      color: fssInputMode === "SYNC" ? "var(--primary)" : "var(--text-secondary)",
+                      borderBottomColor: fssInputMode === "PDF" ? "var(--primary)" : "transparent",
+                      color: fssInputMode === "PDF" ? "var(--primary)" : "var(--text-secondary)",
                     }}
-                    id="btn-tab-fss-sync-4"
+                    id="btn-tab-fss-pdf-4"
                   >
-                    🔐 금융감독원 통합연금 연동
+                    📄 금융감독원 통합연금 자료 등록
                   </button>
                 </div>
 
@@ -1762,6 +1982,8 @@ export default function OnboardingPage() {
                     )}
                   </div>
                 )}
+
+                {fssInputMode === "PDF" && renderPdfUploadSection()}
               </div>
             )}
 
@@ -2278,5 +2500,42 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     gap: "8px",
     lineHeight: 1.4,
+  },
+  pdfUploadBox: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    width: "100%",
+  },
+  portalGuideCard: {
+    backgroundColor: "var(--background)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius-sm)",
+    padding: "12px 16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  dropZone: {
+    border: "2.5px dashed rgba(99, 102, 241, 0.3)",
+    borderRadius: "var(--radius-sm)",
+    padding: "40px 20px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    backgroundColor: "rgba(99, 102, 241, 0.02)",
+    transition: "all var(--transition-fast)",
+  },
+  errorBanner: {
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    border: "1px solid rgba(239, 68, 68, 0.3)",
+    borderRadius: "var(--radius-sm)",
+    padding: "12px 16px",
+    color: "var(--danger)",
+    fontSize: "0.85rem",
+    display: "flex",
+    alignItems: "center",
   },
 };

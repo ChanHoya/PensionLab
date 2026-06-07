@@ -89,6 +89,9 @@ interface PensionStore {
   addPensionInsurance: (insurance: Omit<PensionInsuranceState, "id">) => void;
   updatePensionInsurance: (id: string, data: Partial<PensionInsuranceState>) => void;
   deletePensionInsurance: (id: string) => void;
+  setRetirementPensions: (pensions: RetirementPensionState[]) => void;
+  setPersonalPensions: (pensions: PersonalPensionSavingsState[]) => void;
+  setPensionInsurances: (insurances: PensionInsuranceState[]) => void;
   setSimulationParams: (data: Partial<SimulationParamsState>) => void;
   importStoreData: (data: {
     nationalPension: NationalPensionState;
@@ -218,6 +221,21 @@ export const usePensionStore = create<PensionStore>()(
       deletePensionInsurance: (id) =>
         set((state) => ({
           pensionInsurances: state.pensionInsurances.filter((p) => p.id !== id),
+        })),
+      
+      setRetirementPensions: (pensions) =>
+        set(() => ({
+          retirementPensions: pensions,
+        })),
+
+      setPersonalPensions: (pensions) =>
+        set(() => ({
+          personalPensions: pensions,
+        })),
+
+      setPensionInsurances: (insurances) =>
+        set(() => ({
+          pensionInsurances: insurances,
         })),
 
       setSimulationParams: (data) =>

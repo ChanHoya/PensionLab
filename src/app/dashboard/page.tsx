@@ -196,7 +196,6 @@ export default function DashboardPage() {
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>자산관리</span>
             <Link href="/youtube" style={styles.navItem}>추천 영상</Link>
             <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI 포트폴리오 처방</Link>
-            <Link href="/simulator" style={styles.navItem}>시뮬레이터</Link>
             <Link href="/news" style={styles.navItem}>정책 뉴스</Link>
           </nav>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -1250,7 +1249,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: "relative",
   },
   roofLevel: {
-    width: "65%",
+    width: "70%",
     backgroundColor: "#f97316",
     borderRadius: "4px 4px 0 0",
     display: "flex",
@@ -1258,9 +1257,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "center",
     transition: "all 0.3s ease",
     marginBottom: "2px",
+    borderLeft: "4px solid #ea580c",
+    borderRight: "4px solid #ea580c",
   },
   pillarLevel: {
-    width: "80%",
+    width: "82%",
     backgroundColor: "#facc15",
     display: "flex",
     alignItems: "center",
@@ -1278,7 +1279,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     justifyContent: "center",
     transition: "all 0.3s ease",
-    borderRadius: "4px",
+    borderRadius: "0 0 4px 4px",
     borderBottom: "4px solid #1d4ed8",
   },
   houseLabel: {

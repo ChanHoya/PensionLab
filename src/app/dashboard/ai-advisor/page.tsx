@@ -273,6 +273,20 @@ export default function AIAdvisorPage() {
 
   const hasAssets = pieData.length > 0;
 
+  // 3층 구조 수령액 비중 계산 (65세 또는 은퇴나이 중 늦은 시점 기준)
+  const targetAge = Math.max(65, store.simulationParams.retirementAge);
+  const targetCF = cashFlows.find((cf) => cf.age === targetAge) || 
+                   cashFlows.find((cf) => cf.age === store.simulationParams.retirementAge) || 
+                   { national: 0, basic: 0, retirement: 0, personal: 0, insurance: 0, total: 1 };
+  
+  const v1 = (targetCF.national || 0) + (targetCF.basic || 0); // 1층
+  const v2 = (targetCF.retirement || 0); // 2층
+  const v3 = (targetCF.personal || 0) + (targetCF.insurance || 0); // 3층
+  const totalVal = v1 + v2 + v3 || 1;
+  const pct1 = Math.round((v1 / totalVal) * 100);
+  const pct2 = Math.round((v2 / totalVal) * 100);
+  const pct3 = Math.round((v3 / totalVal) * 100);
+
   // Living cost assessment (assume standard middle class retirement cost: 2.5 million KRW / month)
   const targetAnnuity = 250; // 250만원
   const deficit = targetAnnuity - monthlyAnnuityAtRetirement;
@@ -351,7 +365,7 @@ export default function AIAdvisorPage() {
         heightLeft -= pageHeight;
       }
       
-      pdf.save(`PensionLab_AI_Prescription_${Date.now()}.pdf`);
+      pdf.save(`연금자산_종합_진단_보고서_${Date.now()}.pdf`);
     } catch (err) {
       console.error(err);
       alert("PDF 다운로드 중 오류가 발생했습니다. 다시 시도해주세요.");
@@ -433,9 +447,6 @@ export default function AIAdvisorPage() {
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>
               AI 포트폴리오 처방
             </span>
-            <Link href="/simulator" style={styles.navItem}>
-              시뮬레이터
-            </Link>
             <Link href="/news" style={styles.navItem}>
               정책 뉴스
             </Link>
@@ -572,7 +583,7 @@ export default function AIAdvisorPage() {
                     <span style={styles.reportSub}>AI PRESCRIBED RETIREMENT REPORT</span>
                     <div style={styles.logoText}>Pension<span className="gradient-text">Lab</span></div>
                   </div>
-                  <h3 style={styles.dashboardTitle}>은퇴 자산 종합 진단 & 시각화 분석</h3>
+                  <h3 style={styles.dashboardTitle}>연금자산 종합 진단 보고서</h3>
                 </div>
 
                 <div style={styles.divider} />
@@ -616,30 +627,70 @@ export default function AIAdvisorPage() {
                 {/* Charts Grid */}
                 <div style={styles.chartsGrid}>
                   <div style={styles.chartCol}>
-                    <h4 style={styles.chartBlockTitle}>사적연금 은퇴 시점 적립 비율</h4>
+                    <h4 style={styles.chartBlockTitle}>연금 적립 구성 비율</h4>
                     <div style={{ height: 200, width: "100%" }}>
-                      {hasAssets ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={pieData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={45}
-                              outerRadius={70}
-                              paddingAngle={5}
-                              dataKey="value"
-                              isAnimationActive={false}
-                            >
-                              {pieData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Legend verticalAlign="bottom" height={24} iconSize={8} style={{ fontSize: "0.75rem" }} />
-                          </PieChart>
-                        </ResponsiveContainer>
+                      {totalVal > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: "16px", height: "100%", width: "100%", padding: "0 10px" }}>
+                          {/* 좌측: 3층 구조 이미지 */}
+                          <div style={styles.houseDiagramWrapper}>
+                            {/* 3층 (개인/보험) */}
+                            {v3 > 0 && (
+                              <div style={{
+                                ...styles.roofLevel,
+                                height: `${Math.max(20, (pct3 / 100) * 120)}px`,
+                              }}>
+                                <span style={styles.houseLabel}>3층 ({pct3}%)</span>
+                              </div>
+                            )}
+
+                            {/* 2층 (퇴직연금) */}
+                            {v2 > 0 && (
+                              <div style={{
+                                ...styles.pillarLevel,
+                                height: `${Math.max(20, (pct2 / 100) * 120)}px`,
+                              }}>
+                                <span style={styles.houseLabel}>2층 ({pct2}%)</span>
+                              </div>
+                            )}
+
+                            {/* 1층 (국민/기초) */}
+                            {v1 > 0 && (
+                              <div style={{
+                                ...styles.baseLevel,
+                                height: `${Math.max(20, (pct1 / 100) * 120)}px`,
+                              }}>
+                                <span style={styles.houseLabel}>1층 ({pct1}%)</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 우측: 범례 */}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px", justifyContent: "center", flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <div style={{ width: "12px", height: "12px", backgroundColor: "#f97316", borderRadius: "2px" }} />
+                              <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>3층 개인/보험</span>
+                                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: 700 }}>{v3.toLocaleString()} 만원/월</span>
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <div style={{ width: "12px", height: "12px", backgroundColor: "#facc15", borderRadius: "2px" }} />
+                              <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>2층 퇴직연금</span>
+                                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: 700 }}>{v2.toLocaleString()} 만원/월</span>
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <div style={{ width: "12px", height: "12px", backgroundColor: "#3b82f6", borderRadius: "2px" }} />
+                              <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>1층 국민/기초</span>
+                                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: 700 }}>{v1.toLocaleString()} 만원/월</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       ) : (
-                        <div style={styles.emptyChart}>사적연금 적립 데이터 없음</div>
+                        <div style={styles.emptyChart}>연금 적립 데이터 없음</div>
                       )}
                     </div>
                   </div>
@@ -1227,5 +1278,56 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.75rem",
     color: "var(--text-muted)",
     lineHeight: "1.4",
+  },
+  houseDiagramWrapper: {
+    width: "120px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    height: "160px",
+    position: "relative",
+  },
+  roofLevel: {
+    width: "70%",
+    backgroundColor: "#f97316",
+    borderRadius: "4px 4px 0 0",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.3s ease",
+    marginBottom: "2px",
+    borderLeft: "2px solid #ea580c",
+    borderRight: "2px solid #ea580c",
+  },
+  pillarLevel: {
+    width: "82%",
+    backgroundColor: "#facc15",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.3s ease",
+    marginBottom: "2px",
+    borderRadius: "0",
+    borderLeft: "4px solid #eab308",
+    borderRight: "4px solid #eab308",
+  },
+  baseLevel: {
+    width: "95%",
+    backgroundColor: "#3b82f6",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.3s ease",
+    borderRadius: "0 0 4px 4px",
+    borderBottom: "2px solid #1d4ed8",
+  },
+  houseLabel: {
+    fontSize: "0.7rem",
+    fontWeight: 800,
+    color: "#0f172a",
+    zIndex: 2,
+    textShadow: "0 1px 2px rgba(255, 255, 255, 0.4)",
+    whiteSpace: "nowrap",
   },
 };

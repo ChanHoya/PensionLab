@@ -334,9 +334,10 @@ export default function OnboardingPage() {
   };
 
   const handleFinish = async () => {
+    if (isSubmitting) return; // prevent double clicks
     setIsSubmitting(true);
     
-    const maxRetries = 3;
+    const maxRetries = 4;
     let attempt = 0;
     let success = false;
     let lastError: any = null;
@@ -371,8 +372,8 @@ export default function OnboardingPage() {
         console.warn(`온보딩 저장 시도 ${attempt}/${maxRetries} 실패:`, err.message);
         lastError = err;
         if (attempt < maxRetries) {
-          // DB spin-up 또는 네트워크 안정을 위해 재시도 전 대기 시간 추가 (1.5초)
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          // Exponential backoff: 1s → 2s → 3s wait between retries
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
         }
       }
     }
@@ -380,19 +381,18 @@ export default function OnboardingPage() {
     if (success && userId) {
       // Save userId to localStorage to preserve session
       localStorage.setItem("pensionlab_user_id", userId);
-      
-      store.setSimulationParams({
-        retirementAge: store.simulationParams.retirementAge,
-      });
-
-      router.push("/dashboard");
-      setIsSubmitting(false);
     } else {
-      console.error("온보딩 저장 최종 실패:", lastError);
-      alert(`데이터 저장 도중 에러가 발생했습니다.\n원인: ${lastError?.message || "네트워크 오류"}\n\n로컬 대시보드로 이동합니다.`);
-      router.push("/dashboard");
-      setIsSubmitting(false);
+      // Save locally so dashboard can still work even without DB persistence
+      console.warn("온보딩 DB 저장 실패, 로컬 저장으로 대체:", lastError?.message);
+      localStorage.setItem("pensionlab_user_id", `local_${Date.now()}`);
     }
+    
+    store.setSimulationParams({
+      retirementAge: store.simulationParams.retirementAge,
+    });
+
+    router.push("/dashboard");
+    setIsSubmitting(false);
   };
 
   if (!isMounted) {

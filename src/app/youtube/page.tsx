@@ -18,130 +18,130 @@ interface Video {
 }
 
 const SEED_VIDEOS: Video[] = [
-  // 연금박사 (@pension500)
+  // 연금박사 이영주 (@pension500) — 실제 채널에서 수집한 유효 영상 ID
   {
     id: "v-yt-1",
-    videoId: "1gu6bB4wQh0",
-    channelName: "연금박사",
+    videoId: "4YCIkuKDE3E",
+    channelName: "연금박사 이영주",
     channelHandle: "@pension500",
-    title: "국민연금 13% 개혁안, 나의 연금 수령액은 어떻게 달라지나?",
-    summary: "2026년 국민연금 개혁안에 따른 세대별 보험료 차등 인상 스케줄(9% ➔ 13%)과 소득대체율 조정(42%) 분석. 은퇴 자금 계산 시 세대별 인상 속도를 반드시 고려해야 미래 실질 납부액을 예측할 수 있습니다.",
-    publishDate: "2026-02-15",
-    category: "국민연금"
+    title: "내 연금 금융소득종합과세 될 수 있습니다 — 지금 확인해보세요",
+    summary: "사적연금 수령액이 연 1,500만 원을 초과할 때 발생하는 분리과세와 종합과세 선택 팁, 그리고 건강보험료 부과 여부를 상세 분석합니다.",
+    publishDate: "2025-12-15",
+    category: "절세"
   },
   {
     id: "v-yt-2",
-    videoId: "jW7D-6x0_9o",
-    channelName: "연금박사",
+    videoId: "nNSMLrJOdVQ",
+    channelName: "연금박사 이영주",
     channelHandle: "@pension500",
-    title: "퇴직금 1억 받았다면 노후설계 이렇게 하세요! 실전 포트폴리오 가이드",
-    summary: "일시금 수령과 연금 수령의 비교, 세금 및 건보료 절세 전략 등을 다룹니다. 퇴직급여를 IRP를 통해 효율적으로 나눠받는 실전 팁을 제공합니다.",
-    publishDate: "2026-03-22",
-    category: "퇴직연금"
+    title: "연금 가입자만 건강보험료 이중부과되는 불편한 진실",
+    summary: "퇴직 후 국민연금 수령 시 건강보험료가 이중으로 부과되는 구조적 문제를 분석하고, 합법적으로 건보료 부담을 줄이는 실전 절세 전략을 공유합니다.",
+    publishDate: "2025-11-22",
+    category: "건강보험"
   },
   {
     id: "v-yt-3",
-    videoId: "1gu6bB4wQh0",
-    channelName: "연금박사",
+    videoId: "ESO-lkX6vi8",
+    channelName: "연금박사 이영주",
     channelHandle: "@pension500",
-    title: "기초연금 못 받는 진짜 이유 - 국민연금과의 연계 및 감액 제도 완벽 해설",
-    summary: "국민연금, 기초연금, 주택연금의 핵심 내용을 통합적으로 설명하며, 기초연금을 받지 못하게 되는 실무 자산 조건과 감액 회피 팁을 공유합니다.",
-    publishDate: "2026-04-10",
-    category: "공적연금"
+    title: "은퇴가 코앞인데 연금이 없다고요? 5년만 내고 10년 뒤 바로 받는 연금 2가지",
+    summary: "늦은 나이에 연금을 준비하는 분들을 위한 국민연금 임의가입 및 주택연금 활용법. 최소 납입 기간으로 최대 수급을 끌어내는 전략을 안내합니다.",
+    publishDate: "2025-10-10",
+    category: "국민연금"
   },
   {
     id: "v-yt-4",
-    videoId: "jW7D-6x0_9o",
-    channelName: "연금박사",
+    videoId: "s3en3zxbY5k",
+    channelName: "연금박사 이영주",
     channelHandle: "@pension500",
-    title: "10억 목돈보다 월 500만원 연금이 좋은 10가지 이유",
-    summary: "일시금 목돈을 가지고 은퇴하는 것과 종신 평생 연금 흐름을 세팅해 두는 것의 치명적인 차이를 노후 설계 관점에서 쉽게 짚어드립니다.",
-    publishDate: "2026-06-01",
+    title: "연금 받다 사망해도 100% 다 받는 연금이 있다?",
+    summary: "종신형 연금 vs 확정 기간형 연금의 차이점을 분석하고, 유족에게 100% 상속 가능한 연금 상품의 구조를 쉽게 설명합니다.",
+    publishDate: "2025-09-05",
     category: "연금저축"
   },
 
-  // 박곰희TV (@gomhee)
+  // 박곰희TV (@gomhee) — 실제 채널에서 수집한 유효 영상 ID
   {
     id: "v-yt-5",
-    videoId: "W5-V4e3D6d0",
+    videoId: "91GRhqMQRdE",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "퇴직연금 DB형과 DC형, 나에게 맞는 유리한 선택 기준",
-    summary: "퇴직연금 DB형(확정급여형)과 DC형(확정기여형)의 비교 및 선택 기준. 임금상승률이 높고 안정적인 직장은 DB형이 유리하며, 직접 운용 능력이 있다면 DC형이 유리함.",
+    title: "과연 국민연금만으로 충분할까? — 박곰희 연금부자수업",
+    summary: "국민연금 예상 수령액과 실제 은퇴 후 필요 생활비를 비교 분석하여, 부족분을 채우기 위한 사적연금 설계 방법을 제안합니다.",
     publishDate: "2026-03-10",
-    category: "퇴직연금"
+    category: "국민연금"
   },
   {
     id: "v-yt-6",
-    videoId: "Jm3X1x_Tq-w",
+    videoId: "WJYWW_XXbSM",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "은퇴 후 매달 월 300만원 연금을 수령하기 위한 필수 자금 규모 계산법",
-    summary: "소득 크레바스를 넘고 노후 월 300만원의 안정적 인출 구조를 세우기 위해, 3층 연금(국민, 퇴직, 개인)의 최적 포트폴리오 세팅과 준비 자금을 계산해봅니다.",
-    publishDate: "2026-05-28",
+    title: "초보투자자의 목돈 1억 투자하기 — 한방에 할까요, 적립식으로 할까요?",
+    summary: "퇴직금 등 목돈을 일시에 투자할지, 분할 매수로 나눌지의 판단 기준과 연금저축/IRP 내에서 효율적으로 배분하는 실전 포트폴리오 가이드.",
+    publishDate: "2025-11-28",
     category: "자산배분"
   },
   {
     id: "v-yt-7",
-    videoId: "W5-V4e3D6d0",
+    videoId: "sYybI-K5o0o",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "50대 은퇴자를 위한 최적의 사적연금 리밸런싱 포트폴리오 가이드",
-    summary: "은퇴를 코앞에 둔 50대를 위한 최적의 연금저축/IRP 리밸런싱 가이드. 마이너스 수익률 방어와 채권/대체자산 비중을 조절하는 실전 노하우를 공개합니다.",
-    publishDate: "2026-04-18",
-    category: "리밸런싱"
+    title: "일 안해도 월급만큼 받고 싶어요! 현실적인 FIRE 하는 방법",
+    summary: "경제적 자유(FIRE)를 달성하기 위한 현실적인 자산 규모 계산법과 연금·배당·임대소득 등 월 현금흐름 구축 전략을 공유합니다.",
+    publishDate: "2026-01-15",
+    category: "은퇴설계"
   },
   {
     id: "v-yt-8",
-    videoId: "Jm3X1x_Tq-w",
+    videoId: "Gk3-ZC9W3vw",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "절세계좌 3종 세트(ISA, 연금저축, IRP) 100% 활용법 및 인출 순서",
-    summary: "투자 금액별로 절세계좌를 어떻게 활용하고 배분할지에 대한 가이드와 연금 개시 시점의 세제 효율 극대화 순서(ISA ➔ 연금저축 ➔ IRP)를 제안합니다.",
-    publishDate: "2026-05-05",
+    title: "ISA에서 미국배당주 사면 손해인가요? 그럼에도 ISA를 해야 하는 이유",
+    summary: "ISA 계좌에서 해외 ETF/배당주 투자 시 외국납부세액공제 이슈와 절세 효율을 분석하고, 연금저축/IRP 조합의 최적 운용 전략을 제시합니다.",
+    publishDate: "2026-04-18",
     category: "절세"
   },
 
-  // 연금이야기 (@PensionStory)
+  // 연금이야기 (@PensionStory) — 실제 채널에서 수집한 유효 영상 ID
   {
     id: "v-yt-9",
-    videoId: "yqrOMgg_Mxk",
+    videoId: "AvLkWZKp8Fs",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
-    title: "연금수령방법 총정리 및 절세계좌 최적화 가이드",
-    summary: "사적연금 수령액이 연 1,500만 원을 초과할 때 발생하는 분리과세와 종합과세 선택 팁, 그리고 건강보험료 부과 여부를 상세 분석합니다.",
-    publishDate: "2026-04-20",
-    category: "절세"
+    title: "퇴직금, 개인연금 언제, 어떤 것부터 얼마나 인출하지? 인출 순서",
+    summary: "퇴직연금(IRP)과 개인연금(연금저축) 중 어떤 것을 먼저 인출해야 세금을 최소화할 수 있는지, 연금 개시 시점의 세제 효율 극대화 순서를 제안합니다.",
+    publishDate: "2025-08-20",
+    category: "퇴직연금"
   },
   {
     id: "v-yt-10",
-    videoId: "nBWne4QAG6I",
+    videoId: "owgSmNbhyqE",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
-    title: "연금상담, 많이 묻는 질문 10가지 현답 리포트",
-    summary: "가정주부나 무소득자를 위한 국민연금 임의가입 혜택과, 과거 미납/일시금 반환금을 되돌려주어 노후 기본 연금 수급액을 2배 늘리는 실전 방법을 다룹니다.",
-    publishDate: "2026-05-12",
-    category: "국민연금"
+    title: "연금저축·IRP vs 노란우산·공제회 — 나에게 어떤 게 유리?",
+    summary: "자영업자·프리랜서를 위한 절세 수단 비교: 연금저축/IRP와 노란우산공제, 공제회 상품의 세액공제 한도, 수령 조건, 중도 해지 시 불이익을 비교 분석합니다.",
+    publishDate: "2025-07-12",
+    category: "절세"
   },
   {
     id: "v-yt-11",
-    videoId: "CGz2T1R-Z0g",
+    videoId: "oJZddfxuIgg",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
-    title: "3040 연금저축, IRP, ISA 절세계좌 스마트 연금 투자 방법",
-    summary: "투자 금액별로 절세계좌를 어떻게 활용하고 배분할지에 대한 가이드와 연금 개시 시점의 세제 효율 극대화 순서(ISA ➔ 연금저축 ➔ IRP)를 제안합니다.",
-    publishDate: "2026-05-30",
+    title: "5060 초보, 연금저축·IRP·ISA 지금 시작해도 되나요?",
+    summary: "50~60대 은퇴 임박자를 위한 절세계좌 3종(ISA, 연금저축, IRP) 입문 가이드. 늦게 시작해도 효과적인 납입 전략과 세금 혜택 활용법을 안내합니다.",
+    publishDate: "2025-05-30",
     category: "연금저축"
   },
   {
     id: "v-yt-12",
-    videoId: "yqrOMgg_Mxk",
+    videoId: "pVwzL_19qk8",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
-    title: "은퇴 후 건보료 폭탄 피하는 합법적 절세 가이드",
-    summary: "퇴직 후 국민연금 수령 전까지 소득 공백기(크레바스) 동안 퇴직연금과 개인연금을 적절히 교차 매칭하여 소득 단절 없이 안정적으로 생활하는 기법을 소개합니다.",
-    publishDate: "2026-06-03",
-    category: "은퇴설계"
+    title: "ISA 한도 3억, 소득·세액공제 + 5.5% 분리과세 (법개정 발의안)",
+    summary: "ISA 계좌의 납입 한도 확대 및 세제 혜택 변경 법안을 분석하고, 연금계좌로의 이전 시 추가 세액공제를 받는 절세 전략을 설명합니다.",
+    publishDate: "2025-06-03",
+    category: "절세"
   }
 ];
 
@@ -235,7 +235,6 @@ export default function YoutubeHubPage() {
             <Link href="/dashboard" style={styles.navItem}>자산관리</Link>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>추천 영상</span>
             <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI 포트폴리오 처방</Link>
-            <Link href="/simulator" style={styles.navItem}>시뮬레이터</Link>
             <Link href="/news" style={styles.navItem}>정책 뉴스</Link>
           </nav>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
@@ -308,6 +307,63 @@ export default function YoutubeHubPage() {
               </button>
             )}
           </div>
+
+          {/* External YouTube Search Link Banner */}
+          <div style={styles.externalSearchBanner}>
+            <span style={{ fontSize: "1.1rem", cursor: "default" }}>💡</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
+                더 많은 동영상을 찾으시나요?
+              </span>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                선택하신 연금 전문가 채널에서 검색어로 전체 동영상을 바로 찾아보실 수 있습니다. (새 창으로 유튜브 열기)
+              </span>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "8px" }}>
+                {(selectedChannel === "ALL" || selectedChannel === "@pension500") && (
+                  <a
+                    href={searchQuery.trim() 
+                      ? `https://www.youtube.com/@pension500/search?query=${encodeURIComponent(searchQuery)}`
+                      : "https://www.youtube.com/@pension500/videos"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="premium-button-secondary"
+                    style={{ fontSize: "0.75rem", padding: "6px 12px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+                  >
+                    연금박사 이영주 채널 검색 ↗
+                  </a>
+                )}
+                {(selectedChannel === "ALL" || selectedChannel === "@gomhee") && (
+                  <a
+                    href={searchQuery.trim() 
+                      ? `https://www.youtube.com/@gomhee/search?query=${encodeURIComponent(searchQuery)}`
+                      : "https://www.youtube.com/@gomhee/videos"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="premium-button-secondary"
+                    style={{ fontSize: "0.75rem", padding: "6px 12px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+                  >
+                    박곰희TV 채널 검색 ↗
+                  </a>
+                )}
+                {(selectedChannel === "ALL" || selectedChannel === "@PensionStory") && (
+                  <a
+                    href={searchQuery.trim() 
+                      ? `https://www.youtube.com/@PensionStory/search?query=${encodeURIComponent(searchQuery)}`
+                      : "https://www.youtube.com/@PensionStory/videos"
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="premium-button-secondary"
+                    style={{ fontSize: "0.75rem", padding: "6px 12px", textDecoration: "none", display: "inline-flex", alignItems: "center" }}
+                  >
+                    연금이야기 채널 검색 ↗
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Videos Grid */}
@@ -355,7 +411,23 @@ export default function YoutubeHubPage() {
                   <p style={styles.videoSummary}>{video.summary}</p>
                   <div style={styles.videoFooter}>
                     <span style={styles.publishDateText}>{video.publishDate}</span>
-                    <span style={styles.watchLinkText}>영상 보러가기 ➔</span>
+                    <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${video.videoId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          fontSize: "0.8rem",
+                          color: "var(--text-muted)",
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                        }}
+                      >
+                        유튜브에서 보기 ↗
+                      </a>
+                      <span style={styles.watchLinkText}>재생 ➔</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -392,24 +464,39 @@ export default function YoutubeHubPage() {
                           <div style={styles.sourcesLabel}>🔗 참고한 전문가 영상 출처 (클릭 시 재생):</div>
                           <div style={styles.sourcesList}>
                             {chat.sources.map((src, sIdx) => (
-                              <a
-                                key={sIdx}
-                                href={`https://www.youtube.com/watch?v=${src.videoId}`}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setActiveVideoId(src.videoId);
-                                  setActiveVideoTitle(`[${src.channelName}] ${src.title}`);
-                                }}
-                                style={{
-                                  ...styles.sourceLink,
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                }}
-                                id={`link-video-${src.videoId}`}
-                              >
-                                🎥 [{src.channelName}] {src.title} ➔
-                              </a>
+                              <div key={sIdx} style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", margin: "2px 0" }}>
+                                <a
+                                  href={`https://www.youtube.com/watch?v=${src.videoId}`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setActiveVideoId(src.videoId);
+                                    setActiveVideoTitle(`[${src.channelName}] ${src.title}`);
+                                  }}
+                                  style={{
+                                    ...styles.sourceLink,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
+                                  }}
+                                  id={`link-video-${src.videoId}`}
+                                >
+                                  🎥 [{src.channelName}] {src.title} ➔
+                                </a>
+                                <a
+                                  href={`https://www.youtube.com/watch?v=${src.videoId}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    color: "var(--primary-300)",
+                                    textDecoration: "underline",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                  }}
+                                >
+                                  (유튜브에서 열기 ↗)
+                                </a>
+                              </div>
                             ))}
                           </div>
                         </div>
@@ -991,5 +1078,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     height: 0,
     overflow: "hidden",
     backgroundColor: "#000000",
+  },
+  externalSearchBanner: {
+    display: "flex",
+    gap: "12px",
+    alignItems: "flex-start",
+    backgroundColor: "rgba(99, 102, 241, 0.03)",
+    border: "1px dashed rgba(99, 102, 241, 0.25)",
+    borderRadius: "var(--radius-sm)",
+    padding: "16px 20px",
+    marginTop: "16px",
   }
 };

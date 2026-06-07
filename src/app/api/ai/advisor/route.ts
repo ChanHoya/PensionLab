@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { OpenAI } from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const minimaxApiKey = process.env.MINIMAX_API_KEY;
+const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
+
 const minimaxClient = minimaxApiKey
   ? new OpenAI({
       apiKey: minimaxApiKey,
@@ -9,9 +12,19 @@ const minimaxClient = minimaxApiKey
     })
   : null;
 
+const genAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
+
 export async function POST(request: Request) {
   try {
-    if (!minimaxClient) {
+    const useGemini = process.env.NODE_ENV === "production" || !minimaxClient;
+
+    if (useGemini && !genAI) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY가 서버 환경 변수에 등록되지 않았습니다." },
+        { status: 500 }
+      );
+    }
+    if (!useGemini && !minimaxClient) {
       return NextResponse.json(
         { error: "MINIMAX_API_KEY가 서버 환경 변수에 등록되지 않았습니다." },
         { status: 500 }
@@ -76,21 +89,33 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
 - 태그 밖에는 최종 사용자에게 보여줄 가독성 높은 마크다운 형식의 깔끔하고 premium 한 처방전(보고서 스타일)만 작성해 주십시오. 사용자에게 설명하듯 신뢰성 있고 전문적인 어조로 설명해 주세요.
 `;
 
-    // 2. Call MiniMax M3 API
-    const response = await minimaxClient.chat.completions.create({
-      model: "MiniMax-M3",
-      messages: [
-        {
-          role: "system",
-          content: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다.",
-        },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.6,
-      max_tokens: 3000,
-    });
+    let fullContent = "";
 
-    const fullContent = response.choices[0].message.content || "";
+    if (useGemini && genAI) {
+      // Call Gemini 2.0 Flash
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        systemInstruction: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다. 사용자의 질문에 대해 분석적이고 전문적인 견해를 제시합니다.",
+      });
+
+      const result = await model.generateContent(prompt);
+      fullContent = result.response.text();
+    } else if (minimaxClient) {
+      // Call MiniMax M3
+      const response = await minimaxClient.chat.completions.create({
+        model: "MiniMax-M3",
+        messages: [
+          {
+            role: "system",
+            content: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다.",
+          },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.6,
+        max_tokens: 3000,
+      });
+      fullContent = response.choices[0].message.content || "";
+    }
 
     // 3. Parse and extract the <think> reasoning and the final markdown
     let thinking = "";
@@ -107,7 +132,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
       recommendation,
     });
   } catch (error: any) {
-    console.error("MiniMax AI Advisor API Error:", error);
+    console.error("AI Advisor API Error:", error);
     return NextResponse.json(
       { error: "AI 진단 결과를 가져오는 중 에러가 발생했습니다." },
       { status: 500 }

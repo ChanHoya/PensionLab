@@ -38,4 +38,10 @@ graph TD
   AIAdvisor --> Store
   AIAdvisor --> Calculator
   AIAdvisor --> AIAdvisorAPI[src/app/api/ai/advisor/route.ts]
+
+  %% Simulator & News Routes (404 Bug Fixes)
+  Dashboard --> Simulator[src/app/simulator/page.tsx]
+  Dashboard --> News[src/app/news/page.tsx]
+  Simulator --> Store
+  Simulator --> Calculator
 ```

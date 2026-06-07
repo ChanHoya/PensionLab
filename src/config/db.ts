@@ -6,6 +6,9 @@ import { Pool } from "pg";
 // Configure connection pool
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: process.env.NODE_ENV === "production" ? 3 : 10,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 5000,
 });
 
 // Setup the driver adapter

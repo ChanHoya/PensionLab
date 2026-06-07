@@ -244,7 +244,8 @@ export default function DashboardPage() {
             Pension<span className="gradient-text">Lab</span>
           </Link>
           <nav style={styles.navLinks}>
-            <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>대시보드</span>
+            <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>자산관리</span>
+            <Link href="/youtube" style={styles.navItem}>추천 영상</Link>
             <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI 포트폴리오 처방</Link>
             <Link href="/simulator" style={styles.navItem}>시뮬레이터</Link>
             <Link href="/news" style={styles.navItem}>정책 뉴스</Link>

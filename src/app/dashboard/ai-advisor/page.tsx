@@ -213,7 +213,10 @@ export default function AIAdvisorPage() {
           </Link>
           <nav style={styles.navLinks}>
             <Link href="/dashboard" style={styles.navItem}>
-              대시보드
+              자산관리
+            </Link>
+            <Link href="/youtube" style={styles.navItem}>
+              추천 영상
             </Link>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>
               AI 포트폴리오 처방

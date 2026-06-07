@@ -377,3 +377,12 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   }
   .print-page:last-child { page-break-after: avoid; }
 }
+
+/* ── YouTube Curation Hub Animations ── */
+.premium-card:hover .play-overlay-custom {
+  opacity: 1 !important;
+}
+.premium-card:hover .thumbnail-img-custom {
+  transform: scale(1.05) !important;
+}
+

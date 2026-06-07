@@ -120,7 +120,8 @@ export default function SimulatorSandboxPage() {
             Pension<span className="gradient-text">Lab</span>
           </Link>
           <nav style={styles.navLinks}>
-            <Link href="/dashboard" style={styles.navItem}>대시보드</Link>
+            <Link href="/dashboard" style={styles.navItem}>자산관리</Link>
+            <Link href="/youtube" style={styles.navItem}>추천 영상</Link>
             <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI 포트폴리오 처방</Link>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>시뮬레이터</span>
             <Link href="/news" style={styles.navItem}>정책 뉴스</Link>

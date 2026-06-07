@@ -60,9 +60,63 @@ export async function GET() {
           lowerTitle.includes("업무협약") ||
           lowerTitle.includes("mou") ||
           lowerTitle.includes("선정") ||
-          lowerTitle.includes("수상");
+          lowerTitle.includes("수상") ||
+          lowerTitle.includes("세미나") ||
+          lowerTitle.includes("개최") ||
+          lowerTitle.includes("설명회") ||
+          lowerTitle.includes("웹세미나") ||
+          lowerTitle.includes("웨비나") ||
+          lowerTitle.includes("스타벅스") ||
+          lowerTitle.includes("커피") ||
+          lowerTitle.includes("기프티콘") ||
+          lowerTitle.includes("상품권") ||
+          lowerTitle.includes("증정") ||
+          lowerTitle.includes("지급") ||
+          lowerTitle.includes("선물") ||
+          lowerTitle.includes("이관") ||
+          lowerTitle.includes("계좌 개설") ||
+          lowerTitle.includes("계좌개설") ||
+          lowerTitle.includes("공모주") ||
+          lowerTitle.includes("우대") ||
+          lowerTitle.includes("금리") ||
+          lowerTitle.includes("신상품") ||
+          lowerTitle.includes("판매 개시") ||
+          lowerTitle.includes("선착순") ||
+          lowerTitle.includes("모집") ||
+          lowerTitle.includes("추첨") ||
+          lowerTitle.includes("마케팅") ||
+          lowerTitle.includes("선보여") ||
+          lowerTitle.includes("독식") ||
+          lowerTitle.includes("머니백") ||
+          lowerTitle.includes("포인트") ||
+          lowerTitle.includes("혜택 제공") ||
+          lowerTitle.includes("신규 가입");
           
-        if (isCommercial) {
+        // Composite rule: if a financial firm (증권, 운용, 은행, 생명, 화재, 카드) is in the title,
+        // and it also contains marketing/promotional terms, filter it out.
+        const hasFinancialFirm = 
+          lowerTitle.includes("증권") || 
+          lowerTitle.includes("운용") || 
+          lowerTitle.includes("은행") || 
+          lowerTitle.includes("생명") || 
+          lowerTitle.includes("화재") || 
+          lowerTitle.includes("카드");
+          
+        const hasPromoTerm = 
+          lowerTitle.includes("가입") ||
+          lowerTitle.includes("수수료") ||
+          lowerTitle.includes("고객") ||
+          lowerTitle.includes("유치") ||
+          lowerTitle.includes("개설") ||
+          lowerTitle.includes("연동") ||
+          lowerTitle.includes("전망") ||
+          lowerTitle.includes("대상") ||
+          lowerTitle.includes("선착순") ||
+          lowerTitle.includes("쿠폰") ||
+          lowerTitle.includes("상담") ||
+          lowerTitle.includes("서비스");
+
+        if (isCommercial || (hasFinancialFirm && hasPromoTerm)) {
           continue; // Skip commercial and advertisement news
         }
         

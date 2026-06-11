@@ -594,7 +594,7 @@ export default function WithdrawalStrategyPage() {
               {/* Recharts Bar Comparison Chart */}
               <div style={{ height: 260, width: "100%", marginTop: "12px" }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={barChartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
@@ -654,7 +654,7 @@ export default function WithdrawalStrategyPage() {
               {/* Recharts Area + Line Chart */}
               <div style={{ height: 320, width: "100%", marginTop: "16px" }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={activeResult.flows} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <ComposedChart data={activeResult.flows} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99,102,241,0.1)" />
                     <XAxis dataKey="age" tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
                     <YAxis tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />

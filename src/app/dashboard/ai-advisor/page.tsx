@@ -772,7 +772,7 @@ export default function AIAdvisorPage() {
                       <ResponsiveContainer width="100%" height={200}>
                         <AreaChart
                           data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 1)}
-                          margin={{ top: 5, right: 10, left: -25, bottom: 0 }}
+                          margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.12)" />
                           <XAxis dataKey="age" tickLine={false} style={{ fontSize: "0.75rem", fill: "var(--text-secondary)" }} />
@@ -807,7 +807,7 @@ export default function AIAdvisorPage() {
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart
                             data={premiumChartData}
-                            margin={{ top: 5, right: 5, left: -30, bottom: 0 }}
+                            margin={{ top: 5, right: 5, left: 5, bottom: 0 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.08)" />
                             <XAxis dataKey="year" tickLine={false} style={{ fontSize: "0.65rem", fill: "var(--text-secondary)" }} />

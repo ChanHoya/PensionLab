@@ -367,6 +367,43 @@ export function resolveDrawComposition(
 }
 
 /**
+ * Calculates the decumulation multiplier for a given year index k
+ */
+export function getDecumulationMultiplier(k: number, strategy: string): number {
+  if (strategy !== "DECREASING") return 1.0;
+  const yearsSinceStart = k - 1;
+  if (yearsSinceStart <= 5) return 1.2;
+  if (yearsSinceStart <= 10) return 1.0;
+  if (yearsSinceStart <= 15) return 0.8;
+  if (yearsSinceStart <= 20) return 0.6;
+  return 0.4;
+}
+
+/**
+ * Calculates the base annual payout P for an account using a weighted PMT formula,
+ * so that when multiplied by decumulation multipliers, the balance depletes to exactly 0
+ * at the end of the receiving period, taking into account annual interest compounding.
+ */
+export function calculateWeightedPMT(
+  initialBalance: number,
+  receivingPeriod: number,
+  interestRatePercent: number,
+  strategy: string
+): number {
+  if (receivingPeriod <= 0) return 0;
+  const r = interestRatePercent / 100;
+  
+  let denominator = 0;
+  for (let t = 1; t <= receivingPeriod; t++) {
+    const multiplier = getDecumulationMultiplier(t, strategy);
+    denominator += multiplier * Math.pow(1 + r, -(t - 1));
+  }
+  
+  if (denominator <= 0) return 0;
+  return initialBalance / denominator;
+}
+
+/**
  * 3층 연금 및 개인 자산 데이터 바탕으로 advanced 시뮬레이션 실행
  */
 export function runWithdrawalSimulation(
@@ -572,10 +609,12 @@ export function runWithdrawalSimulation(
     const accounts = createUnifiedAccounts(strategyId);
     const flows: SimulationYearFlow[] = [];
 
-    // 수령 계좌별 수령 연차(1-indexed) 트래킹용 객체
+    // 수령 계좌별 수령 연차(1-indexed) 트래킹 및 PMT 연산용 객체
     const accountPayoutYears: { [accountId: string]: number } = {};
+    const baseAnnualPayouts: { [accountId: string]: number } = {};
     accounts.forEach((a) => {
       accountPayoutYears[a.id] = 0;
+      baseAnnualPayouts[a.id] = 0;
     });
 
     let lifetimeTotalPreTax = 0;
@@ -639,22 +678,23 @@ export function runWithdrawalSimulation(
 
           if (k <= acc.receivingPeriod) {
             // 올해의 세전 인출액 결정
-            // 남은 연차만큼 균등 인출하되, 활동기 집중형(DECREASING) 인출 가중치를 적용
-            const remainingYears = acc.receivingPeriod - k + 1;
-            let drawAmount = acc.balance / remainingYears;
+            // 1년차 수령 시점에 PMT 공식을 이용해 기준 연 수령액 확정
+            if (k === 1) {
+              baseAnnualPayouts[acc.id] = calculateWeightedPMT(
+                acc.balance,
+                acc.receivingPeriod,
+                acc.expectedReturnRate,
+                simulationParams.decumulationStrategy
+              );
+            }
 
-            if (simulationParams.decumulationStrategy === "DECREASING") {
-              // 활동기 집중형 (체감식 가중치)
-              const yearsSinceStart = k - 1;
-              let decumMultiplier = 1.0;
-              if (yearsSinceStart <= 5) decumMultiplier = 1.2;
-              else if (yearsSinceStart <= 10) decumMultiplier = 1.0;
-              else if (yearsSinceStart <= 15) decumMultiplier = 0.8;
-              else if (yearsSinceStart <= 20) decumMultiplier = 0.6;
-              else decumMultiplier = 0.4;
+            const multiplier = getDecumulationMultiplier(k, simulationParams.decumulationStrategy);
+            let drawAmount = baseAnnualPayouts[acc.id] * multiplier;
 
-              drawAmount = drawAmount * decumMultiplier;
-              // 인적 자산 한도 내로 보장
+            // 마지막 연차에는 잔액이 남아 기말 peak이 발생하지 않도록 전액 인출
+            if (k === acc.receivingPeriod) {
+              drawAmount = acc.balance;
+            } else {
               drawAmount = Math.min(drawAmount, acc.balance);
             }
 
@@ -693,9 +733,22 @@ export function runWithdrawalSimulation(
           }
         }
 
-        // 연도 말 계좌 잔액의 자산 운용 수익률 반영 복리 증가
+        // 연도 말 계좌 잔액의 자산 운용 수익률 반영 복리 증가 및 세제 재원 동기화
         if (acc.balance > 0) {
-          acc.balance = acc.balance * (1 + acc.expectedReturnRate / 100);
+          const interest = acc.balance * (acc.expectedReturnRate / 100);
+          const roundedInterest = Math.round(interest);
+          acc.balance += roundedInterest;
+
+          // sources도 복리 증가 반영 (세제 유형 분류 매칭)
+          const targetTaxType: SourceTaxType =
+            acc.category === "INSURANCE" ? "NON_QUALIFIED" : "TAX_CREDITED";
+
+          const sourceIdx = acc.sources.findIndex((s) => s.taxType === targetTaxType);
+          if (sourceIdx !== -1) {
+            acc.sources[sourceIdx].amount += roundedInterest;
+          } else {
+            acc.sources.push({ taxType: targetTaxType, amount: roundedInterest });
+          }
         }
       });
 

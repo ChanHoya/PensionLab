@@ -85,22 +85,36 @@ const result = runWithdrawalSimulation(
   }
 );
 
-console.log("=== S0 (현재 계약형) ===");
-console.log(`생애 총 세전 수령액: ${result.s0.lifetimeTotalPreTax.toLocaleString()} 만원`);
-console.log(`생애 총 세후 수령액: ${result.s0.lifetimeTotalPostTax.toLocaleString()} 만원`);
-console.log(`생애 총 세금 & 건보료: ${result.s0.lifetimeTotalTaxAndHI.toLocaleString()} 만원`);
-console.log(`피부양자 박탈 시기: ${result.s0.lostDependencyAge ? result.s0.lostDependencyAge + "세" : "없음"}`);
+console.log("\n=== S0 Detailed Flows ===");
+console.table(
+  result.s0.flows.map((f) => ({
+    age: f.age,
+    year: f.year,
+    preTax: f.totalPreTax,
+    postTax: f.totalPostTax,
+    taxAndHI: f.totalTaxAndHI,
+    drawTaxCredited: f.drawTaxCredited,
+    drawDeferredRetirement: f.drawDeferredRetirement,
+    taxOnPersonal: f.taxOnPersonal,
+    taxOnRetirement: f.taxOnRetirement,
+    endingBalance: f.endingBalance,
+  }))
+);
 
-console.log("\n=== S1 (절세 평탄화) ===");
-console.log(`생애 총 세전 수령액: ${result.s1.lifetimeTotalPreTax.toLocaleString()} 만원`);
-console.log(`생애 총 세후 수령액: ${result.s1.lifetimeTotalPostTax.toLocaleString()} 만원`);
-console.log(`생애 총 세금 & 건보료: ${result.s1.lifetimeTotalTaxAndHI.toLocaleString()} 만원`);
-console.log(`피부양자 박탈 시기: ${result.s1.lostDependencyAge ? result.s1.lostDependencyAge + "세" : "없음"}`);
-
-console.log("\n=== S2 (절세형 + 국민연금 5년 연기) ===");
-console.log(`생애 총 세전 수령액: ${result.s2.lifetimeTotalPreTax.toLocaleString()} 만원`);
-console.log(`생애 총 세후 수령액: ${result.s2.lifetimeTotalPostTax.toLocaleString()} 만원`);
-console.log(`생애 총 세금 & 건보료: ${result.s2.lifetimeTotalTaxAndHI.toLocaleString()} 만원`);
-console.log(`피부양자 박탈 시기: ${result.s2.lostDependencyAge ? result.s2.lostDependencyAge + "세" : "없음"}`);
+console.log("\n=== S1 Detailed Flows ===");
+console.table(
+  result.s1.flows.map((f) => ({
+    age: f.age,
+    year: f.year,
+    preTax: f.totalPreTax,
+    postTax: f.totalPostTax,
+    taxAndHI: f.totalTaxAndHI,
+    drawTaxCredited: f.drawTaxCredited,
+    drawDeferredRetirement: f.drawDeferredRetirement,
+    taxOnPersonal: f.taxOnPersonal,
+    taxOnRetirement: f.taxOnRetirement,
+    endingBalance: f.endingBalance,
+  }))
+);
 
 console.log("\nValidation success!");

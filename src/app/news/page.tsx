@@ -168,6 +168,7 @@ export default function PolicyNewsPage() {
           <nav style={styles.navLinks}>
             <Link href="/dashboard" style={styles.navItem}>자산관리</Link>
             <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI포트폴리오 진단</Link>
+            <Link href="/dashboard/withdrawal" style={styles.navItem}>인출전략 시뮬레이터</Link>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>관련 뉴스</span>
             <Link href="/youtube" style={styles.navItem}>추천영상</Link>
           </nav>

@@ -195,6 +195,7 @@ export default function DashboardPage() {
           <nav style={styles.navLinks}>
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>자산관리</span>
             <Link href="/dashboard/ai-advisor" style={styles.navItem}>AI포트폴리오 진단</Link>
+            <Link href="/dashboard/withdrawal" style={styles.navItem}>인출전략 시뮬레이터</Link>
             <Link href="/news" style={styles.navItem}>관련 뉴스</Link>
             <Link href="/youtube" style={styles.navItem}>추천영상</Link>
           </nav>

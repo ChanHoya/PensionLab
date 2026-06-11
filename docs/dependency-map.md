@@ -46,4 +46,9 @@ graph TD
   Dashboard --> News[src/app/news/page.tsx]
   Simulator --> Store
   Simulator --> Calculator
+
+  %% Withdrawal Strategy (Sprint 19)
+  Dashboard --> WithdrawalUI[src/app/dashboard/withdrawal/page.tsx]
+  WithdrawalUI --> Store
+  WithdrawalUI --> WithdrawalCalc[src/services/withdrawalCalculator.ts]
 ```

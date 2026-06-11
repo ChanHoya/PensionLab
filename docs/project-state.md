@@ -27,9 +27,10 @@
 - **[Completed]** Sprint 16: AI 종합 처방전 시각 차트 최적화 및 3단계 은퇴 평가 개편.
 - **[Completed]** Sprint 17: 통합연금 PDF 업로드 자동 파싱, 3층 간편인증 연동 탭 숨김 처리, 연금 정보창고 기능 신설, 및 헤더 메뉴/시작 버튼 배치 최적화.
 
+- **[Completed]** Sprint 18: 벤치마킹 참고 서비스 탐색 메뉴 추가 및 랜딩 페이지 UI 고도화 (ReferenceServicesModal 개발 및 아웃링크 카드 그리드 연동)
+- **[Completed]** Sprint 19: 3층 연금 세제/건보 룰셋 반영 인출전략 시뮬레이터 및 비교 대시보드 개발, PDF 리포트 다운로드 연동
+
 ## Active Sprint / Story
-- **Sprint 18**: 벤치마킹 참고 서비스 탐색 메뉴 추가 및 랜딩 페이지 UI 고도화 — **IN PROGRESS**
-  - **[Story S18-1]** [In Progress] 랜딩 페이지 헤더 네비게이션에 '참고 서비스' 메뉴 신설 및 상태/타입 바인딩
-  - **[Story S18-2]** [In Progress] 낙원계산기, cFIREsim, 통합연금포털 등 국내외 5대 벤치마킹 대상 서비스 정보 및 아웃링크가 포함된 다크모드 카드 그리드 모달(`ReferenceServicesModal`) 개발
+- **Sprint 20**: 대기 중 (인출전략 고도화 기능 검증 및 서비스 고도화 준비)
 
 

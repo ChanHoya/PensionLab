@@ -65,6 +65,47 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// Custom Tooltip component for Recharts BarChart
+const BarTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{
+        backgroundColor: "var(--surface)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-sm)",
+        padding: "12px 16px",
+        boxShadow: "var(--shadow-premium)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        zIndex: 100,
+      }}>
+        <p style={{
+          margin: "0 0 8px 0",
+          fontSize: "0.8rem",
+          fontWeight: 700,
+          color: "var(--text-primary)",
+          borderBottom: "1px solid var(--border)",
+          paddingBottom: "6px"
+        }}>{label}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: entry.color || entry.fill }} />
+                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{entry.name}</span>
+              </div>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                {entry.value.toLocaleString()} 만원
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function WithdrawalStrategyPage() {
   const router = useRouter();
   const store = usePensionStore();
@@ -598,7 +639,7 @@ export default function WithdrawalStrategyPage() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
-                    <Tooltip formatter={(value) => value ? `${Number(value).toLocaleString()} 만원` : ""} />
+                    <Tooltip content={<BarTooltip />} />
                     <Legend wrapperStyle={{ fontSize: "0.75rem" }} />
                     <Bar dataKey="세후 수령액" fill="#6366f1" radius={[4, 4, 0, 0]} isAnimationActive={false} />
                     <Bar dataKey="세금 & 건보료" fill="#f43f5e" radius={[4, 4, 0, 0]} isAnimationActive={false} />

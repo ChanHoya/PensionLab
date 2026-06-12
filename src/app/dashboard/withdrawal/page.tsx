@@ -195,6 +195,32 @@ export default function WithdrawalStrategyPage() {
 
   const activeResult: StrategySimulationResult = simulation[activeTab.toLowerCase() as "s0" | "s1" | "s2" | "s3"];
 
+  const totalFlows = activeResult.flows.reduce((acc, flow) => {
+    return {
+      totalPreTax: acc.totalPreTax + flow.totalPreTax,
+      nationalPreTax: acc.nationalPreTax + flow.nationalPreTax,
+      retirementPreTax: acc.retirementPreTax + flow.retirementPreTax,
+      personalPreTax: acc.personalPreTax + flow.personalPreTax,
+      insurancePreTax: acc.insurancePreTax + flow.insurancePreTax,
+      taxOnRetirement: acc.taxOnRetirement + flow.taxOnRetirement,
+      taxOnPersonal: acc.taxOnPersonal + flow.taxOnPersonal,
+      healthInsurance: acc.healthInsurance + flow.healthInsurance,
+      totalPostTax: acc.totalPostTax + flow.totalPostTax,
+      deficit: acc.deficit + flow.deficit,
+    };
+  }, {
+    totalPreTax: 0,
+    nationalPreTax: 0,
+    retirementPreTax: 0,
+    personalPreTax: 0,
+    insurancePreTax: 0,
+    taxOnRetirement: 0,
+    taxOnPersonal: 0,
+    healthInsurance: 0,
+    totalPostTax: 0,
+    deficit: 0,
+  });
+
   // Bar Chart Data: S0, S1, S2 Comparison
   const barChartData = [
     {
@@ -769,6 +795,32 @@ export default function WithdrawalStrategyPage() {
                         </td>
                       </tr>
                     ))}
+                    {/* 합계 행 (Total row) */}
+                    <tr style={{
+                      ...styles.tr,
+                      fontWeight: 700,
+                      backgroundColor: "rgba(99, 102, 241, 0.05)",
+                      borderTop: "2px solid var(--border)",
+                      borderBottom: "2px solid var(--border)",
+                    }}>
+                      <td style={{ ...styles.td, fontWeight: 800 }}>합계</td>
+                      <td style={styles.td}>-</td>
+                      <td style={{ ...styles.td, fontWeight: 800 }}>{totalFlows.totalPreTax.toLocaleString()}</td>
+                      <td style={styles.td}>{totalFlows.nationalPreTax.toLocaleString()}</td>
+                      <td style={styles.td}>{totalFlows.retirementPreTax.toLocaleString()}</td>
+                      <td style={styles.td}>{totalFlows.personalPreTax.toLocaleString()}</td>
+                      <td style={styles.td}>{totalFlows.insurancePreTax.toLocaleString()}</td>
+                      <td style={{ ...styles.td, color: "var(--warning)" }}>{totalFlows.taxOnRetirement.toLocaleString()}</td>
+                      <td style={{ ...styles.td, color: "var(--warning)" }}>{totalFlows.taxOnPersonal.toLocaleString()}</td>
+                      <td style={{ ...styles.td, color: "var(--warning)" }}>{totalFlows.healthInsurance.toLocaleString()}</td>
+                      <td style={{ ...styles.td, fontWeight: 800, color: "var(--success)" }}>
+                        {totalFlows.totalPostTax.toLocaleString()}
+                      </td>
+                      <td style={styles.td}>-</td>
+                      <td style={{ ...styles.td, color: totalFlows.deficit > 0 ? "var(--danger)" : "var(--text-secondary)" }}>
+                        {totalFlows.deficit > 0 ? totalFlows.deficit.toLocaleString() : "-"}
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

@@ -602,6 +602,12 @@ export function runWithdrawalSimulation(
   ): StrategySimulationResult => {
     const accounts = createUnifiedAccounts(strategyId);
     const flows: SimulationYearFlow[] = [];
+    
+    // 이연/연기 효과를 고려한 동적 평탄화(Leveling)를 위해 초기 계좌 잔액 보존
+    const initialBalances: { [id: string]: number } = {};
+    accounts.forEach((a) => {
+      initialBalances[a.id] = a.balance;
+    });
 
     // 수령 계좌별 수령 연차(1-indexed) 트래킹 및 PMT 연산용 객체
     const accountPayoutYears: { [accountId: string]: number } = {};
@@ -674,21 +680,100 @@ export function runWithdrawalSimulation(
             // 올해의 세전 인출액 결정
             // 1년차 수령 시점에 PMT 공식을 이용해 기준 연 수령액 확정
             if (k === 1) {
-              baseAnnualPayouts[acc.id] = calculateWeightedPMT(
-                acc.balance,
-                acc.receivingPeriod,
-                acc.expectedReturnRate,
-                simulationParams.decumulationStrategy
-              );
+              const isS2Leveling = strategyId === "S2";
+              if (isS2Leveling) {
+                // S2(국민연금 5년 연기) 전략의 경우: 70세부터 유입되는 국민연금을 초기(60세~)부터 골고루 안분하여 
+                // 전체 수령액의 급격한 피크 없이 우하향(Spread)하는 평탄화/체감 수급 곡선을 형성하기 위해 연금별 오프셋 계산
+                const r = acc.expectedReturnRate / 100;
+                let offsetSum = 0;
+                
+                for (let y = 1; y <= acc.receivingPeriod; y++) {
+                  const ageAtYear = acc.payoutStartAge + y - 1;
+                  
+                  // 해당 연령에 활성화된 사적 자산의 총 초기 비율 산출
+                  let totalActiveBalanceAtYear = 0;
+                  accounts.forEach((a) => {
+                    const start = a.payoutStartAge;
+                    const end = a.payoutStartAge + a.receivingPeriod - 1;
+                    if (ageAtYear >= start && ageAtYear <= end) {
+                      totalActiveBalanceAtYear += initialBalances[a.id];
+                    }
+                  });
+                  
+                  const shareAtYear = totalActiveBalanceAtYear > 0 ? initialBalances[acc.id] / totalActiveBalanceAtYear : 0;
+                  
+                  let expectedNational = 0;
+                  let expectedBasic = 0;
+                  const nationalPensionStartAge = simulationParams.nationalPensionStartAge + 5; // S2: 5년 연기
+                      
+                  if (ageAtYear >= nationalPensionStartAge) {
+                    const deferYears = 5;
+                    const deferMultiplier = 1 + deferYears * 0.072;
+                    expectedNational = (national.expectedMonthlyPension * 12) * deferMultiplier * 10000;
+                  }
+                  if (ageAtYear >= 65 && basic.expectedEligibility) {
+                    expectedBasic = (basic.expectedMonthlyAmount * 12) * 10000;
+                  }
+                  
+                  const annualOffset = expectedNational + expectedBasic;
+                  offsetSum += (annualOffset * shareAtYear) * Math.pow(1 + r, -(y - 1));
+                }
+                
+                let denominator = 0;
+                for (let y = 1; y <= acc.receivingPeriod; y++) {
+                  const multiplier = getDecumulationMultiplier(y, simulationParams.decumulationStrategy);
+                  denominator += multiplier * Math.pow(1 + r, -(y - 1));
+                }
+                baseAnnualPayouts[acc.id] = (acc.balance + offsetSum) / denominator;
+              } else {
+                baseAnnualPayouts[acc.id] = calculateWeightedPMT(
+                  acc.balance,
+                  acc.receivingPeriod,
+                  acc.expectedReturnRate,
+                  simulationParams.decumulationStrategy
+                );
+              }
             }
 
             const multiplier = getDecumulationMultiplier(k, simulationParams.decumulationStrategy);
-            let drawAmount = baseAnnualPayouts[acc.id] * multiplier;
+            
+            // S2 레벨링의 경우, 계산된 국민/기초연금 오프셋의 지분만큼 사적연금 인출액에서 차감
+            let offsetSub = 0;
+            const isS2Leveling = strategyId === "S2";
+            if (isS2Leveling) {
+              let totalActiveBalanceAtAge = 0;
+              accounts.forEach((a) => {
+                const start = a.payoutStartAge;
+                const end = a.payoutStartAge + a.receivingPeriod - 1;
+                if (age >= start && age <= end) {
+                  totalActiveBalanceAtAge += initialBalances[a.id];
+                }
+              });
+              const shareAtAge = totalActiveBalanceAtAge > 0 ? initialBalances[acc.id] / totalActiveBalanceAtAge : 0;
+              
+              let expectedNational = 0;
+              let expectedBasic = 0;
+              const nationalPensionStartAge = simulationParams.nationalPensionStartAge + 5;
+                  
+              if (age >= nationalPensionStartAge) {
+                const deferYears = 5;
+                const deferMultiplier = 1 + deferYears * 0.072;
+                expectedNational = (national.expectedMonthlyPension * 12) * deferMultiplier * 10000;
+              }
+              if (age >= 65 && basic.expectedEligibility) {
+                expectedBasic = (basic.expectedMonthlyAmount * 12) * 10000;
+              }
+              const annualOffset = expectedNational + expectedBasic;
+              offsetSub = annualOffset * shareAtAge;
+            }
+            
+            let drawAmount = baseAnnualPayouts[acc.id] * multiplier - offsetSub;
 
             // 마지막 연차에는 잔액이 남아 기말 peak이 발생하지 않도록 전액 인출
             if (k === acc.receivingPeriod) {
               drawAmount = acc.balance;
             } else {
+              drawAmount = Math.max(0, drawAmount);
               drawAmount = Math.min(drawAmount, acc.balance);
             }
 

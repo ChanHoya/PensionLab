@@ -645,74 +645,6 @@ export default function DashboardPage() {
               />
             </div>
 
-            <div style={styles.sliderGroup}>
-              <div style={styles.sliderLabelRow}>
-                <label style={styles.sliderLabel}>은퇴 연금 인출 전략</label>
-                <span style={styles.sliderValue}>
-                  {store.simulationParams.decumulationStrategy === "DECREASING"
-                    ? "활동기 집중형 (체감식)"
-                    : "동일 금액형 (정액식)"}
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: "8px", marginTop: "4px", height: "36px" }}>
-                <button
-                  type="button"
-                  onClick={() => store.setSimulationParams({ decumulationStrategy: "DECREASING" })}
-                  style={{
-                    flex: 1,
-                    padding: "0 12px",
-                    fontSize: "0.8rem",
-                    fontWeight: 700,
-                    borderRadius: "var(--radius-sm)",
-                    cursor: "pointer",
-                    border: store.simulationParams.decumulationStrategy === "DECREASING"
-                      ? "1px solid #6366f1"
-                      : "1px solid var(--border)",
-                    backgroundColor: store.simulationParams.decumulationStrategy === "DECREASING"
-                      ? "rgba(99, 102, 241, 0.15)"
-                      : "transparent",
-                    color: store.simulationParams.decumulationStrategy === "DECREASING"
-                      ? "var(--text-primary)"
-                      : "var(--text-secondary)",
-                    transition: "all var(--transition-fast)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "4px"
-                  }}
-                >
-                  🔥 활동기 집중형 (추천)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => store.setSimulationParams({ decumulationStrategy: "FLAT" })}
-                  style={{
-                    flex: 1,
-                    padding: "0 12px",
-                    fontSize: "0.8rem",
-                    fontWeight: 700,
-                    borderRadius: "var(--radius-sm)",
-                    cursor: "pointer",
-                    border: store.simulationParams.decumulationStrategy === "FLAT"
-                      ? "1px solid #6366f1"
-                      : "1px solid var(--border)",
-                    backgroundColor: store.simulationParams.decumulationStrategy === "FLAT"
-                      ? "rgba(99, 102, 241, 0.15)"
-                      : "transparent",
-                    color: store.simulationParams.decumulationStrategy === "FLAT"
-                      ? "var(--text-primary)"
-                      : "var(--text-secondary)",
-                    transition: "all var(--transition-fast)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "4px"
-                  }}
-                >
-                  ⚖️ 동일 금액형 (정액)
-                </button>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -1341,8 +1273,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   slidersGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "24px 40px",
+    gridTemplateColumns: "repeat(5, 1fr)",
+    gap: "24px 32px",
     marginTop: "16px",
   },
   sliderGroup: {

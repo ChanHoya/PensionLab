@@ -29,6 +29,16 @@ export interface PensionAccountModel {
   receivingPeriod: number; // 년 단위
   expectedReturnRate: number; // (%)
   sources: SourceBalance[];
+  pensionType?: "DB" | "DC";
+  avgSalary?: number;
+  yearsOfService?: number;
+  salaryGrowthRate?: number;
+  monthlyContribution?: number;
+  companyMatchRate?: number;
+  monthlyAnnualContribution?: number;
+  personalTaxCreditRatio?: number;
+  monthlyPayment?: number;
+  paymentPeriod?: number;
 }
 
 export interface SimulationYearFlow {
@@ -444,35 +454,6 @@ export function runWithdrawalSimulation(
 
     // 퇴직연금 (2층)
     retirementPensions.forEach((p, idx) => {
-      // 은퇴 시점 시뮬레이션과 동일하게 은퇴 시점 적립금(Lump sum) 추정
-      const yearsToRetire = Math.max(0, simulationParams.retirementAge - currentAge);
-      let calculatedBalance = 0;
-
-      if (p.pensionType === "DB") {
-        const avgSalary = (p.avgSalary || 0) * 10000;
-        const serviceYears = (p.yearsOfService || 0) + yearsToRetire;
-        const growthRate = (p.salaryGrowthRate || 0) / 100;
-        const finalSalary = avgSalary * Math.pow(1 + growthRate, yearsToRetire);
-        calculatedBalance = finalSalary * serviceYears;
-      } else {
-        const accumulated = (p.totalAccumulated || 0) * 10000;
-        const monthlyContribution = (p.monthlyContribution || 0) * 10000;
-        const matchAmt = (p.companyMatchRate || 0) * 10000;
-        const totalMonthlyDeposit = monthlyContribution + matchAmt;
-        const returnRate = (p.expectedReturnRate || 3.0) / 100;
-
-        // 적립금 FV + 납입금 FV
-        const fvCurrent = accumulated * Math.pow(1 + returnRate, yearsToRetire);
-        let fvDeposits = 0;
-        if (returnRate > 0) {
-          const monthlyRate = returnRate / 12;
-          fvDeposits = totalMonthlyDeposit * ((Math.pow(1 + monthlyRate, yearsToRetire * 12) - 1) / monthlyRate);
-        } else {
-          fvDeposits = totalMonthlyDeposit * yearsToRetire * 12;
-        }
-        calculatedBalance = fvCurrent + fvDeposits;
-      }
-
       // 전략별 인출 개시 나이 및 기간 결정
       let payoutStartAge = simulationParams.retirementAge;
       let receivingPeriod = Math.max(10, expectedLife - simulationParams.retirementAge);
@@ -486,96 +467,89 @@ export function runWithdrawalSimulation(
         receivingPeriod = customInputs.s3CustomPeriods?.[p.id] || 10;
       }
 
+      // 초기 적립금 (현재 시점 금액)
+      const currentBalance = (p.totalAccumulated || 0) * 10000;
+
       accounts.push({
         id: p.id,
         name: `${p.pensionType} 퇴직연금`,
         category: "RETIREMENT",
-        balance: Math.round(calculatedBalance),
+        balance: Math.round(currentBalance),
         payoutStartAge,
         receivingPeriod,
         expectedReturnRate: p.expectedReturnRate || 3.0,
         sources: [
-          { taxType: "DEFERRED_RETIREMENT", amount: Math.round(calculatedBalance) }
-        ]
+          { taxType: "DEFERRED_RETIREMENT", amount: Math.round(currentBalance) }
+        ],
+        pensionType: p.pensionType,
+        avgSalary: p.avgSalary,
+        yearsOfService: p.yearsOfService,
+        salaryGrowthRate: p.salaryGrowthRate,
+        monthlyContribution: p.monthlyContribution,
+        companyMatchRate: p.companyMatchRate
       });
     });
 
     // 개인연금저축 (3층)
     personalPensions.forEach((p) => {
-      const yearsToStart = Math.max(0, p.desiredStartAge - currentAge);
-      const yearsToRetire = Math.max(0, simulationParams.retirementAge - currentAge);
-      const monthsToPay = Math.max(0, Math.min(yearsToStart, yearsToRetire) * 12);
-      const returnRate = (p.savingsType === "FUND" ? 4.5 : 2.5) / 100;
-
-      const fvCurrent = (p.totalAccumulated * 10000) * Math.pow(1 + returnRate, yearsToStart);
-      let fvDeposits = 0;
-      const monthlyContribution = p.monthlyAnnualContribution * 10000;
-      if (returnRate > 0) {
-        const monthlyRate = returnRate / 12;
-        fvDeposits = monthlyContribution * ((Math.pow(1 + monthlyRate, monthsToPay) - 1) / monthlyRate);
-      } else {
-        fvDeposits = monthlyContribution * monthsToPay;
-      }
-      const deferredYears = Math.max(0, p.desiredStartAge - simulationParams.retirementAge);
-      const fvDepositsCompounded = fvDeposits * Math.pow(1 + returnRate, deferredYears);
-      const totalBalanceAtStart = fvCurrent + fvDepositsCompounded;
-
       // 전략별 수령 개시 연령 설정
       let payoutStartAge = p.desiredStartAge;
       let receivingPeriod = p.receivingPeriod || 10;
 
+      // S1/S2의 경우 인출 시작 연령 및 평탄화 기간 동적 설정
       if (strategyId === "S1" || strategyId === "S2") {
-        // 절세 평탄화: 사적연금은 국민연금 개시 연령(보통 65세) 근처부터 저율과세 한도(연 1,500만)를 안 넘도록 장기 분산인출
         payoutStartAge = Math.max(60, simulationParams.nationalPensionStartAge);
         
-        // 잔액 규모에 따른 평탄화 기간 결정
-        // 1,500만원/년 이하로 맞출 수 있도록 기간을 최대 20년까지 연장
-        const annualNeeded = totalBalanceAtStart / receivingPeriod;
+        // 평탄화 수령 한도를 위한 임시 FV 계산 (수령 기간 산정을 위해)
+        const yearsToStart = Math.max(0, payoutStartAge - currentAge);
+        const yearsToRetire = Math.max(0, simulationParams.retirementAge - currentAge);
+        const monthsToPay = Math.max(0, Math.min(yearsToStart, yearsToRetire) * 12);
+        const returnRate = (p.savingsType === "FUND" ? 4.5 : 2.5) / 100;
+        const fvCurrent = (p.totalAccumulated * 10000) * Math.pow(1 + returnRate, yearsToStart);
+        let fvDeposits = 0;
+        const monthlyContribution = p.monthlyAnnualContribution * 10000;
+        if (returnRate > 0) {
+          const monthlyRate = returnRate / 12;
+          fvDeposits = monthlyContribution * ((Math.pow(1 + monthlyRate, monthsToPay) - 1) / monthlyRate);
+        } else {
+          fvDeposits = monthlyContribution * monthsToPay;
+        }
+        const deferredYears = Math.max(0, payoutStartAge - simulationParams.retirementAge);
+        const fvDepositsCompounded = fvDeposits * Math.pow(1 + returnRate, deferredYears);
+        const estTotalBalanceAtStart = fvCurrent + fvDepositsCompounded;
+
+        const annualNeeded = estTotalBalanceAtStart / receivingPeriod;
         if (annualNeeded > 15000000) {
-          receivingPeriod = Math.min(25, Math.ceil(totalBalanceAtStart / 15000000));
+          receivingPeriod = Math.min(25, Math.ceil(estTotalBalanceAtStart / 15000000));
         }
       } else if (strategyId === "S3" && customInputs.s3CustomStartAges?.[p.id]) {
         payoutStartAge = customInputs.s3CustomStartAges[p.id];
         receivingPeriod = customInputs.s3CustomPeriods?.[p.id] || 10;
       }
 
-      const creditedAmount = totalBalanceAtStart * personalTaxCreditRatio;
-      const nonCreditedAmount = totalBalanceAtStart * (1 - personalTaxCreditRatio);
+      const currentBalance = p.totalAccumulated * 10000;
+      const creditedAmount = currentBalance * personalTaxCreditRatio;
+      const nonCreditedAmount = currentBalance * (1 - personalTaxCreditRatio);
 
       accounts.push({
         id: p.id,
         name: `개인연금저축 (${p.savingsType === "FUND" ? "펀드" : "보험"})`,
         category: "PERSONAL",
-        balance: Math.round(totalBalanceAtStart),
+        balance: Math.round(currentBalance),
         payoutStartAge,
         receivingPeriod,
         expectedReturnRate: p.savingsType === "FUND" ? 4.5 : 2.5,
         sources: [
           { taxType: "TAX_CREDITED", amount: Math.round(creditedAmount) },
           { taxType: "NON_CREDITED", amount: Math.round(nonCreditedAmount) }
-        ]
+        ],
+        monthlyAnnualContribution: p.monthlyAnnualContribution,
+        personalTaxCreditRatio
       });
     });
 
     // 세제비적격 연금보험 (3층)
     pensionInsurances.forEach((i) => {
-      const yearsToRetire = Math.max(0, simulationParams.retirementAge - currentAge);
-      const paymentYears = Math.min(i.paymentPeriod, yearsToRetire);
-      const rate = i.expectedDeclaredRate / 100;
-
-      const fvCurrent = (i.totalAccumulated * 10000) * Math.pow(1 + rate, yearsToRetire);
-      let fvPayments = 0;
-      const monthlyPayment = i.monthlyPayment * 10000;
-      if (rate > 0) {
-        const monthlyRate = rate / 12;
-        fvPayments = monthlyPayment * ((Math.pow(1 + monthlyRate, paymentYears * 12) - 1) / monthlyRate);
-      } else {
-        fvPayments = monthlyPayment * paymentYears * 12;
-      }
-      const deferredYears = Math.max(0, yearsToRetire - paymentYears);
-      const fvPaymentsCompounded = fvPayments * Math.pow(1 + rate, deferredYears);
-      const totalBalanceAtStart = fvCurrent + fvPaymentsCompounded;
-
       let payoutStartAge = simulationParams.retirementAge;
       let receivingPeriod = Math.max(20, expectedLife - simulationParams.retirementAge);
 
@@ -584,17 +558,21 @@ export function runWithdrawalSimulation(
         receivingPeriod = customInputs.s3CustomPeriods?.[i.id] || 20;
       }
 
+      const currentBalance = i.totalAccumulated * 10000;
+
       accounts.push({
         id: i.id,
         name: `비적격 연금보험 (${i.insuranceType})`,
         category: "INSURANCE",
-        balance: Math.round(totalBalanceAtStart),
+        balance: Math.round(currentBalance),
         payoutStartAge,
         receivingPeriod,
         expectedReturnRate: i.expectedDeclaredRate,
         sources: [
-          { taxType: "NON_QUALIFIED", amount: Math.round(totalBalanceAtStart) }
-        ]
+          { taxType: "NON_QUALIFIED", amount: Math.round(currentBalance) }
+        ],
+        monthlyPayment: i.monthlyPayment,
+        paymentPeriod: i.paymentPeriod
       });
     });
 
@@ -733,17 +711,127 @@ export function runWithdrawalSimulation(
           }
         }
 
-        // 연도 말 계좌 잔액의 자산 운용 수익률 반영 복리 증가 및 세제 재원 동기화
-        // 단, 수령 개시 연령 이상일 때만 복리 증가를 반영하여 사전 더블 복리(Double Compounding) 방지
-        if (acc.balance > 0 && age >= acc.payoutStartAge) {
-          const interest = acc.balance * (acc.expectedReturnRate / 100);
+        // 연도 말 계좌 잔액의 자산 운용 수익률 반영 복리 증가, 기여금 추가 및 세제 재원 동기화
+        const returnRate = acc.expectedReturnRate / 100;
+
+        // A. 수령 개시 전인 경우 (age < acc.payoutStartAge)
+        if (age < acc.payoutStartAge) {
+          if (acc.pensionType === "DB") {
+            // DB형 퇴직연금: 은퇴 전까지는 급여인상률 반영된 퇴직금 적립
+            if (age < simulationParams.retirementAge) {
+              const yearsToRetireOffset = age - currentAge + 1; // 1년 경과 반영
+              const avgSalary = (acc.avgSalary || 0) * 10000;
+              const serviceYears = (acc.yearsOfService || 0) + yearsToRetireOffset;
+              const growthRate = (acc.salaryGrowthRate || 0) / 100;
+              const salaryAtAge = avgSalary * Math.pow(1 + growthRate, yearsToRetireOffset);
+              
+              acc.balance = Math.round(salaryAtAge * serviceYears);
+              acc.sources = [{ taxType: "DEFERRED_RETIREMENT", amount: acc.balance }];
+            } else {
+              // 은퇴 이후 인출 개시 전까지는 퇴직소득세 이연된 채로 복리 운용
+              const interest = acc.balance * returnRate;
+              const roundedInterest = Math.round(interest);
+              acc.balance += roundedInterest;
+              
+              // 은퇴 이후 복리 수익은 TAX_CREDITED 재원으로 가산
+              const sourceIdx = acc.sources.findIndex((s) => s.taxType === "TAX_CREDITED");
+              if (sourceIdx !== -1) {
+                acc.sources[sourceIdx].amount += roundedInterest;
+              } else {
+                acc.sources.push({ taxType: "TAX_CREDITED", amount: roundedInterest });
+              }
+            }
+          } else {
+            // DC형, 개인연금, 연금보험의 축적/거치 시기
+            let contributionCompounded = 0;
+            
+            if (age < simulationParams.retirementAge) {
+              // 은퇴 전 납입 시기
+              if (acc.category === "RETIREMENT" && acc.pensionType === "DC") {
+                const totalMonthlyDeposit = ((acc.monthlyContribution || 0) + (acc.companyMatchRate || 0)) * 10000;
+                const monthlyRate = returnRate / 12;
+                contributionCompounded = returnRate > 0
+                  ? totalMonthlyDeposit * ((Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate)
+                  : totalMonthlyDeposit * 12;
+                  
+                // DC 기여금은 DEFERRED_RETIREMENT 재원으로 누적
+                const sourceIdx = acc.sources.findIndex((s) => s.taxType === "DEFERRED_RETIREMENT");
+                if (sourceIdx !== -1) {
+                  acc.sources[sourceIdx].amount += Math.round(contributionCompounded);
+                } else {
+                  acc.sources.push({ taxType: "DEFERRED_RETIREMENT", amount: Math.round(contributionCompounded) });
+                }
+              } else if (acc.category === "PERSONAL") {
+                const totalMonthlyDeposit = (acc.monthlyAnnualContribution || 0) * 10000;
+                const monthlyRate = returnRate / 12;
+                contributionCompounded = returnRate > 0
+                  ? totalMonthlyDeposit * ((Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate)
+                  : totalMonthlyDeposit * 12;
+                  
+                // 개인연금 기여금은 세액공제 비율에 맞춰 분배 누적
+                const ratio = acc.personalTaxCreditRatio ?? 0.8;
+                const creditedContribution = contributionCompounded * ratio;
+                const nonCreditedContribution = contributionCompounded * (1 - ratio);
+                
+                const idxCredited = acc.sources.findIndex((s) => s.taxType === "TAX_CREDITED");
+                if (idxCredited !== -1) {
+                  acc.sources[idxCredited].amount += Math.round(creditedContribution);
+                } else {
+                  acc.sources.push({ taxType: "TAX_CREDITED", amount: Math.round(creditedContribution) });
+                }
+                
+                const idxNonCredited = acc.sources.findIndex((s) => s.taxType === "NON_CREDITED");
+                if (idxNonCredited !== -1) {
+                  acc.sources[idxNonCredited].amount += Math.round(nonCreditedContribution);
+                } else {
+                  acc.sources.push({ taxType: "NON_CREDITED", amount: Math.round(nonCreditedContribution) });
+                }
+              } else if (acc.category === "INSURANCE") {
+                const yearsPassed = age - currentAge;
+                if (yearsPassed < (acc.paymentPeriod || 0)) {
+                  const totalMonthlyDeposit = (acc.monthlyPayment || 0) * 10000;
+                  const monthlyRate = returnRate / 12;
+                  contributionCompounded = returnRate > 0
+                    ? totalMonthlyDeposit * ((Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate)
+                    : totalMonthlyDeposit * 12;
+                    
+                  const sourceIdx = acc.sources.findIndex((s) => s.taxType === "NON_QUALIFIED");
+                  if (sourceIdx !== -1) {
+                    acc.sources[sourceIdx].amount += Math.round(contributionCompounded);
+                  } else {
+                    acc.sources.push({ taxType: "NON_QUALIFIED", amount: Math.round(contributionCompounded) });
+                  }
+                }
+              }
+            }
+            
+            // 기존 평가금의 복리 증액
+            const interest = acc.balance * returnRate;
+            const roundedInterest = Math.round(interest);
+            
+            acc.balance = acc.balance + roundedInterest + Math.round(contributionCompounded);
+            
+            // 복리 증액분에 대한 세제원 가산
+            const targetTaxType: SourceTaxType =
+              acc.category === "INSURANCE" ? "NON_QUALIFIED" : "TAX_CREDITED";
+              
+            const sourceIdx = acc.sources.findIndex((s) => s.taxType === targetTaxType);
+            if (sourceIdx !== -1) {
+              acc.sources[sourceIdx].amount += roundedInterest;
+            } else {
+              acc.sources.push({ taxType: targetTaxType, amount: roundedInterest });
+            }
+          }
+        }
+        // B. 수령 개시 이후인 경우 (age >= acc.payoutStartAge)
+        else if (acc.balance > 0) {
+          const interest = acc.balance * returnRate;
           const roundedInterest = Math.round(interest);
           acc.balance += roundedInterest;
-
-          // sources도 복리 증가 반영 (세제 유형 분류 매칭)
+          
           const targetTaxType: SourceTaxType =
             acc.category === "INSURANCE" ? "NON_QUALIFIED" : "TAX_CREDITED";
-
+            
           const sourceIdx = acc.sources.findIndex((s) => s.taxType === targetTaxType);
           if (sourceIdx !== -1) {
             acc.sources[sourceIdx].amount += roundedInterest;
@@ -766,7 +854,7 @@ export function runWithdrawalSimulation(
           drawTaxCredited,
           age,
           Infinity, // 한도 초과 평가는 M3-1의 수령한도를 별도 계좌별로 이미 계산했으므로 무제한 설정
-          otherIncomeAnnual / 12, // 월 단위 종합소득 환산
+          otherIncomeAnnual, // 연 단위 종합소득 직접 전달
           publicPensionTaxable,
           false // 종합과세 선택 자동 검사 활성화
         );
@@ -802,15 +890,7 @@ export function runWithdrawalSimulation(
       const totalTaxAndHI = totalTax + estimatedPremium;
       const totalPostTax = Math.max(0, totalPreTax - totalTaxAndHI);
 
-      const endingBalance = accounts.reduce((sum, a) => {
-        if (age < a.payoutStartAge) {
-          // 수령 개시 전에는 미래가치로 평가된 balance를 해당 연도 나이로 할인(Discount)하여 근사잔액 표시
-          const yearsToStart = a.payoutStartAge - age;
-          const discounted = a.balance / Math.pow(1 + a.expectedReturnRate / 100, yearsToStart);
-          return sum + discounted;
-        }
-        return sum + a.balance;
-      }, 0);
+      const endingBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
 
       // 목표 생활비 대비 부족액 검사 (월 단위 생활비 -> 연 단위 환산)
       const targetAnnualSpending = (simulationParams.targetMonthlySpending || 250) * 12 * 10000;

@@ -512,9 +512,6 @@ export default function AIAdvisorPage() {
             <span style={{ ...styles.navItem, color: "var(--primary)", fontWeight: "700" }}>
               AI포트폴리오 진단
             </span>
-            <Link href="/dashboard/withdrawal" style={styles.navItem}>
-              인출전략 시뮬레이터
-            </Link>
             <Link href="/news" style={styles.navItem}>
               관련 뉴스
             </Link>

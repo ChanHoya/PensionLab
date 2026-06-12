@@ -734,7 +734,8 @@ export function runWithdrawalSimulation(
         }
 
         // 연도 말 계좌 잔액의 자산 운용 수익률 반영 복리 증가 및 세제 재원 동기화
-        if (acc.balance > 0) {
+        // 단, 수령 개시 연령 이상일 때만 복리 증가를 반영하여 사전 더블 복리(Double Compounding) 방지
+        if (acc.balance > 0 && age >= acc.payoutStartAge) {
           const interest = acc.balance * (acc.expectedReturnRate / 100);
           const roundedInterest = Math.round(interest);
           acc.balance += roundedInterest;
@@ -801,7 +802,15 @@ export function runWithdrawalSimulation(
       const totalTaxAndHI = totalTax + estimatedPremium;
       const totalPostTax = Math.max(0, totalPreTax - totalTaxAndHI);
 
-      const endingBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+      const endingBalance = accounts.reduce((sum, a) => {
+        if (age < a.payoutStartAge) {
+          // 수령 개시 전에는 미래가치로 평가된 balance를 해당 연도 나이로 할인(Discount)하여 근사잔액 표시
+          const yearsToStart = a.payoutStartAge - age;
+          const discounted = a.balance / Math.pow(1 + a.expectedReturnRate / 100, yearsToStart);
+          return sum + discounted;
+        }
+        return sum + a.balance;
+      }, 0);
 
       // 목표 생활비 대비 부족액 검사 (월 단위 생활비 -> 연 단위 환산)
       const targetAnnualSpending = (simulationParams.targetMonthlySpending || 250) * 12 * 10000;

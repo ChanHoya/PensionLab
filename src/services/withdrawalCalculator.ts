@@ -29,7 +29,7 @@ export interface PensionAccountModel {
   receivingPeriod: number; // 년 단위
   expectedReturnRate: number; // (%)
   sources: SourceBalance[];
-  pensionType?: "DB" | "DC";
+  pensionType?: "DB" | "DC" | "IRP";
   avgSalary?: number;
   yearsOfService?: number;
   salaryGrowthRate?: number;
@@ -747,7 +747,7 @@ export function runWithdrawalSimulation(
             
             if (age < simulationParams.retirementAge) {
               // 은퇴 전 납입 시기
-              if (acc.category === "RETIREMENT" && acc.pensionType === "DC") {
+              if (acc.category === "RETIREMENT" && (acc.pensionType === "DC" || acc.pensionType === "IRP")) {
                 const totalMonthlyDeposit = ((acc.monthlyContribution || 0) + (acc.companyMatchRate || 0)) * 10000;
                 const monthlyRate = returnRate / 12;
                 contributionCompounded = returnRate > 0

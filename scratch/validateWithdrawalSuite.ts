@@ -303,6 +303,8 @@ function testSimulationEngine() {
     inflationRate: 0.0,
     nationalPensionStartAge: 65,
     hasSpouse: false,
+    childrenCount: 0,
+    childrenAges: "",
     targetMonthlySpending: 0,
     minMonthlySpending: 0,
     childSupportExpense: 0,

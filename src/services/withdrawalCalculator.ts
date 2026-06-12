@@ -498,7 +498,13 @@ export function runWithdrawalSimulation(
 
       // S1/S2의 경우 인출 시작 연령 및 평탄화 기간 동적 설정
       if (strategyId === "S1" || strategyId === "S2") {
-        payoutStartAge = Math.max(60, simulationParams.nationalPensionStartAge);
+        if (strategyId === "S1") {
+          payoutStartAge = Math.max(60, simulationParams.nationalPensionStartAge);
+        } else {
+          // S2(국민연금 5년 연기)의 경우, 국민연금이 70세에 시작하므로
+          // 60~69세 소득 공백기(크레바스)를 메우기 위해 개인연금을 은퇴 시점(퇴직 연령)부터 조기 인출하여 브릿지 재원으로 활용합니다.
+          payoutStartAge = Math.max(55, simulationParams.retirementAge);
+        }
         
         // 평탄화 수령 한도를 위한 임시 FV 계산 (수령 기간 산정을 위해)
         const yearsToStart = Math.max(0, payoutStartAge - currentAge);

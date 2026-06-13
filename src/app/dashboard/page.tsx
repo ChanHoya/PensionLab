@@ -399,7 +399,7 @@ export default function DashboardPage() {
       <div key={id} style={styles.sliderGroupContainer}>
         <span style={styles.sliderGroupTitle}>{name}</span>
         
-        <div style={{ display: "flex", gap: "16px", marginTop: "8px" }}>
+        <div style={{ display: "flex", gap: "12px", marginTop: "6px" }}>
           {/* Start Age Slider */}
           <div style={{ flex: 1 }}>
             <div style={styles.sliderLabelRow}>
@@ -664,7 +664,7 @@ export default function DashboardPage() {
                 <div>
                   <p style={styles.wizardQuestion}>1. 개인연금저축/IRP 계좌 적립금 중 <strong>세액공제를 받으신 납입원금의 비중</strong>은 대략 어떻게 되나요?</p>
                   <p style={styles.wizardHelp}>※ 공제받지 않은 납입원금은 나중에 비과세 인출이 가능합니다. (보통 80% 내외)</p>
-                  <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                  <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
                     {[0.5, 0.8, 1.0].map((ratio) => (
                       <button
                         key={ratio}
@@ -673,13 +673,13 @@ export default function DashboardPage() {
                           setWizardStep(2);
                         }}
                         className={personalTaxCreditRatio === ratio ? "premium-button" : "premium-button-secondary"}
-                        style={{ flex: 1, padding: "10px" }}
+                        style={{ flex: 1, padding: "7px" }}
                       >
                         {ratio * 100}% 정도
                       </button>
                     ))}
                   </div>
-                  <div style={{ marginTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", width: "80px" }}>수동 조정:</span>
                     <input
                       type="range"
@@ -699,7 +699,7 @@ export default function DashboardPage() {
                 <div>
                   <p style={styles.wizardQuestion}>2. 퇴직 시 예상되는 평균 <strong>퇴직소득세율</strong>은 대략 몇 %인가요?</p>
                   <p style={styles.wizardHelp}>※ 은퇴 시점 일시금 기준 퇴직소득세율입니다. 잘 모르시면 기본값(8%)을 적용합니다.</p>
-                  <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                  <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
                     {[0.05, 0.08, 0.12].map((rate) => (
                       <button
                         key={rate}
@@ -708,13 +708,13 @@ export default function DashboardPage() {
                           setWizardStep(3);
                         }}
                         className={retirementLumpSumTaxRate === rate ? "premium-button" : "premium-button-secondary"}
-                        style={{ flex: 1, padding: "10px" }}
+                        style={{ flex: 1, padding: "7px" }}
                       >
                         {rate * 100}%
                       </button>
                     ))}
                   </div>
-                  <div style={{ marginTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", width: "80px" }}>수동 조정:</span>
                     <input
                       type="range"
@@ -734,7 +734,7 @@ export default function DashboardPage() {
                 <div>
                   <p style={styles.wizardQuestion}>3. 은퇴 후 연금 외에 <strong>기타 근로/임대/배당 소득(종합소득)</strong>이 예상되시나요?</p>
                   <p style={styles.wizardHelp}>※ 사적연금 1,500만 원 초과 시 종합과세 비교 계산에 활용됩니다.</p>
-                  <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                  <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
                     {[0, 1200, 3000].map((inc) => (
                       <button
                         key={inc}
@@ -744,13 +744,13 @@ export default function DashboardPage() {
                           setWizardStep(1); // reset
                         }}
                         className={otherIncomeAnnual === inc ? "premium-button" : "premium-button-secondary"}
-                        style={{ flex: 1, padding: "10px" }}
+                        style={{ flex: 1, padding: "7px" }}
                       >
                         {inc === 0 ? "없음" : `연 ${inc.toLocaleString()}만원`}
                       </button>
                     ))}
                   </div>
-                  <div style={{ marginTop: "14px", display: "flex", alignItems: "center", gap: "10px" }}>
+                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
                     <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", width: "80px" }}>수동 조정:</span>
                     <input
                       type="number"
@@ -796,7 +796,7 @@ export default function DashboardPage() {
 
         {/* Visual Settings Controls (Quick access) */}
         {!showWizard && (
-          <section className="premium-card animate-fade-in" style={{ padding: "20px", display: "flex", flexWrap: "wrap", gap: "20px" }}>
+          <section className="premium-card animate-fade-in" style={{ padding: "10px 14px", display: "flex", flexWrap: "wrap", gap: "14px" }}>
             <div style={{ flex: "1 1 200px" }}>
               <label style={styles.quickLabel}>세액공제 비율</label>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
@@ -914,7 +914,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <h5 style={styles.compareName}>{strat.strategyName}</h5>
-                    <div style={{ ...styles.divider, margin: "10px 0" }} />
+                    <div style={{ ...styles.divider, margin: "6px 0" }} />
                     <div style={styles.compareValueRow}>
                       <span style={styles.compareLabel}>생애 총 수령액 (세후)</span>
                       <span style={styles.compareVal}>{strat.lifetimeTotalPostTax.toLocaleString()} 만원</span>
@@ -936,7 +936,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Recharts Bar Comparison Chart */}
-              <div style={{ height: 260, width: "100%", marginTop: "12px" }}>
+              <div style={{ height: 220, width: "100%", marginTop: "8px" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barChartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
@@ -977,7 +977,7 @@ export default function DashboardPage() {
               {/* S3 Custom Interactive Sliders */}
               {activeTab === "S3" && (
                 <div style={styles.customParamsBox} className="premium-card animate-fade-in no-print">
-                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "14px", color: "var(--text-primary)" }}>
+                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "8px", color: "var(--text-primary)" }}>
                     🛠️ S3 커스텀 전략 인출 변수 조절
                   </h4>
                   
@@ -996,7 +996,7 @@ export default function DashboardPage() {
               )}
 
               {/* Recharts Area + Line Chart */}
-              <div style={{ height: 320, width: "100%", marginTop: "16px" }}>
+              <div style={{ height: 260, width: "100%", marginTop: "10px" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={activeResult.flows} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
@@ -1015,7 +1015,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Strategy advice box */}
-              <div style={{ ...styles.reformImpactBox, marginTop: "20px" }}>
+              <div style={{ ...styles.reformImpactBox, marginTop: "4px" }}>
                 <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>인출 최적화 처방 조언</h4>
                 <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: "6px" }}>
                   {activeTab === "S0" && "As-Is 전략은 세법상 사적연금 1,500만 원 한도 및 퇴직소득세 한도를 고려하지 않고 임의 수령하는 계획입니다. 특정 연도에 수령액이 과밀되어 16.5% 분리과세나 높은 종합소득세 누진세율이 적용될 수 있습니다."}
@@ -1079,21 +1079,21 @@ export default function DashboardPage() {
                       borderTop: "2px solid var(--border)",
                       borderBottom: "2px solid var(--border)",
                     }}>
-                      <td style={{ padding: "12px 10px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>합계</td>
-                      <td style={{ padding: "12px 10px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>
-                      <td style={{ padding: "12px 10px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>{totalFlows.totalPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.nationalPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.retirementPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.personalPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.insurancePreTax.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.taxOnRetirement.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.taxOnPersonal.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.healthInsurance.toLocaleString()}</td>
-                      <td style={{ padding: "12px 10px", color: "var(--success)", textAlign: "right", fontWeight: 800 }}>
+                      <td style={{ padding: "7px 8px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>합계</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>{totalFlows.totalPreTax.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.nationalPreTax.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.retirementPreTax.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.personalPreTax.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.insurancePreTax.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.taxOnRetirement.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.taxOnPersonal.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.healthInsurance.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--success)", textAlign: "right", fontWeight: 800 }}>
                         {totalFlows.totalPostTax.toLocaleString()}
                       </td>
-                      <td style={{ padding: "12px 10px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>
-                      <td style={{ padding: "12px 10px", color: totalFlows.deficit > 0 ? "var(--danger)" : "var(--text-secondary)", textAlign: "right" }}>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>
+                      <td style={{ padding: "7px 8px", color: totalFlows.deficit > 0 ? "var(--danger)" : "var(--text-secondary)", textAlign: "right" }}>
                         {totalFlows.deficit > 0 ? totalFlows.deficit.toLocaleString() : "-"}
                       </td>
                     </tr>
@@ -1173,7 +1173,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   header: {
     width: "100%",
-    padding: "16px 40px",
+    padding: "10px 40px",
     zIndex: 10,
     borderBottom: "1px solid var(--border)",
     backgroundColor: "var(--glass-bg)",
@@ -1213,10 +1213,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: "100%",
     maxWidth: "1200px",
     margin: "0 auto",
-    padding: "40px 20px 80px 20px",
+    padding: "16px 20px 40px 20px",
     display: "flex",
     flexDirection: "column",
-    gap: "30px",
+    gap: "14px",
     zIndex: 1,
   },
   topSecurityBanner: {
@@ -1224,22 +1224,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: "1px solid rgba(99, 102, 241, 0.15)",
     borderLeft: "3px solid rgba(99, 102, 241, 0.5)",
     borderRadius: "var(--radius-sm)",
-    padding: "12px 18px",
-    fontSize: "0.85rem",
+    padding: "7px 14px",
+    fontSize: "0.8rem",
     color: "var(--text-secondary)",
     lineHeight: 1.4,
   },
   kpiRow: {
     display: "grid",
     gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "20px",
+    gap: "10px",
   },
   kpiCard: {
-    padding: "16px",
+    padding: "12px",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    minHeight: "100px",
+    minHeight: "80px",
   },
   kpiLabel: {
     fontSize: "0.8rem",
@@ -1252,30 +1252,30 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "1.4rem",
     fontWeight: 700,
     color: "var(--text-primary)",
-    margin: "12px 0 6px 0",
+    margin: "6px 0 4px 0",
   },
   kpiSub: {
     fontSize: "0.75rem",
     color: "var(--text-muted)",
   },
   chartTitle: {
-    fontSize: "1.2rem",
+    fontSize: "1rem",
     fontWeight: 700,
     color: "var(--text-primary)",
   },
   chartSubtitle: {
     fontSize: "0.85rem",
     color: "var(--text-muted)",
-    marginBottom: "20px",
+    marginBottom: "8px",
   },
   slidersCard: {
-    padding: "30px",
+    padding: "14px 18px",
   },
   slidersGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "24px 32px",
-    marginTop: "16px",
+    gap: "10px 20px",
+    marginTop: "8px",
   },
   sliderGroup: {
     display: "flex",
@@ -1303,7 +1303,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     accentColor: "var(--primary)",
   },
   wizardCard: {
-    padding: "24px",
+    padding: "12px 16px",
     border: "1px solid rgba(99, 102, 241, 0.25)",
     backgroundColor: "var(--surface)",
   },
@@ -1312,7 +1312,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     alignItems: "center",
     borderBottom: "1px solid var(--border)",
-    paddingBottom: "12px",
+    paddingBottom: "8px",
   },
   closeWizardBtn: {
     backgroundColor: "transparent",
@@ -1322,7 +1322,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: "pointer",
   },
   wizardBody: {
-    padding: "20px 0",
+    padding: "10px 0",
   },
   wizardQuestion: {
     fontSize: "1.05rem",
@@ -1340,8 +1340,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "space-between",
     alignItems: "center",
     borderTop: "1px solid var(--border)",
-    paddingTop: "12px",
-    marginTop: "10px",
+    paddingTop: "8px",
+    marginTop: "6px",
   },
   prevBtn: {
     backgroundColor: "transparent",
@@ -1376,23 +1376,23 @@ const styles: { [key: string]: React.CSSProperties } = {
   resultContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "24px",
+    gap: "14px",
     width: "100%",
   },
   pdfRootContainer: {
     width: "100%",
     display: "flex",
     flexDirection: "column",
-    gap: "30px",
+    gap: "14px",
   },
   dashboardCard: {
-    padding: "36px",
+    padding: "18px 20px",
     background: "var(--surface)",
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-lg)",
     display: "flex",
     flexDirection: "column",
-    gap: "24px",
+    gap: "12px",
   },
   dashboardHeader: {
     display: "flex",
@@ -1425,8 +1425,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   bestStrategyCard: {
     display: "flex",
-    gap: "16px",
-    padding: "18px 24px",
+    gap: "12px",
+    padding: "10px 14px",
     backgroundColor: "rgba(16, 185, 129, 0.05)",
     border: "1px solid rgba(16, 185, 129, 0.15)",
     borderRadius: "var(--radius-md)",
@@ -1434,16 +1434,16 @@ const styles: { [key: string]: React.CSSProperties } = {
   comparisonGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "20px",
+    gap: "10px",
   },
   stratCompareCard: {
-    padding: "20px",
+    padding: "10px 12px",
     borderRadius: "var(--radius-md)",
     cursor: "pointer",
     transition: "all var(--transition-fast)",
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
+    gap: "4px",
   },
   compareId: {
     fontSize: "0.75rem",
@@ -1477,13 +1477,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   tabBar: {
     display: "flex",
-    gap: "10px",
+    gap: "8px",
     flexWrap: "wrap",
     borderBottom: "1px solid var(--border)",
-    paddingBottom: "12px",
+    paddingBottom: "8px",
   },
   tabButton: {
-    padding: "8px 16px",
+    padding: "6px 12px",
     borderRadius: "20px",
     fontSize: "0.85rem",
     fontWeight: 700,
@@ -1491,17 +1491,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: "all var(--transition-fast)",
   },
   customParamsBox: {
-    padding: "20px",
+    padding: "12px 14px",
     backgroundColor: "var(--surface-2)",
   },
   customSlidersGrid: {
     display: "flex",
     flexDirection: "column",
-    gap: "20px",
+    gap: "10px",
   },
   sliderGroupContainer: {
     borderBottom: "1px dashed var(--border)",
-    paddingBottom: "16px",
+    paddingBottom: "10px",
   },
   sliderGroupTitle: {
     fontSize: "0.85rem",
@@ -1512,7 +1512,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: "rgba(99, 102, 241, 0.03)",
     border: "1px dashed rgba(99, 102, 241, 0.2)",
     borderRadius: "var(--radius-md)",
-    padding: "20px",
+    padding: "10px 14px",
   },
   tableWrapper: {
     width: "100%",
@@ -1530,7 +1530,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: "rgba(99, 102, 241, 0.05)",
   },
   th: {
-    padding: "12px 10px",
+    padding: "7px 8px",
     fontWeight: 700,
     color: "var(--text-primary)",
   },
@@ -1540,15 +1540,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: "background-color 0.15s ease",
   },
   td: {
-    padding: "12px 10px",
+    padding: "7px 8px",
     color: "var(--text-secondary)",
   },
   footnoteSection: {
-    padding: "24px",
+    padding: "12px 16px",
     backgroundColor: "var(--surface)",
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-md)",
-    marginTop: "10px",
+    marginTop: "4px",
   },
   footnoteText: {
     fontSize: "0.75rem",

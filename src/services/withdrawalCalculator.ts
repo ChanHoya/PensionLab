@@ -834,12 +834,12 @@ export function runWithdrawalSimulation(
               const roundedInterest = Math.round(interest);
               acc.balance += roundedInterest;
               
-              // 은퇴 이후 복리 수익은 TAX_CREDITED 재원으로 가산
-              const sourceIdx = acc.sources.findIndex((s) => s.taxType === "TAX_CREDITED");
+              // 은퇴 이후 복리 수익은 이연퇴직소득(퇴직소득세 감면 대상)으로 유지
+              const sourceIdx = acc.sources.findIndex((s) => s.taxType === "DEFERRED_RETIREMENT");
               if (sourceIdx !== -1) {
                 acc.sources[sourceIdx].amount += roundedInterest;
               } else {
-                acc.sources.push({ taxType: "TAX_CREDITED", amount: roundedInterest });
+                acc.sources.push({ taxType: "DEFERRED_RETIREMENT", amount: roundedInterest });
               }
             }
           } else {
@@ -909,13 +909,16 @@ export function runWithdrawalSimulation(
             // 기존 평가금의 복리 증액
             const interest = acc.balance * returnRate;
             const roundedInterest = Math.round(interest);
-            
+
             acc.balance = acc.balance + roundedInterest + Math.round(contributionCompounded);
-            
+
             // 복리 증액분에 대한 세제원 가산
+            // 퇴직연금 운용수익은 이연퇴직소득으로 유지 (퇴직소득세 감면 적용 대상)
             const targetTaxType: SourceTaxType =
-              acc.category === "INSURANCE" ? "NON_QUALIFIED" : "TAX_CREDITED";
-              
+              acc.category === "INSURANCE" ? "NON_QUALIFIED"
+              : acc.category === "RETIREMENT" ? "DEFERRED_RETIREMENT"
+              : "TAX_CREDITED";
+
             const sourceIdx = acc.sources.findIndex((s) => s.taxType === targetTaxType);
             if (sourceIdx !== -1) {
               acc.sources[sourceIdx].amount += roundedInterest;
@@ -929,10 +932,13 @@ export function runWithdrawalSimulation(
           const interest = acc.balance * returnRate;
           const roundedInterest = Math.round(interest);
           acc.balance += roundedInterest;
-          
+
+          // 퇴직연금 운용수익은 이연퇴직소득으로 유지 (퇴직소득세 감면 적용 대상)
           const targetTaxType: SourceTaxType =
-            acc.category === "INSURANCE" ? "NON_QUALIFIED" : "TAX_CREDITED";
-            
+            acc.category === "INSURANCE" ? "NON_QUALIFIED"
+            : acc.category === "RETIREMENT" ? "DEFERRED_RETIREMENT"
+            : "TAX_CREDITED";
+
           const sourceIdx = acc.sources.findIndex((s) => s.taxType === targetTaxType);
           if (sourceIdx !== -1) {
             acc.sources[sourceIdx].amount += roundedInterest;

@@ -145,17 +145,12 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Subtitle */}
       <section style={styles.heroSection} className="animate-fade-in">
-        <h1 style={styles.heroTitle}>
-          흩어진 나의 모든 연금 자산,<br />
-          <span className="gradient-text">한눈에 설계하고 분석하다</span>
-        </h1>
         <p style={styles.heroSubtitle}>
-          복잡한 국민연금법 개정안부터 기초연금, 회사 퇴직연금, 그리고 개인연금까지.<br />
+          복잡한 국민연금법 개정안부터 기초연금, 회사 퇴직연금, 그리고 개인연금까지.&nbsp;
           수동 입력만으로 안전하고 정확한 미래 은퇴 소득 시뮬레이션을 무료로 시작해 보세요.
         </p>
-
       </section>
 
       {/* 3층 연금 구조 도식화 이미지 영역 */}
@@ -276,10 +271,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     alignItems: "center",
     width: "100%",
-    minHeight: "100vh",
+    height: "100vh",
+    overflow: "hidden",
     backgroundColor: "var(--background)",
     position: "relative",
-    // overflow: hidden 제거 → 스크롤 가능
   },
   bgGlow1: {
     position: "fixed",
@@ -361,39 +356,41 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     alignItems: "center",
     textAlign: "center",
-    padding: "32px 20px 16px 20px",
-    maxWidth: "800px",
+    padding: "14px 20px 10px 20px",
+    width: "100%",
+    maxWidth: "900px",
     zIndex: 1,
-  },
-  heroTitle: {
-    fontSize: "2.5rem",
-    fontWeight: 800,
-    color: "var(--text-primary)",
-    lineHeight: 1.3,
-    letterSpacing: "-0.5px",
-    marginBottom: "16px",
+    flexShrink: 0,
   },
   heroSubtitle: {
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     color: "var(--text-secondary)",
     lineHeight: 1.5,
-    marginBottom: "24px",
+    margin: 0,
   },
   diagramContainer: {
+    flex: 1,
+    minHeight: 0,
     width: "100%",
     maxWidth: "1000px",
     backgroundColor: "#ffffff",
-    padding: "16px",
+    padding: "12px",
     borderRadius: "20px",
     border: "1px solid rgba(99, 102, 241, 0.25)",
     boxShadow: "0 24px 48px rgba(0, 0, 0, 0.4)",
-    margin: "0 auto 40px auto",
+    margin: "0 auto 12px auto",
     zIndex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
   },
   diagramImage: {
     width: "100%",
-    height: "auto",
+    height: "100%",
+    objectFit: "contain",
     borderRadius: "12px",
+    display: "block",
   },
   libOverlay: {
     position: "fixed",

@@ -318,26 +318,24 @@ export function calcTaxOnPublicPension(
  * 건강보험 피부양자 탈락 검사 및 지역보험료 추정
  *
  * 피부양자 탈락 기준 (2022.9 건보료 개편):
- *   공적연금 과세분(= 수령액 × taxableRatio)이 연 2,000만원 초과 시 탈락
+ *   국민연금 수령액 총액이 연 2,000만원 초과 시 탈락 (과세비율 미적용, 총액 기준)
  *   사적연금(연금저축·퇴직연금 연금형)은 건보료 소득 산정에서 제외
  *
  * 지역보험료 부과소득:
- *   공적연금 과세분 × 50% + 기타 종합과세 소득 × 100%
+ *   공적연금 수령액 × 50% + 기타 종합과세 소득 × 100%
  */
 export function assessHealthInsurance(
   publicPensionAnnual: number,
-  publicPensionTaxableRatio: number,
   otherTaxableIncome: number
 ): { isDependentLost: boolean; estimatedPremium: number } {
-  // 과세비율 적용 후 공적연금 과세 소득
-  const taxablePension = publicPensionAnnual * publicPensionTaxableRatio;
-  const totalAssessableIncome = taxablePension + otherTaxableIncome;
+  // 국민연금 수령액 총액 + 기타소득 합산이 2,000만원 초과 시 피부양자 탈락
+  const totalAssessableIncome = publicPensionAnnual + otherTaxableIncome;
   const isDependentLost = totalAssessableIncome > KR_TAX_2026.healthInsurance.dependentIncomeCap;
 
   let estimatedPremium = 0;
   if (isDependentLost) {
-    // 공적연금 과세분의 50% + 기타소득 100% × 보험료율
-    const baseIncome = (taxablePension * 0.5) + otherTaxableIncome;
+    // 공적연금 수령액의 50% + 기타소득 100% × 보험료율
+    const baseIncome = (publicPensionAnnual * 0.5) + otherTaxableIncome;
     estimatedPremium = baseIncome * KR_TAX_2026.healthInsurance.premiumRate;
   }
 
@@ -988,7 +986,6 @@ export function runWithdrawalSimulation(
       // 2.5 건강보험료 추정
       const { isDependentLost, estimatedPremium } = assessHealthInsurance(
         nationalPreTax,
-        publicPensionTaxableRatio,
         otherIncomeAnnual
       );
       if (isDependentLost && !lostDependencyAge) {

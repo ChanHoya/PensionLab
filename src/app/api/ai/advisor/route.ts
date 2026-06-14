@@ -105,7 +105,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
     if (genAI) {
       try {
         const model = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash",
+          model: "gemini-3.5-flash",
           systemInstruction: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다. 인사말 없이 '### 1. 사용자 현황 및 미래자산 평가'로 본문을 즉시 시작하며, 빈 불릿 포인트나 공백 항목을 생성하지 마십시오. 필요자금 분석 및 실질 필요자금 산출은 반드시 은퇴나이~75세(적극활동기), 75~85세(안정활동기), 85세~기대수명(비활동기)의 3단계로 나누어 설명해 주십시오.",
         });
 
@@ -124,12 +124,39 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
     let recommendation = "";
 
     if (isAIFlowSuccess && fullContent) {
-      const thinkMatch = fullContent.match(/<think[\s\S]*?>([\s\S]*?)(?:<\/think>|$)/i);
+      // thinking 모델(gemini-3.5-flash 등)은 전체 응답을 <think>...</think>로 감싸거나,
+      // 또는 <think>추론부</think> 이후에 본문을 출력하는 두 가지 패턴을 가짐
+      const thinkTagRegex = /<think>([\s\S]*?)<\/think>/i;
+      const thinkMatch = fullContent.match(thinkTagRegex);
       if (thinkMatch) {
         thinking = thinkMatch[1].trim();
-        recommendation = fullContent.replace(/<think[\s\S]*?>[\s\S]*?(?:<\/think>|$)/i, "").trim();
+        // think 태그 이후 본문 추출
+        const afterThink = fullContent.replace(thinkTagRegex, "").trim();
+        if (afterThink) {
+          // 정상적: think 태그 뒤에 본문이 있는 경우
+          recommendation = afterThink;
+        } else {
+          // Thinking 모델이 think 태그 안에 전체 응답을 넣은 경우 → think 내용을 본문으로 사용
+          recommendation = thinking;
+          thinking = "";
+        }
+      } else if (fullContent.includes("<think")) {
+        // 닫히지 않은 think 태그 처리
+        const openIdx = fullContent.indexOf("<think");
+        const closeIdx = fullContent.indexOf("</think>", openIdx);
+        if (closeIdx !== -1) {
+          thinking = fullContent.substring(fullContent.indexOf(">", openIdx) + 1, closeIdx).trim();
+          recommendation = (fullContent.substring(0, openIdx) + fullContent.substring(closeIdx + 8)).trim();
+        } else {
+          // think 열기만 있고 닫기 없음 → think 이전 내용 + think 이후를 본문으로
+          recommendation = fullContent.substring(0, openIdx).trim() || fullContent.substring(openIdx).trim();
+        }
       } else {
         recommendation = fullContent.trim();
+      }
+      // 최종 안전망: recommendation이 비어있으면 fullContent 전체를 사용
+      if (!recommendation) {
+        recommendation = fullContent.replace(/<\/?think[^>]*>/gi, "").trim();
       }
     } else {
       // High-fidelity local fallback generator

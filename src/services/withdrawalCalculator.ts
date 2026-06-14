@@ -532,7 +532,7 @@ export function runWithdrawalSimulation(
           // 1. 퇴직연금 연간 수령액이 목표 생활비를 충당하는지 검사
           const totalRetirementBalance = retirementPensions.reduce((sum, rp) => sum + (rp.totalAccumulated || 0) * 10000, 0);
           const estRetirementAnnual = totalRetirementBalance / 11;
-          const targetAnnualSpending = (simulationParams.targetMonthlySpending || 250) * 12 * 10000;
+          const targetAnnualSpending = (simulationParams.targetMonthlySpending || 300) * 12 * 10000;
 
           if (estRetirementAnnual >= targetAnnualSpending) {
             // 퇴직연금만으로 목표 생활비 충당 가능 -> 개인연금은 조기 인출하지 않고 원래 희망수급연령(desiredStartAge)부터 개시하여 거치 증식 극대화
@@ -1089,7 +1089,7 @@ export function runWithdrawalSimulation(
       const endingBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
 
       // 목표 생활비 대비 부족액 검사 (월 단위 생활비 -> 연 단위 환산)
-      const targetAnnualSpending = (simulationParams.targetMonthlySpending || 250) * 12 * 10000;
+      const targetAnnualSpending = (simulationParams.targetMonthlySpending || 300) * 12 * 10000;
       const deficit = Math.max(0, targetAnnualSpending - totalPostTax);
       if (deficit > 0 && age >= simulationParams.retirementAge) {
         hasDeficit = true;

@@ -178,8 +178,8 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
         : `${simulation.totalAccumulatedAtRetirement.toLocaleString()}만원`;
 
       const monthlyAnnuityStr = `${simulation.monthlyAnnuityAtRetirement.toLocaleString()}만원`;
-      const targetSpending = simulationParams.targetMonthlySpending || 250;
-      const minSpending = simulationParams.minMonthlySpending || 150;
+      const targetSpending = simulationParams.targetMonthlySpending || 300;
+      const minSpending = simulationParams.minMonthlySpending || 200;
       const targetPercent = Math.round((simulation.monthlyAnnuityAtRetirement / targetSpending) * 100);
       const minPercent = Math.round((simulation.monthlyAnnuityAtRetirement / minSpending) * 100);
 

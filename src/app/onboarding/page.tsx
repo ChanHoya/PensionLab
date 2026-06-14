@@ -882,6 +882,32 @@ export default function OnboardingPage() {
                       onChange={(e) => store.setSimulationParams({ nonPensionAssets: Number(e.target.value) })}
                     />
                   </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>
+                      재산세 과세표준 (만원)
+                      <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginLeft: "6px" }}>건보료 재산 기준 추정용 · 미입력 시 재산 건보료 미반영</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      placeholder="0 (예: 아파트 공시가격의 약 60~70%)"
+                      value={store.simulationParams.propertyTaxBase || ""}
+                      onChange={(e) => store.setSimulationParams({ propertyTaxBase: Number(e.target.value) })}
+                    />
+                  </div>
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>
+                      연간 금융소득 이자+배당 (만원/년)
+                      <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginLeft: "6px" }}>1,000만원 초과 시 피부양자 탈락 + 추가 건보료 반영</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      placeholder="0 (은퇴 후 예상 금융소득 기준)"
+                      value={store.simulationParams.financialIncome || ""}
+                      onChange={(e) => store.setSimulationParams({ financialIncome: Number(e.target.value) })}
+                    />
+                  </div>
                 </div>
               </div>
             )}

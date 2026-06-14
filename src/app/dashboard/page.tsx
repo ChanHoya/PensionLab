@@ -133,6 +133,11 @@ export default function DashboardPage() {
   // PDF download loading state
   const [pdfDownloading, setPdfDownloading] = useState(false);
 
+  // 건보료 기준 조정 팝업 state
+  const [showHIModal, setShowHIModal] = useState(false);
+  const [hiPropertyTaxBase, setHiPropertyTaxBase] = useState(store.simulationParams.propertyTaxBase || 0);
+  const [hiFinancialIncome, setHiFinancialIncome] = useState(store.simulationParams.financialIncome || 0);
+
   const handleExportData = () => {
     const data = {
       nationalPension: store.nationalPension,
@@ -1086,7 +1091,148 @@ export default function DashboardPage() {
               <p style={styles.footnoteText}>
                 - 본 리포트는 투자 자문 및 세무 자문이 아니며, 인출 계획 실행 전 반드시 세무사나 재무 설계 전문가의 대면 컨설팅을 받으시길 권장합니다.
               </p>
+              <p style={styles.footnoteText}>
+                - 건보료 산정 시 재산세 과세표준 기반 재산 건보료(연 1.2% 근사) 및 금융소득 1,000만원 초과분(7.09%)이 추가 반영됩니다. 기준 수치는 아래 조정 버튼에서 수정할 수 있습니다.
+              </p>
             </div>
+
+            {/* 건보료 기준 조정 버튼 */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }} className="no-print">
+              <button
+                onClick={() => {
+                  setHiPropertyTaxBase(store.simulationParams.propertyTaxBase || 0);
+                  setHiFinancialIncome(store.simulationParams.financialIncome || 0);
+                  setShowHIModal(true);
+                }}
+                style={{
+                  padding: "7px 16px",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  color: "var(--text-accent)",
+                  background: "transparent",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer",
+                }}
+              >
+                ⚙️ 건보료 재산·금융소득 기준 조정
+              </button>
+            </div>
+
+            {/* 건보료 기준 조정 팝업 모달 */}
+            {showHIModal && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  backgroundColor: "var(--overlay-bg)",
+                  zIndex: 1000,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "20px",
+                }}
+                onClick={() => setShowHIModal(false)}
+              >
+                <div
+                  style={{
+                    background: "var(--modal-bg)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "var(--radius)",
+                    padding: "28px 32px",
+                    width: "100%",
+                    maxWidth: "460px",
+                    boxShadow: "var(--shadow-lg)",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h4 style={{ margin: "0 0 6px", fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                    건보료 재산·금융소득 기준 조정
+                  </h4>
+                  <p style={{ margin: "0 0 20px", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                    재산세 과세표준과 금융소득을 입력하면 건보료 시뮬레이션 정확도가 향상됩니다.
+                  </p>
+                  <div style={{ marginBottom: "16px" }}>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                      재산세 과세표준 (만원)
+                      <span style={{ fontWeight: 400, fontSize: "0.72rem", marginLeft: "6px", color: "var(--text-muted)" }}>연 1.2% 근사 적용</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      style={{ width: "100%", boxSizing: "border-box" }}
+                      placeholder="예: 아파트 공시가격의 약 60~70%"
+                      value={hiPropertyTaxBase || ""}
+                      onChange={(e) => setHiPropertyTaxBase(Number(e.target.value))}
+                    />
+                    {hiPropertyTaxBase > 0 && (
+                      <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--text-accent)" }}>
+                        → 연간 재산 건보료 약 {Math.round(hiPropertyTaxBase * 0.012).toLocaleString()}만원 (월 {Math.round(hiPropertyTaxBase * 0.012 / 12 * 10) / 10}만원)
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ marginBottom: "24px" }}>
+                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
+                      연간 금융소득 이자+배당 (만원/년)
+                      <span style={{ fontWeight: 400, fontSize: "0.72rem", marginLeft: "6px", color: "var(--text-muted)" }}>1,000만원 초과분 7.09% 적용</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      style={{ width: "100%", boxSizing: "border-box" }}
+                      placeholder="0 (은퇴 후 예상 이자·배당소득 합계)"
+                      value={hiFinancialIncome || ""}
+                      onChange={(e) => setHiFinancialIncome(Number(e.target.value))}
+                    />
+                    {hiFinancialIncome > 1000 && (
+                      <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--text-accent)" }}>
+                        → 초과분 {(hiFinancialIncome - 1000).toLocaleString()}만원 × 7.09% = 연간 {Math.round((hiFinancialIncome - 1000) * 0.0709).toLocaleString()}만원 추가
+                      </p>
+                    )}
+                    {hiFinancialIncome > 0 && hiFinancialIncome <= 1000 && (
+                      <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                        1,000만원 이하: 추가 건보료 없음 (단, 피부양자 유지)
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                    <button
+                      onClick={() => setShowHIModal(false)}
+                      style={{
+                        padding: "9px 20px",
+                        fontSize: "0.85rem",
+                        fontWeight: 600,
+                        color: "var(--text-secondary)",
+                        background: "transparent",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-sm)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      취소
+                    </button>
+                    <button
+                      onClick={() => {
+                        store.setSimulationParams({
+                          propertyTaxBase: hiPropertyTaxBase,
+                          financialIncome: hiFinancialIncome,
+                        });
+                        setShowHIModal(false);
+                      }}
+                      className="premium-button"
+                      style={{
+                        padding: "9px 24px",
+                        fontSize: "0.85rem",
+                        fontWeight: 700,
+                        background: "var(--gradient-primary)",
+                      }}
+                    >
+                      저장 및 재계산
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* PDF 다운로드 버튼 — 맨 아래 배치 */}

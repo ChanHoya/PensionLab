@@ -127,8 +127,11 @@ export const KR_TAX_2026 = {
     basicPersonalDeduction: 1500000
   },
   healthInsurance: {
-    dependentIncomeCap: 20000000, // 연 2,000만원 초과 시 피부양자 박탈
-    premiumRate: 0.08 // 연금소득 반영 건보료율 가정
+    dependentIncomeCap: 20000000, // 연 2,000만원 초과 시 피부양자 박탈 (국민연금+기타소득)
+    financialIncomeCap: 10000000, // 금융소득 1,000만원 초과 시 피부양자 박탈
+    premiumRate: 0.08,            // 소득 기반 보험료율
+    propertyPremiumRate: 0.012,   // 재산세 과세표준 기반 연 보험료율 근사 (지역가입자 재산점수제 단순화)
+    financialExcessRate: 0.0709,  // 금융소득 1,000만원 초과분 보험료율 (2026 기준)
   }
 };
 
@@ -325,18 +328,33 @@ export function calcTaxOnPublicPension(
  *   공적연금 수령액 × 50% + 기타 종합과세 소득 × 100%
  */
 export function assessHealthInsurance(
-  publicPensionAnnual: number,
-  otherTaxableIncome: number
+  publicPensionAnnual: number,   // 원/년
+  otherTaxableIncome: number,    // 원/년
+  propertyTaxBaseWon: number = 0, // 원 (재산세 과세표준)
+  financialIncomeWon: number = 0  // 원/년 (금융소득 이자+배당)
 ): { isDependentLost: boolean; estimatedPremium: number } {
-  // 국민연금 수령액 총액 + 기타소득 합산이 2,000만원 초과 시 피부양자 탈락
+  const hi = KR_TAX_2026.healthInsurance;
+
+  // 피부양자 탈락 조건: ① 국민연금+기타소득 > 2,000만원 OR ② 금융소득 > 1,000만원
   const totalAssessableIncome = publicPensionAnnual + otherTaxableIncome;
-  const isDependentLost = totalAssessableIncome > KR_TAX_2026.healthInsurance.dependentIncomeCap;
+  const isDependentLost =
+    totalAssessableIncome > hi.dependentIncomeCap ||
+    financialIncomeWon > hi.financialIncomeCap;
 
   let estimatedPremium = 0;
   if (isDependentLost) {
-    // 공적연금 수령액의 50% + 기타소득 100% × 보험료율
+    // ① 소득 기반: 국민연금 50% + 기타소득 100%
     const baseIncome = (publicPensionAnnual * 0.5) + otherTaxableIncome;
-    estimatedPremium = baseIncome * KR_TAX_2026.healthInsurance.premiumRate;
+    const incomePremium = baseIncome * hi.premiumRate;
+
+    // ② 재산 기반: 재산세 과세표준 × 연 1.2% (지역가입자 재산점수제 단순 근사)
+    const propertyPremium = propertyTaxBaseWon * hi.propertyPremiumRate;
+
+    // ③ 금융소득 기반: 1,000만원 초과분 × 7.09%
+    const financialExcess = Math.max(0, financialIncomeWon - hi.financialIncomeCap);
+    const financialPremium = financialExcess * hi.financialExcessRate;
+
+    estimatedPremium = incomePremium + propertyPremium + financialPremium;
   }
 
   return {
@@ -983,10 +1001,12 @@ export function runWithdrawalSimulation(
         );
       }
 
-      // 2.5 건강보험료 추정
+      // 2.5 건강보험료 추정 (재산·금융소득 기준 포함)
       const { isDependentLost, estimatedPremium } = assessHealthInsurance(
         nationalPreTax,
-        otherIncomeAnnual
+        otherIncomeAnnual,
+        (simulationParams.propertyTaxBase || 0) * 10000,
+        (simulationParams.financialIncome || 0) * 10000
       );
       if (isDependentLost && !lostDependencyAge) {
         lostDependencyAge = age;

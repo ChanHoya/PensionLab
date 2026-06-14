@@ -65,6 +65,8 @@ export interface SimulationParamsState {
   childSupportExpense: number;
   annualMedicalExpense: number;
   nonPensionAssets: number;
+  propertyTaxBase: number;  // 재산세 과세표준 (만원)
+  financialIncome: number;  // 금융소득 이자+배당 (만원/년)
   decumulationStrategy: "DECREASING" | "FLAT";
 }
 
@@ -138,6 +140,8 @@ const initialSimulationParams: SimulationParamsState = {
   childSupportExpense: 0,
   annualMedicalExpense: 0,
   nonPensionAssets: 0,
+  propertyTaxBase: 0,
+  financialIncome: 0,
   decumulationStrategy: "DECREASING",
 };
 

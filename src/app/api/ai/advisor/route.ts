@@ -105,7 +105,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
     if (genAI) {
       try {
         const model = genAI.getGenerativeModel({
-          model: "gemini-3.5-flash",
+          model: "gemini-2.0-flash",
           systemInstruction: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다. 인사말 없이 '### 1. 사용자 현황 및 미래자산 평가'로 본문을 즉시 시작하며, 빈 불릿 포인트나 공백 항목을 생성하지 마십시오. 필요자금 분석 및 실질 필요자금 산출은 반드시 은퇴나이~75세(적극활동기), 75~85세(안정활동기), 85세~기대수명(비활동기)의 3단계로 나누어 설명해 주십시오.",
         });
 

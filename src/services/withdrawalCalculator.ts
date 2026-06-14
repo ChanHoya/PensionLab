@@ -629,12 +629,6 @@ export function runWithdrawalSimulation(
   ): StrategySimulationResult => {
     const accounts = createUnifiedAccounts(strategyId);
     const flows: SimulationYearFlow[] = [];
-    
-    // 이연/연기 효과를 고려한 동적 평탄화(Leveling)를 위해 초기 계좌 잔액 보존
-    const initialBalances: { [id: string]: number } = {};
-    accounts.forEach((a) => {
-      initialBalances[a.id] = a.balance;
-    });
 
     // 수령 계좌별 수령 연차(1-indexed) 트래킹
     const accountPayoutYears: { [accountId: string]: number } = {};
@@ -644,16 +638,20 @@ export function runWithdrawalSimulation(
 
     // === 포트폴리오 레벨 PMT 계산 ===
     // 계좌별 독립 PMT 대신 포트폴리오 합산 단일 PMT를 사용.
-    // 개인/퇴직연금 계좌 개시 시점(예: 65세)에 수령액이 급증하지 않고
-    // 은퇴 첫 해부터 총 수령액이 단조감소하는 곡선을 보장.
+    // 매년 단조감소하는 "목표 총 수령액"을 정의하고, 모든 계좌·공적연금이
+    // 이 목표를 함께 채우도록 하여 계좌/연금 개시 시점과 무관하게 은퇴 첫 해부터
+    // 완전한 계단식(우하향) 곡선을 보장. (모든 전략 공통)
     const deferYearsPort = strategyId === "S2" ? 5 : 0;
     const effectiveNatStartPort = simulationParams.nationalPensionStartAge + deferYearsPort;
     const deferMultPort = 1 + deferYearsPort * 0.072;
 
+    // 인출(감소) 시작 기준 연령: 은퇴나이. (계좌가 더 일찍 개시되면 그 시점)
     const minPayoutAge = accounts.length > 0
       ? Math.min(...accounts.map(a => a.payoutStartAge))
       : simulationParams.retirementAge;
-    const maxPayoutAge = accounts.length > 0
+    const decumStartAge = Math.min(simulationParams.retirementAge, minPayoutAge);
+    // 자산 소진 목표 종료 연령: 가장 늦게 끝나는 계좌의 수령 종료 시점
+    const horizonEndAge = accounts.length > 0
       ? Math.max(...accounts.map(a => a.payoutStartAge + a.receivingPeriod - 1))
       : simulationParams.retirementAge + 30;
 
@@ -662,14 +660,11 @@ export function runWithdrawalSimulation(
       ? accounts.reduce((s, a) => s + a.balance * (a.expectedReturnRate / 100), 0) / totalInitialBalance
       : 0.04;
 
+    // 인출 시작~종료 전 구간에 대해 PV 가중 분모 및 미래 공적연금 유입 PV 합산
     let pvPublicPension = 0;
     let portfolioDenominator = 0;
-    for (let portAge = minPayoutAge; portAge <= maxPayoutAge; portAge++) {
-      const anyActive = accounts.some(a =>
-        portAge >= a.payoutStartAge && portAge <= a.payoutStartAge + a.receivingPeriod - 1
-      );
-      if (!anyActive) continue;
-      const t = portAge - minPayoutAge;
+    for (let portAge = decumStartAge; portAge <= horizonEndAge; portAge++) {
+      const t = portAge - decumStartAge;
       const df = Math.pow(1 + weightedR, -t);
       const mult = getDecumulationMultiplier(t + 1, simulationParams.decumulationStrategy);
       let natP = 0, basP = 0;
@@ -679,6 +674,7 @@ export function runWithdrawalSimulation(
       portfolioDenominator += mult * df;
     }
 
+    // 목표 총 수령액 기준선: (총 자산 + 미래 공적연금 PV) / 가중분모
     const portfolioBaseDraw = portfolioDenominator > 0
       ? (totalInitialBalance + pvPublicPension) / portfolioDenominator
       : 0;
@@ -737,73 +733,68 @@ export function runWithdrawalSimulation(
         hasCrevasse = true;
       }
 
-      // 2.2 각 사적 계좌별 올해의 인출액 결정
-      accounts.forEach((acc) => {
-        if (age >= acc.payoutStartAge && acc.balance > 0) {
+      // 2.2 통합 인출 패스: 단조감소 목표를 공적연금 + 사적연금이 함께 충족
+      // 목표 총 수령액(targetTotal)은 portfolioBaseDraw × multiplier(t)로 계단식 우하향.
+      // 공적연금으로 부족한 부분(remaining)을 잔고 보유 계좌에서 잔액 비례로 인출하여
+      // 계좌/공적연금 개시 시점과 무관하게 총 수령액이 매년 단조감소하도록 보장.
+      if (age >= decumStartAge) {
+        const portT = age - decumStartAge;
+        const multiplier = getDecumulationMultiplier(portT + 1, simulationParams.decumulationStrategy);
+        const targetTotal = portfolioBaseDraw * multiplier;
+        const remaining = Math.max(0, targetTotal - nationalPreTax - basicPreTax);
+
+        // 인출 가능 계좌: 잔고 보유 + (개시 연령 도달 OR 은퇴 후 브릿지 인출 가능)
+        // DB 연금은 연금화 상품이므로 개시 전 조기 인출 불가.
+        const drawable = accounts.filter((a) => {
+          if (a.balance <= 0) return false;
+          if (age >= a.payoutStartAge) return true;
+          if (a.pensionType === "DB") return false;
+          return age >= simulationParams.retirementAge;
+        });
+
+        const totalDrawableBal = drawable.reduce((s, a) => s + a.balance, 0);
+        // 목표 대비 인출 비율 (자산이 목표보다 적으면 전액 인출 = 1.0)
+        const fillRatio = totalDrawableBal > 0 ? Math.min(1, remaining / totalDrawableBal) : 0;
+
+        drawable.forEach((acc) => {
+          const drawAmount = Math.min(acc.balance, acc.balance * fillRatio);
+          if (drawAmount <= 0) return;
+
           accountPayoutYears[acc.id]++;
           const k = accountPayoutYears[acc.id]; // 수령 연차
 
-          {
-            // 포트폴리오 PMT 기반 비례 배분:
-            // receivingPeriod 이후에도 잔고가 남으면 계속 인출 (마지막 해 전액 덤프 없음).
-            // 잔고 소진 시점까지 자연스럽게 감소 → 84세 등 계약 만기 시점 급증 제거.
-            const portT = age - minPayoutAge;
-            const multiplier = getDecumulationMultiplier(portT + 1, simulationParams.decumulationStrategy);
+          const { draws, updatedSources } = resolveDrawComposition(acc.sources, drawAmount);
+          acc.sources = updatedSources;
+          acc.balance -= drawAmount;
 
-            const natAtAge = age >= effectiveNatStartPort
-              ? (national.expectedMonthlyPension * 12) * deferMultPort * 10000
-              : 0;
-            const basAtAge = age >= 65 && basic.expectedEligibility
-              ? (basic.expectedMonthlyAmount * 12) * 10000
-              : 0;
-            const targetPrivateDraw = Math.max(0, portfolioBaseDraw * multiplier - natAtAge - basAtAge);
+          drawNonCredited += draws["NON_CREDITED"] || 0;
+          drawDeferredRetirement += draws["DEFERRED_RETIREMENT"] || 0;
+          drawTaxCredited += draws["TAX_CREDITED"] || 0;
+          drawNonQualified += draws["NON_QUALIFIED"] || 0;
 
-            // 잔고 보유 중인 계좌만 포함 (수령기간 초과 계좌도 잔고 있으면 포함)
-            let totalActiveInitBalance = 0;
-            accounts.forEach((a) => {
-              if (age >= a.payoutStartAge && a.balance > 0) {
-                totalActiveInitBalance += initialBalances[a.id];
-              }
-            });
-            const share = totalActiveInitBalance > 0 ? initialBalances[acc.id] / totalActiveInitBalance : 0;
-
-            let drawAmount = Math.max(0, Math.min(targetPrivateDraw * share, acc.balance));
-
-            // 계좌 내 실질 인출액 분해 및 세액 계산
-            const { draws, updatedSources } = resolveDrawComposition(acc.sources, drawAmount);
-            acc.sources = updatedSources;
-            acc.balance -= drawAmount;
-
-            // 재원별 집계
-            drawNonCredited += draws["NON_CREDITED"] || 0;
-            drawDeferredRetirement += draws["DEFERRED_RETIREMENT"] || 0;
-            drawTaxCredited += draws["TAX_CREDITED"] || 0;
-            drawNonQualified += draws["NON_QUALIFIED"] || 0;
-
-            if (acc.category === "RETIREMENT") {
-              retirementPreTax += drawAmount;
-            } else if (acc.category === "PERSONAL") {
-              personalPreTax += drawAmount;
-            } else if (acc.category === "INSURANCE") {
-              insurancePreTax += drawAmount;
-            }
-
-            // 수령한도 검사
-            const limit = calcWithdrawalLimit(acc.balance + drawAmount, k);
-
-            // 2.3 세액 계산
-            // 이연퇴직소득세 계산
-            if (draws["DEFERRED_RETIREMENT"]) {
-              taxOnRetirement += calcTaxOnDeferredRetirement(
-                draws["DEFERRED_RETIREMENT"],
-                retirementLumpSumTaxRate,
-                k,
-                limit
-              );
-            }
+          if (acc.category === "RETIREMENT") {
+            retirementPreTax += drawAmount;
+          } else if (acc.category === "PERSONAL") {
+            personalPreTax += drawAmount;
+          } else if (acc.category === "INSURANCE") {
+            insurancePreTax += drawAmount;
           }
-        }
 
+          // 수령한도 검사 및 이연퇴직소득세 계산
+          const limit = calcWithdrawalLimit(acc.balance + drawAmount, k);
+          if (draws["DEFERRED_RETIREMENT"]) {
+            taxOnRetirement += calcTaxOnDeferredRetirement(
+              draws["DEFERRED_RETIREMENT"],
+              retirementLumpSumTaxRate,
+              k,
+              limit
+            );
+          }
+        });
+      }
+
+      // 2.3 연도 말 계좌 잔액 갱신 (운용수익 복리 + 은퇴 전 적립)
+      accounts.forEach((acc) => {
         // 연도 말 계좌 잔액의 자산 운용 수익률 반영 복리 증가, 기여금 추가 및 세제 재원 동기화
         const returnRate = acc.expectedReturnRate / 100;
 
@@ -939,66 +930,6 @@ export function runWithdrawalSimulation(
           }
         }
       });
-
-      // 2.3-B 브릿지 인출: 은퇴 이후 수령액이 목표에 미달할 경우
-      // 아직 개시하지 않은 계좌에서 세금 효율성 우선순위로 추가 인출
-      if (age >= simulationParams.retirementAge) {
-        const targetAnnual = (simulationParams.targetMonthlySpending || 300) * 12 * 10000;
-        const naturalTotal = nationalPreTax + basicPreTax + retirementPreTax + personalPreTax + insurancePreTax;
-
-        if (naturalTotal < targetAnnual) {
-          // 미개시 계좌를 세금 효율성 순으로 정렬
-          // 우선순위: 이연퇴직소득(퇴직연금) → 비세액공제(개인연금) → 세액공제(개인연금) → 비적격보험
-          const bridgeCandidates = accounts
-            .filter(acc => acc.balance > 0 && acc.payoutStartAge > age)
-            .sort((a, b) => {
-              const getPriority = (acc: PensionAccountModel) => {
-                if (acc.sources.some(s => s.taxType === "DEFERRED_RETIREMENT")) return 1;
-                if (acc.sources.some(s => s.taxType === "NON_CREDITED")) return 2;
-                if (acc.sources.some(s => s.taxType === "TAX_CREDITED")) return 3;
-                return 4;
-              };
-              return getPriority(a) - getPriority(b);
-            });
-
-          let remaining = targetAnnual - naturalTotal;
-          for (const acc of bridgeCandidates) {
-            if (remaining <= 0 || acc.balance <= 0) break;
-            // 연간 브릿지 인출은 계좌 잔액의 25% 이내로 제한 (조기 소진 방지)
-            const maxDraw = Math.min(remaining, acc.balance * 0.25);
-            if (maxDraw <= 0) continue;
-
-            const { draws, updatedSources } = resolveDrawComposition(acc.sources, maxDraw);
-            acc.sources = updatedSources;
-            acc.balance -= maxDraw;
-
-            drawNonCredited += draws["NON_CREDITED"] || 0;
-            drawDeferredRetirement += draws["DEFERRED_RETIREMENT"] || 0;
-            drawTaxCredited += draws["TAX_CREDITED"] || 0;
-            drawNonQualified += draws["NON_QUALIFIED"] || 0;
-
-            if (acc.category === "RETIREMENT") {
-              retirementPreTax += maxDraw;
-              if (draws["DEFERRED_RETIREMENT"]) {
-                const k = Math.max(1, accountPayoutYears[acc.id] || 1);
-                const limit = calcWithdrawalLimit(acc.balance + maxDraw, k);
-                taxOnRetirement += calcTaxOnDeferredRetirement(
-                  draws["DEFERRED_RETIREMENT"],
-                  retirementLumpSumTaxRate,
-                  k,
-                  limit
-                );
-              }
-            } else if (acc.category === "PERSONAL") {
-              personalPreTax += maxDraw;
-            } else if (acc.category === "INSURANCE") {
-              insurancePreTax += maxDraw;
-            }
-
-            remaining -= maxDraw;
-          }
-        }
-      }
 
       // 2.4 세액공제분 및 공적연금 종합 과세 계산
       let taxOnPersonalYear = 0;

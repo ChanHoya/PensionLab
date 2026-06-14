@@ -21,6 +21,7 @@ export default function PdfViewerModal({
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [scale, setScale] = useState(1.3);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const renderTaskRef = useRef<any>(null);
 
   // PDF 로드
@@ -32,9 +33,7 @@ export default function PdfViewerModal({
       setIsLoading(true);
       try {
         const pdfjsLib = await import("pdfjs-dist");
-        // 로컬 서빙 pdfjs-dist worker 설정
         pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-
         const doc = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
         if (!cancelled) {
           setPdfDoc(doc);
@@ -52,11 +51,10 @@ export default function PdfViewerModal({
     return () => { cancelled = true; };
   }, [isOpen, pdfUrl]);
 
-  // 페이지 렌더링
+  // 페이지 렌더링 (일반/전체화면 공통)
   const renderPage = useCallback(async (pageNum: number) => {
     if (!pdfDoc || !canvasRef.current) return;
 
-    // 이전 렌더 작업 취소
     if (renderTaskRef.current) {
       renderTaskRef.current.cancel();
       renderTaskRef.current = null;
@@ -70,7 +68,18 @@ export default function PdfViewerModal({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      const viewport = page.getViewport({ scale });
+      let useScale = scale;
+
+      // 전체화면 모드: 뷰포트에 맞게 스케일 자동 계산
+      if (isFullscreen) {
+        const baseViewport = page.getViewport({ scale: 1.0 });
+        const availW = window.innerWidth - 180;  // 좌우 화살표 공간
+        const availH = window.innerHeight - 130; // 상단 바 + 하단 인디케이터
+        useScale = Math.min(availW / baseViewport.width, availH / baseViewport.height);
+        useScale = Math.max(0.4, useScale);
+      }
+
+      const viewport = page.getViewport({ scale: useScale });
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
@@ -84,7 +93,7 @@ export default function PdfViewerModal({
     } finally {
       setIsLoading(false);
     }
-  }, [pdfDoc, scale]);
+  }, [pdfDoc, scale, isFullscreen]);
 
   useEffect(() => {
     if (pdfDoc) renderPage(currentPage);
@@ -94,23 +103,107 @@ export default function PdfViewerModal({
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") prev();
-      if (e.key === "ArrowRight" || e.key === "ArrowDown") next();
-      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") setCurrentPage(p => Math.max(1, p - 1));
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") setCurrentPage(p => Math.min(totalPages, p + 1));
+      if (e.key === "Escape") {
+        if (isFullscreen) setIsFullscreen(false);
+        else onClose();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, currentPage, totalPages]);
+  }, [isOpen, totalPages, isFullscreen, onClose]);
 
-  const prev = () => setCurrentPage((p) => Math.max(1, p - 1));
-  const next = () => setCurrentPage((p) => Math.min(totalPages, p + 1));
+  const prev = () => setCurrentPage(p => Math.max(1, p - 1));
+  const next = () => setCurrentPage(p => Math.min(totalPages, p + 1));
 
   if (!isOpen) return null;
 
+  // ─── 전체화면 렌더 ───────────────────────────────────────
+  if (isFullscreen) {
+    return (
+      <div style={fsOverlay}>
+        {/* 상단 바 */}
+        <div style={fsTopBar}>
+          <span style={badge}>📄 {title}</span>
+          <span style={fsPageInfo}>{currentPage} / {totalPages}</span>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button
+              onClick={() => setIsFullscreen(false)}
+              style={iconBtn}
+              title="전체화면 종료 (Esc)"
+            >
+              ⊡
+            </button>
+            <button onClick={onClose} style={closeBtn} title="닫기">✕</button>
+          </div>
+        </div>
+
+        {/* 중앙 영역: 이전 버튼 | 캔버스 | 다음 버튼 */}
+        <div style={fsCenterRow}>
+          {/* 이전 버튼 */}
+          <button
+            onClick={prev}
+            disabled={currentPage <= 1}
+            style={fsSideBtn(currentPage <= 1)}
+            aria-label="이전 페이지"
+          >
+            ‹
+          </button>
+
+          {/* 캔버스 */}
+          <div style={fsCanvasArea}>
+            {isLoading && (
+              <div style={loaderOverlay}>
+                <div style={spinner} />
+              </div>
+            )}
+            <canvas
+              ref={canvasRef}
+              style={{ borderRadius: "6px", boxShadow: "0 12px 48px rgba(0,0,0,0.7)", display: "block" }}
+            />
+          </div>
+
+          {/* 다음 버튼 */}
+          <button
+            onClick={next}
+            disabled={currentPage >= totalPages}
+            style={fsSideBtn(currentPage >= totalPages)}
+            aria-label="다음 페이지"
+          >
+            ›
+          </button>
+        </div>
+
+        {/* 하단 페이지 인디케이터 오버레이 */}
+        <div style={fsBottomBar}>
+          <div style={dots}>
+            {Array.from({ length: Math.min(totalPages, 15) }, (_, i) => {
+              const p = i + 1;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  style={dot(p === currentPage)}
+                  title={`${p}페이지`}
+                />
+              );
+            })}
+            {totalPages > 15 && (
+              <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>
+                ...{totalPages}p
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── 일반 모달 렌더 ───────────────────────────────────────
   return (
     <div style={overlay} onClick={onClose}>
-      <div style={modal} onClick={(e) => e.stopPropagation()}>
+      <div style={modal} onClick={e => e.stopPropagation()}>
         {/* 헤더 */}
         <div style={header}>
           <div style={headerLeft}>
@@ -121,16 +214,21 @@ export default function PdfViewerModal({
           </div>
           <div style={headerRight}>
             <button
-              onClick={() => setScale((s) => Math.max(0.7, s - 0.2))}
+              onClick={() => setScale(s => Math.max(0.5, s - 0.2))}
               style={iconBtn}
               title="축소"
             >−</button>
             <span style={scaleLabel}>{Math.round(scale * 100)}%</span>
             <button
-              onClick={() => setScale((s) => Math.min(2.5, s + 0.2))}
+              onClick={() => setScale(s => Math.min(3.0, s + 0.2))}
               style={iconBtn}
               title="확대"
             >+</button>
+            <button
+              onClick={() => setIsFullscreen(true)}
+              style={{ ...iconBtn, marginLeft: "6px", fontSize: "1rem" }}
+              title="전체화면"
+            >⛶</button>
             <button onClick={onClose} style={closeBtn} title="닫기">✕</button>
           </div>
         </div>
@@ -156,17 +254,15 @@ export default function PdfViewerModal({
             ← 이전
           </button>
 
-          {/* 페이지 점 인디케이터 (최대 10개 표시) */}
           <div style={dots}>
             {Array.from({ length: Math.min(totalPages, 12) }, (_, i) => {
-              const page = i + 1;
-              const isActive = page === currentPage;
+              const p = i + 1;
               return (
                 <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  style={dot(isActive)}
-                  title={`${page}페이지`}
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  style={dot(p === currentPage)}
+                  title={`${p}페이지`}
                 />
               );
             })}
@@ -192,6 +288,8 @@ export default function PdfViewerModal({
 }
 
 /* ─── 스타일 ─────────────────────────────────────────── */
+
+// 일반 모달
 const overlay: React.CSSProperties = {
   position: "fixed",
   top: "70px",
@@ -212,12 +310,10 @@ const modal: React.CSSProperties = {
   width: "100%",
   maxWidth: "1200px",
   height: "100%",
-  maxHeight: "none",
   backgroundColor: "#161728",
   borderLeft: "1px solid rgba(99, 102, 241, 0.2)",
   borderRight: "1px solid rgba(99, 102, 241, 0.2)",
   borderBottom: "1px solid rgba(99, 102, 241, 0.2)",
-  borderRadius: "0px",
   boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
   display: "flex",
   flexDirection: "column",
@@ -334,10 +430,11 @@ const spinner: React.CSSProperties = {
   animation: "spin 0.8s linear infinite",
 };
 
+// 줌 버그 수정: maxWidth 제거 → 캔버스가 스케일대로 실제 크기로 표시됨
 const canvasStyle: React.CSSProperties = {
-  maxWidth: "100%",
   boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
   borderRadius: "4px",
+  display: "block",
 };
 
 const footer: React.CSSProperties = {
@@ -389,3 +486,83 @@ const navBtn = (disabled: boolean): React.CSSProperties => ({
   whiteSpace: "nowrap",
   boxShadow: disabled ? "none" : "0 2px 12px rgba(99,102,241,0.35)",
 });
+
+// 전체화면 스타일
+const fsOverlay: React.CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  zIndex: 200,
+  backgroundColor: "#080910",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const fsTopBar: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "10px 20px",
+  backgroundColor: "rgba(14, 15, 28, 0.95)",
+  borderBottom: "1px solid rgba(99,102,241,0.12)",
+  flexShrink: 0,
+  gap: "12px",
+};
+
+const fsPageInfo: React.CSSProperties = {
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  color: "rgba(255,255,255,0.6)",
+  flex: 1,
+  textAlign: "center",
+};
+
+const fsCenterRow: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0",
+  overflow: "hidden",
+  position: "relative",
+};
+
+const fsCanvasArea: React.CSSProperties = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  position: "relative",
+  height: "100%",
+};
+
+const fsSideBtn = (disabled: boolean): React.CSSProperties => ({
+  flexShrink: 0,
+  width: "72px",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: disabled
+    ? "transparent"
+    : "rgba(99,102,241,0.06)",
+  border: "none",
+  color: disabled ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.7)",
+  fontSize: "4rem",
+  fontWeight: 300,
+  cursor: disabled ? "not-allowed" : "pointer",
+  transition: "all 0.15s ease",
+  lineHeight: 1,
+  userSelect: "none",
+});
+
+const fsBottomBar: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "10px 24px 14px 24px",
+  backgroundColor: "rgba(14, 15, 28, 0.92)",
+  borderTop: "1px solid rgba(99,102,241,0.10)",
+  flexShrink: 0,
+  backdropFilter: "blur(8px)",
+};

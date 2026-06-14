@@ -34,6 +34,12 @@ const LIBRARY_DOCUMENTS = [
 
 const REFERENCE_SERVICES = [
   {
+    title: "금융감독원 통합연금포털",
+    url: "https://100lifeplan.fss.or.kr",
+    desc: "대한민국 국민의 3층 연금(국민, 퇴직, 개인) 가입 정보를 일괄 조회하여 포트폴리오를 제공하는 공식 포털",
+    point: "65세 노령연금 개시 전 '소득 공백기(브릿지 기간)' 브릿지 설계에 필수 참고"
+  },
+  {
     title: "낙원계산기",
     url: "https://keep-ones.me",
     desc: "자산 수명과 원하는 은퇴 생활비 달성을 위해 필요한 은퇴 자산을 빠르게 역산해 주는 직관적인 계산기",
@@ -57,12 +63,6 @@ const REFERENCE_SERVICES = [
     desc: "매년 고정액 인출, 물가연동 인출, 자산 비례 인출 등 다양한 인출 규칙을 대입하여 결과를 비교하는 도구",
     point: "커스텀 인출 규칙(Withdrawal Strategies) 수립 및 비교"
   },
-  {
-    title: "금융감독원 통합연금포털",
-    url: "https://100lifeplan.fss.or.kr",
-    desc: "대한민국 국민의 3층 연금(국민, 퇴직, 개인) 가입 정보를 일괄 조회하여 포트폴리오를 제공하는 공식 포털",
-    point: "65세 노령연금 개시 전 '소득 공백기(브릿지 기간)' 브릿지 설계에 필수 참고"
-  }
 ];
 
 export default function LandingPage() {
@@ -179,24 +179,24 @@ export default function LandingPage() {
           </div>
           <div style={styles.libBody}>
             <p style={styles.libSubtitle}>Hoya Pension Lab의 은퇴 연산 엔진 설계에 영감을 준 국내외 대표적인 은퇴/인출 시뮬레이션 서비스 목록입니다.</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
               {REFERENCE_SERVICES.map((srv, idx) => (
-                <a 
-                  key={idx} 
+                <a
+                  key={idx}
                   href={srv.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ ...styles.libCard, textDecoration: "none", display: "flex", gap: "14px", alignItems: "flex-start", width: "100%" }}
+                  style={{ ...styles.libCard, textDecoration: "none", display: "flex", gap: "10px", alignItems: "flex-start", width: "100%", padding: "9px 12px" }}
                   className="premium-card animate-fade-in"
                 >
-                  <div style={{ ...styles.libCardIcon, fontSize: "1.4rem" }}>🔗</div>
+                  <div style={{ ...styles.libCardIcon, fontSize: "1.2rem", marginTop: "1px" }}>🔗</div>
                   <div style={{ ...styles.libCardContent, flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap" }}>
-                      <h4 style={{ ...styles.libCardTitle, color: "#a5b4fc" }}>{srv.title}</h4>
-                      <span style={{ fontSize: "0.75rem", color: "var(--primary-light)", textDecoration: "underline" }}>공식 사이트 바로가기 ↗</span>
+                      <h4 style={{ ...styles.libCardTitle, color: "#a5b4fc", fontSize: "0.9rem" }}>{srv.title}</h4>
+                      <span style={{ fontSize: "0.72rem", color: "var(--primary-light)", textDecoration: "underline" }}>공식 사이트 바로가기 ↗</span>
                     </div>
-                    <p style={{ ...styles.libCardDesc, marginTop: "4px" }}>{srv.desc}</p>
-                    <div style={{ fontSize: "0.75rem", color: "var(--success-light)", marginTop: "6px", backgroundColor: "rgba(16, 185, 129, 0.08)", padding: "4px 8px", borderRadius: "4px", display: "inline-block" }}>
+                    <p style={{ ...styles.libCardDesc, marginTop: "2px" }}>{srv.desc}</p>
+                    <div style={{ fontSize: "0.72rem", color: "var(--success-light)", marginTop: "3px", backgroundColor: "rgba(16, 185, 129, 0.08)", padding: "2px 7px", borderRadius: "4px", display: "inline-block" }}>
                       💡 <strong>벤치마킹 포인트:</strong> {srv.point}
                     </div>
                   </div>
@@ -422,7 +422,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "18px 24px",
+    padding: "12px 18px",
     borderBottom: "1px solid rgba(99, 102, 241, 0.15)",
     backgroundColor: "rgba(22, 23, 40, 0.95)",
   },
@@ -439,18 +439,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: "pointer",
   },
   libBody: {
-    padding: "24px",
+    padding: "12px 16px 14px 16px",
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
-    maxHeight: "80vh",
+    gap: "8px",
+    maxHeight: "90vh",
     overflowY: "auto",
   },
   libSubtitle: {
-    fontSize: "0.95rem",
+    fontSize: "0.82rem",
     color: "var(--text-secondary)",
-    lineHeight: 1.5,
-    marginBottom: "8px",
+    lineHeight: 1.4,
+    marginBottom: "2px",
   },
   libGrid: {
     display: "grid",

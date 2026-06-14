@@ -986,7 +986,7 @@ export default function OnboardingPage() {
                       <div style={styles.previewGrid}>
                         <div>총 예상 납부보험료: <strong>{store.nationalPension.totalExpectedPremium.toLocaleString()} 만원</strong></div>
                         <div>현재까지 총 납부액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
-                        <div>예상 연금 수령액: <strong style={{ color: "var(--primary-700)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
+                        <div>예상 연금 수령액: <strong style={{ color: "var(--text-accent)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
                       </div>
                     </div>
                   </>
@@ -1092,7 +1092,7 @@ export default function OnboardingPage() {
                           ...styles.infoAlert,
                           backgroundColor: "rgba(245, 158, 11, 0.15)",
                           borderLeft: "4px solid #f59e0b",
-                          color: "#f3f4f6",
+                          color: "var(--text-primary)",
                           marginBottom: "16px",
                         }}
                         className="animate-fade-in"
@@ -1237,7 +1237,7 @@ export default function OnboardingPage() {
                           <div>가입 개월수: <strong>{store.nationalPension.contributionMonths} 개월</strong></div>
                           <div>총 납부금액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
                           <div>현재 기준소득월액: <strong>{store.nationalPension.currentStandardMonthlyIncome.toLocaleString()} 만원</strong></div>
-                          <div>예상 연금 월액: <strong style={{ color: "var(--primary-700)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
+                          <div>예상 연금 월액: <strong style={{ color: "var(--text-accent)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
                         </div>
                       </div>
                     )}
@@ -1291,7 +1291,7 @@ export default function OnboardingPage() {
                   <h4 style={styles.previewTitle}>기초연금 예상 수급 결과</h4>
                   <div style={styles.previewGrid}>
                     <div>소득 기준 충족 여부: <strong>{store.basicPension.expectedEligibility ? "충족 (수급 가능)" : "초과 (수급 불가)"}</strong></div>
-                    <div>예상 월 수령액: <strong style={{ color: "var(--primary-700)" }}>{store.basicPension.expectedMonthlyAmount} 만원/월</strong></div>
+                    <div>예상 월 수령액: <strong style={{ color: "var(--text-accent)" }}>{store.basicPension.expectedMonthlyAmount} 만원/월</strong></div>
                   </div>
                 </div>
               </div>
@@ -1481,7 +1481,7 @@ export default function OnboardingPage() {
                           ...styles.infoAlert,
                           backgroundColor: "rgba(245, 158, 11, 0.15)",
                           borderLeft: "4px solid #f59e0b",
-                          color: "#f3f4f6",
+                          color: "var(--text-primary)",
                           marginBottom: "16px",
                         }}
                         className="animate-fade-in"
@@ -1626,7 +1626,7 @@ export default function OnboardingPage() {
                           <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
                           <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
                           <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
-                          <div>총 자산 누계액: <strong style={{ color: "var(--primary-700)" }}>
+                          <div>총 자산 누계액: <strong style={{ color: "var(--text-accent)" }}>
                             {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
                               store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
                               store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
@@ -1836,7 +1836,7 @@ export default function OnboardingPage() {
                           ...styles.infoAlert,
                           backgroundColor: "rgba(245, 158, 11, 0.15)",
                           borderLeft: "4px solid #f59e0b",
-                          color: "#f3f4f6",
+                          color: "var(--text-primary)",
                           marginBottom: "16px",
                         }}
                         className="animate-fade-in"
@@ -1981,7 +1981,7 @@ export default function OnboardingPage() {
                           <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
                           <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
                           <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
-                          <div>총 자산 누계액: <strong style={{ color: "var(--primary-700)" }}>
+                          <div>총 자산 누계액: <strong style={{ color: "var(--text-accent)" }}>
                             {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
                               store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
                               store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
@@ -2149,7 +2149,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     background: "rgba(99, 102, 241, 0.12)",
     border: "1px solid rgba(99, 102, 241, 0.3)",
     borderRadius: "var(--radius-sm)",
-    color: "#a5b4fc",
+    color: "var(--text-accent)",
     fontSize: "0.85rem",
     fontWeight: 600,
     cursor: "pointer",
@@ -2267,7 +2267,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   stepBadge: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "var(--primary-700)",
+    color: "var(--text-accent)",
     backgroundColor: "var(--primary-50)",
     padding: "4px 8px",
     borderRadius: "var(--radius-full)",
@@ -2422,7 +2422,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "10px",
     backgroundColor: "rgba(99, 102, 241, 0.15)",
     border: "1.5px dashed rgba(99, 102, 241, 0.4)",
-    color: "#a5b4fc",
+    color: "var(--text-accent)",
     borderRadius: "var(--radius-sm)",
     fontWeight: 600,
     cursor: "pointer",
@@ -2434,7 +2434,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "8px",
     backgroundColor: "rgba(99, 102, 241, 0.15)",
     border: "1px dashed rgba(99, 102, 241, 0.4)",
-    color: "#a5b4fc",
+    color: "var(--text-accent)",
     borderRadius: "var(--radius-sm)",
     fontWeight: 600,
     fontSize: "0.8rem",
@@ -2504,7 +2504,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "12px 16px",
     marginBottom: "24px",
     fontSize: "0.85rem",
-    color: "var(--primary-700)",
+    color: "var(--text-accent)",
     display: "flex",
     alignItems: "center",
     gap: "8px",

@@ -190,7 +190,7 @@ export default function PdfViewerModal({
               );
             })}
             {totalPages > 15 && (
-              <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>
+              <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
                 ...{totalPages}p
               </span>
             )}
@@ -310,7 +310,7 @@ const modal: React.CSSProperties = {
   width: "100%",
   maxWidth: "1200px",
   height: "100%",
-  backgroundColor: "#161728",
+  backgroundColor: "var(--modal-bg)",
   borderLeft: "1px solid rgba(99, 102, 241, 0.2)",
   borderRight: "1px solid rgba(99, 102, 241, 0.2)",
   borderBottom: "1px solid rgba(99, 102, 241, 0.2)",
@@ -326,7 +326,7 @@ const header: React.CSSProperties = {
   alignItems: "center",
   padding: "14px 20px",
   borderBottom: "1px solid rgba(99,102,241,0.15)",
-  backgroundColor: "rgba(22, 23, 40, 0.95)",
+  backgroundColor: "var(--modal-header-bg)",
   flexShrink: 0,
 };
 
@@ -351,19 +351,19 @@ const badge: React.CSSProperties = {
   borderRadius: "999px",
   fontSize: "0.75rem",
   fontWeight: 700,
-  color: "#a5b4fc",
+  color: "var(--text-accent)",
   letterSpacing: "0.04em",
 };
 
 const pageInfo: React.CSSProperties = {
   fontSize: "0.9rem",
   fontWeight: 600,
-  color: "#9497b8",
+  color: "var(--text-secondary)",
 };
 
 const scaleLabel: React.CSSProperties = {
   fontSize: "0.8rem",
-  color: "#9497b8",
+  color: "var(--text-secondary)",
   minWidth: "38px",
   textAlign: "center",
 };
@@ -377,7 +377,7 @@ const iconBtn: React.CSSProperties = {
   background: "rgba(99,102,241,0.1)",
   border: "1px solid rgba(99,102,241,0.2)",
   borderRadius: "6px",
-  color: "#a5b4fc",
+  color: "var(--text-accent)",
   fontSize: "1rem",
   cursor: "pointer",
   lineHeight: 1,
@@ -478,7 +478,7 @@ const navBtn = (disabled: boolean): React.CSSProperties => ({
   border: "1px solid",
   borderColor: disabled ? "rgba(99,102,241,0.15)" : "transparent",
   borderRadius: "8px",
-  color: disabled ? "#5c6080" : "#ffffff",
+  color: disabled ? "var(--text-muted)" : "#ffffff",
   fontSize: "0.9rem",
   fontWeight: 600,
   cursor: disabled ? "not-allowed" : "pointer",

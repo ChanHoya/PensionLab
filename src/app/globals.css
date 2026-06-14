@@ -57,6 +57,14 @@
   --text-secondary: #4b5563;
   --text-muted:     #9ca3af;
 
+  /* ── Semantic adaptive colors ── */
+  --text-accent:      #4f46e5;            /* indigo-600: readable on light bg */
+  --success-light:    #059669;            /* emerald-600: readable on light bg */
+  --modal-bg:         #ffffff;
+  --modal-header-bg:  rgba(248, 250, 255, 0.97);
+  --overlay-bg:       rgba(15, 17, 39, 0.5);
+  --muted-label:      #6b7280;
+
   /* Gradients */
   --gradient-brand:   linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
@@ -109,6 +117,14 @@
   --text-primary:   #f0f0f8;  /* near white with slight blue */
   --text-secondary: #9497b8;  /* muted text */
   --text-muted:     #5c6080;  /* very muted */
+
+  /* ── Semantic adaptive colors (dark overrides) ── */
+  --text-accent:     #a5b4fc;             /* primary-300: readable on dark bg */
+  --success-light:   #34d399;             /* emerald-400: readable on dark bg */
+  --modal-bg:        #161728;
+  --modal-header-bg: rgba(22, 23, 40, 0.95);
+  --overlay-bg:      rgba(5, 6, 15, 0.85);
+  --muted-label:     #9497b8;
 
   /* Dark glass — ETF Lens nav/header style */
   --glass-bg:     rgba(22, 23, 40, 0.92);

@@ -488,7 +488,7 @@ export default function YoutubeHubPage() {
                                   rel="noopener noreferrer"
                                   style={{
                                     fontSize: "0.75rem",
-                                    color: "var(--primary-300)",
+                                    color: "var(--text-accent)",
                                     textDecoration: "underline",
                                     display: "inline-flex",
                                     alignItems: "center",
@@ -665,7 +665,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   badge: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "var(--primary-300)",
+    color: "var(--text-accent)",
     backgroundColor: "rgba(99, 102, 241, 0.15)",
     border: "1px solid rgba(99, 102, 241, 0.3)",
     padding: "4px 12px",
@@ -792,7 +792,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     right: "12px",
     backgroundColor: "rgba(13, 14, 28, 0.8)",
     backdropFilter: "blur(4px)",
-    color: "var(--primary-300)",
+    color: "var(--text-accent)",
     fontSize: "0.75rem",
     fontWeight: 600,
     padding: "3px 10px",
@@ -867,7 +867,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   watchLinkText: {
     fontSize: "0.8rem",
     fontWeight: 700,
-    color: "var(--primary-300)",
+    color: "var(--text-accent)",
   },
   emptyContainer: {
     gridColumn: "1 / -1",

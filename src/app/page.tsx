@@ -192,7 +192,7 @@ export default function LandingPage() {
                   <div style={{ ...styles.libCardIcon, fontSize: "1.2rem", marginTop: "1px" }}>🔗</div>
                   <div style={{ ...styles.libCardContent, flex: 1 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap" }}>
-                      <h4 style={{ ...styles.libCardTitle, color: "#a5b4fc", fontSize: "0.9rem" }}>{srv.title}</h4>
+                      <h4 style={{ ...styles.libCardTitle, color: "var(--text-accent)", fontSize: "0.9rem" }}>{srv.title}</h4>
                       <span style={{ fontSize: "0.72rem", color: "var(--primary-light)", textDecoration: "underline" }}>공식 사이트 바로가기 ↗</span>
                     </div>
                     <p style={{ ...styles.libCardDesc, marginTop: "2px" }}>{srv.desc}</p>
@@ -340,7 +340,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     boxSizing: "border-box",
   },
   navButtonActive: {
-    color: "#a5b4fc",
+    color: "var(--text-accent)",
     background: "rgba(99, 102, 241, 0.15)",
     border: "1px solid rgba(99, 102, 241, 0.3)",
     fontWeight: 600,
@@ -398,7 +398,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(5, 6, 15, 0.85)",
+    backgroundColor: "var(--overlay-bg)",
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     zIndex: 999,
@@ -410,7 +410,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   libModal: {
     width: "100%",
     maxWidth: "800px",
-    backgroundColor: "#161728",
+    backgroundColor: "var(--modal-bg)",
     border: "1px solid rgba(99, 102, 241, 0.25)",
     borderRadius: "16px",
     boxShadow: "0 24px 48px rgba(0, 0, 0, 0.5)",
@@ -424,12 +424,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     padding: "12px 18px",
     borderBottom: "1px solid rgba(99, 102, 241, 0.15)",
-    backgroundColor: "rgba(22, 23, 40, 0.95)",
+    backgroundColor: "var(--modal-header-bg)",
   },
   libTitle: {
     fontSize: "1.2rem",
     fontWeight: 700,
-    color: "#a5b4fc",
+    color: "var(--text-accent)",
   },
   libCloseBtn: {
     background: "transparent",

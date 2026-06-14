@@ -1384,7 +1384,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   reportSub: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "var(--primary-300)",
+    color: "var(--text-accent)",
     letterSpacing: "1px",
     textTransform: "uppercase",
   },
@@ -1488,7 +1488,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   sliderGroupTitle: {
     fontSize: "0.85rem",
     fontWeight: 700,
-    color: "var(--primary-300)",
+    color: "var(--text-accent)",
   },
   reformImpactBox: {
     backgroundColor: "rgba(99, 102, 241, 0.03)",

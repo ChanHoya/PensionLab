@@ -990,7 +990,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   badge: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "#a5b4fc",
+    color: "var(--text-accent)",
     backgroundColor: "rgba(99,102,241,0.15)",
     padding: "4px 10px",
     borderRadius: "var(--radius-full)",
@@ -1182,7 +1182,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   reportSub: {
     fontSize: "0.75rem",
     fontWeight: 700,
-    color: "var(--primary-300)",
+    color: "var(--text-accent)",
     letterSpacing: "1px",
     textTransform: "uppercase",
   },

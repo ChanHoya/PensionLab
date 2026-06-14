@@ -707,67 +707,56 @@ export function runWithdrawalSimulation(
             // 올해의 세전 인출액 결정
             // 1년차 수령 시점에 PMT 공식을 이용해 기준 연 수령액 확정
             if (k === 1) {
-              const isS2Leveling = strategyId === "S2";
-              if (isS2Leveling) {
-                // S2(국민연금 5년 연기) 전략의 경우: 70세부터 유입되는 국민연금을 초기(60세~)부터 골고루 안분하여 
-                // 전체 수령액의 급격한 피크 없이 우하향(Spread)하는 평탄화/체감 수급 곡선을 형성하기 위해 연금별 오프셋 계산
-                const r = acc.expectedReturnRate / 100;
-                let offsetSum = 0;
-                
-                for (let y = 1; y <= acc.receivingPeriod; y++) {
-                  const ageAtYear = acc.payoutStartAge + y - 1;
-                  
-                  // 해당 연령에 활성화된 사적 자산의 총 초기 비율 산출
-                  let totalActiveBalanceAtYear = 0;
-                  accounts.forEach((a) => {
-                    const start = a.payoutStartAge;
-                    const end = a.payoutStartAge + a.receivingPeriod - 1;
-                    if (ageAtYear >= start && ageAtYear <= end) {
-                      totalActiveBalanceAtYear += initialBalances[a.id];
-                    }
-                  });
-                  
-                  const shareAtYear = totalActiveBalanceAtYear > 0 ? initialBalances[acc.id] / totalActiveBalanceAtYear : 0;
-                  
-                  let expectedNational = 0;
-                  let expectedBasic = 0;
-                  const nationalPensionStartAge = simulationParams.nationalPensionStartAge + 5; // S2: 5년 연기
-                      
-                  if (ageAtYear >= nationalPensionStartAge) {
-                    const deferYears = 5;
-                    const deferMultiplier = 1 + deferYears * 0.072;
-                    expectedNational = (national.expectedMonthlyPension * 12) * deferMultiplier * 10000;
+              // 모든 전략에 국민연금 오프셋 적용:
+              // 은퇴 시점에 미래 국민연금 유입을 선반영(PV 할인합산)하여
+              // 국민연금 개시 연도 이후 사적연금 인출액을 자동 감액 → 총 수령액이 단조감소
+              // S2는 국민연금 5년 연기 효과(+36%) 추가 반영
+              const deferYearsK1 = strategyId === "S2" ? 5 : 0;
+              const effectiveNatStartAgeK1 = simulationParams.nationalPensionStartAge + deferYearsK1;
+              const deferMultK1 = 1 + deferYearsK1 * 0.072;
+              const r = acc.expectedReturnRate / 100;
+              let offsetSum = 0;
+
+              for (let y = 1; y <= acc.receivingPeriod; y++) {
+                const ageAtYear = acc.payoutStartAge + y - 1;
+
+                let totalActiveBalanceAtYear = 0;
+                accounts.forEach((a) => {
+                  const start = a.payoutStartAge;
+                  const end = a.payoutStartAge + a.receivingPeriod - 1;
+                  if (ageAtYear >= start && ageAtYear <= end) {
+                    totalActiveBalanceAtYear += initialBalances[a.id];
                   }
-                  if (ageAtYear >= 65 && basic.expectedEligibility) {
-                    expectedBasic = (basic.expectedMonthlyAmount * 12) * 10000;
-                  }
-                  
-                  const annualOffset = expectedNational + expectedBasic;
-                  offsetSum += (annualOffset * shareAtYear) * Math.pow(1 + r, -(y - 1));
+                });
+                const shareAtYear = totalActiveBalanceAtYear > 0 ? initialBalances[acc.id] / totalActiveBalanceAtYear : 0;
+
+                let expectedNational = 0;
+                let expectedBasic = 0;
+                if (ageAtYear >= effectiveNatStartAgeK1) {
+                  expectedNational = (national.expectedMonthlyPension * 12) * deferMultK1 * 10000;
                 }
-                
-                let denominator = 0;
-                for (let y = 1; y <= acc.receivingPeriod; y++) {
-                  const multiplier = getDecumulationMultiplier(y, simulationParams.decumulationStrategy);
-                  denominator += multiplier * Math.pow(1 + r, -(y - 1));
+                if (ageAtYear >= 65 && basic.expectedEligibility) {
+                  expectedBasic = (basic.expectedMonthlyAmount * 12) * 10000;
                 }
-                baseAnnualPayouts[acc.id] = (acc.balance + offsetSum) / denominator;
-              } else {
-                baseAnnualPayouts[acc.id] = calculateWeightedPMT(
-                  acc.balance,
-                  acc.receivingPeriod,
-                  acc.expectedReturnRate,
-                  simulationParams.decumulationStrategy
-                );
+                const annualOffset = expectedNational + expectedBasic;
+                offsetSum += (annualOffset * shareAtYear) * Math.pow(1 + r, -(y - 1));
               }
+
+              let denominator = 0;
+              for (let y = 1; y <= acc.receivingPeriod; y++) {
+                const mult = getDecumulationMultiplier(y, simulationParams.decumulationStrategy);
+                denominator += mult * Math.pow(1 + r, -(y - 1));
+              }
+              baseAnnualPayouts[acc.id] = (acc.balance + offsetSum) / denominator;
             }
 
             const multiplier = getDecumulationMultiplier(k, simulationParams.decumulationStrategy);
-            
-            // S2 레벨링의 경우, 계산된 국민/기초연금 오프셋의 지분만큼 사적연금 인출액에서 차감
+
+            // 모든 전략에 국민/기초연금 오프셋 차감:
+            // 국민연금이 유입되는 연도부터 해당 계좌의 자산 지분 비율만큼 사적연금 인출액 차감
+            // → 총 수령액(사적 + 공적) = base_PMT × multiplier(t) 로 단조감소 유지
             let offsetSub = 0;
-            const isS2Leveling = strategyId === "S2";
-            if (isS2Leveling) {
+            {
               let totalActiveBalanceAtAge = 0;
               accounts.forEach((a) => {
                 const start = a.payoutStartAge;
@@ -777,15 +766,15 @@ export function runWithdrawalSimulation(
                 }
               });
               const shareAtAge = totalActiveBalanceAtAge > 0 ? initialBalances[acc.id] / totalActiveBalanceAtAge : 0;
-              
+
+              const deferYearsOff = strategyId === "S2" ? 5 : 0;
+              const effectiveNatStartAgeOff = simulationParams.nationalPensionStartAge + deferYearsOff;
+              const deferMultOff = 1 + deferYearsOff * 0.072;
+
               let expectedNational = 0;
               let expectedBasic = 0;
-              const nationalPensionStartAge = simulationParams.nationalPensionStartAge + 5;
-                  
-              if (age >= nationalPensionStartAge) {
-                const deferYears = 5;
-                const deferMultiplier = 1 + deferYears * 0.072;
-                expectedNational = (national.expectedMonthlyPension * 12) * deferMultiplier * 10000;
+              if (age >= effectiveNatStartAgeOff) {
+                expectedNational = (national.expectedMonthlyPension * 12) * deferMultOff * 10000;
               }
               if (age >= 65 && basic.expectedEligibility) {
                 expectedBasic = (basic.expectedMonthlyAmount * 12) * 10000;

@@ -830,22 +830,6 @@ export default function DashboardPage() {
 
         {/* Withdrawal Simulation & Results */}
         <section style={styles.resultContainer} className="animate-fade-in">
-          <div style={{ display: "flex", justifyContent: "flex-end" }} className="no-print">
-            <button
-              onClick={handleDownloadPDF}
-              disabled={pdfDownloading}
-              className="premium-button"
-              style={{
-                background: "var(--gradient-primary)",
-                padding: "12px 24px",
-                boxShadow: "var(--shadow-brand)",
-                fontWeight: 700,
-              }}
-            >
-              {pdfDownloading ? "🔄 PDF 리포트 생성 중..." : "📥 인출전략 정밀분석 보고서 PDF 다운로드"}
-            </button>
-          </div>
-
           <div id="withdrawal-report-root" style={styles.pdfRootContainer}>
             {/* 1. Comparison Summary */}
             <div style={styles.dashboardCard} className="premium-card">
@@ -914,30 +898,79 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Recharts Bar Comparison Chart */}
-              <div style={{ height: 220, width: "100%", marginTop: "8px" }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barChartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
-                    <Tooltip content={<BarTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: "0.75rem" }} />
-                    <Bar dataKey="세후 수령액" fill="#6366f1" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-                    <Bar dataKey="세금 & 건보료" fill="#f43f5e" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-                  </BarChart>
-                </ResponsiveContainer>
+              {/* S3 Custom Interactive Sliders — 전략 카드 바로 아래 배치 */}
+              {activeTab === "S3" && (
+                <div style={{ ...styles.customParamsBox, marginTop: "12px" }} className="premium-card animate-fade-in no-print">
+                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "8px", color: "var(--text-primary)" }}>
+                    🛠️ S3 커스텀 전략 인출 변수 조절
+                  </h4>
+                  {accountsListIsEmpty() ? (
+                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "center", padding: "10px" }}>
+                      등록된 2/3층 사적연금 자산이 없습니다. 대시보드나 온보딩에서 연금을 추가해 주세요.
+                    </p>
+                  ) : (
+                    <div style={styles.customSlidersGrid}>
+                      {store.retirementPensions.map((p) => renderCustomSliders(p.id, `${p.pensionType} 퇴직연금`))}
+                      {store.personalPensions.map((p) => renderCustomSliders(p.id, `개인연금저축 (${p.savingsType})`))}
+                      {store.pensionInsurances.map((i) => renderCustomSliders(i.id, `연금보험 (${i.insuranceType})`))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 그래프 ① 세금 & 건보료 비교 Bar Chart */}
+              <div style={{ marginTop: "14px" }}>
+                <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  전략별 생애 세금 & 건보료 vs 세후 수령액 비교
+                </p>
+                <div style={{ height: 200, width: "100%" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barChartData} margin={{ top: 6, right: 10, left: 10, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
+                      <YAxis tick={{ fontSize: 11, fill: "var(--text-secondary)" }} tickLine={false} />
+                      <Tooltip
+                        cursor={{ fill: "rgba(99, 102, 241, 0.07)", stroke: "rgba(99, 102, 241, 0.35)", strokeWidth: 1 }}
+                        content={<BarTooltip />}
+                      />
+                      <Legend wrapperStyle={{ fontSize: "0.75rem" }} />
+                      <Bar dataKey="세후 수령액" fill="#6366f1" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                      <Bar dataKey="세금 & 건보료" fill="#f43f5e" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 그래프 ② 인출흐름 & 자산변화 Area+Line Chart */}
+              <div style={{ marginTop: "14px" }}>
+                <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                  {strategies.find(s => s.strategyId === activeTab)?.strategyName} — 연령별 인출흐름 & 자산변화
+                </p>
+                <div style={{ height: 250, width: "100%" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={activeResult.flows} margin={{ top: 6, right: 10, left: 15, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
+                      <XAxis dataKey="age" tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
+                      <YAxis tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: "0.75rem", marginTop: "10px" }} />
+                      <Area type="monotone" dataKey="nationalPreTax" name="국민연금" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} isAnimationActive={false} />
+                      <Area type="monotone" dataKey="basicPreTax" name="기초연금" stackId="1" stroke="#93c5fd" fill="#93c5fd" fillOpacity={0.4} isAnimationActive={false} />
+                      <Area type="monotone" dataKey="retirementPreTax" name="퇴직연금" stackId="1" stroke="#facc15" fill="#facc15" fillOpacity={0.4} isAnimationActive={false} />
+                      <Area type="monotone" dataKey="personalPreTax" name="개인연금" stackId="1" stroke="#f97316" fill="#f97316" fillOpacity={0.4} isAnimationActive={false} />
+                      <Area type="monotone" dataKey="insurancePreTax" name="연금보험" stackId="1" stroke="#f87171" fill="#f87171" fillOpacity={0.4} isAnimationActive={false} />
+                      <Line type="monotone" dataKey="totalPostTax" name="실질 세후 수령액" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
 
-            {/* 2. Strategy Tabs & Detailed Chart */}
+            {/* 2. 인출 최적화 처방 조언 + 탭 선택 */}
             <div style={styles.dashboardCard} className="premium-card">
-              {/* 제목 + 탭 버튼 동일 행 */}
+              {/* 탭 버튼 */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
-                <div>
-                  <h3 style={styles.chartTitle}>인출전략 시뮬레이션 및 자산 변화 그래프</h3>
-                  <p style={{ ...styles.chartSubtitle, marginBottom: 0 }}>선택한 전략의 연령별 3층 구조 인출 흐름 및 세후 가치 변화</p>
-                </div>
+                <h3 style={{ ...styles.chartTitle, marginBottom: 0 }}>인출 최적화 처방 조언</h3>
                 <div style={{ ...styles.tabBar, borderBottom: "none", paddingBottom: 0, flexShrink: 0 }} className="no-print">
                   {strategies.map((s) => (
                     <button
@@ -955,57 +988,12 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
-
-              {/* S3 Custom Interactive Sliders */}
-              {activeTab === "S3" && (
-                <div style={styles.customParamsBox} className="premium-card animate-fade-in no-print">
-                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "8px", color: "var(--text-primary)" }}>
-                    🛠️ S3 커스텀 전략 인출 변수 조절
-                  </h4>
-                  
-                  {accountsListIsEmpty() ? (
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "center", padding: "10px" }}>
-                      등록된 2/3층 사적연금 자산이 없습니다. 대시보드나 온보딩에서 연금을 추가해 주세요.
-                    </p>
-                  ) : (
-                    <div style={styles.customSlidersGrid}>
-                      {store.retirementPensions.map((p) => renderCustomSliders(p.id, `${p.pensionType} 퇴직연금`))}
-                      {store.personalPensions.map((p) => renderCustomSliders(p.id, `개인연금저축 (${p.savingsType})`))}
-                      {store.pensionInsurances.map((i) => renderCustomSliders(i.id, `연금보험 (${i.insuranceType})`))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Recharts Area + Line Chart */}
-              <div style={{ height: 260, width: "100%", marginTop: "10px" }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={activeResult.flows} margin={{ top: 10, right: 10, left: 15, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
-                    <XAxis dataKey="age" tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
-                    <YAxis tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: "0.75rem", marginTop: "10px" }} />
-                    <Area type="monotone" dataKey="nationalPreTax" name="국민연금" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="basicPreTax" name="기초연금" stackId="1" stroke="#93c5fd" fill="#93c5fd" fillOpacity={0.4} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="retirementPreTax" name="퇴직연금" stackId="1" stroke="#facc15" fill="#facc15" fillOpacity={0.4} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="personalPreTax" name="개인연금" stackId="1" stroke="#f97316" fill="#f97316" fillOpacity={0.4} isAnimationActive={false} />
-                    <Area type="monotone" dataKey="insurancePreTax" name="연금보험" stackId="1" stroke="#f87171" fill="#f87171" fillOpacity={0.4} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="totalPostTax" name="실질 세후 수령액" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Strategy advice box */}
-              <div style={{ ...styles.reformImpactBox, marginTop: "4px" }}>
-                <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>인출 최적화 처방 조언</h4>
-                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: "6px" }}>
-                  {activeTab === "S0" && "As-Is 전략은 세법상 사적연금 1,500만 원 한도 및 퇴직소득세 한도를 고려하지 않고 임의 수령하는 계획입니다. 특정 연도에 수령액이 과밀되어 16.5% 분리과세나 높은 종합소득세 누진세율이 적용될 수 있습니다."}
-                  {activeTab === "S1" && "절세 평탄화 전략은 사적연금 수령 한도(1,500만 원) 내로 수령액을 균등 분산하여 3.3%~5.5% 수준의 저율과세 혜택을 100% 누리며, 퇴직연금 수령 기간을 11년 이상 확보하여 퇴직소득세를 최대 40% 감면받을 수 있도록 최적화했습니다."}
-                  {activeTab === "S2" && "국민연금 5년 연기형은 은퇴 직후 소득 공백기 동안 IRP 퇴직소득세 감면 재원 및 개인연금저축을 집중 활용하여 생활비를 충당하고, 국민연금을 5년 연기함으로써 매년 7.2%씩(총 +36%) 연금 수령 단가를 증액하여 생애 후반의 장수 리스크와 물가 상승 위험을 강력히 방어합니다."}
-                  {activeTab === "S3" && "커스텀 전략 조정을 통해 본인만의 최적의 절세 구간을 찾을 수 있습니다. 가능한 사적연금 인출액을 고르게 평탄화하고 수령 기간을 10년 이상 길게 설계하는 것이 절세의 핵심입니다."}
-                </p>
-              </div>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: "10px" }}>
+                {activeTab === "S0" && "As-Is 전략은 세법상 사적연금 1,500만 원 한도 및 퇴직소득세 한도를 고려하지 않고 임의 수령하는 계획입니다. 특정 연도에 수령액이 과밀되어 16.5% 분리과세나 높은 종합소득세 누진세율이 적용될 수 있습니다."}
+                {activeTab === "S1" && "절세 평탄화 전략은 사적연금 수령 한도(1,500만 원) 내로 수령액을 균등 분산하여 3.3%~5.5% 수준의 저율과세 혜택을 100% 누리며, 퇴직연금 수령 기간을 11년 이상 확보하여 퇴직소득세를 최대 40% 감면받을 수 있도록 최적화했습니다."}
+                {activeTab === "S2" && "국민연금 5년 연기형은 은퇴 직후 소득 공백기 동안 IRP 퇴직소득세 감면 재원 및 개인연금저축을 집중 활용하여 생활비를 충당하고, 국민연금을 5년 연기함으로써 매년 7.2%씩(총 +36%) 연금 수령 단가를 증액하여 생애 후반의 장수 리스크와 물가 상승 위험을 강력히 방어합니다."}
+                {activeTab === "S3" && "커스텀 전략 조정을 통해 본인만의 최적의 절세 구간을 찾을 수 있습니다. 가능한 사적연금 인출액을 고르게 평탄화하고 수령 기간을 10년 이상 길게 설계하는 것이 절세의 핵심입니다."}
+              </p>
             </div>
 
             {/* 3. Detailed Year-by-Year Table */}
@@ -1099,6 +1087,24 @@ export default function DashboardPage() {
                 - 본 리포트는 투자 자문 및 세무 자문이 아니며, 인출 계획 실행 전 반드시 세무사나 재무 설계 전문가의 대면 컨설팅을 받으시길 권장합니다.
               </p>
             </div>
+          </div>
+
+          {/* PDF 다운로드 버튼 — 맨 아래 배치 */}
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "16px" }} className="no-print">
+            <button
+              onClick={handleDownloadPDF}
+              disabled={pdfDownloading}
+              className="premium-button"
+              style={{
+                background: "var(--gradient-primary)",
+                padding: "14px 32px",
+                boxShadow: "var(--shadow-brand)",
+                fontWeight: 700,
+                fontSize: "1rem",
+              }}
+            >
+              {pdfDownloading ? "🔄 PDF 리포트 생성 중..." : "📥 인출전략 정밀분석 보고서 PDF 다운로드"}
+            </button>
           </div>
         </section>
       </div>

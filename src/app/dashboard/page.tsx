@@ -390,57 +390,36 @@ export default function DashboardPage() {
     );
   }
 
-  // Render a slider group for S3 custom strategy
+  // Render a slider group for S3 custom strategy (slim single-row: name | slider1 | slider2)
   function renderCustomSliders(id: string, name: string) {
     const startAge = s3StartAges[id] || 60;
     const period = s3Periods[id] || 10;
 
     return (
-      <div key={id} style={styles.sliderGroupContainer}>
-        <span style={styles.sliderGroupTitle}>{name}</span>
-        
-        <div style={{ display: "flex", gap: "12px", marginTop: "6px" }}>
-          {/* Start Age Slider */}
-          <div style={{ flex: 1 }}>
-            <div style={styles.sliderLabelRow}>
-              <label style={styles.sliderLabel}>인출 개시 연령</label>
-              <span style={styles.sliderValue}>{startAge}세</span>
-            </div>
-            <input
-              type="range"
-              min="55"
-              max="80"
-              value={startAge}
-              onChange={(e) => {
-                setS3StartAges({
-                  ...s3StartAges,
-                  [id]: Number(e.target.value)
-                });
-              }}
-              style={styles.sliderRange}
-            />
-          </div>
+      <div key={id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 0", borderBottom: "1px dashed var(--border)" }}>
+        {/* 상품명 */}
+        <span style={{ width: "110px", flexShrink: 0, fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 600 }}>{name}</span>
 
-          {/* Period Slider */}
-          <div style={{ flex: 1 }}>
-            <div style={styles.sliderLabelRow}>
-              <label style={styles.sliderLabel}>수령 기간</label>
-              <span style={styles.sliderValue}>{period}년</span>
-            </div>
-            <input
-              type="range"
-              min="5"
-              max="30"
-              value={period}
-              onChange={(e) => {
-                setS3Periods({
-                  ...s3Periods,
-                  [id]: Number(e.target.value)
-                });
-              }}
-              style={styles.sliderRange}
-            />
-          </div>
+        {/* 인출 개시 연령 */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px" }}>
+          <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>개시</label>
+          <span style={{ fontSize: "0.72rem", color: "var(--primary)", fontWeight: 700, width: "32px", textAlign: "right" }}>{startAge}세</span>
+          <input
+            type="range" min="55" max="80" value={startAge}
+            onChange={(e) => setS3StartAges({ ...s3StartAges, [id]: Number(e.target.value) })}
+            style={{ ...styles.sliderRange, flex: 1, margin: 0 }}
+          />
+        </div>
+
+        {/* 수령 기간 */}
+        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px" }}>
+          <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>기간</label>
+          <span style={{ fontSize: "0.72rem", color: "var(--primary)", fontWeight: 700, width: "28px", textAlign: "right" }}>{period}년</span>
+          <input
+            type="range" min="5" max="30" value={period}
+            onChange={(e) => setS3Periods({ ...s3Periods, [id]: Number(e.target.value) })}
+            style={{ ...styles.sliderRange, flex: 1, margin: 0 }}
+          />
         </div>
       </div>
     );
@@ -953,25 +932,28 @@ export default function DashboardPage() {
 
             {/* 2. Strategy Tabs & Detailed Chart */}
             <div style={styles.dashboardCard} className="premium-card">
-              <h3 style={styles.chartTitle}>인출전략 시뮬레이션 및 자산 소모 흐름</h3>
-              <p style={styles.chartSubtitle}>선택한 전략의 연령별 3층 구조 인출 흐름 및 세후 가치 변화</p>
-
-              {/* Custom Tab Bar */}
-              <div style={styles.tabBar} className="no-print">
-                {strategies.map((s) => (
-                  <button
-                    key={s.strategyId}
-                    onClick={() => setActiveTab(s.strategyId)}
-                    style={{
-                      ...styles.tabButton,
-                      backgroundColor: activeTab === s.strategyId ? "var(--primary)" : "transparent",
-                      color: activeTab === s.strategyId ? "#fff" : "var(--text-secondary)",
-                      border: activeTab === s.strategyId ? "1px solid var(--primary)" : "1px solid var(--border)"
-                    }}
-                  >
-                    {s.strategyName}
-                  </button>
-                ))}
+              {/* 제목 + 탭 버튼 동일 행 */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                <div>
+                  <h3 style={styles.chartTitle}>인출전략 시뮬레이션 및 자산 변화 그래프</h3>
+                  <p style={{ ...styles.chartSubtitle, marginBottom: 0 }}>선택한 전략의 연령별 3층 구조 인출 흐름 및 세후 가치 변화</p>
+                </div>
+                <div style={{ ...styles.tabBar, borderBottom: "none", paddingBottom: 0, flexShrink: 0 }} className="no-print">
+                  {strategies.map((s) => (
+                    <button
+                      key={s.strategyId}
+                      onClick={() => setActiveTab(s.strategyId)}
+                      style={{
+                        ...styles.tabButton,
+                        backgroundColor: activeTab === s.strategyId ? "var(--primary)" : "transparent",
+                        color: activeTab === s.strategyId ? "#fff" : "var(--text-secondary)",
+                        border: activeTab === s.strategyId ? "1px solid var(--primary)" : "1px solid var(--border)"
+                      }}
+                    >
+                      {s.strategyName}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* S3 Custom Interactive Sliders */}

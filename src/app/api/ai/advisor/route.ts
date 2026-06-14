@@ -50,52 +50,65 @@ export async function POST(request: Request) {
     );
 
     // 1. Construct prompt using the detailed state data
-    const prompt = `
-[사용자 프로필 및 연금 시뮬레이션 데이터]
-- 현재 나이: ${simulationParams.currentAge}세
-- 은퇴 희망 나이: ${simulationParams.retirementAge}세 (은퇴까지 남은 기간: ${Math.max(0, simulationParams.retirementAge - simulationParams.currentAge)}년)
-- 기대 수명: ${simulationParams.expectedLifeExpectancy}세
-- 목표 생활비: 월 ${simulationParams.targetMonthlySpending}만원
-- 최소 생활비: 월 ${simulationParams.minMonthlySpending}만원
-- 물가상승률 설정: 연 ${simulationParams.inflationRate}%
-- 은퇴 인출 전략: ${simulationParams.decumulationStrategy === "DECREASING" ? "활동기 집중형 (체감식: 은퇴 초반 120% 인출 후 감액)" : "동일 금액형 (정액식)"}
-- 비연금 금융자산: ${simulationParams.nonPensionAssets}만원
+    // 시뮬레이션 기반 요약 수치 계산
+    const crevasseYears = Math.max(0, (simulationParams.nationalPensionStartAge || 65) - (simulationParams.retirementAge || 60));
+    const grandTotalAssets = simulation.totalAccumulatedAtRetirement + (simulationParams.nonPensionAssets || 0);
+    const retirementCF = simulation.cashFlows.find((cf: any) => cf.age === simulationParams.retirementAge);
+    const natStartCF = simulation.cashFlows.find((cf: any) => cf.age === simulationParams.nationalPensionStartAge);
+    const monthlyAtRetirement = retirementCF ? retirementCF.total : 0;
+    const monthlyAtNatStart = natStartCF ? natStartCF.total : 0;
 
-[1층 국민연금 / 기초연금]
-- 국민연금 예상 수령액: 월 ${nationalPension?.expectedMonthlyPension || 0}만원 (개시 연령: ${simulationParams.nationalPensionStartAge}세)
-- 국민연금 납부 개월수: ${nationalPension?.contributionMonths || 0}개월 / 예상 총 납부: ${nationalPension?.expectedTotalContributionMonths || 0}개월
-- 기초연금 수급 여부: ${basicPension?.expectedEligibility ? "대상자" : "대상 외"} (예상 수령액: 월 ${basicPension?.expectedMonthlyAmount || 0}만원)
+    const prompt = `
+[사용자 종합 자산 현황]
+- 현재 나이: ${simulationParams.currentAge}세 / 은퇴 희망: ${simulationParams.retirementAge}세 (${Math.max(0, simulationParams.retirementAge - simulationParams.currentAge)}년 후)
+- 기대 수명: ${simulationParams.expectedLifeExpectancy}세 / 국민연금 개시: ${simulationParams.nationalPensionStartAge}세
+- 소득 크레바스(공백기): ${crevasseYears}년 (은퇴 후 국민연금 개시 전)
+
+[자산 현황 - 전체 포트폴리오]
+- 연금 자산 합계 (은퇴 시점 추정): ${simulation.totalAccumulatedAtRetirement.toLocaleString()}만원
+- 비연금 금융자산 (주식·채권·현금 등): ${simulationParams.nonPensionAssets || 0}만원
+- 재산세 과세표준 (건보료 재산 기준): ${simulationParams.propertyTaxBase || 0}만원
+- 연간 금융소득 (이자+배당): ${simulationParams.financialIncome || 0}만원/년
+- ★ 전체 보유 자산 합계: ${grandTotalAssets.toLocaleString()}만원 (${grandTotalAssets >= 10000 ? `${(grandTotalAssets / 10000).toFixed(2)}억원` : `${grandTotalAssets.toLocaleString()}만원`})
+
+[소득 흐름 시뮬레이션]
+- 은퇴 직후 (${simulationParams.retirementAge}세) 월 수령액: ${monthlyAtRetirement.toLocaleString()}만원/월
+- 국민연금 개시 후 (${simulationParams.nationalPensionStartAge}세) 월 수령액: ${monthlyAtNatStart.toLocaleString()}만원/월
+- 생애 평균 월 수령액: ${simulation.monthlyAnnuityAtRetirement.toLocaleString()}만원/월
+- 목표 생활비: 월 ${simulationParams.targetMonthlySpending}만원 / 최소 생활비: 월 ${simulationParams.minMonthlySpending}만원
+- 목표 달성 여부: ${simulation.monthlyAnnuityAtRetirement >= simulationParams.targetMonthlySpending ? "✅ 목표 달성" : `⚠ 월 ${simulationParams.targetMonthlySpending - simulation.monthlyAnnuityAtRetirement}만원 부족`}
+- 물가상승률: 연 ${simulationParams.inflationRate}% / 인출 전략: ${simulationParams.decumulationStrategy === "DECREASING" ? "활동기 집중형 (체감식)" : "동일 금액형 (정액식)"}
+
+[1층 공적연금]
+- 국민연금 예상 수령액: 월 ${nationalPension?.expectedMonthlyPension || 0}만원 (개시 ${simulationParams.nationalPensionStartAge}세)
+- 국민연금 납부: ${nationalPension?.contributionMonths || 0}개월 / 예상 총 ${nationalPension?.expectedTotalContributionMonths || 0}개월
+- 기초연금: ${basicPension?.expectedEligibility ? `수급 대상 (월 ${basicPension?.expectedMonthlyAmount || 0}만원)` : "비해당"}
 
 [2층 퇴직연금]
-${retirementPensions.length === 0 ? "- 등록된 퇴직연금 없음" : retirementPensions.map((p: any, idx: number) => `
-- ${idx + 1}. 유형: ${p.pensionType} ${p.pensionType === "DB" ? `(평균급여: ${p.avgSalary || 0}만원, 근속연수: ${p.yearsOfService || 0}년, 임금상승률: ${p.salaryGrowthRate || 0}%)` : `(누적적립금: ${p.totalAccumulated || 0}만원, 월 납입액: ${p.monthlyContribution || 0}만원, 투자수익률: ${p.expectedReturnRate || 0}%)`}`).join("\n")}
+${retirementPensions.length === 0 ? "- 등록된 퇴직연금 없음" : retirementPensions.map((p: any, idx: number) => `- ${idx + 1}. ${p.pensionType}: ${p.pensionType === "DB" ? `평균급여 ${p.avgSalary || 0}만원 × 근속 ${p.yearsOfService || 0}년 (임금상승률 ${p.salaryGrowthRate || 0}%)` : `적립금 ${p.totalAccumulated || 0}만원, 월납 ${p.monthlyContribution || 0}만원, 수익률 ${p.expectedReturnRate || 0}%`}`).join("\n")}
 
 [3층 개인연금 / 연금보험]
-${personalPensions.length === 0 ? "- 등록된 개인연금 없음" : personalPensions.map((p: any, idx: number) => `
-- ${idx + 1}. 개인연금유형: ${p.savingsType} (누적적립금: ${p.totalAccumulated || 0}만원, 월/연 납입액: ${p.monthlyAnnualContribution || 0}만원, 개시 희망나이: ${p.desiredStartAge}세, 수령기간: ${p.receivingPeriod}년)`).join("\n")}
-${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionInsurances.map((p: any, idx: number) => `
-- ${idx + 1}. 연금보험명: ${p.insuranceType} (누적적립금: ${p.totalAccumulated || 0}만원, 월 납입액: ${p.monthlyPayment || 0}만원, 납입기간: ${p.paymentPeriod}년, 공시이율: ${p.expectedDeclaredRate || 0}%)`).join("\n")}
+${personalPensions.length === 0 ? "- 등록된 개인연금 없음" : personalPensions.map((p: any, idx: number) => `- ${idx + 1}. 개인연금(${p.savingsType}): 적립금 ${p.totalAccumulated || 0}만원, 납입 ${p.monthlyAnnualContribution || 0}만원, ${p.desiredStartAge}세 개시 ${p.receivingPeriod}년 수령`).join("\n")}
+${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionInsurances.map((p: any, idx: number) => `- ${idx + 1}. 연금보험(${p.insuranceType}): 적립금 ${p.totalAccumulated || 0}만원, 월납 ${p.monthlyPayment || 0}만원, 납입 ${p.paymentPeriod}년, 공시이율 ${p.expectedDeclaredRate || 0}%`).join("\n")}
 
 당신은 대한민국 3층 연금 및 은퇴 자산 포트폴리오를 설계하는 최고 수준의 AI 자산 관리사(Financial Planner)입니다.
-위 데이터를 바탕으로 사용자를 위한 **은퇴 자산 포트폴리오 진단 및 연금 리밸런싱 처방전**을 정밀하게 분석해 주십시오.
+위의 **전체 자산(연금 자산 + 비연금 자산)** 데이터를 종합하여 사용자를 위한 **은퇴 자산 종합 진단 및 리밸런싱 처방전**을 작성해 주십시오.
 
-반드시 다음 5가지 핵심 영역에 대해 상세한 의견과 개선 방향을 제시해 주세요:
-1. **사용자 현황 및 미래자산 평가**: 은퇴 시점 예상 총자산 규모와 연금 월 수령액, 준비 상황에 대한 전반적 진단 및 총평
-2. **은퇴 준비도 종합평가**: 은퇴 후 단계별 필요자금 및 실질 필요자금 산출
-   - 필요자금 산출은 반드시 다음 3가지 단계(활동 단계별)로 구분하여 기간(은퇴 시점부터 기대수명까지의 총 은퇴 생활기간)과 금액을 분석해 주세요:
-     1) 은퇴후 적극 활동기 (은퇴 나이 ~ 75세): 활발한 여가/사회 활동이 수반되는 시기로 목표 생활비의 120% 수준 적용
-     2) 은퇴후 안정 활동기 (75세 ~ 85세): 지출이 안정화되는 시기로 목표 생활비의 80% 수준 적용
-     3) 은퇴후 비활동기 (85세 ~ 기대수명): 의료/간병비 중심의 소극적 시기로 최소 생활비 수준 적용
-   - 국민연금 차감 후 실질 필요액(은퇴자금 부족액)도 위와 동일한 3가지 단계(적극 활동기, 안정 활동기, 비활동기)로 나누어 각각 기간별 필요 자금을 수치 계산하여 산출해 주세요.
-3. **소득 크레바스(소득 공백기) 진단 및 인출 순서 최적화**: 은퇴 나이부터 국민연금 개시 나이 사이의 소득 공백기 대응 방안 및 세금을 최소화하는 최적의 인출 전략 (퇴직연금, 개인연금, 공적연금의 수령 순서 및 시기 배치)
-4. **자산군 리밸런싱 및 투자 제안**: 남은 은퇴 준비 기간 및 나이를 고려하여, 위험자산과 안전자산의 비율 제안 및 안정적인 배당 흐름을 창출하는 자산군(TDF, 미국 고배당 커버드콜 ETF, 리츠 등) 추천
-5. **인출 전략 맞춤 조언**: 사용자가 선택한 인출 전략(활동기 집중형 또는 동일 금액형)에 따른 지출 예산 관리법 및 리스크(장수 리스크, 인플레이션 위험) 방어 가이드
+반드시 다음 5가지 핵심 영역에 대해 구체적인 수치와 함께 상세히 분석해 주세요:
+1. **사용자 현황 및 종합 자산 평가**: 연금 자산 + 비연금 자산을 포함한 전체 보유 자산 총평. 은퇴 시점 총 자산 규모(${grandTotalAssets.toLocaleString()}만원)와 월 수령 구조(공백기 ${monthlyAtRetirement}만원 → 국민연금 개시 후 ${monthlyAtNatStart}만원)를 기반으로 현재 노후 준비 수준을 종합 평가해 주세요.
+2. **은퇴 준비도 종합평가 및 필요자금 산출**: 다음 3단계로 나누어 각 단계별 필요 자금과 국민연금 차감 후 실질 부족액을 계산해 주세요:
+   1) 은퇴 후 적극 활동기 (${simulationParams.retirementAge}세 ~ 75세, ${Math.max(0, 75 - simulationParams.retirementAge)}년): 목표 생활비의 120% = 월 ${Math.round(simulationParams.targetMonthlySpending * 1.2)}만원 기준
+   2) 은퇴 후 안정 활동기 (75세 ~ 85세, 10년): 목표 생활비의 80% = 월 ${Math.round(simulationParams.targetMonthlySpending * 0.8)}만원 기준
+   3) 은퇴 후 비활동기 (85세 ~ ${simulationParams.expectedLifeExpectancy}세, ${Math.max(0, simulationParams.expectedLifeExpectancy - 85)}년): 최소 생활비 = 월 ${simulationParams.minMonthlySpending}만원 기준
+3. **소득 크레바스 진단 및 최적 인출 순서**: 소득 공백기(${crevasseYears}년: ${simulationParams.retirementAge}세~${simulationParams.nationalPensionStartAge}세) 대응 방안과 세금·건보료를 최소화하는 퇴직연금·개인연금·공적연금 수령 순서 최적화 처방
+4. **자산군 리밸런싱 및 투자 제안**: 비연금 자산(${simulationParams.nonPensionAssets || 0}만원) 포함 전체 포트폴리오 관점에서의 위험자산/안전자산 비율 제안과 배당·인컴 창출 자산군(TDF, 고배당 ETF, 리츠, 채권 등) 추천
+5. **인출 전략 맞춤 조언**: ${simulationParams.decumulationStrategy === "DECREASING" ? "활동기 집중형 체감식" : "동일 금액형 정액식"} 전략 기준 지출 예산 관리법과 장수 리스크·인플레이션 방어 가이드
 
 [답변 작성 형식 지침]
 - 당신의 깊이 있는 생각 흐름과 대안 검토 과정은 반드시 \`<think>\`와 \`</think>\` 태그 내에 한글로 상세히 작성해 주십시오.
-- 인사말, 소개 글, 또는 서론 문장을 완전히 배제하고, \`</think>\` 태그가 닫힌 직후 바로 **"### 1. 사용자 현황 및 미래자산 평가"**로 본문 보고서를 시작해 주십시오.
-- 보고서 내에 빈 항목이나 내용이 없는 불릿 포인트(예: '■ --' 이나 공백으로만 구성된 불릿)는 절대 포함하지 말고, 각 항목의 핵심 내용을 명확히 기술하십시오.
-- 최종 사용자에게 보여줄 가독성 높은 마크다운 형식의 깔끔하고 premium 한 처방전(보고서 스타일)만 작성해 주십시오. 사용자에게 설명하듯 신뢰성 있고 전문적인 어조로 설명해 주세요.
+- 인사말, 소개 글, 또는 서론 문장을 완전히 배제하고, \`</think>\` 태그가 닫힌 직후 바로 **"### 1. 사용자 현황 및 종합 자산 평가"**로 본문 보고서를 시작해 주십시오.
+- 보고서 내에 빈 항목이나 내용이 없는 불릿 포인트는 절대 포함하지 마십시오.
+- 최종 사용자에게 보여줄 가독성 높은 마크다운 형식의 전문적인 처방전(보고서 스타일)만 작성해 주십시오.
 `;
 
     let fullContent = "";

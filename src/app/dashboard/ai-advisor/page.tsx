@@ -315,6 +315,40 @@ export default function AIAdvisorPage() {
 
   const hasAssets = pieData.length > 0;
 
+  // === 종합 자산 현황 (비연금 포함) ===
+  const nonPensionAssets = store.simulationParams.nonPensionAssets || 0;
+  const grandTotalAssets = totalAccumulatedAtRetirement + nonPensionAssets;
+
+  // 연금 자산 세부 구성 (현재 적립액 기준 비중 → 투영 총액에 비율 적용)
+  const retirementLumpApprox = Math.round(dbLump + dcLump);
+  const currentPensionLump = retirementLumpApprox + Math.round(personalLump) + Math.round(insuranceLump) || 1;
+  const pensionProjected = totalAccumulatedAtRetirement;
+  const retirementProjected = Math.round(pensionProjected * (retirementLumpApprox / currentPensionLump));
+  const personalProjected = Math.round(pensionProjected * (personalLump / currentPensionLump));
+  const insuranceProjected = Math.round(pensionProjected * (insuranceLump / currentPensionLump));
+
+  // 비연금 포함 종합 파이 데이터
+  const fullPieData = [
+    { name: "퇴직연금", value: retirementProjected, color: "#6366f1" },
+    { name: "개인연금", value: personalProjected, color: "#34d399" },
+    { name: "연금보험", value: insuranceProjected, color: "#fb923c" },
+    { name: "비연금자산", value: Math.round(nonPensionAssets), color: "#94a3b8" },
+  ].filter(item => item.value > 0);
+  const fullPieTotal = fullPieData.reduce((s, d) => s + d.value, 0) || 1;
+
+  // 소득 크레바스 분석
+  const retirementAge = store.simulationParams.retirementAge;
+  const natStartAge = store.simulationParams.nationalPensionStartAge;
+  const crevasseYears = Math.max(0, natStartAge - retirementAge);
+  const retirementAgeCF = cashFlows.find(cf => cf.age === retirementAge) || { total: 0, national: 0, basic: 0, retirement: 0, personal: 0, insurance: 0 };
+  const natStartCF = cashFlows.find(cf => cf.age === natStartAge) || { total: 0, national: 0, basic: 0, retirement: 0, personal: 0, insurance: 0 };
+  const monthlyAtRetAge = retirementAgeCF.total;
+  const monthlyAtNatStart = natStartCF.total;
+
+  // 은퇴 준비도 %
+  const targetMonthly = store.simulationParams.targetMonthlySpending || 300;
+  const preparednessRatio = Math.min(100, Math.round((monthlyAnnuityAtRetirement / targetMonthly) * 100));
+
   // 3층 구조 수령액 비중 계산 (65세 또는 은퇴나이 중 늦은 시점 기준)
   const targetAge = Math.max(65, store.simulationParams.retirementAge);
   const targetCF = cashFlows.find((cf) => cf.age === targetAge) || 
@@ -536,45 +570,102 @@ export default function AIAdvisorPage() {
       <div style={styles.contentBody}>
         {/* Title and Intro */}
         <section style={styles.titleSection} className="animate-fade-in">
-          <span style={styles.badge}>Gemini 3.5 Flash Reasoning Advisor</span>
-          <h2 style={styles.pageTitle}>AI 은퇴 자산 진단 & 리밸런싱 처방</h2>
+          <span style={styles.badge}>AI 연금 종합 진단 리포트</span>
+          <h2 style={styles.pageTitle}>연금자산 AI 종합 진단 & 리밸런싱 처방</h2>
           <p style={styles.pageSubtitle}>
-            구글의 최신 초거대 AI <strong>Gemini 3.5 Flash</strong>를 통해 회원님의 3층 연금 및 개인 자산을 입체적으로 분석하고 맞춤형 리밸런싱 전략을 도출합니다.
+            입력하신 3층 연금 구조 및 전체 보유 자산을 통합 분석하여 은퇴 준비 현황을 진단하고 맞춤형 리밸런싱 처방전을 제공합니다.
           </p>
+          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "-4px" }}>AI 모델: Google Gemini 3.5 Flash</span>
         </section>
 
         {/* Current State Summary Card */}
         <section style={styles.summaryGrid} className="animate-fade-in">
           <div style={styles.summaryCard} className="premium-card">
-            <h3 style={styles.cardTitle}>현재 은퇴 설계 프로필</h3>
-            <div style={styles.profileDetails}>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>나이 현황</span>
-                <span style={styles.detailValue}>
-                  현재 {currentAge}세 ➔ 은퇴 희망 {store.simulationParams.retirementAge}세 (준비 기간: {Math.max(0, store.simulationParams.retirementAge - currentAge)}년)
+            <h3 style={styles.cardTitle}>은퇴 설계 종합 현황</h3>
+
+            {/* 기본 프로필 */}
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginBottom: "20px" }}>
+              {[
+                { label: "현재 나이", value: `${currentAge}세` },
+                { label: "은퇴 희망", value: `${retirementAge}세 (${Math.max(0, retirementAge - currentAge)}년 후)` },
+                { label: "국민연금 개시", value: `${natStartAge}세` },
+                { label: "기대 수명", value: `${store.simulationParams.expectedLifeExpectancy}세` },
+              ].map((item) => (
+                <div key={item.label} style={{
+                  flex: "1 1 120px",
+                  background: "rgba(99,102,241,0.06)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "10px 14px",
+                }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "3px" }}>{item.label}</div>
+                  <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* 자산 구성 */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                보유 자산 현황 (은퇴 시점 추정)
+              </div>
+              {[
+                { label: "퇴직연금 (DB/DC/IRP)", value: retirementProjected, color: "#6366f1" },
+                { label: "개인연금저축", value: personalProjected, color: "#34d399" },
+                { label: "연금보험", value: insuranceProjected, color: "#fb923c" },
+                { label: "비연금자산 (주식·채권·현금 등)", value: Math.round(nonPensionAssets), color: "#94a3b8" },
+              ].filter(item => item.value > 0).map((item) => (
+                <div key={item.label} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                  <div style={{ width: "10px", height: "10px", borderRadius: "2px", backgroundColor: item.color, flexShrink: 0 }} />
+                  <div style={{ flex: 1, fontSize: "0.78rem", color: "var(--text-secondary)" }}>{item.label}</div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)", whiteSpace: "nowrap" }}>
+                    {item.value >= 10000 ? `${(item.value / 10000).toFixed(2)}억` : `${item.value.toLocaleString()}만`}원
+                  </div>
+                  <div style={{ width: "80px", height: "6px", background: "var(--border)", borderRadius: "3px", flexShrink: 0 }}>
+                    <div style={{ height: "100%", width: `${Math.min(100, Math.round(item.value / fullPieTotal * 100))}%`, backgroundColor: item.color, borderRadius: "3px" }} />
+                  </div>
+                </div>
+              ))}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1.5px solid var(--border)", marginTop: "10px", paddingTop: "10px" }}>
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>총 보유 자산 합계</span>
+                <span className="gradient-text" style={{ fontSize: "1.15rem", fontWeight: 800 }}>
+                  {grandTotalAssets >= 10000 ? `${(grandTotalAssets / 10000).toFixed(2)} 억원` : `${grandTotalAssets.toLocaleString()} 만원`}
                 </span>
               </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>은퇴 시점 연금 자산 규모</span>
-                <span style={styles.detailValue}>
-                  {totalAccumulatedAtRetirement >= 10000
-                    ? `${(totalAccumulatedAtRetirement / 10000).toFixed(2)} 억원`
-                    : `${totalAccumulatedAtRetirement.toLocaleString()} 만원`}
-                </span>
+            </div>
+
+            {/* 소득 흐름 타임라인 */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--text-secondary)", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                소득 흐름 분석
               </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>예상 수령액 (은퇴나이 기준)</span>
-                <span style={styles.detailValue}>
-                  월 <span className="gradient-text">{monthlyAnnuityAtRetirement.toLocaleString()}</span> 만원 / 월 (목표: 월 {store.simulationParams.targetMonthlySpending}만원)
-                </span>
-              </div>
-              <div style={styles.detailRow}>
-                <span style={styles.detailLabel}>선택한 인출 전략</span>
-                <span style={styles.detailValue}>
-                  {store.simulationParams.decumulationStrategy === "DECREASING"
-                    ? "활동기 집중형 (체감식)"
-                    : "동일 금액형 (정액식)"}
-                </span>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <div style={{ flex: 1, background: crevasseYears > 0 ? "rgba(239,68,68,0.07)" : "rgba(34,197,94,0.07)", border: `1px solid ${crevasseYears > 0 ? "rgba(239,68,68,0.2)" : "rgba(34,197,94,0.2)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px" }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "3px" }}>
+                    {retirementAge}세 은퇴 직후 월 수령액
+                  </div>
+                  <div style={{ fontSize: "1rem", fontWeight: 800, color: crevasseYears > 0 ? "var(--danger)" : "var(--success)" }}>
+                    {monthlyAtRetAge.toLocaleString()} 만원/월
+                  </div>
+                  {crevasseYears > 0 && <div style={{ fontSize: "0.68rem", color: "var(--danger)", marginTop: "2px" }}>⚠ 소득 공백기 {crevasseYears}년</div>}
+                </div>
+                <div style={{ flex: 1, background: "rgba(99,102,241,0.06)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 12px" }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "3px" }}>
+                    {natStartAge}세 국민연금 개시 후 월 수령액
+                  </div>
+                  <div style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-accent)" }}>
+                    {monthlyAtNatStart.toLocaleString()} 만원/월
+                  </div>
+                </div>
+                <div style={{ flex: 1, background: "rgba(99,102,241,0.06)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 12px" }}>
+                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginBottom: "3px" }}>목표 생활비</div>
+                  <div style={{ fontSize: "1rem", fontWeight: 800, color: "var(--text-primary)" }}>
+                    {targetMonthly.toLocaleString()} 만원/월
+                  </div>
+                  <div style={{ fontSize: "0.68rem", color: preparednessRatio >= 100 ? "var(--success)" : "var(--warning)", marginTop: "2px" }}>
+                    {preparednessRatio >= 100 ? "✅ 목표 달성" : `준비도 ${preparednessRatio}%`}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -587,13 +678,12 @@ export default function AIAdvisorPage() {
                 width: "100%",
                 padding: "16px",
                 fontSize: "1.05rem",
-                marginTop: "24px",
                 background: "var(--gradient-brand)",
                 boxShadow: "var(--shadow-brand)",
                 fontWeight: 700,
               }}
             >
-              {loading ? "🔄 Gemini가 포트폴리오를 진단하고 있습니다..." : "🔮 AI 포트폴리오 정밀 처방전 받기"}
+              {loading ? "🔄 AI가 전체 자산을 종합 진단하고 있습니다..." : "🔮 AI 연금 종합 진단 처방전 받기"}
             </button>
           </div>
         </section>
@@ -613,10 +703,11 @@ export default function AIAdvisorPage() {
               <div style={styles.customSpinnerInner} />
             </div>
             <h4 style={{ marginTop: "24px", color: "var(--text-primary)", fontWeight: 700 }}>
-              AI 추론 엔진 가동 중 (Thinking...)
+              AI 종합 진단 분석 중...
             </h4>
             <p style={{ marginTop: "8px", color: "var(--text-secondary)", fontSize: "0.85rem", textAlign: "center", maxWidth: "450px", lineHeight: 1.5 }}>
-              Gemini 3.5 Flash 모델이 3층 연금 구조, 은퇴 크레바스 기간 분석, 리밸런싱 포트폴리오 및 연금별 인출 순서 세제 효율성을 입체적으로 추론하고 있습니다. 잠시만 기다려주세요.
+              3층 연금 구조·전체 보유 자산·소득 공백기·세제 최적화 인출 순서를 종합 분석하고 있습니다.
+              Thinking 모델 특성상 1~2분 소요될 수 있습니다. 잠시 기다려주세요.
             </p>
           </div>
         )}
@@ -648,10 +739,10 @@ export default function AIAdvisorPage() {
               <div style={styles.dashboardCard} className="premium-card">
                 <div style={styles.dashboardHeader}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                    <span style={styles.reportSub}>AI PRESCRIBED RETIREMENT REPORT</span>
+                    <span style={styles.reportSub}>AI RETIREMENT DIAGNOSIS REPORT</span>
                     <div style={styles.logoText}>Pension<span className="gradient-text">Lab</span></div>
                   </div>
-                  <h3 style={styles.dashboardTitle}>연금자산 종합 진단 보고서</h3>
+                  <h3 style={styles.dashboardTitle}>연금자산 AI 종합 진단 보고서</h3>
                 </div>
 
                 <div style={styles.divider} />
@@ -692,102 +783,180 @@ export default function AIAdvisorPage() {
                   </div>
                 </div>
 
-                {/* Charts Grid */}
-                <div style={styles.chartsGrid}>
-                  <div style={styles.chartCol}>
-                    <h4 style={styles.chartBlockTitle}>연금 적립 구성 비율</h4>
-                    <div style={{ height: 260, width: "100%" }}>
-                      {totalVal > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: "16px", height: "100%", width: "100%", padding: "0 10px" }}>
-                          {/* 좌측: 3층 구조 이미지 */}
-                          <div style={styles.houseDiagramWrapper}>
-                            {/* 3층 (개인/보험) */}
-                            {v3 > 0 && (
-                              <div style={{
-                                ...styles.roofLevel,
-                                height: `${Math.max(28, (pct3 / 100) * 200)}px`,
-                              }}>
-                                <span style={styles.houseLabel}>3층 ({pct3}%)</span>
-                              </div>
-                            )}
+                {/* Charts Grid - 전문 리포트 차트 */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginTop: "20px" }}>
 
-                            {/* 2층 (퇴직연금) */}
-                            {v2 > 0 && (
-                              <div style={{
-                                ...styles.pillarLevel,
-                                height: `${Math.max(28, (pct2 / 100) * 200)}px`,
-                              }}>
-                                <span style={styles.houseLabel}>2층 ({pct2}%)</span>
-                              </div>
-                            )}
-
-                            {/* 1층 (국민/기초) */}
-                            {v1 > 0 && (
-                              <div style={{
-                                ...styles.baseLevel,
-                                height: `${Math.max(28, (pct1 / 100) * 200)}px`,
-                              }}>
-                                <span style={styles.houseLabel}>1층 ({pct1}%)</span>
-                              </div>
-                            )}
+                  {/* ① 전체 자산 구성 도넛 차트 */}
+                  <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "16px" }}>
+                    <h4 style={{ ...styles.chartBlockTitle, marginTop: 0 }}>
+                      보유 자산 포트폴리오 구성
+                      <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 400, marginLeft: "6px" }}>(은퇴 시점 추정)</span>
+                    </h4>
+                    <div style={{ height: 200 }}>
+                      {fullPieData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={fullPieData}
+                              cx="42%"
+                              cy="50%"
+                              innerRadius={52}
+                              outerRadius={82}
+                              paddingAngle={2}
+                              dataKey="value"
+                              isAnimationActive={false}
+                            >
+                              {fullPieData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} stroke="transparent" />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(value) => {
+                                const v = Number(value) || 0;
+                                return [v >= 10000 ? `${(v / 10000).toFixed(2)} 억원` : `${v.toLocaleString()} 만원`, ""];
+                              }}
+                              contentStyle={{ background: "var(--modal-bg)", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "0.78rem" }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div style={styles.emptyChart}>자산 데이터 없음</div>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {fullPieData.map((item) => (
+                        <div key={item.name} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <div style={{ width: "9px", height: "9px", borderRadius: "2px", backgroundColor: item.color, flexShrink: 0 }} />
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>{item.name}</span>
                           </div>
-
-                          {/* 우측: 범례 */}
-                          <div style={{ display: "flex", flexDirection: "column", gap: "12px", justifyContent: "center", flex: 1 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <div style={{ width: "12px", height: "12px", backgroundColor: "#f97316", borderRadius: "2px" }} />
-                              <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>3층 개인/보험</span>
-                                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: 700 }}>{v3.toLocaleString()} 만원/월</span>
-                              </div>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <div style={{ width: "12px", height: "12px", backgroundColor: "#facc15", borderRadius: "2px" }} />
-                              <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>2층 퇴직연금</span>
-                                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: 700 }}>{v2.toLocaleString()} 만원/월</span>
-                              </div>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <div style={{ width: "12px", height: "12px", backgroundColor: "#3b82f6", borderRadius: "2px" }} />
-                              <div style={{ display: "flex", flexDirection: "column" }}>
-                                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 500 }}>1층 국민/기초</span>
-                                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)", fontWeight: 700 }}>{v1.toLocaleString()} 만원/월</span>
-                              </div>
-                            </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>
+                              {Math.round(item.value / fullPieTotal * 100)}%
+                            </span>
+                            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--text-primary)", textAlign: "right", minWidth: "70px" }}>
+                              {item.value >= 10000 ? `${(item.value / 10000).toFixed(1)}억` : `${item.value.toLocaleString()}만`}원
+                            </span>
                           </div>
                         </div>
-                      ) : (
-                        <div style={styles.emptyChart}>연금 적립 데이터 없음</div>
-                      )}
+                      ))}
+                      <div style={{ borderTop: "1px solid var(--border)", paddingTop: "6px", display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--text-primary)" }}>총 자산</span>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-accent)" }}>
+                          {grandTotalAssets >= 10000 ? `${(grandTotalAssets / 10000).toFixed(2)}억원` : `${grandTotalAssets.toLocaleString()}만원`}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div style={styles.chartCol}>
-                    <h4 style={styles.chartBlockTitle}>연령별 예상 월 연금 수령액 (3층 구조)</h4>
-                    <div style={{ height: 240, width: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <AreaChart
-                          data={cashFlows.filter((cf) => cf.age >= store.simulationParams.retirementAge - 1)}
-                          margin={{ top: 5, right: 10, left: 10, bottom: 0 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.12)" />
-                          <XAxis dataKey="age" tickLine={false} style={{ fontSize: "0.75rem", fill: "var(--text-secondary)" }} />
-                          <YAxis tickLine={false} style={{ fontSize: "0.75rem", fill: "var(--text-secondary)" }} />
-                          {hasNational && <Area type="monotone" dataKey="national" name="국민" stackId="1" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.4} isAnimationActive={false} />}
-                          {hasBasic && <Area type="monotone" dataKey="basic" name="기초" stackId="1" stroke="var(--info)" fill="var(--info)" fillOpacity={0.4} isAnimationActive={false} />}
-                          {hasRetirement && <Area type="monotone" dataKey="retirement" name="퇴직" stackId="1" stroke="#818cf8" fill="#818cf8" fillOpacity={0.4} isAnimationActive={false} />}
-                          {hasPersonal && <Area type="monotone" dataKey="personal" name="개인" stackId="1" stroke="#34d399" fill="#34d399" fillOpacity={0.4} isAnimationActive={false} />}
-                          {hasInsurance && <Area type="monotone" dataKey="insurance" name="보험" stackId="1" stroke="#fb923c" fill="#fb923c" fillOpacity={0.4} isAnimationActive={false} />}
-                        </AreaChart>
-                      </ResponsiveContainer>
-                      <div style={styles.chartLegend}>
-                        {hasNational && <span style={styles.legendItem}><span style={{ ...styles.legendDot, backgroundColor: "var(--primary)" }} />국민</span>}
-                        {hasBasic && <span style={styles.legendItem}><span style={{ ...styles.legendDot, backgroundColor: "var(--info)" }} />기초</span>}
-                        {hasRetirement && <span style={styles.legendItem}><span style={{ ...styles.legendDot, backgroundColor: "#818cf8" }} />퇴직</span>}
-                        {hasPersonal && <span style={styles.legendItem}><span style={{ ...styles.legendDot, backgroundColor: "#34d399" }} />개인</span>}
-                        {hasInsurance && <span style={styles.legendItem}><span style={{ ...styles.legendDot, backgroundColor: "#fb923c" }} />보험</span>}
+                  {/* ② 연령별 연금 수령액 스택 차트 */}
+                  <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "16px" }}>
+                    <h4 style={{ ...styles.chartBlockTitle, marginTop: 0 }}>
+                      연령별 월 연금 수령액 흐름
+                      <span style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 400, marginLeft: "6px" }}>(만원/월)</span>
+                    </h4>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart
+                        data={cashFlows.filter((cf) => cf.age >= retirementAge)}
+                        margin={{ top: 5, right: 8, left: -10, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient id="gradNational" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.6} />
+                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.1} />
+                          </linearGradient>
+                          <linearGradient id="gradRetirement" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#818cf8" stopOpacity={0.6} />
+                            <stop offset="95%" stopColor="#818cf8" stopOpacity={0.1} />
+                          </linearGradient>
+                          <linearGradient id="gradPersonal" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#34d399" stopOpacity={0.6} />
+                            <stop offset="95%" stopColor="#34d399" stopOpacity={0.1} />
+                          </linearGradient>
+                          <linearGradient id="gradInsurance" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#fb923c" stopOpacity={0.6} />
+                            <stop offset="95%" stopColor="#fb923c" stopOpacity={0.1} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99,102,241,0.1)" />
+                        <XAxis dataKey="age" tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickFormatter={(v) => `${v}세`} interval={4} />
+                        <YAxis tickLine={false} tick={{ fontSize: 10, fill: "var(--text-muted)" }} />
+                        <Tooltip
+                          contentStyle={{ background: "var(--modal-bg)", border: "1px solid var(--border)", borderRadius: "6px", fontSize: "0.78rem" }}
+                          formatter={(v, name) => [`${Number(v).toLocaleString()}만원`, String(name)]}
+                          labelFormatter={(label) => `${label}세`}
+                        />
+                        {hasNational && <Area type="monotone" dataKey="national" name="국민연금" stackId="1" stroke="#6366f1" fill="url(#gradNational)" isAnimationActive={false} />}
+                        {hasBasic && <Area type="monotone" dataKey="basic" name="기초연금" stackId="1" stroke="var(--info)" fill="var(--info)" fillOpacity={0.35} isAnimationActive={false} />}
+                        {hasRetirement && <Area type="monotone" dataKey="retirement" name="퇴직연금" stackId="1" stroke="#818cf8" fill="url(#gradRetirement)" isAnimationActive={false} />}
+                        {hasPersonal && <Area type="monotone" dataKey="personal" name="개인연금" stackId="1" stroke="#34d399" fill="url(#gradPersonal)" isAnimationActive={false} />}
+                        {hasInsurance && <Area type="monotone" dataKey="insurance" name="연금보험" stackId="1" stroke="#fb923c" fill="url(#gradInsurance)" isAnimationActive={false} />}
+                        <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "0.72rem", paddingTop: "8px" }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* ③ 준비도 게이지 + 소득 크레바스 시각화 */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginTop: "16px" }}>
+                  <div style={{ background: "rgba(99,102,241,0.04)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "16px" }}>
+                    <h4 style={{ ...styles.chartBlockTitle, marginTop: 0, marginBottom: "14px" }}>은퇴 준비도 진단</h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {[
+                        { label: "목표 생활비 달성률", ratio: preparednessRatio, color: preparednessRatio >= 100 ? "#22c55e" : preparednessRatio >= 60 ? "#f59e0b" : "#ef4444" },
+                        { label: "최소 생활비 달성률", ratio: Math.min(100, Math.round((monthlyAnnuityAtRetirement / (store.simulationParams.minMonthlySpending || 200)) * 100)), color: "#6366f1" },
+                      ].map((g) => (
+                        <div key={g.label}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                            <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>{g.label}</span>
+                            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: g.color }}>{g.ratio}%</span>
+                          </div>
+                          <div style={{ height: "8px", background: "rgba(99,102,241,0.12)", borderRadius: "4px", overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${g.ratio}%`, background: g.color, borderRadius: "4px", transition: "width 0.6s ease" }} />
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ marginTop: "8px", padding: "10px", background: "rgba(99,102,241,0.06)", borderRadius: "var(--radius-sm)", textAlign: "center" }}>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>생애 예상 월 평균 수령액</div>
+                        <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-accent)" }}>{monthlyAnnuityAtRetirement.toLocaleString()} 만원</div>
+                        <div style={{ fontSize: "0.68rem", color: deficit > 0 ? "var(--danger)" : "var(--success)", marginTop: "2px" }}>
+                          {deficit > 0 ? `목표 대비 월 ${deficit.toLocaleString()}만원 부족` : "목표 월 수령액 달성"}
+                        </div>
                       </div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: "var(--radius-sm)", padding: "16px" }}>
+                    <h4 style={{ ...styles.chartBlockTitle, marginTop: 0, marginBottom: "14px", color: "var(--text-primary)" }}>소득 크레바스 분석</h4>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", background: "rgba(99,102,241,0.06)", borderRadius: "var(--radius-sm)" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>은퇴 나이</span>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{retirementAge}세</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", background: crevasseYears > 0 ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.06)", borderRadius: "var(--radius-sm)" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>공백기 (국민연금 전)</span>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: crevasseYears > 0 ? "var(--danger)" : "var(--success)" }}>
+                          {crevasseYears > 0 ? `${crevasseYears}년 공백` : "공백 없음"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", background: "rgba(99,102,241,0.06)", borderRadius: "var(--radius-sm)" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>공백기 월 수령액</span>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>{monthlyAtRetAge.toLocaleString()}만원</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 10px", background: "rgba(99,102,241,0.06)", borderRadius: "var(--radius-sm)" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>국민연금 개시 후</span>
+                        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-accent)" }}>{monthlyAtNatStart.toLocaleString()}만원</span>
+                      </div>
+                      {crevasseYears > 0 && (
+                        <div style={{ padding: "8px 10px", background: "rgba(239,68,68,0.06)", borderRadius: "var(--radius-sm)", marginTop: "2px" }}>
+                          <div style={{ fontSize: "0.7rem", color: "var(--danger)", fontWeight: 600 }}>
+                            ⚠ 공백기 {crevasseYears}년간 추가 필요액
+                          </div>
+                          <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-primary)", marginTop: "3px" }}>
+                            ≈ {Math.round(Math.max(0, targetMonthly - monthlyAtRetAge) * crevasseYears * 12).toLocaleString()}만원
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -862,9 +1031,9 @@ export default function AIAdvisorPage() {
                 <div style={styles.prescriptionHeader}>
                   <span style={{ fontSize: "1.75rem" }}>📋</span>
                   <div>
-                    <h3 style={styles.prescriptionTitle}>AI 연금 리밸런싱 종합 처방전</h3>
+                    <h3 style={styles.prescriptionTitle}>AI 연금 종합 진단 처방전</h3>
                     <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                      본 진단은 입력된 자산을 기초로 한 Gemini 3.5 Flash AI의 모델 시뮬레이션 제안서입니다.
+                      3층 연금 구조 및 전체 보유 자산을 기초로 한 AI 모델 시뮬레이션 제안서입니다. (AI 모델: Google Gemini 3.5 Flash)
                     </p>
                   </div>
                 </div>

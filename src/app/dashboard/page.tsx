@@ -1667,6 +1667,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "7px 8px",
     fontWeight: 700,
     color: "var(--text-primary)",
+    textAlign: "right" as const,
   },
   tr: {
     borderBottom: "1px solid var(--border)",
@@ -1676,6 +1677,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   td: {
     padding: "7px 8px",
     color: "var(--text-secondary)",
+    textAlign: "right" as const,
+    fontVariantNumeric: "tabular-nums" as const,
+    fontFeatureSettings: '"tnum"',
+    fontFamily: "'Roboto Mono', 'SF Mono', 'Fira Code', Menlo, Monaco, 'Courier New', monospace",
+    fontSize: "0.82rem",
   },
   footnoteSection: {
     padding: "12px 16px",

@@ -345,9 +345,10 @@ export default function AIAdvisorPage() {
   const monthlyAtRetAge = retirementAgeCF.total;
   const monthlyAtNatStart = natStartCF.total;
 
-  // 은퇴 준비도 %
+  // 은퇴 준비도 % — 국민연금 개시 후 수령액 기준이 실질 생활 준비도를 더 정확히 반영
   const targetMonthly = store.simulationParams.targetMonthlySpending || 300;
-  const preparednessRatio = Math.min(100, Math.round((monthlyAnnuityAtRetirement / targetMonthly) * 100));
+  const repMonthly = monthlyAtNatStart > 0 ? monthlyAtNatStart : monthlyAnnuityAtRetirement;
+  const preparednessRatio = Math.min(100, Math.round((repMonthly / targetMonthly) * 100));
 
   // 3층 구조 수령액 비중 계산 (65세 또는 은퇴나이 중 늦은 시점 기준)
   const targetAge = Math.max(65, store.simulationParams.retirementAge);
@@ -389,22 +390,22 @@ export default function AIAdvisorPage() {
     }
   }
 
-  // Living cost assessment (assume standard middle class retirement cost: 2.5 million KRW / month)
-  const targetAnnuity = 250; // 250만원
-  const deficit = targetAnnuity - monthlyAnnuityAtRetirement;
-  
+  // 국민연금 개시 후 수령액 vs 목표 생활비로 준비도 판단
+  const deficit = targetMonthly - repMonthly;
+  const minMonthly = store.simulationParams.minMonthlySpending || 200;
+
   let grade = "준비 필요";
   let gradeColor = "var(--warning)";
-  let gradeText = "은퇴 후 기본적인 생활비(250만원) 마련에 추가 보완책이 필요합니다.";
-  
-  if (monthlyAnnuityAtRetirement >= targetAnnuity) {
+  let gradeText = `목표 생활비(월 ${targetMonthly.toLocaleString()}만원)에 추가 보완이 필요합니다.`;
+
+  if (repMonthly >= targetMonthly) {
     grade = "안정";
     gradeColor = "var(--success)";
-    gradeText = "목표 연금액(월 250만원)을 달성하여 노후 준비 수준이 훌륭합니다.";
-  } else if (monthlyAnnuityAtRetirement < 120) {
+    gradeText = `목표 연금액(월 ${targetMonthly.toLocaleString()}만원)을 달성하여 노후 준비 수준이 훌륭합니다.`;
+  } else if (repMonthly < minMonthly) {
     grade = "보완 시급";
     gradeColor = "var(--danger)";
-    gradeText = "월 연금 수령액이 기초 생활비에 미치지 못하므로 즉각적인 납입액 확대가 시급합니다.";
+    gradeText = "예상 수령액이 최소 생활비에 미치지 못하므로 즉각적인 납입액 확대가 시급합니다.";
   }
 
   const handleDownloadPDF = async () => {
@@ -573,7 +574,7 @@ export default function AIAdvisorPage() {
           <span style={styles.badge}>AI 연금 종합 진단 리포트</span>
           <h2 style={styles.pageTitle}>연금자산 AI 종합 진단 & 리밸런싱 처방</h2>
           <p style={styles.pageSubtitle}>
-            입력하신 3층 연금 구조 및 전체 보유 자산을 통합 분석하여 은퇴 준비 현황을 진단하고 맞춤형 리밸런싱 처방전을 제공합니다.
+            자산관리 탭의 수치 시뮬레이션을 넘어, AI가 3층 연금 구조·전체 보유 자산·소득 공백기를 종합 평가하고 <strong>투자 리밸런싱·세제 최적화·인출 전략</strong>에 대한 맞춤 처방전을 제공합니다.
           </p>
           <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "-4px" }}>AI 모델: Google Gemini 3.5 Flash</span>
         </section>
@@ -630,6 +631,11 @@ export default function AIAdvisorPage() {
                 <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>총 보유 자산 합계</span>
                 <span className="gradient-text" style={{ fontSize: "1.15rem", fontWeight: 800 }}>
                   {grandTotalAssets >= 10000 ? `${(grandTotalAssets / 10000).toFixed(2)} 억원` : `${grandTotalAssets.toLocaleString()} 만원`}
+                </span>
+              </div>
+              <div style={{ marginTop: "8px", padding: "7px 10px", background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: "6px" }}>
+                <span style={{ fontSize: "0.69rem", color: "var(--text-muted)" }}>
+                  ℹ️ 국민연금은 공적 수급권(소득)으로, 일시 인출이 불가한 공적 연금이므로 적립 자산이 아닌 월 수령액으로 아래 소득 흐름에 반영됩니다.
                 </span>
               </div>
             </div>
@@ -713,7 +719,7 @@ export default function AIAdvisorPage() {
         )}
 
         {/* Diagnostic Results (Only display when recommendation is available) */}
-        {!loading && recommendation && (
+        {!loading && recommendation.trim() && (
           <section style={styles.resultContainer} className="animate-fade-in">
             {/* PDF Download Action Button */}
             <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px", width: "100%" }} className="no-print">
@@ -761,23 +767,23 @@ export default function AIAdvisorPage() {
                     <div style={styles.tableCell}>진단 및 시뮬레이션 결과</div>
                   </div>
                   <div style={styles.tableRow}>
-                    <div style={styles.tableCellLabel}>은퇴 후 예상 월 수령액</div>
+                    <div style={styles.tableCellLabel}>{natStartAge}세 이후 월 수령액 (국민연금 포함)</div>
                     <div style={styles.tableCellVal}>
-                      <strong>{monthlyAnnuityAtRetirement.toLocaleString()}</strong> 만원 / 월
+                      <strong>{monthlyAtNatStart.toLocaleString()}</strong> 만원 / 월
                     </div>
                   </div>
                   <div style={styles.tableRow}>
-                    <div style={styles.tableCellLabel}>목표 대비 과부족액 (기준 250만)</div>
+                    <div style={styles.tableCellLabel}>목표 대비 과부족액 (기준 {targetMonthly.toLocaleString()}만)</div>
                     <div style={{ ...styles.tableCellVal, color: deficit > 0 ? "var(--danger)" : "var(--success)" }}>
-                      {deficit > 0 ? `${deficit.toLocaleString()} 만원 부족` : "은퇴 자금 충족"}
+                      {deficit > 0 ? `${Math.abs(deficit).toLocaleString()} 만원 부족` : "목표 월 수령액 달성"}
                     </div>
                   </div>
                   <div style={{ ...styles.tableRow, borderBottom: "none" }}>
-                    <div style={styles.tableCellLabel}>은퇴 시 적립 자산 규모</div>
+                    <div style={styles.tableCellLabel}>은퇴 시 총 적립 자산 (비연금 포함)</div>
                     <div style={styles.tableCellVal}>
-                      {totalAccumulatedAtRetirement >= 10000 
-                        ? `${(totalAccumulatedAtRetirement / 10000).toFixed(2)} 억원`
-                        : `${totalAccumulatedAtRetirement.toLocaleString()} 만원`
+                      {grandTotalAssets >= 10000
+                        ? `${(grandTotalAssets / 10000).toFixed(2)} 억원`
+                        : `${grandTotalAssets.toLocaleString()} 만원`
                       }
                     </div>
                   </div>
@@ -904,7 +910,7 @@ export default function AIAdvisorPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {[
                         { label: "목표 생활비 달성률", ratio: preparednessRatio, color: preparednessRatio >= 100 ? "#22c55e" : preparednessRatio >= 60 ? "#f59e0b" : "#ef4444" },
-                        { label: "최소 생활비 달성률", ratio: Math.min(100, Math.round((monthlyAnnuityAtRetirement / (store.simulationParams.minMonthlySpending || 200)) * 100)), color: "#6366f1" },
+                        { label: "최소 생활비 달성률", ratio: Math.min(100, Math.round((repMonthly / minMonthly) * 100)), color: "#6366f1" },
                       ].map((g) => (
                         <div key={g.label}>
                           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
@@ -917,10 +923,10 @@ export default function AIAdvisorPage() {
                         </div>
                       ))}
                       <div style={{ marginTop: "8px", padding: "10px", background: "rgba(99,102,241,0.06)", borderRadius: "var(--radius-sm)", textAlign: "center" }}>
-                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>생애 예상 월 평균 수령액</div>
-                        <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-accent)" }}>{monthlyAnnuityAtRetirement.toLocaleString()} 만원</div>
+                        <div style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>{natStartAge}세 이후 월 수령액 (국민연금 포함)</div>
+                        <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-accent)" }}>{repMonthly.toLocaleString()} 만원</div>
                         <div style={{ fontSize: "0.68rem", color: deficit > 0 ? "var(--danger)" : "var(--success)", marginTop: "2px" }}>
-                          {deficit > 0 ? `목표 대비 월 ${deficit.toLocaleString()}만원 부족` : "목표 월 수령액 달성"}
+                          {deficit > 0 ? `목표 대비 월 ${Math.abs(deficit).toLocaleString()}만원 부족` : "목표 월 수령액 달성"}
                         </div>
                       </div>
                     </div>
@@ -1026,26 +1032,31 @@ export default function AIAdvisorPage() {
                 </div>
               )}
 
-              {/* 3. Main Recommendation Content (Prescription) */}
-              <div style={styles.prescriptionCard} className="premium-card">
-                <div style={styles.prescriptionHeader}>
-                  <span style={{ fontSize: "1.75rem" }}>📋</span>
-                  <div>
-                    <h3 style={styles.prescriptionTitle}>AI 연금 종합 진단 처방전</h3>
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                      3층 연금 구조 및 전체 보유 자산을 기초로 한 AI 모델 시뮬레이션 제안서입니다. (AI 모델: Google Gemini 3.5 Flash)
-                    </p>
+              {/* 3. Main Recommendation Content (Prescription) — only render when there is actual markdown content */}
+              {(() => {
+                const content = renderMarkdown(recommendation);
+                const hasContent = Array.isArray(content) ? content.some(Boolean) : !!content;
+                if (!hasContent) return null;
+                return (
+                  <div style={styles.prescriptionCard} className="premium-card">
+                    <div style={styles.prescriptionHeader}>
+                      <span style={{ fontSize: "1.75rem" }}>📋</span>
+                      <div>
+                        <h3 style={styles.prescriptionTitle}>AI 연금 종합 진단 처방전</h3>
+                        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
+                          3층 연금 구조 및 전체 보유 자산을 기초로 한 AI 모델 시뮬레이션 제안서입니다. (AI 모델: Google Gemini 3.5 Flash)
+                        </p>
+                      </div>
+                    </div>
+                    <div style={styles.prescriptionBody}>
+                      {content}
+                    </div>
+                    <div style={styles.prescriptionFooter}>
+                      <span>🔒 본 진단 보고서는 브라우저 로컬 캐시에 저장되며, 외부 서버로 정보가 유출되지 않습니다.</span>
+                    </div>
                   </div>
-                </div>
-
-                <div style={styles.prescriptionBody}>
-                  {renderMarkdown(recommendation)}
-                </div>
-
-                <div style={styles.prescriptionFooter}>
-                  <span>🔒 본 진단 보고서는 브라우저 로컬 캐시에 저장되며, 외부 서버로 정보가 유출되지 않습니다.</span>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           </section>
         )}

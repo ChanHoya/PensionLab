@@ -523,7 +523,10 @@ export function runWithdrawalSimulation(
       // S1/S2의 경우 인출 시작 연령 및 평탄화 기간 동적 설정
       if (strategyId === "S1" || strategyId === "S2") {
         if (strategyId === "S1") {
-          payoutStartAge = Math.max(60, simulationParams.nationalPensionStartAge);
+          // S1 절세 평탄화: 개인연금을 은퇴 시점부터 인출 개시하여
+          // 소득공백기(크레바스)를 메우고 전 기간 세금을 평탄화함
+          payoutStartAge = simulationParams.retirementAge;
+          receivingPeriod = Math.max(10, expectedLife - payoutStartAge);
         } else {
           // S2(국민연금 5년 연기)의 경우:
           // 1. 퇴직연금 연간 수령액이 목표 생활비를 충당하는지 검사
@@ -971,6 +974,66 @@ export function runWithdrawalSimulation(
           }
         }
       });
+
+      // 2.3-B 브릿지 인출: 은퇴 이후 수령액이 목표에 미달할 경우
+      // 아직 개시하지 않은 계좌에서 세금 효율성 우선순위로 추가 인출
+      if (age >= simulationParams.retirementAge) {
+        const targetAnnual = (simulationParams.targetMonthlySpending || 300) * 12 * 10000;
+        const naturalTotal = nationalPreTax + basicPreTax + retirementPreTax + personalPreTax + insurancePreTax;
+
+        if (naturalTotal < targetAnnual) {
+          // 미개시 계좌를 세금 효율성 순으로 정렬
+          // 우선순위: 이연퇴직소득(퇴직연금) → 비세액공제(개인연금) → 세액공제(개인연금) → 비적격보험
+          const bridgeCandidates = accounts
+            .filter(acc => acc.balance > 0 && acc.payoutStartAge > age)
+            .sort((a, b) => {
+              const getPriority = (acc: PensionAccountModel) => {
+                if (acc.sources.some(s => s.taxType === "DEFERRED_RETIREMENT")) return 1;
+                if (acc.sources.some(s => s.taxType === "NON_CREDITED")) return 2;
+                if (acc.sources.some(s => s.taxType === "TAX_CREDITED")) return 3;
+                return 4;
+              };
+              return getPriority(a) - getPriority(b);
+            });
+
+          let remaining = targetAnnual - naturalTotal;
+          for (const acc of bridgeCandidates) {
+            if (remaining <= 0 || acc.balance <= 0) break;
+            // 연간 브릿지 인출은 계좌 잔액의 25% 이내로 제한 (조기 소진 방지)
+            const maxDraw = Math.min(remaining, acc.balance * 0.25);
+            if (maxDraw <= 0) continue;
+
+            const { draws, updatedSources } = resolveDrawComposition(acc.sources, maxDraw);
+            acc.sources = updatedSources;
+            acc.balance -= maxDraw;
+
+            drawNonCredited += draws["NON_CREDITED"] || 0;
+            drawDeferredRetirement += draws["DEFERRED_RETIREMENT"] || 0;
+            drawTaxCredited += draws["TAX_CREDITED"] || 0;
+            drawNonQualified += draws["NON_QUALIFIED"] || 0;
+
+            if (acc.category === "RETIREMENT") {
+              retirementPreTax += maxDraw;
+              if (draws["DEFERRED_RETIREMENT"]) {
+                const k = Math.max(1, accountPayoutYears[acc.id] || 1);
+                const limit = calcWithdrawalLimit(acc.balance + maxDraw, k);
+                taxOnRetirement += calcTaxOnDeferredRetirement(
+                  draws["DEFERRED_RETIREMENT"],
+                  retirementLumpSumTaxRate,
+                  k,
+                  limit
+                );
+              }
+            } else if (acc.category === "PERSONAL") {
+              personalPreTax += maxDraw;
+            } else if (acc.category === "INSURANCE") {
+              insurancePreTax += maxDraw;
+            }
+
+            remaining -= maxDraw;
+          }
+        }
+      }
 
       // 2.4 세액공제분 및 공적연금 종합 과세 계산
       let taxOnPersonalYear = 0;

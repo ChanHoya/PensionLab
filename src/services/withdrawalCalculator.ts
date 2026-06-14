@@ -743,11 +743,10 @@ export function runWithdrawalSimulation(
           accountPayoutYears[acc.id]++;
           const k = accountPayoutYears[acc.id]; // 수령 연차
 
-          if (k <= acc.receivingPeriod) {
+          {
             // 포트폴리오 PMT 기반 비례 배분:
-            // 은퇴 첫해부터 총 수령액이 단조감소하도록 portfolioBaseDraw 기준으로
-            // 활성 계좌들의 초기 잔액 비율에 따라 targetPrivateDraw 를 배분.
-            // 개인/퇴직연금 계좌 개시 시점에 수령액이 급증하지 않음.
+            // receivingPeriod 이후에도 잔고가 남으면 계속 인출 (마지막 해 전액 덤프 없음).
+            // 잔고 소진 시점까지 자연스럽게 감소 → 84세 등 계약 만기 시점 급증 제거.
             const portT = age - minPayoutAge;
             const multiplier = getDecumulationMultiplier(portT + 1, simulationParams.decumulationStrategy);
 
@@ -759,23 +758,16 @@ export function runWithdrawalSimulation(
               : 0;
             const targetPrivateDraw = Math.max(0, portfolioBaseDraw * multiplier - natAtAge - basAtAge);
 
+            // 잔고 보유 중인 계좌만 포함 (수령기간 초과 계좌도 잔고 있으면 포함)
             let totalActiveInitBalance = 0;
             accounts.forEach((a) => {
-              if (age >= a.payoutStartAge && age <= a.payoutStartAge + a.receivingPeriod - 1) {
+              if (age >= a.payoutStartAge && a.balance > 0) {
                 totalActiveInitBalance += initialBalances[a.id];
               }
             });
             const share = totalActiveInitBalance > 0 ? initialBalances[acc.id] / totalActiveInitBalance : 0;
 
-            let drawAmount = targetPrivateDraw * share;
-
-            // 마지막 연차에는 잔액이 남아 기말 peak이 발생하지 않도록 전액 인출
-            if (k === acc.receivingPeriod) {
-              drawAmount = acc.balance;
-            } else {
-              drawAmount = Math.max(0, drawAmount);
-              drawAmount = Math.min(drawAmount, acc.balance);
-            }
+            let drawAmount = Math.max(0, Math.min(targetPrivateDraw * share, acc.balance));
 
             // 계좌 내 실질 인출액 분해 및 세액 계산
             const { draws, updatedSources } = resolveDrawComposition(acc.sources, drawAmount);

@@ -668,8 +668,13 @@ export function runWithdrawalSimulation(
       const df = Math.pow(1 + weightedR, -t);
       const mult = getDecumulationMultiplier(t + 1, simulationParams.decumulationStrategy);
       let natP = 0, basP = 0;
-      if (portAge >= effectiveNatStartPort) natP = (national.expectedMonthlyPension * 12) * deferMultPort * 10000;
-      if (portAge >= 65 && basic.expectedEligibility) basP = (basic.expectedMonthlyAmount * 12) * 10000;
+      // 공적연금 물가연동 증액분을 PV 합산에 반영
+      if (portAge >= effectiveNatStartPort) {
+        natP = (national.expectedMonthlyPension * 12) * deferMultPort * Math.pow(1 + inflationRate, portAge - effectiveNatStartPort) * 10000;
+      }
+      if (portAge >= 65 && basic.expectedEligibility) {
+        basP = (basic.expectedMonthlyAmount * 12) * Math.pow(1 + inflationRate, portAge - 65) * 10000;
+      }
       pvPublicPension += (natP + basP) * df;
       portfolioDenominator += mult * df;
     }
@@ -720,12 +725,16 @@ export function runWithdrawalSimulation(
         // 국민연금 연기 시 매년 +7.2% 증액 효과 반영
         const deferYears = Math.max(0, nationalPensionStartAge - simulationParams.nationalPensionStartAge);
         const deferMultiplier = 1 + deferYears * 0.072;
+        // 국민연금은 매년 전년도 소비자물가변동률만큼 증액(물가연동) → 연령 증가에 따라 수령액 증가
+        const indexation = Math.pow(1 + inflationRate, age - nationalPensionStartAge);
         // 국민연금 연액 계산 (만 원 -> 원)
-        nationalPreTax = (national.expectedMonthlyPension * 12) * deferMultiplier * 10000;
+        nationalPreTax = (national.expectedMonthlyPension * 12) * deferMultiplier * indexation * 10000;
       }
 
       if (age >= 65 && basic.expectedEligibility) {
-        basicPreTax = (basic.expectedMonthlyAmount * 12) * 10000;
+        // 기초연금도 매년 물가상승률만큼 증액
+        const basicIndexation = Math.pow(1 + inflationRate, age - 65);
+        basicPreTax = (basic.expectedMonthlyAmount * 12) * basicIndexation * 10000;
       }
 
       // 은퇴 크레바스(소득 공백기) 판별: 은퇴 나이 이상인데 공적연금 수령액이 0원인 기간

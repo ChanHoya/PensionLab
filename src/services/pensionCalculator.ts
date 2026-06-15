@@ -105,12 +105,12 @@ export function runPensionSimulation(
       // DB Lump sum = final average salary * service years
       retirementLumpSum += finalSalary * serviceYears;
     } else {
-      // DC or IRP — use real return rate (nominal - inflation) to express result in today's purchasing power
+      // DC or IRP — 명목 기준: 명목 수익률로 미래가치 산출 (통합연금포털과 동일 기준)
       const accumulated = r.totalAccumulated || 0;
       const monthlyContribution = r.monthlyContribution || 0;
       const matchAmt = r.companyMatchRate || 0;
       const totalMonthlyDeposit = monthlyContribution + matchAmt;
-      const returnRate = Math.max(0.5, (r.expectedReturnRate || 3.0) - params.inflationRate);
+      const returnRate = Math.max(0.5, (r.expectedReturnRate || 3.0));
 
       const fvCurrent = calculateFV(accumulated, returnRate, yearsToRetire);
       const fvDeposits = calculateFVAnnuity(totalMonthlyDeposit, returnRate, yearsToRetire * 12);
@@ -121,7 +121,7 @@ export function runPensionSimulation(
 
   // Convert retirement lump sum to a monthly annuity (assume received for 20 years or until expectancy)
   const retirementAnnuityYears = Math.max(10, expectedLife - params.retirementAge);
-  const retirementPayoutRate = Math.max(0.5, 3.0 - params.inflationRate);
+  const retirementPayoutRate = Math.max(0.5, 3.0);
   const monthlyRetirementPayout = calculateAnnuityPayout(retirementLumpSum, retirementAnnuityYears, retirementPayoutRate);
 
   // 4. Project Personal Pension Savings (3층 - 연금저축)
@@ -130,9 +130,9 @@ export function runPensionSimulation(
     const yearsToStart = Math.max(0, p.desiredStartAge - currentAge);
     const monthsToPay = Math.max(0, Math.min(yearsToStart, params.retirementAge - currentAge) * 12);
 
-    // Real return rate = nominal return rate - inflation rate
+    // 명목 기준: 명목 수익률 사용
     const nominalRate = p.savingsType === "FUND" ? 4.5 : 2.5;
-    const returnRate = Math.max(0.5, nominalRate - params.inflationRate);
+    const returnRate = Math.max(0.5, nominalRate);
 
     const fvCurrent = calculateFV(p.totalAccumulated, returnRate, yearsToStart);
     const fvDeposits = calculateFVAnnuity(p.monthlyAnnualContribution, returnRate, monthsToPay);
@@ -148,8 +148,8 @@ export function runPensionSimulation(
     const paymentYears = Math.min(i.paymentPeriod, yearsToRetire);
     const yearsToStart = yearsToRetire;
 
-    // Real return rate = declared rate - inflation rate
-    const realRate = Math.max(0.5, i.expectedDeclaredRate - params.inflationRate);
+    // 명목 기준: 공시이율(명목) 사용
+    const realRate = Math.max(0.5, i.expectedDeclaredRate);
 
     const fvCurrent = calculateFV(i.totalAccumulated, realRate, yearsToStart);
     const fvPayments = calculateFVAnnuity(i.monthlyPayment, realRate, paymentYears * 12);
@@ -197,16 +197,15 @@ export function runPensionSimulation(
     }
 
     // 6b. Payout Calculations (after retirement / start age)
-    // National Pension Payout
+    // National Pension Payout (명목 기준: 매년 물가상승률만큼 증액 — 통합연금포털과 동일)
     if (age >= params.nationalPensionStartAge) {
-      // Indexed to inflation in real life (stays constant in real terms, grows in nominal terms)
-      // We return values in real terms (today's KRW value)
-      nationalPayout = national.expectedMonthlyPension;
+      const indexation = Math.pow(1 + params.inflationRate / 100, age - params.nationalPensionStartAge);
+      nationalPayout = national.expectedMonthlyPension * indexation;
     }
 
-    // Basic Pension Payout
+    // Basic Pension Payout (명목 기준: 물가연동 증액)
     if (age >= 65) {
-      basicPayout = basic.expectedMonthlyAmount;
+      basicPayout = basic.expectedMonthlyAmount * Math.pow(1 + params.inflationRate / 100, age - 65);
     }
 
     // 은퇴 후 년수 계산 (체감형 인출 가중치 적용용 - Spending Smile)
@@ -235,7 +234,7 @@ export function runPensionSimulation(
     personal.forEach((p) => {
       if (age >= p.desiredStartAge && age < p.desiredStartAge + p.receivingPeriod) {
         const pNominalRate = p.savingsType === "FUND" ? 4.5 : 2.5;
-        const pRealRate = Math.max(0.5, pNominalRate - params.inflationRate);
+        const pRealRate = Math.max(0.5, pNominalRate);
         const pLump = calculateFV(p.totalAccumulated, pRealRate, Math.max(0, p.desiredStartAge - currentAge)) +
           calculateFV(calculateFVAnnuity(p.monthlyAnnualContribution, pRealRate, Math.max(0, Math.min(p.desiredStartAge - currentAge, params.retirementAge - currentAge)) * 12), pRealRate, Math.max(0, p.desiredStartAge - params.retirementAge));
 
@@ -260,7 +259,7 @@ export function runPensionSimulation(
     insurance.forEach((i) => {
       const payoutYears = Math.max(20, expectedLife - params.retirementAge);
       if (age >= params.retirementAge && age < params.retirementAge + payoutYears) {
-        const iRealRate = Math.max(0.5, i.expectedDeclaredRate - params.inflationRate);
+        const iRealRate = Math.max(0.5, i.expectedDeclaredRate);
         const iLump = calculateFV(i.totalAccumulated, iRealRate, yearsToRetire) +
           calculateFV(calculateFVAnnuity(i.monthlyPayment, iRealRate, Math.min(i.paymentPeriod, yearsToRetire) * 12), iRealRate, Math.max(0, yearsToRetire - Math.min(i.paymentPeriod, yearsToRetire)));
 

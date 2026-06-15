@@ -636,6 +636,9 @@ export function runWithdrawalSimulation(
       accountPayoutYears[a.id] = 0;
     });
 
+    // S0(계약대로 자연 지급) 전용: 계좌별 약정 정액(레벨) 연금액 저장
+    const naturalPayouts: { [accountId: string]: number } = {};
+
     // === 포트폴리오 레벨 PMT 계산 ===
     // 계좌별 독립 PMT 대신 포트폴리오 합산 단일 PMT를 사용.
     // 매년 단조감소하는 "목표 총 수령액"을 정의하고, 모든 계좌·공적연금이
@@ -742,11 +745,67 @@ export function runWithdrawalSimulation(
         hasCrevasse = true;
       }
 
-      // 2.2 통합 인출 패스: 단조감소 목표를 공적연금 + 사적연금이 함께 충족
+      // 2.2 인출 패스
+      // S0(현재 계약대로 수령): 각 연금 계좌가 약정 기간 동안 자체 잔고로
+      // 정액(레벨) 연금을 지급하는 "계약대로 자연 지급" 방식. 포트폴리오 재배분/
+      // 체감 인출 없이 통합연금포털과 동일하게 상품별 약정 스케줄대로 지급.
+      if (strategyId === "S0") {
+        accounts.forEach((acc) => {
+          const inWindow = age >= acc.payoutStartAge && age <= acc.payoutStartAge + acc.receivingPeriod - 1;
+          if (!inWindow || acc.balance <= 0) return;
+
+          accountPayoutYears[acc.id]++;
+          const k = accountPayoutYears[acc.id];
+
+          // 수령 첫 해에 약정 기간 동안 잔고를 균등 소진하는 정액 연금액 확정
+          if (k === 1) {
+            naturalPayouts[acc.id] = calculateWeightedPMT(
+              acc.balance,
+              acc.receivingPeriod,
+              acc.expectedReturnRate,
+              "FLAT"
+            );
+          }
+
+          let drawAmount = naturalPayouts[acc.id];
+          // 마지막 수령 연차에는 잔여 전액 지급 (정액 PMT가 잔고를 거의 소진하므로 단차 미미)
+          if (k >= acc.receivingPeriod) drawAmount = acc.balance;
+          drawAmount = Math.max(0, Math.min(drawAmount, acc.balance));
+          if (drawAmount <= 0) return;
+
+          const { draws, updatedSources } = resolveDrawComposition(acc.sources, drawAmount);
+          acc.sources = updatedSources;
+          acc.balance -= drawAmount;
+
+          drawNonCredited += draws["NON_CREDITED"] || 0;
+          drawDeferredRetirement += draws["DEFERRED_RETIREMENT"] || 0;
+          drawTaxCredited += draws["TAX_CREDITED"] || 0;
+          drawNonQualified += draws["NON_QUALIFIED"] || 0;
+
+          if (acc.category === "RETIREMENT") {
+            retirementPreTax += drawAmount;
+          } else if (acc.category === "PERSONAL") {
+            personalPreTax += drawAmount;
+          } else if (acc.category === "INSURANCE") {
+            insurancePreTax += drawAmount;
+          }
+
+          const limit = calcWithdrawalLimit(acc.balance + drawAmount, k);
+          if (draws["DEFERRED_RETIREMENT"]) {
+            taxOnRetirement += calcTaxOnDeferredRetirement(
+              draws["DEFERRED_RETIREMENT"],
+              retirementLumpSumTaxRate,
+              k,
+              limit
+            );
+          }
+        });
+      }
+      // S1/S2/S3: 통합 인출 패스 — 단조감소 목표를 공적연금 + 사적연금이 함께 충족
       // 목표 총 수령액(targetTotal)은 portfolioBaseDraw × multiplier(t)로 계단식 우하향.
       // 공적연금으로 부족한 부분(remaining)을 잔고 보유 계좌에서 잔액 비례로 인출하여
       // 계좌/공적연금 개시 시점과 무관하게 총 수령액이 매년 단조감소하도록 보장.
-      if (age >= decumStartAge) {
+      else if (age >= decumStartAge) {
         const portT = age - decumStartAge;
         const multiplier = getDecumulationMultiplier(portT + 1, simulationParams.decumulationStrategy);
         const targetTotal = portfolioBaseDraw * multiplier;

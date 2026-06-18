@@ -120,7 +120,7 @@ export default function DashboardPage() {
   const [publicPensionTaxableRatio, setPublicPensionTaxableRatio] = useState(0.5);
 
   // Tab Selection for withdrawal simulator
-  const [activeTab, setActiveTab] = useState<"S0" | "S1" | "S2" | "S3">("S1");
+  const [activeTab, setActiveTab] = useState<"S0" | "S1" | "S2" | "S3" | "S4">("S1");
 
   // S3 Custom sliders state
   const [s3StartAges, setS3StartAges] = useState<{ [id: string]: number }>({});
@@ -261,7 +261,7 @@ export default function DashboardPage() {
     }
   );
 
-  const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as "s0" | "s1" | "s2" | "s3"];
+  const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as "s0" | "s1" | "s2" | "s3" | "s4"];
 
   const totalFlows = activeResult.flows.reduce((acc, flow) => {
     return {
@@ -289,7 +289,6 @@ export default function DashboardPage() {
     deficit: 0,
   });
 
-  // Bar Chart Data: S0, S1, S2, S3 Comparison
   const barChartData = [
     {
       name: "As-Is (S0)",
@@ -310,10 +309,15 @@ export default function DashboardPage() {
       name: "커스텀 (S3)",
       "세후 수령액": withdrawalSimulation.s3.lifetimeTotalPostTax,
       "세금 & 건보료": withdrawalSimulation.s3.lifetimeTotalTaxAndHI,
+    },
+    {
+      name: "하이브리드 (S4)",
+      "세후 수령액": withdrawalSimulation.s4.lifetimeTotalPostTax,
+      "세금 & 건보료": withdrawalSimulation.s4.lifetimeTotalTaxAndHI,
     }
   ];
 
-  const strategies = [withdrawalSimulation.s0, withdrawalSimulation.s1, withdrawalSimulation.s2, withdrawalSimulation.s3];
+  const strategies = [withdrawalSimulation.s0, withdrawalSimulation.s1, withdrawalSimulation.s2, withdrawalSimulation.s3, withdrawalSimulation.s4];
   const bestStrategy = [...strategies].sort((a, b) => b.lifetimeTotalPostTax - a.lifetimeTotalPostTax)[0];
 
   // PDF Report Capture
@@ -923,6 +927,99 @@ export default function DashboardPage() {
                 </div>
               )}
 
+              {/* S4 하이브리드 전략 전용 입력 컨트롤 */}
+              {activeTab === "S4" && (
+                <div style={{ ...styles.customParamsBox, marginTop: "12px" }} className="premium-card animate-fade-in no-print">
+                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "12px", color: "var(--text-primary)" }}>
+                    📈 S4 하이브리드(배당+연금) 전략 변수 조절
+                  </h4>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", alignItems: "start" }}>
+                    {/* 커버드콜 투자금 슬라이더 */}
+                    <div>
+                      <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
+                        커버드콜/월배당 투자금: <strong>{(store.simulationParams.coveredCallAsset || 5000).toLocaleString()}만원</strong>
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={50000}
+                        step={500}
+                        value={store.simulationParams.coveredCallAsset || 5000}
+                        onChange={(e) => store.setSimulationParams({ coveredCallAsset: Number(e.target.value) })}
+                        style={{ width: "100%", accentColor: "var(--primary)" }}
+                      />
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                        <span>0원</span>
+                        <span>5억</span>
+                      </div>
+                    </div>
+                    {/* 예상 배당률 슬라이더 */}
+                    <div>
+                      <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
+                        예상 연 분배율: <strong>{(store.simulationParams.coveredCallDividendRate || 9.0).toFixed(1)}%</strong>
+                      </label>
+                      <input
+                        type="range"
+                        min={2}
+                        max={15}
+                        step={0.5}
+                        value={store.simulationParams.coveredCallDividendRate || 9.0}
+                        onChange={(e) => store.setSimulationParams({ coveredCallDividendRate: Number(e.target.value) })}
+                        style={{ width: "100%", accentColor: "var(--primary)" }}
+                      />
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+                        <span>2%</span>
+                        <span>15%</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* 부부 명의 분산 토글 */}
+                  <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "10px" }}>
+                    <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <input
+                        type="checkbox"
+                        checked={store.simulationParams.isCoupleDivided || false}
+                        onChange={(e) => store.setSimulationParams({ isCoupleDivided: e.target.checked })}
+                        style={{ accentColor: "var(--primary)", width: "16px", height: "16px" }}
+                      />
+                      부부 명의 분산 적용 (인당 연 1,000만원 배당소득 비과세 혁택 극대화)
+                    </label>
+                  </div>
+                  {/* 피부양자 유지 상태 안내 */}
+                  {(() => {
+                    const s4Result = withdrawalSimulation.s4;
+                    const perPersonDividend = store.simulationParams.isCoupleDivided
+                      ? ((store.simulationParams.coveredCallAsset || 5000) * 10000 * (store.simulationParams.coveredCallDividendRate || 9) / 100) / 2
+                      : (store.simulationParams.coveredCallAsset || 5000) * 10000 * (store.simulationParams.coveredCallDividendRate || 9) / 100;
+                    const isWithinCap = perPersonDividend <= 10000000;
+                    return (
+                      <div style={{
+                        marginTop: "12px",
+                        padding: "10px 14px",
+                        borderRadius: "var(--radius-sm)",
+                        backgroundColor: isWithinCap ? "rgba(16, 185, 129, 0.08)" : "rgba(244, 63, 94, 0.08)",
+                        border: `1px solid ${isWithinCap ? "rgba(16, 185, 129, 0.3)" : "rgba(244, 63, 94, 0.3)"}`,
+                        fontSize: "0.8rem",
+                        lineHeight: 1.6,
+                      }}>
+                        <strong style={{ color: isWithinCap ? "#10b981" : "#f43f5e" }}>
+                          {isWithinCap ? "✅ 피부양자 유지 가능" : "⚠️ 피부양자 탈락 위험"}
+                        </strong>
+                        <span style={{ color: "var(--text-secondary)", marginLeft: "8px" }}>
+                          1인당 예상 연 배당소득: {Math.round(perPersonDividend / 10000).toLocaleString()}만원
+                          {isWithinCap ? " (한도 1,000만원 이하)" : ` (한도 1,000만원 초과 → 건보료 부과)`}
+                        </span>
+                        {s4Result.lostDependencyAge && (
+                          <span style={{ display: "block", marginTop: "4px", color: "var(--warning)" }}>
+                            피부양자 탈락 예상 시점: {s4Result.lostDependencyAge}세 | 생애 건보료 총액: {s4Result.lifetimeTotalHI.toLocaleString()}만원
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
               {/* 그래프 ① 세금 & 건보료 비교 Bar Chart */}
               <div style={{ marginTop: "14px" }}>
                 <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
@@ -964,6 +1061,9 @@ export default function DashboardPage() {
                       <Area type="monotone" dataKey="retirementPreTax" name="퇴직연금" stackId="1" stroke="#facc15" fill="#facc15" fillOpacity={0.4} isAnimationActive={false} />
                       <Area type="monotone" dataKey="personalPreTax" name="개인연금" stackId="1" stroke="#f97316" fill="#f97316" fillOpacity={0.4} isAnimationActive={false} />
                       <Area type="monotone" dataKey="insurancePreTax" name="연금보험" stackId="1" stroke="#f87171" fill="#f87171" fillOpacity={0.4} isAnimationActive={false} />
+                      {activeTab === "S4" && (
+                        <Area type="monotone" dataKey="dividendPreTax" name="커버드콜 배당" stackId="1" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.5} isAnimationActive={false} />
+                      )}
                       <Line type="monotone" dataKey="totalPostTax" name="실질 세후 수령액" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
                     </ComposedChart>
                   </ResponsiveContainer>
@@ -998,6 +1098,7 @@ export default function DashboardPage() {
                 {activeTab === "S1" && "절세 평탄화 전략은 사적연금 수령 한도(1,500만 원) 내로 수령액을 균등 분산하여 3.3%~5.5% 수준의 저율과세 혜택을 100% 누리며, 퇴직연금 수령 기간을 11년 이상 확보하여 퇴직소득세를 최대 40% 감면받을 수 있도록 최적화했습니다."}
                 {activeTab === "S2" && "국민연금 5년 연기형은 은퇴 직후 소득 공백기 동안 IRP 퇴직소득세 감면 재원 및 개인연금저축을 집중 활용하여 생활비를 충당하고, 국민연금을 5년 연기함으로써 매년 7.2%씩(총 +36%) 연금 수령 단가를 증액하여 생애 후반의 장수 리스크와 물가 상승 위험을 강력히 방어합니다."}
                 {activeTab === "S3" && "커스텀 전략 조정을 통해 본인만의 최적의 절세 구간을 찾을 수 있습니다. 가능한 사적연금 인출액을 고르게 평탄화하고 수령 기간을 10년 이상 길게 설계하는 것이 절세의 핵심입니다."}
+                {activeTab === "S4" && "하이브리드 전략은 커버드콜 ETF 등 월 분배형 상품의 배당소득을 인당 연 1,000만원 이하로 통제하여 건보료 피부양자 자격을 방어하고, 부족한 생활비는 건보료가 비과세인 사적연금(연 1,500만원 한도)/퇴직연금에서 우선 인출하여 세금과 건강보험료를 동시에 최소화합니다."}
               </p>
             </div>
 

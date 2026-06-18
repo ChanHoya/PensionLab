@@ -68,6 +68,10 @@ export interface SimulationParamsState {
   propertyTaxBase: number;  // 재산세 과세표준 (만원)
   financialIncome: number;  // 금융소득 이자+배당 (만원/년)
   decumulationStrategy: "DECREASING" | "FLAT";
+  // S4 하이브리드(배당+연금) 전략 매개변수
+  coveredCallAsset: number;        // 커버드콜/월배당 투자금 (만원, 기본 5000)
+  coveredCallDividendRate: number;  // 예상 연 분배율 (%, 기본 9.0)
+  isCoupleDivided: boolean;         // 부부 명의 분산 여부 (기본 false)
 }
 
 interface PensionStore {
@@ -143,6 +147,9 @@ const initialSimulationParams: SimulationParamsState = {
   propertyTaxBase: 0,
   financialIncome: 0,
   decumulationStrategy: "DECREASING",
+  coveredCallAsset: 5000,
+  coveredCallDividendRate: 9.0,
+  isCoupleDivided: false,
 };
 
 export const usePensionStore = create<PensionStore>()(

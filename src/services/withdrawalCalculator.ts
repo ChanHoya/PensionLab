@@ -59,6 +59,10 @@ export interface SimulationYearFlow {
   drawTaxCredited: number;
   drawNonQualified: number;
 
+  // 배당소득 (S4 하이브리드 전략)
+  dividendPreTax: number;
+  taxOnDividend: number;
+
   // 세금 및 건보료
   taxOnNational: number;
   taxOnRetirement: number;
@@ -77,7 +81,7 @@ export interface SimulationYearFlow {
 }
 
 export interface StrategySimulationResult {
-  strategyId: "S0" | "S1" | "S2" | "S3";
+  strategyId: "S0" | "S1" | "S2" | "S3" | "S4";
   strategyName: string;
   lifetimeTotalPreTax: number;
   lifetimeTotalPostTax: number;
@@ -335,11 +339,31 @@ export function assessHealthInsurance(
 ): { isDependentLost: boolean; estimatedPremium: number } {
   const hi = KR_TAX_2026.healthInsurance;
 
-  // 피부양자 탈락 조건: ① 국민연금+기타소득 > 2,000만원 OR ② 금융소득 > 1,000만원
-  const totalAssessableIncome = publicPensionAnnual + otherTaxableIncome;
-  const isDependentLost =
-    totalAssessableIncome > hi.dependentIncomeCap ||
-    financialIncomeWon > hi.financialIncomeCap;
+  // 금융소득 1,000만원 허들 룰: 1,000만원 이하면 합산소득에서 0원 처리,
+  // 1,000만원 초과 시 금융소득 '전액'이 합산소득에 산입됨 (초과분만이 아님)
+  const assessableFinancialIncome = financialIncomeWon > hi.financialIncomeCap
+    ? financialIncomeWon  // 전액 합산
+    : 0;                  // 0원 처리
+
+  // 피부양자 탈락 기준: 합산소득(공적연금+기타소득+금융소득) > 2,000만원
+  // 재산세 과세표준 5.4억~9억 구간: 합산소득 > 1,000만원 시 탈락
+  // 재산세 과세표준 9억 초과: 소득 무관 탈락
+  const totalAssessableIncome = publicPensionAnnual + otherTaxableIncome + assessableFinancialIncome;
+
+  const propertyThresholdHigh = 900000000;  // 9억 원
+  const propertyThresholdMid = 540000000;   // 5.4억 원
+
+  let isDependentLost = false;
+  if (propertyTaxBaseWon > propertyThresholdHigh) {
+    // 재산세 과세표준 9억 초과: 소득 무관 무조건 탈락
+    isDependentLost = true;
+  } else if (propertyTaxBaseWon > propertyThresholdMid) {
+    // 재산세 과세표준 5.4억~9억: 합산소득 1,000만원 초과 시 탈락
+    isDependentLost = totalAssessableIncome > hi.financialIncomeCap;
+  } else {
+    // 재산세 과세표준 5.4억 이하: 합산소득 2,000만원 초과 시 탈락
+    isDependentLost = totalAssessableIncome > hi.dependentIncomeCap;
+  }
 
   let estimatedPremium = 0;
   if (isDependentLost) {
@@ -350,9 +374,11 @@ export function assessHealthInsurance(
     // ② 재산 기반: 재산세 과세표준 × 연 1.2% (지역가입자 재산점수제 단순 근사)
     const propertyPremium = propertyTaxBaseWon * hi.propertyPremiumRate;
 
-    // ③ 금융소득 기반: 1,000만원 초과분 × 7.09%
-    const financialExcess = Math.max(0, financialIncomeWon - hi.financialIncomeCap);
-    const financialPremium = financialExcess * hi.financialExcessRate;
+    // ③ 금융소득 기반: 1,000만원 초과 시 → 전액에 대해 7.09% 부과
+    // (허들 룰에 따라 초과분만이 아닌 전체 금융소득에 부과)
+    const financialPremium = assessableFinancialIncome > 0
+      ? financialIncomeWon * hi.financialExcessRate
+      : 0;
 
     estimatedPremium = incomePremium + propertyPremium + financialPremium;
   }
@@ -460,6 +486,7 @@ export function runWithdrawalSimulation(
   s1: StrategySimulationResult;
   s2: StrategySimulationResult;
   s3: StrategySimulationResult;
+  s4: StrategySimulationResult;
 } {
   const currentAge = simulationParams.currentAge || 35;
   const expectedLife = simulationParams.expectedLifeExpectancy || 85;
@@ -473,7 +500,7 @@ export function runWithdrawalSimulation(
   const publicPensionTaxableRatio = customInputs.publicPensionTaxableRatio ?? 0.5;
 
   // 1. 계좌 리스트 및 세부 재원 통합 초기 모델 생성 함수
-  const createUnifiedAccounts = (strategyId: "S0" | "S1" | "S2" | "S3"): PensionAccountModel[] => {
+  const createUnifiedAccounts = (strategyId: "S0" | "S1" | "S2" | "S3" | "S4"): PensionAccountModel[] => {
     const accounts: PensionAccountModel[] = [];
 
     // 퇴직연금 (2층)
@@ -482,7 +509,7 @@ export function runWithdrawalSimulation(
       let payoutStartAge = simulationParams.retirementAge;
       let receivingPeriod = Math.max(10, expectedLife - simulationParams.retirementAge);
 
-      if (strategyId === "S1" || strategyId === "S2") {
+      if (strategyId === "S1" || strategyId === "S2" || strategyId === "S4") {
         // 절세 평탄화 전략: 퇴직연금은 소득공백기(크레바스) 브릿지 자금으로 우선 배치하되 감면 극대화를 위해 수령기간 11년 이상 유지
         payoutStartAge = simulationParams.retirementAge;
         receivingPeriod = Math.max(11, Math.min(20, expectedLife - payoutStartAge));
@@ -520,9 +547,9 @@ export function runWithdrawalSimulation(
       let payoutStartAge = p.desiredStartAge;
       let receivingPeriod = p.receivingPeriod || 10;
 
-      // S1/S2의 경우 인출 시작 연령 및 평탄화 기간 동적 설정
-      if (strategyId === "S1" || strategyId === "S2") {
-        if (strategyId === "S1") {
+      // S1/S2/S4의 경우 인출 시작 연령 및 평탄화 기간 동적 설정
+      if (strategyId === "S1" || strategyId === "S2" || strategyId === "S4") {
+        if (strategyId === "S1" || strategyId === "S4") {
           // S1 절세 평탄화: 개인연금을 은퇴 시점부터 인출 개시하여
           // 소득공백기(크레바스)를 메우고 전 기간 세금을 평탄화함
           payoutStartAge = simulationParams.retirementAge;
@@ -624,7 +651,7 @@ export function runWithdrawalSimulation(
 
   // 2. 단일 시나리오 시뮬레이션 계산 실행기
   const simulateStrategy = (
-    strategyId: "S0" | "S1" | "S2" | "S3",
+    strategyId: "S0" | "S1" | "S2" | "S3" | "S4",
     strategyName: string
   ): StrategySimulationResult => {
     const accounts = createUnifiedAccounts(strategyId);
@@ -999,6 +1026,29 @@ export function runWithdrawalSimulation(
         }
       });
 
+      // === S4 하이브리드 전략: 커버드콜 배당소득 계산 ===
+      let dividendPreTax = 0;
+      let taxOnDividend = 0;
+      if (strategyId === "S4" && age >= simulationParams.retirementAge) {
+        // 커버드콜 자산에서 발생하는 연 배당소득 (만원 -> 원)
+        const coveredCallAssetWon = (simulationParams.coveredCallAsset || 0) * 10000;
+        const dividendRate = (simulationParams.coveredCallDividendRate || 9.0) / 100;
+        const rawDividend = coveredCallAssetWon * dividendRate;
+
+        // 부부 분산 시 1인당 한도: 연 1,000만 원 × 2인 = 2,000만 원
+        // 미분산 시 1인당 한도: 연 1,000만 원
+        const perPersonCap = 10000000; // 1,000만 원
+        const maxDividendForHI = simulationParams.isCoupleDivided
+          ? perPersonCap * 2  // 부부 합산 2,000만 원
+          : perPersonCap;      // 개인 1,000만 원
+
+        // 건보료 피부양자 유지를 위해 한도 내로 배당 수령액 통제
+        dividendPreTax = Math.min(rawDividend, maxDividendForHI);
+
+        // 배당소득세 15.4% 원천징수 (지방세 포함)
+        taxOnDividend = Math.round(dividendPreTax * 0.154);
+      }
+
       // 2.4 세액공제분 및 공적연금 종합 과세 계산
       let taxOnPersonalYear = 0;
       let taxOnNationalYear = 0;
@@ -1006,7 +1056,6 @@ export function runWithdrawalSimulation(
       if (drawTaxCredited > 0) {
         // 공적연금 중 과세대상 소득
         const publicPensionTaxable = nationalPreTax * publicPensionTaxableRatio;
-        const lowLimit = drawTaxCredited; // 각 계좌별로 분할되어 들어왔을 것이나, 연간 단위로 합산하여 한도 관리
         
         const { tax } = calcTaxOnCredited(
           drawTaxCredited,
@@ -1029,12 +1078,28 @@ export function runWithdrawalSimulation(
       }
 
       // 2.5 건강보험료 추정 (재산·금융소득 기준 포함)
+      // S4 전략에서는 커버드콜 배당소득도 금융소득으로 반영
+      const effectiveFinancialIncome = strategyId === "S4"
+        ? dividendPreTax  // S4에서는 시뮬레이션된 배당소득을 직접 사용
+        : (simulationParams.financialIncome || 0) * 10000;
+
+      // S4 부부 분산 시: 1인당 금융소득으로 환산하여 건보료 평가
+      const perPersonFinancial = (strategyId === "S4" && simulationParams.isCoupleDivided)
+        ? effectiveFinancialIncome / 2
+        : effectiveFinancialIncome;
+
       const { isDependentLost, estimatedPremium } = assessHealthInsurance(
         nationalPreTax,
         otherIncomeAnnual,
         (simulationParams.propertyTaxBase || 0) * 10000,
-        (simulationParams.financialIncome || 0) * 10000
+        perPersonFinancial
       );
+
+      // S4 부부 분산 시: 양쪽 모두 지역가입자이므로 건보료 2배
+      const adjustedPremium = (strategyId === "S4" && simulationParams.isCoupleDivided && isDependentLost)
+        ? estimatedPremium * 2
+        : estimatedPremium;
+
       if (isDependentLost && !lostDependencyAge) {
         lostDependencyAge = age;
       }
@@ -1044,10 +1109,11 @@ export function runWithdrawalSimulation(
         basicPreTax +
         retirementPreTax +
         personalPreTax +
-        insurancePreTax;
+        insurancePreTax +
+        dividendPreTax;
 
-      const totalTax = taxOnRetirement + taxOnPersonalYear + taxOnNationalYear;
-      const totalTaxAndHI = totalTax + estimatedPremium;
+      const totalTax = taxOnRetirement + taxOnPersonalYear + taxOnNationalYear + taxOnDividend;
+      const totalTaxAndHI = totalTax + adjustedPremium;
       const totalPostTax = Math.max(0, totalPreTax - totalTaxAndHI);
 
       const endingBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
@@ -1063,7 +1129,7 @@ export function runWithdrawalSimulation(
       lifetimeTotalPostTax += totalPostTax;
       lifetimeTotalTaxAndHI += totalTaxAndHI;
       lifetimeTotalTax += totalTax;
-      lifetimeTotalHI += estimatedPremium;
+      lifetimeTotalHI += adjustedPremium;
 
       flows.push({
         age,
@@ -1078,10 +1144,12 @@ export function runWithdrawalSimulation(
         drawDeferredRetirement: Math.round(drawDeferredRetirement / 10000),
         drawTaxCredited: Math.round(drawTaxCredited / 10000),
         drawNonQualified: Math.round(drawNonQualified / 10000),
+        dividendPreTax: Math.round(dividendPreTax / 10000),
+        taxOnDividend: Math.round(taxOnDividend / 10000),
         taxOnNational: Math.round(taxOnNationalYear / 10000),
         taxOnRetirement: Math.round(taxOnRetirement / 10000),
         taxOnPersonal: Math.round(taxOnPersonalYear / 10000),
-        healthInsurance: Math.round(estimatedPremium / 10000),
+        healthInsurance: Math.round(adjustedPremium / 10000),
         totalTaxAndHI: Math.round(totalTaxAndHI / 10000),
         totalPostTax: Math.round(totalPostTax / 10000),
         endingBalance: Math.round(endingBalance / 10000),
@@ -1108,6 +1176,7 @@ export function runWithdrawalSimulation(
   const s1 = simulateStrategy("S1", "절세 평탄화 인출전략");
   const s2 = simulateStrategy("S2", "절세형 + 국민연금 5년 연기");
   const s3 = simulateStrategy("S3", "사용자 정의 커스텀 전략");
+  const s4 = simulateStrategy("S4", "건보료 최적화 하이브리드(배당+연금)");
 
-  return { s0, s1, s2, s3 };
+  return { s0, s1, s2, s3, s4 };
 }

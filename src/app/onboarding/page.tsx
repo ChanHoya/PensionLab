@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePensionStore } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
+import { resolveAge } from "@/utils/age";
 
 const STEPS = [
   { id: 0, title: "기본 정보 & 재무 목표", desc: "본인/가족 정보 및 은퇴 생활비 목표 등" },
@@ -31,6 +32,34 @@ export default function OnboardingPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // 나이/주민번호 통합 입력 (본인, 배우자, 자녀)
+  const [ageInput, setAgeInput] = useState<string>(
+    store.simulationParams.currentAge ? String(store.simulationParams.currentAge) : ""
+  );
+  const [lastSyncedCurrentAge, setLastSyncedCurrentAge] = useState(store.simulationParams.currentAge);
+  if (store.simulationParams.currentAge !== lastSyncedCurrentAge) {
+    setLastSyncedCurrentAge(store.simulationParams.currentAge);
+    setAgeInput(store.simulationParams.currentAge ? String(store.simulationParams.currentAge) : "");
+  }
+
+  const [spouseAgeInput, setSpouseAgeInput] = useState<string>(
+    store.simulationParams.spouseAge != null ? String(store.simulationParams.spouseAge) : ""
+  );
+  const [lastSyncedSpouseAge, setLastSyncedSpouseAge] = useState(store.simulationParams.spouseAge);
+  if (store.simulationParams.spouseAge !== lastSyncedSpouseAge) {
+    setLastSyncedSpouseAge(store.simulationParams.spouseAge);
+    setSpouseAgeInput(store.simulationParams.spouseAge != null ? String(store.simulationParams.spouseAge) : "");
+  }
+
+  const [childrenAgesInput, setChildrenAgesInput] = useState<string>(
+    store.simulationParams.childrenAges || ""
+  );
+  const [lastSyncedChildrenAges, setLastSyncedChildrenAges] = useState(store.simulationParams.childrenAges);
+  if (store.simulationParams.childrenAges !== lastSyncedChildrenAges) {
+    setLastSyncedChildrenAges(store.simulationParams.childrenAges);
+    setChildrenAgesInput(store.simulationParams.childrenAges || "");
+  }
 
   // NPS Codef API 연동 관련 상태 변수들
   const [syncName, setSyncName] = useState("홍길동");
@@ -747,10 +776,21 @@ export default function OnboardingPage() {
                   <div style={styles.fieldRow}>
                     <label style={styles.label}>현재 나이 (세)</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
                       className="premium-input"
-                      value={store.simulationParams.currentAge || ""}
-                      onChange={(e) => store.setSimulationParams({ currentAge: Number(e.target.value) })}
+                      placeholder="나이 또는 주민번호 앞 6자리 (예: 59, 691020)"
+                      value={ageInput}
+                      onChange={(e) => setAgeInput(e.target.value)}
+                      onBlur={() => {
+                        const resolved = resolveAge(ageInput);
+                        if (resolved !== null) {
+                          store.setSimulationParams({ currentAge: resolved });
+                          setAgeInput(String(resolved));
+                        } else {
+                          setAgeInput(store.simulationParams.currentAge ? String(store.simulationParams.currentAge) : "");
+                        }
+                      }}
                     />
                   </div>
                   <div style={styles.fieldRow}>
@@ -801,11 +841,21 @@ export default function OnboardingPage() {
                     <div style={styles.fieldRow}>
                       <label style={styles.label}>배우자 현재 나이 (세)</label>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         className="premium-input"
-                        placeholder="예: 35"
-                        value={store.simulationParams.spouseAge ?? ""}
-                        onChange={(e) => store.setSimulationParams({ spouseAge: Number(e.target.value) })}
+                        placeholder="나이 또는 주민번호 앞 6자리 (예: 35, 910101)"
+                        value={spouseAgeInput}
+                        onChange={(e) => setSpouseAgeInput(e.target.value)}
+                        onBlur={() => {
+                          const resolved = resolveAge(spouseAgeInput);
+                          if (resolved !== null) {
+                            store.setSimulationParams({ spouseAge: resolved });
+                            setSpouseAgeInput(String(resolved));
+                          } else {
+                            setSpouseAgeInput(store.simulationParams.spouseAge != null ? String(store.simulationParams.spouseAge) : "");
+                          }
+                        }}
                       />
                     </div>
                   </div>
@@ -827,9 +877,20 @@ export default function OnboardingPage() {
                       <input
                         type="text"
                         className="premium-input"
-                        placeholder="예: 5, 8"
-                        value={store.simulationParams.childrenAges || ""}
-                        onChange={(e) => store.setSimulationParams({ childrenAges: e.target.value })}
+                        placeholder="나이 또는 주민번호 앞 6자리, 쉼표구분 (예: 27, 950101)"
+                        value={childrenAgesInput}
+                        onChange={(e) => setChildrenAgesInput(e.target.value)}
+                        onBlur={() => {
+                          const resolvedAges = childrenAgesInput
+                            .split(",")
+                            .map((part) => part.trim())
+                            .filter((part) => part.length > 0)
+                            .map((part) => resolveAge(part))
+                            .filter((age): age is number => age !== null);
+                          const joined = resolvedAges.join(", ");
+                          store.setSimulationParams({ childrenAges: joined });
+                          setChildrenAgesInput(joined);
+                        }}
                       />
                     </div>
                   )}

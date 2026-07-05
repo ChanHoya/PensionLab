@@ -774,7 +774,9 @@ export default function OnboardingPage() {
                 <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>1. 본인 및 가족 정보</h3>
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>현재나이 (실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</label>
+                    <label style={styles.label}>
+                      현재나이 <span style={styles.labelHint}>(실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</span>
+                    </label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -839,7 +841,9 @@ export default function OnboardingPage() {
                 {store.simulationParams.hasSpouse && (
                   <div style={styles.fieldGrid} className="animate-fade-in">
                     <div style={styles.fieldRow}>
-                      <label style={styles.label}>배우자 현재나이 (실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</label>
+                      <label style={styles.label}>
+                        배우자 현재나이 <span style={styles.labelHint}>(실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</span>
+                      </label>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -873,7 +877,9 @@ export default function OnboardingPage() {
                   </div>
                   {store.simulationParams.childrenCount > 0 && (
                     <div style={styles.fieldRow}>
-                      <label style={styles.label}>자녀나이 (실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함, 쉼표구분)</label>
+                      <label style={styles.label}>
+                        자녀나이 <span style={styles.labelHint}>(실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함, 쉼표구분)</span>
+                      </label>
                       <input
                         type="text"
                         className="premium-input"
@@ -2420,6 +2426,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.95rem",
     fontWeight: 600,
     color: "var(--text-primary)",
+  },
+  labelHint: {
+    fontSize: "0.75rem",
+    fontWeight: 400,
+    color: "var(--text-muted)",
   },
   previewBox: {
     backgroundColor: "var(--background)",

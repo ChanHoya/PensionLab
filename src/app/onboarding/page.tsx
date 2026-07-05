@@ -775,7 +775,7 @@ export default function OnboardingPage() {
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
                     <label style={styles.label}>
-                      현재나이 <span style={styles.labelHint}>(실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</span>
+                      현재나이 <span style={styles.labelHint}>(나이 또는 생년월일(YYMMDD)을 넣으면 환산, 세)</span>
                     </label>
                     <input
                       type="text"
@@ -796,7 +796,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>희망 은퇴 나이 (세)</label>
+                    <label style={styles.label}>
+                      희망 은퇴 나이 <span style={styles.labelHint}>(세)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"
@@ -805,7 +807,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>예상 기대 수명 (세)</label>
+                    <label style={styles.label}>
+                      예상 기대 수명 <span style={styles.labelHint}>(세)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"
@@ -842,7 +846,7 @@ export default function OnboardingPage() {
                   <div style={styles.fieldGrid} className="animate-fade-in">
                     <div style={styles.fieldRow}>
                       <label style={styles.label}>
-                        배우자 현재나이 <span style={styles.labelHint}>(실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</span>
+                        배우자 현재나이 <span style={styles.labelHint}>(나이 또는 생년월일(YYMMDD)을 넣으면 환산, 세)</span>
                       </label>
                       <input
                         type="text"
@@ -867,7 +871,9 @@ export default function OnboardingPage() {
 
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>자녀 수 (명)</label>
+                    <label style={styles.label}>
+                      자녀 수 <span style={styles.labelHint}>(명)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"
@@ -878,7 +884,7 @@ export default function OnboardingPage() {
                   {store.simulationParams.childrenCount > 0 && (
                     <div style={styles.fieldRow}>
                       <label style={styles.label}>
-                        자녀나이 <span style={styles.labelHint}>(실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함, 쉼표구분)</span>
+                        자녀나이 <span style={styles.labelHint}>(나이 또는 생년월일(YYMMDD)을 넣으면 환산, 세, 쉼표구분)</span>
                       </label>
                       <input
                         type="text"
@@ -905,7 +911,9 @@ export default function OnboardingPage() {
                 <h3 style={{ ...styles.addFormTitle, marginTop: 20 }}>2. 노후 재무지출 및 자산 목표</h3>
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>희망 월 생활비 (만원)</label>
+                    <label style={styles.label}>
+                      희망 월 생활비 <span style={styles.labelHint}>(만원)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"
@@ -914,7 +922,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>최소 월 생활비 (만원)</label>
+                    <label style={styles.label}>
+                      최소 월 생활비 <span style={styles.labelHint}>(만원)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"
@@ -923,7 +933,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>자녀 교육/결혼 지원비 총액 (만원)</label>
+                    <label style={styles.label}>
+                      자녀 교육/결혼 지원비 총액 <span style={styles.labelHint}>(만원)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"
@@ -932,7 +944,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>노후 대비 연간 의료비 (만원)</label>
+                    <label style={styles.label}>
+                      노후 대비 연간 의료비 <span style={styles.labelHint}>(만원)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"
@@ -941,7 +955,9 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>은퇴 시점 비연금 자산(주식,채권,현금 등) 규모 (만원)</label>
+                    <label style={styles.label}>
+                      은퇴 시점 비연금 자산(주식,채권,현금 등) 규모 <span style={styles.labelHint}>(만원)</span>
+                    </label>
                     <input
                       type="number"
                       className="premium-input"

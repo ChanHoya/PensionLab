@@ -774,7 +774,7 @@ export default function OnboardingPage() {
                 <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>1. 본인 및 가족 정보</h3>
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
-                    <label style={styles.label}>현재 나이 (세)</label>
+                    <label style={styles.label}>현재나이 (실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -839,7 +839,7 @@ export default function OnboardingPage() {
                 {store.simulationParams.hasSpouse && (
                   <div style={styles.fieldGrid} className="animate-fade-in">
                     <div style={styles.fieldRow}>
-                      <label style={styles.label}>배우자 현재 나이 (세)</label>
+                      <label style={styles.label}>배우자 현재나이 (실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함)</label>
                       <input
                         type="text"
                         inputMode="numeric"
@@ -873,7 +873,7 @@ export default function OnboardingPage() {
                   </div>
                   {store.simulationParams.childrenCount > 0 && (
                     <div style={styles.fieldRow}>
-                      <label style={styles.label}>자녀 나이 (쉼표구분, 세)</label>
+                      <label style={styles.label}>자녀나이 (실제 나이(세) 또는 생년월일(YYMMDD)을 넣으면 환산함, 쉼표구분)</label>
                       <input
                         type="text"
                         className="premium-input"

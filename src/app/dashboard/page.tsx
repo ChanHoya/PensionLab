@@ -146,6 +146,7 @@ export default function DashboardPage() {
       personalPensions: store.personalPensions,
       pensionInsurances: store.pensionInsurances,
       simulationParams: store.simulationParams,
+      additionalPayment: store.additionalPayment,
     };
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
       JSON.stringify(data, null, 2)

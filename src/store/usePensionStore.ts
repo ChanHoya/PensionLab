@@ -74,6 +74,26 @@ export interface SimulationParamsState {
   isCoupleDivided: boolean;         // 부부 명의 분산 여부 (기본 false)
 }
 
+export type GapReason = "EXEMPT" | "EXCLUDED" | "MILITARY" | "ARREARS";
+export type EnrollStatus = "WORKPLACE" | "REGIONAL" | "VOLUNTARY" | "VOLUNTARY_CONT" | "NONE";
+
+export interface AdditionalPaymentState {
+  firstEnrollYm: string;          // 최초 가입년월 "YYYY-MM"
+  resumeYm: string;               // 지속 가입개시 년월 "YYYY-MM"
+  gapMonths: number;              // 중단 기간 (개월)
+  gapReason: GapReason;           // 중단 사유
+  enrollStatus: EnrollStatus;     // 현재 가입 상태
+  receivedLumpSumRefund: boolean; // 반환일시금 수령 여부
+  requestedMonths: number;        // 추납 희망 개월수
+  baseIncome: number;             // 추납 기준소득월액 (만원)
+  paymentMode: "LUMP" | "INSTALLMENT";
+  installments: number;           // 분납 횟수 (최대 60)
+  installmentInterestRate: number; // 분납이자율 (%/년, 1년 정기예금)
+  applyYm: string;                // 신청 년월 "YYYY-MM" (첫 납부기한은 다음 달)
+  marginalTaxRate: number;        // 한계세율 (%, 지방세 포함)
+  applyToSimulation: boolean;     // 대시보드 시뮬레이션에 추납 반영
+}
+
 interface PensionStore {
   // States
   nationalPension: NationalPensionState;
@@ -82,7 +102,8 @@ interface PensionStore {
   personalPensions: PersonalPensionSavingsState[];
   pensionInsurances: PensionInsuranceState[];
   simulationParams: SimulationParamsState;
-  
+  additionalPayment: AdditionalPaymentState;
+
   // Actions
   setNationalPension: (data: Partial<NationalPensionState>) => void;
   setBasicPension: (data: Partial<BasicPensionState>) => void;
@@ -99,6 +120,7 @@ interface PensionStore {
   setPersonalPensions: (pensions: PersonalPensionSavingsState[]) => void;
   setPensionInsurances: (insurances: PensionInsuranceState[]) => void;
   setSimulationParams: (data: Partial<SimulationParamsState>) => void;
+  setAdditionalPayment: (data: Partial<AdditionalPaymentState>) => void;
   importStoreData: (data: {
     nationalPension: NationalPensionState;
     basicPension: BasicPensionState;
@@ -106,6 +128,7 @@ interface PensionStore {
     personalPensions: PersonalPensionSavingsState[];
     pensionInsurances: PensionInsuranceState[];
     simulationParams: SimulationParamsState;
+    additionalPayment?: AdditionalPaymentState;
   }) => void;
   resetStore: () => void;
 }
@@ -152,6 +175,23 @@ const initialSimulationParams: SimulationParamsState = {
   isCoupleDivided: false,
 };
 
+const initialAdditionalPayment: AdditionalPaymentState = {
+  firstEnrollYm: "",
+  resumeYm: "",
+  gapMonths: 0,
+  gapReason: "EXEMPT",
+  enrollStatus: "REGIONAL",
+  receivedLumpSumRefund: false,
+  requestedMonths: 0,
+  baseIncome: 100,
+  paymentMode: "LUMP",
+  installments: 12,
+  installmentInterestRate: 2.5,
+  applyYm: "",
+  marginalTaxRate: 0,
+  applyToSimulation: false,
+};
+
 export const usePensionStore = create<PensionStore>()(
   persist(
     (set) => ({
@@ -162,6 +202,7 @@ export const usePensionStore = create<PensionStore>()(
       personalPensions: [],
       pensionInsurances: [],
       simulationParams: initialSimulationParams,
+      additionalPayment: initialAdditionalPayment,
 
       // Actions
       setNationalPension: (data) =>
@@ -254,6 +295,11 @@ export const usePensionStore = create<PensionStore>()(
           simulationParams: { ...state.simulationParams, ...data },
         })),
 
+      setAdditionalPayment: (data) =>
+        set((state) => ({
+          additionalPayment: { ...state.additionalPayment, ...data },
+        })),
+
       importStoreData: (data) =>
         set({
           nationalPension: data.nationalPension || initialNationalPension,
@@ -264,6 +310,9 @@ export const usePensionStore = create<PensionStore>()(
           simulationParams: data.simulationParams
             ? { ...initialSimulationParams, ...data.simulationParams }
             : initialSimulationParams,
+          additionalPayment: data.additionalPayment
+            ? { ...initialAdditionalPayment, ...data.additionalPayment }
+            : initialAdditionalPayment,
         }),
 
       resetStore: () =>
@@ -274,6 +323,7 @@ export const usePensionStore = create<PensionStore>()(
           personalPensions: [],
           pensionInsurances: [],
           simulationParams: initialSimulationParams,
+          additionalPayment: initialAdditionalPayment,
         }),
     }),
     {

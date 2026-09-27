@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 import { runPensionSimulation } from "@/services/pensionCalculator";
-import { applyAdditionalPayment } from "@/services/additionalPaymentCalculator";
+import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import ThemeToggle from "@/components/ThemeToggle";
 import {
   ResponsiveContainer,
@@ -243,7 +243,8 @@ const renderMarkdown = (text: string) => {
 export default function AIAdvisorPage() {
   const router = useRouter();
   const store = usePensionStore();
-  const nationalForSim = applyAdditionalPayment(store.nationalPension, store.additionalPayment, store.simulationParams);
+  const selfApplied = applyNpsOptions(store.nationalPension, store.additionalPayment, store.returnRepayment, store.simulationParams);
+  const nationalForSim = selfApplied.national;
   const [isMounted, setIsMounted] = useState(false);
 
   // API Call States
@@ -591,7 +592,7 @@ export default function AIAdvisorPage() {
               fontSize: "0.8rem",
               fontWeight: 600,
             }}>
-              🔁 추납 {nationalForSim.expectedTotalContributionMonths - store.nationalPension.expectedTotalContributionMonths}개월 반영 (추정치 · 정확한 금액은 국민연금공단 1355 확인)
+              🔁 {[selfApplied.addedMonths > 0 && `추납 ${selfApplied.addedMonths}개월`, selfApplied.restoredMonths > 0 && `반납 ${selfApplied.restoredMonths}개월`].filter(Boolean).join(" · ")} 반영 (추정치 · 정확한 금액은 국민연금공단 1355 확인)
             </div>
           )}
         </section>

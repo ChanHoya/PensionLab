@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 import { runPensionSimulation } from "@/services/pensionCalculator";
 import { runWithdrawalSimulation, StrategySimulationResult } from "@/services/withdrawalCalculator";
-import { applyAdditionalPayment } from "@/services/additionalPaymentCalculator";
+import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
+import { runCoupleSimulation, personParams } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
+import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 
 // Import Recharts components
 import {
@@ -229,8 +231,34 @@ export default function DashboardPage() {
     );
   }
 
-  // 추가납부 탭에서 「대시보드 반영」을 켠 경우 추납 후 국민연금 값으로 시뮬레이션
-  const nationalForSim = applyAdditionalPayment(store.nationalPension, store.additionalPayment, store.simulationParams);
+  // 반납·추납 「대시보드 반영」이 켜진 것만 적용한 국민연금 (본인·배우자)
+  const selfApplied = applyNpsOptions(store.nationalPension, store.additionalPayment, store.returnRepayment, store.simulationParams);
+  const nationalForSim = selfApplied.national;
+  const hasSpouse = store.simulationParams.hasSpouse;
+  const spouseApplied = applyNpsOptions(
+    store.spouse.nationalPension,
+    store.spouse.additionalPayment,
+    store.spouse.returnRepayment,
+    personParams(store.simulationParams, "SPOUSE")
+  );
+  const coupleResult = runCoupleSimulation(
+    {
+      national: nationalForSim,
+      retirementPensions: store.retirementPensions,
+      personalPensions: store.personalPensions,
+      pensionInsurances: store.pensionInsurances,
+    },
+    hasSpouse
+      ? {
+          national: spouseApplied.national,
+          retirementPensions: store.spouse.retirementPensions,
+          personalPensions: store.spouse.personalPensions,
+          pensionInsurances: store.spouse.pensionInsurances,
+        }
+      : null,
+    store.simulationParams,
+    store.basicPension
+  );
 
   // Run the basic pension simulation based on store states
   const simulation = runPensionSimulation(
@@ -499,7 +527,7 @@ export default function DashboardPage() {
             fontSize: "0.8rem",
             fontWeight: 600,
           }} className="animate-fade-in">
-            🔁 추납 {nationalForSim.expectedTotalContributionMonths - store.nationalPension.expectedTotalContributionMonths}개월 반영 (추정치 · 정확한 금액은 국민연금공단 1355 확인)
+            🔁 {[selfApplied.addedMonths > 0 && `추납 ${selfApplied.addedMonths}개월`, selfApplied.restoredMonths > 0 && `반납 ${selfApplied.restoredMonths}개월`].filter(Boolean).join(" · ")} 반영 (추정치 · 정확한 금액은 국민연금공단 1355 확인)
           </div>
         )}
 
@@ -574,6 +602,14 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {hasSpouse && (
+          <CoupleSimulationSection
+            result={coupleResult}
+            selfStartAge={store.simulationParams.nationalPensionStartAge}
+            spouseStartAge={store.simulationParams.spouseNationalPensionStartAge}
+          />
+        )}
 
         {/* Row 2: Parameter Sliders (3-column layout) */}
         <section style={styles.slidersCard} className="premium-card">

@@ -171,16 +171,16 @@ export default function OnboardingPage() {
           currentStandardMonthlyIncome: income,
           expectedMonthlyPension: parsedData.nationalPension.expectedMonthlyPension || 0,
           totalPaidAmount: totalPaid || Math.round(income * 0.09 * months),
-          expectedTotalContributionMonths: parsedData.nationalPension.expectedTotalContributionMonths || store.nationalPension.expectedTotalContributionMonths,
-          totalExpectedPremium: parsedData.nationalPension.totalExpectedPremium || store.nationalPension.totalExpectedPremium,
-          basicPensionAmount: store.nationalPension.basicPensionAmount,
-          aValue: store.nationalPension.aValue,
-          bValue: store.nationalPension.bValue,
-        });
+          expectedTotalContributionMonths: parsedData.nationalPension.expectedTotalContributionMonths || person.nationalPension.expectedTotalContributionMonths,
+          totalExpectedPremium: parsedData.nationalPension.totalExpectedPremium || person.nationalPension.totalExpectedPremium,
+          basicPensionAmount: person.nationalPension.basicPensionAmount,
+          aValue: person.nationalPension.aValue,
+          bValue: person.nationalPension.bValue,
+        }, who);
       }
 
       if (parsedData.retirementPensions && parsedData.retirementPensions.length > 0) {
-        store.setRetirementPensions([]);
+        store.setRetirementPensions([], who);
         parsedData.retirementPensions.forEach((p: any) => {
           store.addRetirementPension({
             pensionType: p.pensionType || "DC",
@@ -191,12 +191,12 @@ export default function OnboardingPage() {
             monthlyContribution: p.monthlyContribution || 0,
             expectedReturnRate: p.expectedReturnRate || 3.0,
             companyMatchRate: 0,
-          });
+          }, who);
         });
       }
 
       if (parsedData.personalPensions && parsedData.personalPensions.length > 0) {
-        store.setPersonalPensions([]);
+        store.setPersonalPensions([], who);
         parsedData.personalPensions.forEach((p: any) => {
           store.addPersonalPension({
             savingsType: p.savingsType || "FUND",
@@ -204,12 +204,12 @@ export default function OnboardingPage() {
             monthlyAnnualContribution: p.monthlyAnnualContribution || 0,
             desiredStartAge: p.desiredStartAge || 65,
             receivingPeriod: p.receivingPeriod || 20,
-          });
+          }, who);
         });
       }
 
       if (parsedData.pensionInsurances && parsedData.pensionInsurances.length > 0) {
-        store.setPensionInsurances([]);
+        store.setPensionInsurances([], who);
         parsedData.pensionInsurances.forEach((p: any) => {
           store.addPensionInsurance({
             insuranceType: p.insuranceType || "SAVING",
@@ -217,7 +217,7 @@ export default function OnboardingPage() {
             monthlyPayment: p.monthlyPayment || 0,
             paymentPeriod: p.paymentPeriod || 10,
             expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
-          });
+          }, who);
         });
       }
 
@@ -316,10 +316,10 @@ export default function OnboardingPage() {
           <div style={{ ...styles.previewBox, marginTop: 16, borderLeft: "4px solid var(--success)" }} className="animate-fade-in">
             <h4 style={{ ...styles.previewTitle, color: "var(--success-light)" }}>✓ 연금 정보 자동 연동 완료</h4>
             <div style={{ ...styles.previewGrid, fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 8 }}>
-              <div>국민연금: <strong>{store.nationalPension.contributionMonths > 0 ? `${store.nationalPension.contributionMonths}개월 (예상 ${store.nationalPension.expectedMonthlyPension}만원/월)` : "정보 없음"}</strong></div>
-              <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length}개</strong></div>
-              <div>개인연금 계좌수: <strong>{store.personalPensions.length}개</strong></div>
-              <div>연금보험 계좌수: <strong>{store.pensionInsurances.length}개</strong></div>
+              <div>국민연금: <strong>{person.nationalPension.contributionMonths > 0 ? `${person.nationalPension.contributionMonths}개월 (예상 ${person.nationalPension.expectedMonthlyPension}만원/월)` : "정보 없음"}</strong></div>
+              <div>퇴직연금 계좌수: <strong>{person.retirementPensions.length}개</strong></div>
+              <div>개인연금 계좌수: <strong>{person.personalPensions.length}개</strong></div>
+              <div>연금보험 계좌수: <strong>{person.pensionInsurances.length}개</strong></div>
             </div>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 10 }}>
               * 각 단계별 메뉴 탭에서 상세 내용을 확인하고 보완할 수 있습니다.
@@ -374,7 +374,7 @@ export default function OnboardingPage() {
             basicPensionAmount: result.data.basicPensionAmount,
             aValue: result.data.aValue,
             bValue: result.data.bValue,
-          });
+          }, who);
           setVerificationPending(false);
           setNpsSyncing(false);
           setNpsSynced(true);
@@ -430,7 +430,7 @@ export default function OnboardingPage() {
           setFssSyncing(false);
         } else if (result.status === "SUCCESS" && result.data) {
           // 1. 퇴직연금 업데이트
-          store.retirementPensions.forEach(p => store.deleteRetirementPension(p.id));
+          person.retirementPensions.forEach(p => store.deleteRetirementPension(p.id, who));
           result.data.retirementPensions.forEach((p: any) => {
             store.addRetirementPension({
               pensionType: p.pensionType,
@@ -441,11 +441,11 @@ export default function OnboardingPage() {
               monthlyContribution: p.monthlyContribution,
               companyMatchRate: 20,
               expectedReturnRate: p.expectedReturnRate,
-            });
+            }, who);
           });
 
           // 2. 개인연금 업데이트
-          store.personalPensions.forEach(p => store.deletePersonalPension(p.id));
+          person.personalPensions.forEach(p => store.deletePersonalPension(p.id, who));
           result.data.personalPensions.forEach((p: any) => {
             store.addPersonalPension({
               savingsType: p.savingsType,
@@ -453,11 +453,11 @@ export default function OnboardingPage() {
               monthlyAnnualContribution: p.monthlyAnnualContribution,
               desiredStartAge: p.desiredStartAge || 65,
               receivingPeriod: p.receivingPeriod || 20,
-            });
+            }, who);
           });
 
           // 3. 연금보험 업데이트
-          store.pensionInsurances.forEach(p => store.deletePensionInsurance(p.id));
+          person.pensionInsurances.forEach(p => store.deletePensionInsurance(p.id, who));
           result.data.pensionInsurances.forEach((p: any) => {
             store.addPensionInsurance({
               insuranceType: p.insuranceType,
@@ -465,7 +465,7 @@ export default function OnboardingPage() {
               monthlyPayment: p.monthlyPayment,
               paymentPeriod: p.paymentPeriod || 10,
               expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
-            });
+            }, who);
           });
 
           setFssVerificationPending(false);
@@ -1060,8 +1060,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.contributionMonths || ""}
-                          onChange={(e) => store.setNationalPension({ contributionMonths: Number(e.target.value) })}
+                          value={person.nationalPension.contributionMonths || ""}
+                          onChange={(e) => store.setNationalPension({ contributionMonths: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1069,8 +1069,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.totalPaidAmount || ""}
-                          onChange={(e) => store.setNationalPension({ totalPaidAmount: Number(e.target.value) })}
+                          value={person.nationalPension.totalPaidAmount || ""}
+                          onChange={(e) => store.setNationalPension({ totalPaidAmount: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1078,8 +1078,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.currentStandardMonthlyIncome || ""}
-                          onChange={(e) => store.setNationalPension({ currentStandardMonthlyIncome: Number(e.target.value) })}
+                          value={person.nationalPension.currentStandardMonthlyIncome || ""}
+                          onChange={(e) => store.setNationalPension({ currentStandardMonthlyIncome: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1087,8 +1087,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.expectedTotalContributionMonths || ""}
-                          onChange={(e) => store.setNationalPension({ expectedTotalContributionMonths: Number(e.target.value) })}
+                          value={person.nationalPension.expectedTotalContributionMonths || ""}
+                          onChange={(e) => store.setNationalPension({ expectedTotalContributionMonths: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1096,8 +1096,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.expectedMonthlyPension || ""}
-                          onChange={(e) => store.setNationalPension({ expectedMonthlyPension: Number(e.target.value) })}
+                          value={person.nationalPension.expectedMonthlyPension || ""}
+                          onChange={(e) => store.setNationalPension({ expectedMonthlyPension: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1105,8 +1105,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.totalExpectedPremium || ""}
-                          onChange={(e) => store.setNationalPension({ totalExpectedPremium: Number(e.target.value) })}
+                          value={person.nationalPension.totalExpectedPremium || ""}
+                          onChange={(e) => store.setNationalPension({ totalExpectedPremium: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1114,8 +1114,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.basicPensionAmount || ""}
-                          onChange={(e) => store.setNationalPension({ basicPensionAmount: Number(e.target.value) })}
+                          value={person.nationalPension.basicPensionAmount || ""}
+                          onChange={(e) => store.setNationalPension({ basicPensionAmount: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1123,8 +1123,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.aValue || ""}
-                          onChange={(e) => store.setNationalPension({ aValue: Number(e.target.value) })}
+                          value={person.nationalPension.aValue || ""}
+                          onChange={(e) => store.setNationalPension({ aValue: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1132,8 +1132,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.bValue || ""}
-                          onChange={(e) => store.setNationalPension({ bValue: Number(e.target.value) })}
+                          value={person.nationalPension.bValue || ""}
+                          onChange={(e) => store.setNationalPension({ bValue: Number(e.target.value) }, who)}
                         />
                       </div>
                     </div>
@@ -1294,10 +1294,10 @@ export default function OnboardingPage() {
                       <div style={styles.previewBox}>
                         <h4 style={styles.previewTitle}>동기화 완료된 국민연금 정보 (NPS Codef 연동 데이터)</h4>
                         <div style={styles.previewGrid}>
-                          <div>가입 개월수: <strong>{store.nationalPension.contributionMonths} 개월</strong></div>
-                          <div>총 납부금액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
-                          <div>현재 기준소득월액: <strong>{store.nationalPension.currentStandardMonthlyIncome.toLocaleString()} 만원</strong></div>
-                          <div>예상 연금 월액: <strong style={{ color: "var(--text-accent)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
+                          <div>가입 개월수: <strong>{person.nationalPension.contributionMonths} 개월</strong></div>
+                          <div>총 납부금액: <strong>{person.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
+                          <div>현재 기준소득월액: <strong>{person.nationalPension.currentStandardMonthlyIncome.toLocaleString()} 만원</strong></div>
+                          <div>예상 연금 월액: <strong style={{ color: "var(--text-accent)" }}>{person.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
                         </div>
                       </div>
                     )}
@@ -1306,7 +1306,7 @@ export default function OnboardingPage() {
 
                 {nationalInputMode === "PDF" && renderPdfUploadSection()}
 
-                {nationalInputMode === "ADDITIONAL" && <AdditionalPaymentPanel />}
+                {nationalInputMode === "ADDITIONAL" && <AdditionalPaymentPanel who={who} />}
               </div>
             )}
 
@@ -1393,9 +1393,9 @@ export default function OnboardingPage() {
                     </div>
 
                     {/* Added Pensions List */}
-                    {store.retirementPensions.length > 0 ? (
+                    {person.retirementPensions.length > 0 ? (
                       <div style={styles.addedList}>
-                        {store.retirementPensions.map((p) => (
+                        {person.retirementPensions.map((p) => (
                           <div key={p.id} style={styles.addedItem}>
                             <div>
                               <strong>{p.pensionType}형 퇴직연금</strong>
@@ -1407,7 +1407,7 @@ export default function OnboardingPage() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => store.deleteRetirementPension(p.id)}
+                              onClick={() => store.deleteRetirementPension(p.id, who)}
                               style={styles.deleteBtn}
                             >
                               삭제
@@ -1520,7 +1520,7 @@ export default function OnboardingPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          store.addRetirementPension(tempRetirement);
+                          store.addRetirementPension(tempRetirement, who);
                           alert("퇴직연금이 추가되었습니다.");
                         }}
                         style={styles.addBtn}
@@ -1685,13 +1685,13 @@ export default function OnboardingPage() {
                       <div style={styles.previewBox}>
                         <h4 style={styles.previewTitle}>동기화 완료된 FSS 연금 정보</h4>
                         <div style={styles.previewGrid}>
-                          <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
-                          <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
-                          <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
+                          <div>퇴직연금 계좌수: <strong>{person.retirementPensions.length} 개</strong></div>
+                          <div>개인연금 계좌수: <strong>{person.personalPensions.length} 개</strong></div>
+                          <div>연금보험 계좌수: <strong>{person.pensionInsurances.length} 개</strong></div>
                           <div>총 자산 누계액: <strong style={{ color: "var(--text-accent)" }}>
-                            {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
+                            {((person.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
                           </strong></div>
                         </div>
                       </div>
@@ -1741,12 +1741,12 @@ export default function OnboardingPage() {
                       <div style={styles.addFormBox}>
                         <h4 style={styles.addFormTitle}>연금저축 (세제혜택)</h4>
                         
-                        {store.personalPensions.length > 0 && (
+                        {person.personalPensions.length > 0 && (
                           <div style={{ ...styles.addedList, marginBottom: 12 }}>
-                            {store.personalPensions.map((p) => (
+                            {person.personalPensions.map((p) => (
                               <div key={p.id} style={styles.addedItemCompact}>
                                 <span>{p.savingsType} - {p.totalAccumulated}만원</span>
-                                <button type="button" onClick={() => store.deletePersonalPension(p.id)} style={styles.deleteBtnCompact}>✕</button>
+                                <button type="button" onClick={() => store.deletePersonalPension(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
                               </div>
                             ))}
                           </div>
@@ -1803,7 +1803,7 @@ export default function OnboardingPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            store.addPersonalPension(tempPersonal);
+                            store.addPersonalPension(tempPersonal, who);
                           }}
                           style={styles.addBtnCompact}
                         >
@@ -1815,12 +1815,12 @@ export default function OnboardingPage() {
                       <div style={styles.addFormBox}>
                         <h4 style={styles.addFormTitle}>연금보험 (비과세)</h4>
 
-                        {store.pensionInsurances.length > 0 && (
+                        {person.pensionInsurances.length > 0 && (
                           <div style={{ ...styles.addedList, marginBottom: 12 }}>
-                            {store.pensionInsurances.map((p) => (
+                            {person.pensionInsurances.map((p) => (
                               <div key={p.id} style={styles.addedItemCompact}>
                                 <span>{p.insuranceType} - {p.totalAccumulated}만원</span>
-                                <button type="button" onClick={() => store.deletePensionInsurance(p.id)} style={styles.deleteBtnCompact}>✕</button>
+                                <button type="button" onClick={() => store.deletePensionInsurance(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
                               </div>
                             ))}
                           </div>
@@ -1875,7 +1875,7 @@ export default function OnboardingPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            store.addPensionInsurance(tempInsurance);
+                            store.addPensionInsurance(tempInsurance, who);
                           }}
                           style={styles.addBtnCompact}
                         >
@@ -2040,13 +2040,13 @@ export default function OnboardingPage() {
                       <div style={styles.previewBox}>
                         <h4 style={styles.previewTitle}>동기화 완료된 FSS 연금 정보</h4>
                         <div style={styles.previewGrid}>
-                          <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
-                          <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
-                          <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
+                          <div>퇴직연금 계좌수: <strong>{person.retirementPensions.length} 개</strong></div>
+                          <div>개인연금 계좌수: <strong>{person.personalPensions.length} 개</strong></div>
+                          <div>연금보험 계좌수: <strong>{person.pensionInsurances.length} 개</strong></div>
                           <div>총 자산 누계액: <strong style={{ color: "var(--text-accent)" }}>
-                            {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
+                            {((person.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
                           </strong></div>
                         </div>
                       </div>

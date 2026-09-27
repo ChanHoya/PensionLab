@@ -1,0 +1,161 @@
+"use client";
+
+import React from "react";
+import { usePensionStore, pensionsOf, type ReturnRepaymentState, type Who } from "@/store/usePensionStore";
+import {
+  calcRepaymentCost,
+  compareRefundScenarios,
+  isRepaymentReady,
+} from "@/services/returnRepaymentCalculator";
+import { personParams } from "@/services/coupleSimulation";
+import { maxRefundInstallments } from "@/config/npsRules";
+
+const fmt = (v: number) => Math.round(v).toLocaleString();
+
+// 반환일시금 반납 입력 + 대안 D(현행)·B(반납)·C(추납)·A(반납+추납) 비교
+export default function ReturnRepaymentSection({ who }: { who: Who }) {
+  const store = usePensionStore();
+  const person = pensionsOf(store, who);
+  const rr = person.returnRepayment;
+  const params = personParams(store.simulationParams, who);
+  const set = (data: Partial<ReturnRepaymentState>) => store.setReturnRepayment(data, who);
+  const ready = isRepaymentReady(rr);
+  const cost = ready ? calcRepaymentCost(rr) : null;
+  const scenarios = compareRefundScenarios(person.nationalPension, rr, person.additionalPayment, params);
+  const maxInstallments = maxRefundInstallments(rr.restoredMonths);
+  const best = Math.max(...scenarios.map((s) => s.gainAtLifeExpectancy));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <h4 style={styles.sectionTitle}>⑤ 반환일시금 반납</h4>
+      <div style={styles.infoAlert}>
+        💡 예전에 받은 반환일시금을 이자와 함께 돌려주면 그 가입기간이 <strong>당시 소득대체율 그대로</strong> 되살아납니다
+        (1988~1998년 가입분은 70%). 공단 반납 고지액을 입력하면 그 금액을, 비워 두면 공단 고시 연도별 정기예금 이자율로 추정합니다.
+      </div>
+      <div style={styles.fieldGrid}>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>반환일시금 원금 (만원)</label>
+          <input type="number" min={0} className="premium-input" value={rr.refundAmount || ""}
+            onChange={(e) => set({ refundAmount: Number(e.target.value) })} />
+        </div>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>반환일시금 수령년월</label>
+          <input type="month" className="premium-input" value={rr.refundYm}
+            onChange={(e) => set({ refundYm: e.target.value })} />
+        </div>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>복원 가입기간 (개월)</label>
+          <input type="number" min={0} className="premium-input" value={rr.restoredMonths || ""}
+            onChange={(e) => set({ restoredMonths: Number(e.target.value) })} />
+        </div>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>복원 기간 시작년월 <span style={styles.labelHint}>(당시 가입 시작, 소득대체율 판정)</span></label>
+          <input type="month" className="premium-input" value={rr.periodStartYm}
+            onChange={(e) => set({ periodStartYm: e.target.value })} />
+        </div>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>공단 반납 고지액 (만원) <span style={styles.labelHint}>(모르면 비워 두세요 · ☎1355 조회)</span></label>
+          <input type="number" min={0} className="premium-input" value={rr.noticeAmount || ""}
+            onChange={(e) => set({ noticeAmount: Number(e.target.value) })} />
+        </div>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>반납 신청년월</label>
+          <input type="month" className="premium-input" value={rr.applyYm}
+            onChange={(e) => set({ applyYm: e.target.value })} />
+        </div>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>분할 횟수 <span style={styles.labelHint}>(1 = 일시납, 최대 {maxInstallments}회)</span></label>
+          <input type="number" min={1} step={1} className="premium-input" value={rr.installments || ""}
+            onChange={(e) => set({ installments: Number(e.target.value) })} />
+        </div>
+        <div style={styles.fieldRow}>
+          <label style={styles.label}>대시보드 시뮬레이션에 반영</label>
+          <select className="premium-input" value={rr.applyToSimulation ? "Y" : "N"}
+            onChange={(e) => set({ applyToSimulation: e.target.value === "Y" })}>
+            <option value="N">반영 안 함</option>
+            <option value="Y">반납 후 연금액으로 반영</option>
+          </select>
+        </div>
+      </div>
+
+      {cost && (
+        <div style={styles.previewBox}>
+          <div style={styles.previewGrid}>
+            <div>반납금: <strong>{fmt(cost.lumpSum)} 만원</strong> ({cost.source === "NOTICE" ? "공단 고지액" : `원금 ${fmt(cost.principal)}만원 + 이자 추정`})</div>
+            <div>분할 {cost.installments}회 추가 이자: <strong>{fmt(cost.installmentInterest)} 만원</strong> → 총 <strong>{fmt(cost.total)} 만원</strong></div>
+          </div>
+        </div>
+      )}
+
+      <div style={styles.previewBox}>
+        <h4 style={styles.previewTitle}>대안별 비교 (D 현행 · B 반납 · C 추납 · A 반납+추납)</h4>
+        <div style={{ overflowX: "auto" }}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>대안</th>
+                <th style={styles.th}>가입기간</th>
+                <th style={styles.th}>추가 납부액</th>
+                <th style={styles.th}>생애 총 납부보험료</th>
+                <th style={styles.th}>예상 월 연금</th>
+                <th style={styles.th}>총원금 회수 나이</th>
+                <th style={styles.th}>추가분 회수 나이</th>
+                <th style={styles.th}>기대수명({params.expectedLifeExpectancy}세)까지 순이익</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scenarios.map((s) => (
+                <tr key={s.id} style={s.gainAtLifeExpectancy === best ? styles.bestRow : undefined}>
+                  <td style={styles.td}>{s.id} · {s.label}</td>
+                  <td style={styles.td}>{s.totalMonths}개월 {s.addedMonths > 0 && `(+${s.addedMonths})`}</td>
+                  <td style={styles.td}>{fmt(s.extraCost)} 만원</td>
+                  <td style={styles.td}>{fmt(s.lifetimePremium)} 만원</td>
+                  <td style={styles.td}>{s.monthly.toFixed(1)} 만원 {s.delta > 0 && `(+${s.delta.toFixed(1)})`}</td>
+                  <td style={styles.td}>{s.recoverAgeTotal === null ? "-" : `${s.recoverAgeTotal}세`}</td>
+                  <td style={styles.td}>{s.recoverAgeExtra === null ? "-" : `${s.recoverAgeExtra}세`}</td>
+                  <td style={styles.td}>{fmt(s.gainAtLifeExpectancy)} 만원</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p style={styles.note}>
+          생애 총 납부보험료 = 「NPS 공단고서 상세 입력」의 총 예상 납부보험료 + 추가 납부액. 추납(C·A)은 위 ①~④ 추납 입력을 그대로 씁니다.
+          반납 복원 기간의 소득은 본인 평균소득(B값)과 같다고 가정한 현재가치 추정치이며, 정확한 금액은 국민연금공단(☎1355)에서 확인하세요.
+        </p>
+        {!ready && <p style={styles.note}>반납 원금·수령년월·복원 개월수·복원 시작년월·신청년월을 모두 입력하면 B·A 대안이 계산됩니다.</p>}
+      </div>
+    </div>
+  );
+}
+
+const styles: { [key: string]: React.CSSProperties } = {
+  sectionTitle: { fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)", margin: "4px 0 0" },
+  infoAlert: {
+    backgroundColor: "rgba(99, 102, 241, 0.07)",
+    border: "1px solid rgba(99, 102, 241, 0.18)",
+    borderLeft: "3px solid rgba(99, 102, 241, 0.6)",
+    borderRadius: "var(--radius-sm)",
+    padding: "12px 16px",
+    fontSize: "0.875rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.6,
+  },
+  fieldGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 20px" },
+  fieldRow: { display: "flex", flexDirection: "column", gap: "8px" },
+  label: { fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)" },
+  labelHint: { fontSize: "0.75rem", fontWeight: 400, color: "var(--text-muted)" },
+  previewBox: {
+    backgroundColor: "var(--background)",
+    border: "1px dashed var(--border)",
+    borderRadius: "var(--radius-sm)",
+    padding: "16px",
+  },
+  previewTitle: { fontSize: "0.9rem", fontWeight: 700, color: "var(--primary)", marginBottom: "10px" },
+  previewGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "0.85rem", color: "var(--text-secondary)" },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", color: "var(--text-secondary)" },
+  th: { textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--border)", color: "var(--text-primary)", fontWeight: 600, whiteSpace: "nowrap" },
+  td: { padding: "6px 8px", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" },
+  bestRow: { backgroundColor: "rgba(16, 185, 129, 0.08)", fontWeight: 600 },
+  note: { fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "8px", lineHeight: 1.5 },
+};

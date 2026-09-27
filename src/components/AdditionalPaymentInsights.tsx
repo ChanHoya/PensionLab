@@ -77,26 +77,28 @@ export default function AdditionalPaymentInsights({ plan, paymentMode }: Props) 
 
       <div style={styles.box}>
         <h4 style={styles.title}>기준소득월액별 비교 ({plan.months}개월 추납, 세전)</h4>
-        <table style={styles.table}>
-          <thead>
-            <tr>
-              <th style={styles.th}>기준소득월액</th>
-              <th style={styles.th}>추납액</th>
-              <th style={styles.th}>연금 증가(월)</th>
-              <th style={styles.th}>회수 기간</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plan.comparisons.map((o) => (
-              <tr key={o.label}>
-                <td style={styles.td}>{o.label} · {fmt(o.baseIncome)}만원</td>
-                <td style={styles.td}>{fmt(o.cost)} 만원</td>
-                <td style={styles.td}>+{o.deltaMonthly.toFixed(1)} 만원</td>
-                <td style={styles.td}>{o.yearsToBreakEven === null ? "회수 불가" : `${o.yearsToBreakEven}년`}</td>
+        <div style={{ overflowX: "auto" }}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={styles.th}>기준소득월액</th>
+                <th style={styles.th}>추납액</th>
+                <th style={styles.th}>연금 증가(월)</th>
+                <th style={styles.th}>회수 기간</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {plan.comparisons.map((o) => (
+                <tr key={o.label}>
+                  <td style={styles.td}>{o.label} · {fmt(o.baseIncome)}만원</td>
+                  <td style={styles.td}>{fmt(o.cost)} 만원</td>
+                  <td style={styles.td}>+{o.deltaMonthly.toFixed(1)} 만원</td>
+                  <td style={styles.td}>{o.yearsToBreakEven === null ? "회수 불가" : `${o.yearsToBreakEven}년`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <p style={styles.note}>
           국민연금은 소득이 낮을수록 낸 돈 대비 많이 받도록 설계되어 있어, 금액을 높이기보다 <strong>적은 금액으로 가능한 한 긴 기간</strong>을 채우는 편이 회수가 빠릅니다.
         </p>
@@ -127,26 +129,28 @@ export default function AdditionalPaymentInsights({ plan, paymentMode }: Props) 
       {paymentMode === "INSTALLMENT" && (
         <div style={styles.box}>
           <h4 style={styles.title}>분납 연도별 보험료율</h4>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>연도</th>
-                <th style={styles.th}>적용 요율</th>
-                <th style={styles.th}>회차</th>
-                <th style={styles.th}>납부액(이자 포함)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...byYear.entries()].map(([year, v]) => (
-                <tr key={year}>
-                  <td style={styles.td}>{year}년</td>
-                  <td style={styles.td}>{v.rate.toFixed(1)}%</td>
-                  <td style={styles.td}>{v.count}회</td>
-                  <td style={styles.td}>{fmt(v.amount)} 만원</td>
+          <div style={{ overflowX: "auto" }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>연도</th>
+                  <th style={styles.th}>적용 요율</th>
+                  <th style={styles.th}>회차</th>
+                  <th style={styles.th}>납부액(이자 포함)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[...byYear.entries()].map(([year, v]) => (
+                  <tr key={year}>
+                    <td style={styles.td}>{year}년</td>
+                    <td style={styles.td}>{v.rate.toFixed(1)}%</td>
+                    <td style={styles.td}>{v.count}회</td>
+                    <td style={styles.td}>{fmt(v.amount)} 만원</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <p style={styles.note}>
             2025.11.25 개정 국민연금법에 따라 추납 보험료율은 납부기한이 속하는 달 기준입니다. 해가 바뀐 회차부터 오른 요율이 적용된다고 가정했습니다(정확한 적용 방식은 공단 확인).
           </p>

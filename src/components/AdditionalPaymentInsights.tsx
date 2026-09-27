@@ -168,7 +168,7 @@ export default function AdditionalPaymentInsights({ plan, paymentMode, isVolunta
           <li><strong>목돈이 없다면</strong> 분납(최대 60회)이 가능하지만, 해가 바뀐 회차부터 오른 요율과 분납이자(1년 정기예금 이자율)가 붙습니다. 횟수를 줄이거나 연내에 끝내는 편이 유리합니다.</li>
           <li><strong>종합소득세율이 높은 직장인·사업자</strong>는 여러 해에 나눠 내면 해마다 소득공제를 받아 환급이 커질 수 있습니다. 소득이 없는 임의가입자(전업주부 등)에게는 해당되지 않습니다.</li>
           <li><strong>가입기간이 10년 미만</strong>이면 추납으로 10년을 채우는 것이 가장 큰 효과입니다(노령연금 수급권 확보).</li>
-          <li>반환일시금을 받은 적이 있다면 <strong>반납</strong>이 먼저입니다. 신청 후 <strong>연금 수급이 시작되면 납부할 수 없고</strong>, 납부기한을 넘기면 가산이자가 붙습니다.</li>
+          <li>반환일시금을 받은 기간은 <strong>먼저 반납해야 추납 자격이 생깁니다</strong>. 반환일시금을 받은 적이 있다면 반납부터 신청하세요. 신청 후 <strong>연금 수급이 시작되면 납부할 수 없고</strong>, 납부기한을 넘기면 가산이자가 붙습니다.</li>
           <li>신청 시 <strong>혼인관계증명서</strong>(상세, 주민등록번호 표시)를 제출해야 합니다. 문의: 국민연금 고객센터 1355.</li>
         </ol>
         <a href="/NPS_Additional_Payment_Plan.pdf" target="_blank" rel="noopener noreferrer" style={styles.link}>

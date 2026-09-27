@@ -53,9 +53,6 @@ export function checkEligibility(ap: AdditionalPaymentState): Eligibility {
       blocked = true;
     }
   }
-  if (ap.receivedLumpSumRefund) {
-    issues.push("반환일시금을 받은 기간은 먼저 반납해야 추납 자격이 생깁니다.");
-  }
   if (!blocked && ap.gapMonths <= 0) {
     issues.push("중단 기간(개월)을 입력하세요.");
   }

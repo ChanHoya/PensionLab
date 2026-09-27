@@ -1,16 +1,19 @@
 "use client";
 
 import React from "react";
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ReferenceLine } from "recharts";
 import { usePensionStore, pensionsOf, type ReturnRepaymentState, type Who } from "@/store/usePensionStore";
 import {
   calcRepaymentCost,
   compareRefundScenarios,
   isRepaymentReady,
+  type ScenarioId,
 } from "@/services/returnRepaymentCalculator";
 import { personParams } from "@/services/coupleSimulation";
 import { maxRefundInstallments } from "@/config/npsRules";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
+const SCENARIO_COLORS: Record<ScenarioId, string> = { D: "#94a3b8", B: "#f59e0b", C: "#a855f7", A: "#6366f1" };
 
 // 반환일시금 반납 입력 (반환일시금 「받은 적 있음」일 때만 표시)
 export default function ReturnRepaymentSection({ who, title }: { who: Who; title: string }) {
@@ -134,6 +137,15 @@ export function RefundScenarioComparison({ who, title }: { who: Who; title: stri
   // 나이와 연금 개시부터 걸리는 기간을 함께 표시: 69.3세 (4.3년)
   const ageWithYears = (age: number | null) =>
     age === null ? "-" : `${age.toFixed(1)}세 (${(age - params.nationalPensionStartAge).toFixed(1)}년)`;
+  // 나이별 누적 순이익 = 그 나이까지 누적 수령액 − 총 납부보험료 (표의 순이익과 같은 기준)
+  const start = params.nationalPensionStartAge;
+  const chartData: Record<string, number>[] = [];
+  for (let age = start; age <= params.expectedLifeExpectancy; age++) {
+    const row: Record<string, number> = { age };
+    scenarios.forEach((s) => (row[s.id] = s.monthly * 12 * (age - start + 1) - s.lifetimePremium));
+    chartData.push(row);
+  }
+  const showChart = scenarios[0].monthly > 0 && chartData.length > 1;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -181,6 +193,37 @@ export function RefundScenarioComparison({ who, title }: { who: Who; title: stri
           반납 복원 기간의 소득은 본인 평균소득(B값)과 같다고 가정한 현재가치 추정치이며, 정확한 금액은 국민연금공단(☎1355)에서 확인하세요.
         </p>
         {hasRefund && !ready && <p style={styles.note}>반납 원금·수령년월·복원 개월수·복원 시작년월·신청년월을 모두 입력하면 B·A 대안이 계산됩니다.</p>}
+
+        {showChart && (
+          <div style={{ marginTop: "20px" }}>
+            <h4 style={styles.previewTitle}>대안별 나이별 누적 순이익 (누적 수령액 − 총 납부보험료)</h4>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={chartData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="age" tickFormatter={(v) => `${v}세`} stroke="var(--text-muted)" fontSize={12} />
+                <YAxis tickFormatter={(v) => fmt(v)} stroke="var(--text-muted)" fontSize={12} />
+                <Tooltip formatter={(v) => `${fmt(Number(v))} 만원`} labelFormatter={(l) => `${l}세`} />
+                <Legend />
+                <ReferenceLine y={0} stroke="var(--text-muted)" label={{ value: "원금 회수선", position: "insideBottomRight", fill: "var(--text-muted)", fontSize: 11 }} />
+                {scenarios.map((s) => (
+                  <Line
+                    key={s.id}
+                    type="monotone"
+                    dataKey={s.id}
+                    name={`${s.id} · ${s.label}`}
+                    stroke={SCENARIO_COLORS[s.id]}
+                    strokeWidth={s.gainAtLifeExpectancy === best ? 3 : 2}
+                    dot={false}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+            <p style={styles.note}>
+              선이 0(원금 회수선)을 넘는 나이가 총 납부보험료를 모두 돌려받는 시점이고, 선이 가파를수록 월 연금이 많으며,
+              오른쪽 끝 높이가 기대수명({params.expectedLifeExpectancy}세)까지 순이익입니다. 굵은 선이 순이익 1위 대안입니다.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

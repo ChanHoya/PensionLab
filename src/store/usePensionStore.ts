@@ -276,11 +276,13 @@ const initialData: StoreData = {
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null && !Array.isArray(v);
 
-// 저장본·백업을 불러올 때 새로 생긴 필드가 초기값으로 채워지도록 객체는 재귀 병합, 배열·값은 덮어쓴다
+// 저장본·백업을 불러올 때 새로 생긴 필드가 초기값으로 채워지도록 객체는 재귀 병합, 배열·값은 덮어쓴다.
+// defaults에 없는 키(백업 파일의 알 수 없는 필드, 액션 이름과 같은 키 등)는 무시한다.
 export function mergeWithDefaults<T>(saved: unknown, defaults: T): T {
   if (!isPlainObject(saved) || !isPlainObject(defaults)) return defaults;
   const out: Record<string, unknown> = { ...defaults };
-  for (const [key, value] of Object.entries(saved)) {
+  for (const key of Object.keys(defaults as Record<string, unknown>)) {
+    const value = (saved as Record<string, unknown>)[key];
     if (value === undefined) continue;
     const base = (defaults as Record<string, unknown>)[key];
     out[key] = isPlainObject(value) && isPlainObject(base) ? mergeWithDefaults(value, base) : value;

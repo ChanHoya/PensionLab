@@ -50,6 +50,17 @@ async function main() {
   assert.equal(st.returnRepayment.installments, 1);
   assert.equal(typeof st.setNationalPension, "function");
 
+  // F5: defaults에 없는 알 수 없는 최상위 키는 추가되지 않고, 액션 이름과 같은 키도 액션을 덮어쓰지 않는다
+  usePensionStore.getState().importStoreData({
+    exportedAt: "2024-01-01T00:00:00.000Z",
+    setNationalPension: 1,
+    basicPension: { expectedMonthlyAmount: 77 },
+  } as never);
+  st = usePensionStore.getState();
+  assert.equal((st as unknown as Record<string, unknown>).exportedAt, undefined);
+  assert.equal(typeof st.setNationalPension, "function");
+  assert.equal(st.basicPension.expectedMonthlyAmount, 77);
+
   // 객체는 재귀 병합, 배열·값은 덮어쓰기
   assert.deepEqual(mergeWithDefaults({ a: { x: 1 }, arr: [9] }, { a: { x: 0, y: 2 }, arr: [1, 2], z: 3 }), {
     a: { x: 1, y: 2 },

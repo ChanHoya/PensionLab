@@ -153,6 +153,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         (한 사람만 65세 이상이면 감액 없음, 둘 다 받으면 각 20% 감액, 사망 후 단독가구 기준).
         배우자 유족연금의 50세 미만 지급정지·재혼 등 예외는 반영하지 않았습니다.
       </p>
+      <p style={styles.note}>※ 추정치입니다. 정확한 금액은 국민연금공단(☎1355)·복지로에서 확인하세요.</p>
     </div>
   );
 }

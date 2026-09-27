@@ -5,6 +5,8 @@ import { usePensionStore, type BasicPensionState, type NationalPensionState } fr
 import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensionCalculator";
 import { BASIC_PENSION_RULES, type Region } from "@/config/basicPensionRules";
 import { NPS_RULES } from "@/config/npsRules";
+import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
+import { personParams } from "@/services/coupleSimulation";
 
 const REGION_LABEL: Record<Region, string> = {
   METRO: "대도시 (특별·광역시 구, 특례시)",
@@ -41,10 +43,19 @@ export default function BasicPensionForm() {
     debts: b.debts,
     luxuryAssets: b.luxuryAssets,
   };
+  // 반납·추납 「대시보드 반영」이 켜진 것만 적용한 국민연금 (본인·배우자) — 대시보드와 같은 값을 쓴다
+  const selfNational = applyNpsOptions(store.nationalPension, store.additionalPayment, store.returnRepayment, store.simulationParams).national;
+  const spouseNational = applyNpsOptions(
+    store.spouse.nationalPension,
+    store.spouse.additionalPayment,
+    store.spouse.returnRepayment,
+    personParams(store.simulationParams, "SPOUSE")
+  ).national;
+
   // 두 사람 모두 65세 이상이고 생존한 시점 기준 (국민연금은 각자 예상 연금액)
   const result = calcBasicPension(
-    person(b.selfEarnedIncome, b.selfOtherIncome, b.selfOccupational, store.nationalPension),
-    hasSpouse ? person(b.spouseEarnedIncome, b.spouseOtherIncome, b.spouseOccupational, store.spouse.nationalPension) : null,
+    person(b.selfEarnedIncome, b.selfOtherIncome, b.selfOccupational, selfNational),
+    hasSpouse ? person(b.spouseEarnedIncome, b.spouseOtherIncome, b.spouseOccupational, spouseNational) : null,
     household
   );
 
@@ -135,6 +146,7 @@ export default function BasicPensionForm() {
           ※ 연도별 실제 수급액(한 사람만 65세 이상인 기간, 배우자 사망 후 단독가구 전환 등)은 대시보드의 부부 통합 시뮬레이션에서 계산합니다.
           기초연금은 신청한 달부터 지급되며 소급되지 않습니다.
         </p>
+        <p style={styles.note}>※ 추정치입니다. 정확한 금액은 국민연금공단(☎1355)·복지로에서 확인하세요.</p>
       </div>
     </div>
   );

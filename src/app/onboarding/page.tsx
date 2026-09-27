@@ -3,24 +3,48 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePensionStore } from "@/store/usePensionStore";
+import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 import { resolveAge } from "@/utils/age";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
+import BasicPensionForm from "@/components/BasicPensionForm";
+import { extractPdfText } from "@/utils/pdfText";
 
-const STEPS = [
-  { id: 0, title: "기본 정보 & 재무 목표", desc: "본인/가족 정보 및 은퇴 생활비 목표 등" },
-  { id: 1, title: "국민연금 (1층)", desc: "국민연금 납부 내역 및 예상액" },
-  { id: 2, title: "기초연금 (1층)", desc: "기초연금 대상 확인용 정보" },
-  { id: 3, title: "퇴직연금 (2층)", desc: "회사 퇴직연금 (DB/DC/IRP)" },
-  { id: 4, title: "개인연금 (3층)", desc: "연금저축 및 연금보험" },
-  { id: 5, title: "기타 시뮬레이션 설정", desc: "물가상승률 및 국민연금 개시 연령 설정" },
+type StepKind = "INFO" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SETTINGS";
+
+interface StepDef {
+  key: string;
+  kind: StepKind;
+  who: Who;
+  badge: string; // 사이드바·헤더에 보이는 층 번호
+  title: string;
+  desc: string;
+  spouseOnly?: boolean; // 배우자 있음일 때만 표시
+}
+
+const STEPS: StepDef[] = [
+  { key: "info", kind: "INFO", who: "SELF", badge: "0", title: "기본 정보 & 재무 목표", desc: "본인·배우자 정보 및 은퇴 생활비 목표 등" },
+  { key: "national-self", kind: "NATIONAL", who: "SELF", badge: "1", title: "국민연금 (1층, 본인)", desc: "국민연금 납부 내역·예상액·반납·추납" },
+  { key: "national-spouse", kind: "NATIONAL", who: "SPOUSE", badge: "1", title: "국민연금 (1층, 배우자)", desc: "미입력 시 진단에서 제외", spouseOnly: true },
+  { key: "basic", kind: "BASIC", who: "SELF", badge: "1", title: "기초연금 (1층, 본인/배우자)", desc: "가구 재산·소득으로 수급 판정" },
+  { key: "retirement-self", kind: "RETIREMENT", who: "SELF", badge: "2", title: "퇴직연금 (2층, 본인)", desc: "회사 퇴직연금 (DB/DC/IRP), 미입력 시 제외" },
+  { key: "retirement-spouse", kind: "RETIREMENT", who: "SPOUSE", badge: "2", title: "퇴직연금 (2층, 배우자)", desc: "미입력 시 진단에서 제외", spouseOnly: true },
+  { key: "personal-self", kind: "PERSONAL", who: "SELF", badge: "3", title: "개인연금 (3층, 본인)", desc: "연금저축 및 연금보험, 미입력 시 제외" },
+  { key: "personal-spouse", kind: "PERSONAL", who: "SPOUSE", badge: "3", title: "개인연금 (3층, 배우자)", desc: "미입력 시 진단에서 제외", spouseOnly: true },
+  { key: "settings", kind: "SETTINGS", who: "SELF", badge: "4", title: "기타 시뮬레이션 설정", desc: "물가상승률 및 국민연금 개시 연령 설정" },
 ];
 
 export default function OnboardingPage() {
   const router = useRouter();
   const store = usePensionStore();
   const [currentStep, setCurrentStep] = useState(0);
+  // 배우자 없음이면 배우자 단계는 숨긴다. currentStep은 visibleSteps의 인덱스
+  const visibleSteps = STEPS.filter((s) => !s.spouseOnly || store.simulationParams.hasSpouse);
+  const lastStepIndex = visibleSteps.length - 1;
+  const stepIndex = Math.min(currentStep, lastStepIndex);
+  const step = visibleSteps[stepIndex];
+  const who = step.who;
+  const person = pensionsOf(store, who);
   const [nationalInputMode, setNationalInputMode] = useState<"DETAILED" | "PDF" | "SYNC" | "ADDITIONAL">("DETAILED");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -94,27 +118,7 @@ export default function OnboardingPage() {
     setPdfParsed(false);
 
     try {
-      // 1. pdfjs-dist 동적 로드
-      const pdfjs = await import("pdfjs-dist");
-      
-      // worker 설정: 패키지 자체 버전을 활용하여 호환 cdn 지정
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
-
-      let fullText = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
-        fullText += pageText + "\n";
-      }
-
-      const cleanText = fullText.trim();
+      const cleanText = await extractPdfText(file);
       if (!cleanText) {
         throw new Error("PDF에서 텍스트를 추출할 수 없습니다. 보안 비밀번호가 해제된 PDF 파일인지 확인해 주세요.");
       }
@@ -149,16 +153,16 @@ export default function OnboardingPage() {
           currentStandardMonthlyIncome: income,
           expectedMonthlyPension: parsedData.nationalPension.expectedMonthlyPension || 0,
           totalPaidAmount: totalPaid || Math.round(income * 0.09 * months),
-          expectedTotalContributionMonths: parsedData.nationalPension.expectedTotalContributionMonths || store.nationalPension.expectedTotalContributionMonths,
-          totalExpectedPremium: parsedData.nationalPension.totalExpectedPremium || store.nationalPension.totalExpectedPremium,
-          basicPensionAmount: store.nationalPension.basicPensionAmount,
-          aValue: store.nationalPension.aValue,
-          bValue: store.nationalPension.bValue,
-        });
+          expectedTotalContributionMonths: parsedData.nationalPension.expectedTotalContributionMonths || person.nationalPension.expectedTotalContributionMonths,
+          totalExpectedPremium: parsedData.nationalPension.totalExpectedPremium || person.nationalPension.totalExpectedPremium,
+          basicPensionAmount: person.nationalPension.basicPensionAmount,
+          aValue: person.nationalPension.aValue,
+          bValue: person.nationalPension.bValue,
+        }, who);
       }
 
       if (parsedData.retirementPensions && parsedData.retirementPensions.length > 0) {
-        store.setRetirementPensions([]);
+        store.setRetirementPensions([], who);
         parsedData.retirementPensions.forEach((p: any) => {
           store.addRetirementPension({
             pensionType: p.pensionType || "DC",
@@ -169,12 +173,12 @@ export default function OnboardingPage() {
             monthlyContribution: p.monthlyContribution || 0,
             expectedReturnRate: p.expectedReturnRate || 3.0,
             companyMatchRate: 0,
-          });
+          }, who);
         });
       }
 
       if (parsedData.personalPensions && parsedData.personalPensions.length > 0) {
-        store.setPersonalPensions([]);
+        store.setPersonalPensions([], who);
         parsedData.personalPensions.forEach((p: any) => {
           store.addPersonalPension({
             savingsType: p.savingsType || "FUND",
@@ -182,12 +186,12 @@ export default function OnboardingPage() {
             monthlyAnnualContribution: p.monthlyAnnualContribution || 0,
             desiredStartAge: p.desiredStartAge || 65,
             receivingPeriod: p.receivingPeriod || 20,
-          });
+          }, who);
         });
       }
 
       if (parsedData.pensionInsurances && parsedData.pensionInsurances.length > 0) {
-        store.setPensionInsurances([]);
+        store.setPensionInsurances([], who);
         parsedData.pensionInsurances.forEach((p: any) => {
           store.addPensionInsurance({
             insuranceType: p.insuranceType || "SAVING",
@@ -195,7 +199,7 @@ export default function OnboardingPage() {
             monthlyPayment: p.monthlyPayment || 0,
             paymentPeriod: p.paymentPeriod || 10,
             expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
-          });
+          }, who);
         });
       }
 
@@ -294,10 +298,10 @@ export default function OnboardingPage() {
           <div style={{ ...styles.previewBox, marginTop: 16, borderLeft: "4px solid var(--success)" }} className="animate-fade-in">
             <h4 style={{ ...styles.previewTitle, color: "var(--success-light)" }}>✓ 연금 정보 자동 연동 완료</h4>
             <div style={{ ...styles.previewGrid, fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 8 }}>
-              <div>국민연금: <strong>{store.nationalPension.contributionMonths > 0 ? `${store.nationalPension.contributionMonths}개월 (예상 ${store.nationalPension.expectedMonthlyPension}만원/월)` : "정보 없음"}</strong></div>
-              <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length}개</strong></div>
-              <div>개인연금 계좌수: <strong>{store.personalPensions.length}개</strong></div>
-              <div>연금보험 계좌수: <strong>{store.pensionInsurances.length}개</strong></div>
+              <div>국민연금: <strong>{person.nationalPension.contributionMonths > 0 ? `${person.nationalPension.contributionMonths}개월 (예상 ${person.nationalPension.expectedMonthlyPension}만원/월)` : "정보 없음"}</strong></div>
+              <div>퇴직연금 계좌수: <strong>{person.retirementPensions.length}개</strong></div>
+              <div>개인연금 계좌수: <strong>{person.personalPensions.length}개</strong></div>
+              <div>연금보험 계좌수: <strong>{person.pensionInsurances.length}개</strong></div>
             </div>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 10 }}>
               * 각 단계별 메뉴 탭에서 상세 내용을 확인하고 보완할 수 있습니다.
@@ -352,7 +356,7 @@ export default function OnboardingPage() {
             basicPensionAmount: result.data.basicPensionAmount,
             aValue: result.data.aValue,
             bValue: result.data.bValue,
-          });
+          }, who);
           setVerificationPending(false);
           setNpsSyncing(false);
           setNpsSynced(true);
@@ -408,7 +412,7 @@ export default function OnboardingPage() {
           setFssSyncing(false);
         } else if (result.status === "SUCCESS" && result.data) {
           // 1. 퇴직연금 업데이트
-          store.retirementPensions.forEach(p => store.deleteRetirementPension(p.id));
+          person.retirementPensions.forEach(p => store.deleteRetirementPension(p.id, who));
           result.data.retirementPensions.forEach((p: any) => {
             store.addRetirementPension({
               pensionType: p.pensionType,
@@ -419,11 +423,11 @@ export default function OnboardingPage() {
               monthlyContribution: p.monthlyContribution,
               companyMatchRate: 20,
               expectedReturnRate: p.expectedReturnRate,
-            });
+            }, who);
           });
 
           // 2. 개인연금 업데이트
-          store.personalPensions.forEach(p => store.deletePersonalPension(p.id));
+          person.personalPensions.forEach(p => store.deletePersonalPension(p.id, who));
           result.data.personalPensions.forEach((p: any) => {
             store.addPersonalPension({
               savingsType: p.savingsType,
@@ -431,11 +435,11 @@ export default function OnboardingPage() {
               monthlyAnnualContribution: p.monthlyAnnualContribution,
               desiredStartAge: p.desiredStartAge || 65,
               receivingPeriod: p.receivingPeriod || 20,
-            });
+            }, who);
           });
 
           // 3. 연금보험 업데이트
-          store.pensionInsurances.forEach(p => store.deletePensionInsurance(p.id));
+          person.pensionInsurances.forEach(p => store.deletePensionInsurance(p.id, who));
           result.data.pensionInsurances.forEach((p: any) => {
             store.addPensionInsurance({
               insuranceType: p.insuranceType,
@@ -443,7 +447,7 @@ export default function OnboardingPage() {
               monthlyPayment: p.monthlyPayment,
               paymentPeriod: p.paymentPeriod || 10,
               expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
-            });
+            }, who);
           });
 
           setFssVerificationPending(false);
@@ -498,12 +502,28 @@ export default function OnboardingPage() {
     expectedDeclaredRate: 2.5,
   });
 
+  // 단계를 넘어갈 때 이전 단계의 임시 동기화 상태(PDF 파싱 결과, NPS/FSS 인증 대기 등)가
+  // 다음 단계(특히 배우자 단계)로 새지 않도록 초기화한다.
+  const goToStep = (i: number) => {
+    setPdfParsed(false);
+    setPdfError("");
+    setNpsSynced(false);
+    setVerificationPending(false);
+    setJti(null);
+    setTwoWayInfo(null);
+    setFssSynced(false);
+    setFssVerificationPending(false);
+    setFssJti(null);
+    setFssTwoWayInfo(null);
+    setCurrentStep(i);
+  };
+
   const nextStep = () => {
-    if (currentStep < 5) setCurrentStep(currentStep + 1);
+    if (stepIndex < lastStepIndex) goToStep(stepIndex + 1);
   };
 
   const prevStep = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
+    if (stepIndex > 0) goToStep(stepIndex - 1);
   };
 
   // JSON 백업 저장
@@ -517,6 +537,8 @@ export default function OnboardingPage() {
       pensionInsurances: store.pensionInsurances,
       simulationParams: store.simulationParams,
       additionalPayment: store.additionalPayment,
+      returnRepayment: store.returnRepayment,
+      spouse: store.spouse,
     };
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
     const a = document.createElement("a");
@@ -673,20 +695,20 @@ export default function OnboardingPage() {
         <aside style={styles.sidebar}>
           <div style={styles.progressLabel}>
             <span>진행률</span>
-            <span>{Math.round((currentStep / 5) * 100)}%</span>
+            <span>{Math.round((stepIndex / lastStepIndex) * 100)}%</span>
           </div>
           <div style={styles.progressBarBg}>
-            <div style={{ ...styles.progressBarFill, width: `${(currentStep / 5) * 100}%` }} />
+            <div style={{ ...styles.progressBarFill, width: `${(stepIndex / lastStepIndex) * 100}%` }} />
           </div>
 
           <nav style={styles.stepList}>
-            {STEPS.map((step) => {
-              const isActive = currentStep === step.id;
-              const isCompleted = currentStep > step.id;
+            {visibleSteps.map((s, i) => {
+              const isActive = i === stepIndex;
+              const isCompleted = i < stepIndex;
               return (
                 <div
-                  key={step.id}
-                  onClick={() => setCurrentStep(step.id)}
+                  key={s.key}
+                  onClick={() => goToStep(i)}
                   style={{
                     ...styles.stepItem,
                     borderColor: isActive ? "rgba(99, 102, 241, 0.4)" : "transparent",
@@ -707,13 +729,13 @@ export default function OnboardingPage() {
                       boxShadow: (isActive || isCompleted) ? "0 0 12px rgba(99, 102, 241, 0.4)" : "none",
                     }}
                   >
-                    {isCompleted ? "✓" : step.id}
+                    {isCompleted ? "✓" : s.badge}
                   </div>
                   <div style={styles.stepInfo}>
                     <div style={{ ...styles.stepTitle, fontWeight: isActive ? "700" : "500" }}>
-                      {step.title}
+                      {s.title}
                     </div>
-                    <div style={styles.stepDesc}>{step.desc}</div>
+                    <div style={styles.stepDesc}>{s.desc}</div>
                   </div>
                 </div>
               );
@@ -724,117 +746,145 @@ export default function OnboardingPage() {
         {/* Form Card */}
         <section style={styles.formCard} className="glass">
           <div style={styles.formHeader}>
-            <span style={styles.stepBadge}>STEP {currentStep}</span>
-            <h2 style={styles.formTitle}>{STEPS[currentStep].title}</h2>
-            <p style={styles.formDesc}>{STEPS[currentStep].desc}</p>
+            <span style={styles.stepBadge}>STEP {step.badge}</span>
+            <h2 style={styles.formTitle}>{step.title}</h2>
+            <p style={styles.formDesc}>{step.desc}</p>
           </div>
 
 
-          <div style={styles.formBody}>
+          <div key={step.key} style={styles.formBody}>
             {/* STEP 0: 기본 정보 및 노후 재무 목표 */}
-            {currentStep === 0 && (
+            {step.kind === "INFO" && (
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.infoAlert}>
                   👤 본인 및 가족 구성원의 정보와 노후 지출 목표를 입력하면 더욱 정확한 시뮬레이션이 가능해집니다.
                 </div>
                 
                 <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>1. 본인 및 가족 정보</h3>
-                <div style={styles.fieldGrid}>
-                  <div style={styles.fieldRow}>
-                    <label style={styles.label}>
-                      현재나이 <span style={styles.labelHint}>(나이 또는 생년월일(YYMMDD)을 넣으면 환산, 세)</span>
+
+                <div style={styles.fieldRow}>
+                  <label style={styles.label}>배우자 유무</label>
+                  <div style={styles.radioGroup}>
+                    <label style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="hasSpouse"
+                        checked={store.simulationParams.hasSpouse === true}
+                        onChange={() => store.setSimulationParams({ hasSpouse: true })}
+                      />
+                      있음
                     </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      className="premium-input"
-                      placeholder="나이 또는 주민번호 앞 6자리 (예: 59, 691020)"
-                      value={ageInput}
-                      onChange={(e) => setAgeInput(e.target.value)}
-                      onBlur={() => {
-                        const resolved = resolveAge(ageInput);
-                        if (resolved !== null) {
-                          store.setSimulationParams({ currentAge: resolved });
-                          setAgeInput(String(resolved));
-                        } else {
-                          setAgeInput(store.simulationParams.currentAge ? String(store.simulationParams.currentAge) : "");
-                        }
-                      }}
-                    />
-                  </div>
-                  <div style={styles.fieldRow}>
-                    <label style={styles.label}>
-                      희망 은퇴 나이 <span style={styles.labelHint}>(세)</span>
+                    <label style={styles.radioLabel}>
+                      <input
+                        type="radio"
+                        name="hasSpouse"
+                        checked={store.simulationParams.hasSpouse === false}
+                        onChange={() => store.setSimulationParams({ hasSpouse: false, spouseAge: undefined })}
+                      />
+                      없음
                     </label>
-                    <input
-                      type="number"
-                      className="premium-input"
-                      value={store.simulationParams.retirementAge || ""}
-                      onChange={(e) => store.setSimulationParams({ retirementAge: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div style={styles.fieldRow}>
-                    <label style={styles.label}>
-                      예상 기대 수명 <span style={styles.labelHint}>(세)</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="premium-input"
-                      value={store.simulationParams.expectedLifeExpectancy || ""}
-                      onChange={(e) => store.setSimulationParams({ expectedLifeExpectancy: Number(e.target.value) })}
-                    />
-                  </div>
-                  <div style={styles.fieldRow}>
-                    <label style={styles.label}>배우자 유무</label>
-                    <div style={styles.radioGroup}>
-                      <label style={styles.radioLabel}>
-                        <input
-                          type="radio"
-                          name="hasSpouse"
-                          checked={store.simulationParams.hasSpouse === true}
-                          onChange={() => store.setSimulationParams({ hasSpouse: true })}
-                        />
-                        있음
-                      </label>
-                      <label style={styles.radioLabel}>
-                        <input
-                          type="radio"
-                          name="hasSpouse"
-                          checked={store.simulationParams.hasSpouse === false}
-                          onChange={() => store.setSimulationParams({ hasSpouse: false, spouseAge: undefined })}
-                        />
-                        없음
-                      </label>
-                    </div>
                   </div>
                 </div>
 
-                {store.simulationParams.hasSpouse && (
-                  <div style={styles.fieldGrid} className="animate-fade-in">
+                <div style={store.simulationParams.hasSpouse ? styles.fieldGrid : undefined}>
+                  <div style={styles.formGroupList}>
+                    <h4 style={styles.label}>본인</h4>
                     <div style={styles.fieldRow}>
                       <label style={styles.label}>
-                        배우자 현재나이 <span style={styles.labelHint}>(나이 또는 생년월일(YYMMDD)을 넣으면 환산, 세)</span>
+                        현재나이 <span style={styles.labelHint}>(나이 또는 생년월일(YYMMDD)을 넣으면 환산, 세)</span>
                       </label>
                       <input
                         type="text"
                         inputMode="numeric"
                         className="premium-input"
-                        placeholder="나이 또는 주민번호 앞 6자리 (예: 35, 910101)"
-                        value={spouseAgeInput}
-                        onChange={(e) => setSpouseAgeInput(e.target.value)}
+                        placeholder="나이 또는 주민번호 앞 6자리 (예: 59, 691020)"
+                        value={ageInput}
+                        onChange={(e) => setAgeInput(e.target.value)}
                         onBlur={() => {
-                          const resolved = resolveAge(spouseAgeInput);
+                          const resolved = resolveAge(ageInput);
                           if (resolved !== null) {
-                            store.setSimulationParams({ spouseAge: resolved });
-                            setSpouseAgeInput(String(resolved));
+                            store.setSimulationParams({ currentAge: resolved });
+                            setAgeInput(String(resolved));
                           } else {
-                            setSpouseAgeInput(store.simulationParams.spouseAge != null ? String(store.simulationParams.spouseAge) : "");
+                            setAgeInput(store.simulationParams.currentAge ? String(store.simulationParams.currentAge) : "");
                           }
                         }}
                       />
                     </div>
+                    <div style={styles.fieldRow}>
+                      <label style={styles.label}>
+                        은퇴 예상 나이 <span style={styles.labelHint}>(세)</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="premium-input"
+                        value={store.simulationParams.retirementAge || ""}
+                        onChange={(e) => store.setSimulationParams({ retirementAge: Number(e.target.value) })}
+                      />
+                    </div>
+                    <div style={styles.fieldRow}>
+                      <label style={styles.label}>
+                        예상 기대 수명 <span style={styles.labelHint}>(세)</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="premium-input"
+                        value={store.simulationParams.expectedLifeExpectancy || ""}
+                        onChange={(e) => store.setSimulationParams({ expectedLifeExpectancy: Number(e.target.value) })}
+                      />
+                    </div>
                   </div>
-                )}
+
+                  {store.simulationParams.hasSpouse && (
+                    <div style={styles.formGroupList} className="animate-fade-in">
+                      <h4 style={styles.label}>배우자</h4>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>
+                          배우자 현재나이 <span style={styles.labelHint}>(나이 또는 생년월일(YYMMDD)을 넣으면 환산, 세)</span>
+                        </label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          className="premium-input"
+                          placeholder="나이 또는 주민번호 앞 6자리 (예: 35, 910101)"
+                          value={spouseAgeInput}
+                          onChange={(e) => setSpouseAgeInput(e.target.value)}
+                          onBlur={() => {
+                            const resolved = resolveAge(spouseAgeInput);
+                            if (resolved !== null) {
+                              store.setSimulationParams({ spouseAge: resolved });
+                              setSpouseAgeInput(String(resolved));
+                            } else {
+                              setSpouseAgeInput(store.simulationParams.spouseAge != null ? String(store.simulationParams.spouseAge) : "");
+                            }
+                          }}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>
+                          배우자 은퇴 예상 나이 <span style={styles.labelHint}>(세)</span>
+                        </label>
+                        <input
+                          type="number"
+                          className="premium-input"
+                          value={store.simulationParams.spouseRetirementAge || ""}
+                          onChange={(e) => store.setSimulationParams({ spouseRetirementAge: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div style={styles.fieldRow}>
+                        <label style={styles.label}>
+                          배우자 기대 수명 <span style={styles.labelHint}>(세)</span>
+                        </label>
+                        <input
+                          type="number"
+                          className="premium-input"
+                          value={store.simulationParams.spouseLifeExpectancy || ""}
+                          onChange={(e) => store.setSimulationParams({ spouseLifeExpectancy: Number(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
@@ -963,7 +1013,7 @@ export default function OnboardingPage() {
             )}
 
             {/* STEP 1: 국민연금 */}
-            {currentStep === 1 && (
+            {step.kind === "NATIONAL" && (
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.tabContainer}>
                   <button
@@ -1008,8 +1058,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.contributionMonths || ""}
-                          onChange={(e) => store.setNationalPension({ contributionMonths: Number(e.target.value) })}
+                          value={person.nationalPension.contributionMonths || ""}
+                          onChange={(e) => store.setNationalPension({ contributionMonths: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1017,8 +1067,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.totalPaidAmount || ""}
-                          onChange={(e) => store.setNationalPension({ totalPaidAmount: Number(e.target.value) })}
+                          value={person.nationalPension.totalPaidAmount || ""}
+                          onChange={(e) => store.setNationalPension({ totalPaidAmount: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1026,8 +1076,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.currentStandardMonthlyIncome || ""}
-                          onChange={(e) => store.setNationalPension({ currentStandardMonthlyIncome: Number(e.target.value) })}
+                          value={person.nationalPension.currentStandardMonthlyIncome || ""}
+                          onChange={(e) => store.setNationalPension({ currentStandardMonthlyIncome: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1035,8 +1085,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.expectedTotalContributionMonths || ""}
-                          onChange={(e) => store.setNationalPension({ expectedTotalContributionMonths: Number(e.target.value) })}
+                          value={person.nationalPension.expectedTotalContributionMonths || ""}
+                          onChange={(e) => store.setNationalPension({ expectedTotalContributionMonths: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1044,8 +1094,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.expectedMonthlyPension || ""}
-                          onChange={(e) => store.setNationalPension({ expectedMonthlyPension: Number(e.target.value) })}
+                          value={person.nationalPension.expectedMonthlyPension || ""}
+                          onChange={(e) => store.setNationalPension({ expectedMonthlyPension: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1053,8 +1103,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.totalExpectedPremium || ""}
-                          onChange={(e) => store.setNationalPension({ totalExpectedPremium: Number(e.target.value) })}
+                          value={person.nationalPension.totalExpectedPremium || ""}
+                          onChange={(e) => store.setNationalPension({ totalExpectedPremium: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1062,8 +1112,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.basicPensionAmount || ""}
-                          onChange={(e) => store.setNationalPension({ basicPensionAmount: Number(e.target.value) })}
+                          value={person.nationalPension.basicPensionAmount || ""}
+                          onChange={(e) => store.setNationalPension({ basicPensionAmount: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1071,8 +1121,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.aValue || ""}
-                          onChange={(e) => store.setNationalPension({ aValue: Number(e.target.value) })}
+                          value={person.nationalPension.aValue || ""}
+                          onChange={(e) => store.setNationalPension({ aValue: Number(e.target.value) }, who)}
                         />
                       </div>
                       <div style={styles.fieldRow}>
@@ -1080,8 +1130,8 @@ export default function OnboardingPage() {
                         <input
                           type="number"
                           className="premium-input"
-                          value={store.nationalPension.bValue || ""}
-                          onChange={(e) => store.setNationalPension({ bValue: Number(e.target.value) })}
+                          value={person.nationalPension.bValue || ""}
+                          onChange={(e) => store.setNationalPension({ bValue: Number(e.target.value) }, who)}
                         />
                       </div>
                     </div>
@@ -1242,10 +1292,10 @@ export default function OnboardingPage() {
                       <div style={styles.previewBox}>
                         <h4 style={styles.previewTitle}>동기화 완료된 국민연금 정보 (NPS Codef 연동 데이터)</h4>
                         <div style={styles.previewGrid}>
-                          <div>가입 개월수: <strong>{store.nationalPension.contributionMonths} 개월</strong></div>
-                          <div>총 납부금액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
-                          <div>현재 기준소득월액: <strong>{store.nationalPension.currentStandardMonthlyIncome.toLocaleString()} 만원</strong></div>
-                          <div>예상 연금 월액: <strong style={{ color: "var(--text-accent)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
+                          <div>가입 개월수: <strong>{person.nationalPension.contributionMonths} 개월</strong></div>
+                          <div>총 납부금액: <strong>{person.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
+                          <div>현재 기준소득월액: <strong>{person.nationalPension.currentStandardMonthlyIncome.toLocaleString()} 만원</strong></div>
+                          <div>예상 연금 월액: <strong style={{ color: "var(--text-accent)" }}>{person.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
                         </div>
                       </div>
                     )}
@@ -1254,61 +1304,15 @@ export default function OnboardingPage() {
 
                 {nationalInputMode === "PDF" && renderPdfUploadSection()}
 
-                {nationalInputMode === "ADDITIONAL" && <AdditionalPaymentPanel />}
+                {nationalInputMode === "ADDITIONAL" && <AdditionalPaymentPanel who={who} />}
               </div>
             )}
 
             {/* STEP 2: 기초연금 */}
-            {currentStep === 2 && (
-              <div style={styles.formGroupList} className="animate-fade-in">
-                <div style={styles.infoAlert}>
-                  ℹ️ 기초연금은 65세 이상 대한민국 국적 소득하위 70% 가구에 지급됩니다. (2026년 기준)
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>가구 유형</label>
-                  <select
-                    className="premium-input"
-                    value={store.basicPension.householdType}
-                    onChange={(e) => store.setBasicPension({ householdType: e.target.value as "SINGLE" | "COUPLE" })}
-                  >
-                    <option value="SINGLE">단독 가구 (1인)</option>
-                    <option value="COUPLE">부부 가구 (2인)</option>
-                  </select>
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>소득 인정액 (만원)</label>
-                  <input
-                    type="number"
-                    className="premium-input"
-                    placeholder="근로소득, 재산소득, 부동산을 산정해 공단이 정한 인정액"
-                    value={store.basicPension.recognizedIncome || ""}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      // Estimate eligibility dynamically (2026 thresholds single: ~210만원, couple: ~330만원)
-                      const threshold = store.basicPension.householdType === "SINGLE" ? 210 : 336;
-                      const eligible = val <= threshold;
-                      const monthlyAmt = eligible ? (store.basicPension.householdType === "SINGLE" ? 34 : 54) : 0;
-                      store.setBasicPension({
-                        recognizedIncome: val,
-                        expectedEligibility: eligible,
-                        expectedMonthlyAmount: monthlyAmt,
-                      });
-                    }}
-                  />
-                </div>
-
-                <div style={styles.previewBox}>
-                  <h4 style={styles.previewTitle}>기초연금 예상 수급 결과</h4>
-                  <div style={styles.previewGrid}>
-                    <div>소득 기준 충족 여부: <strong>{store.basicPension.expectedEligibility ? "충족 (수급 가능)" : "초과 (수급 불가)"}</strong></div>
-                    <div>예상 월 수령액: <strong style={{ color: "var(--text-accent)" }}>{store.basicPension.expectedMonthlyAmount} 만원/월</strong></div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {step.kind === "BASIC" && <BasicPensionForm />}
 
             {/* STEP 3: 퇴직연금 */}
-            {currentStep === 3 && (
+            {step.kind === "RETIREMENT" && (
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.tabContainer}>
                   <button
@@ -1341,9 +1345,9 @@ export default function OnboardingPage() {
                     </div>
 
                     {/* Added Pensions List */}
-                    {store.retirementPensions.length > 0 ? (
+                    {person.retirementPensions.length > 0 ? (
                       <div style={styles.addedList}>
-                        {store.retirementPensions.map((p) => (
+                        {person.retirementPensions.map((p) => (
                           <div key={p.id} style={styles.addedItem}>
                             <div>
                               <strong>{p.pensionType}형 퇴직연금</strong>
@@ -1355,7 +1359,7 @@ export default function OnboardingPage() {
                             </div>
                             <button
                               type="button"
-                              onClick={() => store.deleteRetirementPension(p.id)}
+                              onClick={() => store.deleteRetirementPension(p.id, who)}
                               style={styles.deleteBtn}
                             >
                               삭제
@@ -1468,7 +1472,7 @@ export default function OnboardingPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          store.addRetirementPension(tempRetirement);
+                          store.addRetirementPension(tempRetirement, who);
                           alert("퇴직연금이 추가되었습니다.");
                         }}
                         style={styles.addBtn}
@@ -1633,13 +1637,13 @@ export default function OnboardingPage() {
                       <div style={styles.previewBox}>
                         <h4 style={styles.previewTitle}>동기화 완료된 FSS 연금 정보</h4>
                         <div style={styles.previewGrid}>
-                          <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
-                          <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
-                          <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
+                          <div>퇴직연금 계좌수: <strong>{person.retirementPensions.length} 개</strong></div>
+                          <div>개인연금 계좌수: <strong>{person.personalPensions.length} 개</strong></div>
+                          <div>연금보험 계좌수: <strong>{person.pensionInsurances.length} 개</strong></div>
                           <div>총 자산 누계액: <strong style={{ color: "var(--text-accent)" }}>
-                            {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
+                            {((person.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
                           </strong></div>
                         </div>
                       </div>
@@ -1652,7 +1656,7 @@ export default function OnboardingPage() {
             )}
 
             {/* STEP 4: 개인연금 및 연금보험 */}
-            {currentStep === 4 && (
+            {step.kind === "PERSONAL" && (
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.tabContainer}>
                   <button
@@ -1689,12 +1693,12 @@ export default function OnboardingPage() {
                       <div style={styles.addFormBox}>
                         <h4 style={styles.addFormTitle}>연금저축 (세제혜택)</h4>
                         
-                        {store.personalPensions.length > 0 && (
+                        {person.personalPensions.length > 0 && (
                           <div style={{ ...styles.addedList, marginBottom: 12 }}>
-                            {store.personalPensions.map((p) => (
+                            {person.personalPensions.map((p) => (
                               <div key={p.id} style={styles.addedItemCompact}>
                                 <span>{p.savingsType} - {p.totalAccumulated}만원</span>
-                                <button type="button" onClick={() => store.deletePersonalPension(p.id)} style={styles.deleteBtnCompact}>✕</button>
+                                <button type="button" onClick={() => store.deletePersonalPension(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
                               </div>
                             ))}
                           </div>
@@ -1751,7 +1755,7 @@ export default function OnboardingPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            store.addPersonalPension(tempPersonal);
+                            store.addPersonalPension(tempPersonal, who);
                           }}
                           style={styles.addBtnCompact}
                         >
@@ -1763,12 +1767,12 @@ export default function OnboardingPage() {
                       <div style={styles.addFormBox}>
                         <h4 style={styles.addFormTitle}>연금보험 (비과세)</h4>
 
-                        {store.pensionInsurances.length > 0 && (
+                        {person.pensionInsurances.length > 0 && (
                           <div style={{ ...styles.addedList, marginBottom: 12 }}>
-                            {store.pensionInsurances.map((p) => (
+                            {person.pensionInsurances.map((p) => (
                               <div key={p.id} style={styles.addedItemCompact}>
                                 <span>{p.insuranceType} - {p.totalAccumulated}만원</span>
-                                <button type="button" onClick={() => store.deletePensionInsurance(p.id)} style={styles.deleteBtnCompact}>✕</button>
+                                <button type="button" onClick={() => store.deletePensionInsurance(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
                               </div>
                             ))}
                           </div>
@@ -1823,7 +1827,7 @@ export default function OnboardingPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            store.addPensionInsurance(tempInsurance);
+                            store.addPensionInsurance(tempInsurance, who);
                           }}
                           style={styles.addBtnCompact}
                         >
@@ -1988,13 +1992,13 @@ export default function OnboardingPage() {
                       <div style={styles.previewBox}>
                         <h4 style={styles.previewTitle}>동기화 완료된 FSS 연금 정보</h4>
                         <div style={styles.previewGrid}>
-                          <div>퇴직연금 계좌수: <strong>{store.retirementPensions.length} 개</strong></div>
-                          <div>개인연금 계좌수: <strong>{store.personalPensions.length} 개</strong></div>
-                          <div>연금보험 계좌수: <strong>{store.pensionInsurances.length} 개</strong></div>
+                          <div>퇴직연금 계좌수: <strong>{person.retirementPensions.length} 개</strong></div>
+                          <div>개인연금 계좌수: <strong>{person.personalPensions.length} 개</strong></div>
+                          <div>연금보험 계좌수: <strong>{person.pensionInsurances.length} 개</strong></div>
                           <div>총 자산 누계액: <strong style={{ color: "var(--text-accent)" }}>
-                            {((store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
-                              store.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
+                            {((person.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) +
+                              person.pensionInsurances.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0))).toLocaleString()} 만원
                           </strong></div>
                         </div>
                       </div>
@@ -2007,7 +2011,7 @@ export default function OnboardingPage() {
             )}
 
             {/* STEP 5: 설계 기준 설정 */}
-            {currentStep === 5 && (
+            {step.kind === "SETTINGS" && (
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.infoAlert}>
                   ⚙️ 물가상승률 및 은퇴 후 연금 수령 개시 나이 등의 시뮬레이션 기본 파라미터를 설정합니다.
@@ -2030,6 +2034,17 @@ export default function OnboardingPage() {
                     onChange={(e) => store.setSimulationParams({ nationalPensionStartAge: Number(e.target.value) })}
                   />
                 </div>
+                {store.simulationParams.hasSpouse && (
+                  <div style={styles.fieldRow}>
+                    <label style={styles.label}>배우자 국민연금 수령 개시 연령 (세)</label>
+                    <input
+                      type="number"
+                      className="premium-input"
+                      value={store.simulationParams.spouseNationalPensionStartAge}
+                      onChange={(e) => store.setSimulationParams({ spouseNationalPensionStartAge: Number(e.target.value) })}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2038,14 +2053,14 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={prevStep}
-              disabled={currentStep === 1}
+              disabled={stepIndex === 0}
               className="premium-button-secondary"
-              style={{ opacity: currentStep === 1 ? 0.5 : 1, cursor: currentStep === 1 ? "not-allowed" : "pointer" }}
+              style={{ opacity: stepIndex === 0 ? 0.5 : 1, cursor: stepIndex === 0 ? "not-allowed" : "pointer" }}
             >
               이전 단계
             </button>
 
-            {currentStep < 5 ? (
+            {stepIndex < lastStepIndex ? (
               <button
                 type="button"
                 onClick={nextStep}

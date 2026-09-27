@@ -1,10 +1,13 @@
 "use client";
 
 import React from "react";
-import { usePensionStore, AdditionalPaymentState } from "@/store/usePensionStore";
+import { usePensionStore, pensionsOf, AdditionalPaymentState, type Who } from "@/store/usePensionStore";
 import { runAdditionalPaymentPlan, monthsBetween, firstDueYmOf, effectiveBaseIncome, isVoluntary } from "@/services/additionalPaymentCalculator";
+import { personParams } from "@/services/coupleSimulation";
 import { NPS_RULES } from "@/config/npsRules";
 import AdditionalPaymentInsights from "@/components/AdditionalPaymentInsights";
+import ReturnRepaymentSection from "@/components/ReturnRepaymentSection";
+import NpsHistoryUpload from "@/components/NpsHistoryUpload";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 
@@ -16,17 +19,20 @@ const GAP_REASON_HINT: Record<AdditionalPaymentState["gapReason"], string> = {
   ARREARS: "보험료를 내야 했는데 내지 않은 기간 — 추납 대상 아님",
 };
 
-export default function AdditionalPaymentPanel() {
+export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) {
   const store = usePensionStore();
-  const ap = store.additionalPayment;
-  const set = (data: Partial<AdditionalPaymentState>) => store.setAdditionalPayment(data);
-  const plan = runAdditionalPaymentPlan(ap, store.nationalPension, store.simulationParams);
+  const person = pensionsOf(store, who);
+  const national = person.nationalPension;
+  const params = personParams(store.simulationParams, who);
+  const ap = person.additionalPayment;
+  const set = (data: Partial<AdditionalPaymentState>) => store.setAdditionalPayment(data, who);
+  const plan = runAdditionalPaymentPlan(ap, national, params);
   const span = ap.firstEnrollYm && ap.resumeYm ? monthsBetween(ap.firstEnrollYm, ap.resumeYm) : 0;
-  const hasNpsData = store.nationalPension.expectedTotalContributionMonths > 0;
+  const hasNpsData = national.expectedTotalContributionMonths > 0;
   const voluntary = isVoluntary(ap);
   const effectiveIncome = voluntary
     ? ap.baseIncome
-    : effectiveBaseIncome({ ...ap, baseIncome: store.nationalPension.currentStandardMonthlyIncome || ap.baseIncome });
+    : effectiveBaseIncome({ ...ap, baseIncome: national.currentStandardMonthlyIncome || ap.baseIncome });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="animate-fade-in">
@@ -34,6 +40,7 @@ export default function AdditionalPaymentPanel() {
         💡 소득이 없어 보험료를 못 낸 기간(납부예외·적용제외·군복무)을 나중에 채워 넣어 <strong>가입기간을 늘리는 제도</strong>입니다.
         최대 {NPS_RULES.maxAdditionalMonths}개월까지 가능하며, 적은 금액으로 긴 기간을 채울수록 효율이 좋습니다.
       </div>
+      <NpsHistoryUpload who={who} />
       {!hasNpsData && (
         <div style={styles.warnAlert}>
           ⚠ 「NPS 공단고서 상세 입력」 또는 「금융감독원 통합연금 자료 등록」 탭에서 총 예상 가입월수를 입력하지 않으면
@@ -176,7 +183,7 @@ export default function AdditionalPaymentPanel() {
                 {plan.breakEven.breakEvenAge === null ? "기대수명 내 회수 불가" : `${plan.breakEven.breakEvenAge}세 (수령 ${plan.breakEven.yearsToBreakEven}년차)`}
               </strong>
             </div>
-            <div>기대수명({store.simulationParams.expectedLifeExpectancy}세)까지 순이익: <strong>{fmt(plan.breakEven.lifetimeGain)} 만원</strong></div>
+            <div>기대수명({params.expectedLifeExpectancy}세)까지 순이익: <strong>{fmt(plan.breakEven.lifetimeGain)} 만원</strong></div>
           </div>
         ) : (
           plan.eligibility.eligible && <div style={styles.labelHint}>추납 희망 개월수와 신청 년월을 입력하면 결과가 계산됩니다.</div>
@@ -189,6 +196,7 @@ export default function AdditionalPaymentPanel() {
         </p>
       </div>
       {plan.months > 0 && ap.applyYm && <AdditionalPaymentInsights plan={plan} paymentMode={ap.paymentMode} isVoluntary={voluntary} />}
+      <ReturnRepaymentSection who={who} />
     </div>
   );
 }

@@ -18,6 +18,17 @@ export interface BasicPensionState {
   recognizedIncome: number;
   expectedEligibility: boolean;
   expectedMonthlyAmount: number;
+  region: "METRO" | "CITY" | "RURAL"; // 거주지역 (기본재산 공제 구분)
+  generalProperty: number; // 일반재산: 주택 공시가격 등 (만원)
+  financialAssets: number; // 금융재산 (만원)
+  debts: number; // 부채: 주택담보대출·임대보증금 (만원)
+  luxuryAssets: number; // 고급 차량(4,000만원 이상)·회원권 가액 (만원)
+  selfEarnedIncome: number; // 본인 65세 이후 상시근로소득 (만원/월)
+  selfOtherIncome: number; // 본인 사업·임대·이자·배당·사적연금 소득 (만원/월)
+  selfOccupational: boolean; // 본인 직역연금 수급권자
+  spouseEarnedIncome: number;
+  spouseOtherIncome: number;
+  spouseOccupational: boolean;
 }
 
 export interface RetirementPensionState {
@@ -72,6 +83,9 @@ export interface SimulationParamsState {
   coveredCallAsset: number;        // 커버드콜/월배당 투자금 (만원, 기본 5000)
   coveredCallDividendRate: number;  // 예상 연 분배율 (%, 기본 9.0)
   isCoupleDivided: boolean;         // 부부 명의 분산 여부 (기본 false)
+  spouseRetirementAge: number;      // 배우자 은퇴 예상 나이
+  spouseLifeExpectancy: number;     // 배우자 기대수명
+  spouseNationalPensionStartAge: number; // 배우자 국민연금 개시 나이
 }
 
 export type GapReason = "EXEMPT" | "EXCLUDED" | "MILITARY" | "ARREARS";
@@ -94,8 +108,32 @@ export interface AdditionalPaymentState {
   applyToSimulation: boolean;     // 대시보드 시뮬레이션에 추납 반영
 }
 
-interface PensionStore {
-  // States
+export interface ReturnRepaymentState {
+  refundAmount: number;       // 반환일시금 원금 (만원)
+  refundYm: string;           // 반환일시금 수령년월 "YYYY-MM"
+  restoredMonths: number;     // 반납 시 복원되는 가입기간 (개월)
+  periodStartYm: string;      // 복원 기간의 가입 시작년월 (소득대체율 판정)
+  noticeAmount: number;       // 공단 반납 고지액 (만원, 0이면 추정)
+  applyYm: string;            // 반납 신청년월 "YYYY-MM"
+  installments: number;       // 분할 횟수 (1 = 일시납)
+  applyToSimulation: boolean; // 대시보드 시뮬레이션에 반납 반영
+}
+
+// 본인·배우자 구분. 기존 액션은 who를 생략하면 본인(SELF)에 쓴다
+export type Who = "SELF" | "SPOUSE";
+
+export interface SpouseState {
+  nationalPension: NationalPensionState;
+  additionalPayment: AdditionalPaymentState;
+  returnRepayment: ReturnRepaymentState;
+  retirementPensions: RetirementPensionState[];
+  personalPensions: PersonalPensionSavingsState[];
+  pensionInsurances: PensionInsuranceState[];
+}
+
+export type PersonData = SpouseState;
+
+interface StoreData {
   nationalPension: NationalPensionState;
   basicPension: BasicPensionState;
   retirementPensions: RetirementPensionState[];
@@ -103,33 +141,30 @@ interface PensionStore {
   pensionInsurances: PensionInsuranceState[];
   simulationParams: SimulationParamsState;
   additionalPayment: AdditionalPaymentState;
+  returnRepayment: ReturnRepaymentState;
+  spouse: SpouseState;
+}
 
-  // Actions
-  setNationalPension: (data: Partial<NationalPensionState>) => void;
+interface PensionStore extends StoreData {
+  // Actions — who를 생략하면 본인(SELF)
+  setNationalPension: (data: Partial<NationalPensionState>, who?: Who) => void;
   setBasicPension: (data: Partial<BasicPensionState>) => void;
-  addRetirementPension: (pension: Omit<RetirementPensionState, "id">) => void;
-  updateRetirementPension: (id: string, data: Partial<RetirementPensionState>) => void;
-  deleteRetirementPension: (id: string) => void;
-  addPersonalPension: (pension: Omit<PersonalPensionSavingsState, "id">) => void;
-  updatePersonalPension: (id: string, data: Partial<PersonalPensionSavingsState>) => void;
-  deletePersonalPension: (id: string) => void;
-  addPensionInsurance: (insurance: Omit<PensionInsuranceState, "id">) => void;
-  updatePensionInsurance: (id: string, data: Partial<PensionInsuranceState>) => void;
-  deletePensionInsurance: (id: string) => void;
-  setRetirementPensions: (pensions: RetirementPensionState[]) => void;
-  setPersonalPensions: (pensions: PersonalPensionSavingsState[]) => void;
-  setPensionInsurances: (insurances: PensionInsuranceState[]) => void;
+  addRetirementPension: (pension: Omit<RetirementPensionState, "id">, who?: Who) => void;
+  updateRetirementPension: (id: string, data: Partial<RetirementPensionState>, who?: Who) => void;
+  deleteRetirementPension: (id: string, who?: Who) => void;
+  addPersonalPension: (pension: Omit<PersonalPensionSavingsState, "id">, who?: Who) => void;
+  updatePersonalPension: (id: string, data: Partial<PersonalPensionSavingsState>, who?: Who) => void;
+  deletePersonalPension: (id: string, who?: Who) => void;
+  addPensionInsurance: (insurance: Omit<PensionInsuranceState, "id">, who?: Who) => void;
+  updatePensionInsurance: (id: string, data: Partial<PensionInsuranceState>, who?: Who) => void;
+  deletePensionInsurance: (id: string, who?: Who) => void;
+  setRetirementPensions: (pensions: RetirementPensionState[], who?: Who) => void;
+  setPersonalPensions: (pensions: PersonalPensionSavingsState[], who?: Who) => void;
+  setPensionInsurances: (insurances: PensionInsuranceState[], who?: Who) => void;
   setSimulationParams: (data: Partial<SimulationParamsState>) => void;
-  setAdditionalPayment: (data: Partial<AdditionalPaymentState>) => void;
-  importStoreData: (data: {
-    nationalPension: NationalPensionState;
-    basicPension: BasicPensionState;
-    retirementPensions: RetirementPensionState[];
-    personalPensions: PersonalPensionSavingsState[];
-    pensionInsurances: PensionInsuranceState[];
-    simulationParams: SimulationParamsState;
-    additionalPayment?: AdditionalPaymentState;
-  }) => void;
+  setAdditionalPayment: (data: Partial<AdditionalPaymentState>, who?: Who) => void;
+  setReturnRepayment: (data: Partial<ReturnRepaymentState>, who?: Who) => void;
+  importStoreData: (data: Partial<StoreData>) => void;
   resetStore: () => void;
 }
 
@@ -150,6 +185,17 @@ const initialBasicPension: BasicPensionState = {
   recognizedIncome: 0,
   expectedEligibility: false,
   expectedMonthlyAmount: 0,
+  region: "METRO",
+  generalProperty: 0,
+  financialAssets: 0,
+  debts: 0,
+  luxuryAssets: 0,
+  selfEarnedIncome: 0,
+  selfOtherIncome: 0,
+  selfOccupational: false,
+  spouseEarnedIncome: 0,
+  spouseOtherIncome: 0,
+  spouseOccupational: false,
 };
 
 const initialSimulationParams: SimulationParamsState = {
@@ -173,6 +219,9 @@ const initialSimulationParams: SimulationParamsState = {
   coveredCallAsset: 5000,
   coveredCallDividendRate: 9.0,
   isCoupleDivided: false,
+  spouseRetirementAge: 60,
+  spouseLifeExpectancy: 85,
+  spouseNationalPensionStartAge: 65,
 };
 
 const initialAdditionalPayment: AdditionalPaymentState = {
@@ -192,143 +241,176 @@ const initialAdditionalPayment: AdditionalPaymentState = {
   applyToSimulation: false,
 };
 
+const initialReturnRepayment: ReturnRepaymentState = {
+  refundAmount: 0,
+  refundYm: "",
+  restoredMonths: 0,
+  periodStartYm: "",
+  noticeAmount: 0,
+  applyYm: "",
+  installments: 1,
+  applyToSimulation: false,
+};
+
+const initialSpouse: SpouseState = {
+  nationalPension: initialNationalPension,
+  additionalPayment: initialAdditionalPayment,
+  returnRepayment: initialReturnRepayment,
+  retirementPensions: [],
+  personalPensions: [],
+  pensionInsurances: [],
+};
+
+const initialData: StoreData = {
+  nationalPension: initialNationalPension,
+  basicPension: initialBasicPension,
+  retirementPensions: [],
+  personalPensions: [],
+  pensionInsurances: [],
+  simulationParams: initialSimulationParams,
+  additionalPayment: initialAdditionalPayment,
+  returnRepayment: initialReturnRepayment,
+  spouse: initialSpouse,
+};
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+// 저장본·백업을 불러올 때 새로 생긴 필드가 초기값으로 채워지도록 객체는 재귀 병합, 배열·값은 덮어쓴다.
+// defaults에 없는 키(백업 파일의 알 수 없는 필드, 액션 이름과 같은 키 등)는 무시한다.
+export function mergeWithDefaults<T>(saved: unknown, defaults: T): T {
+  if (!isPlainObject(saved) || !isPlainObject(defaults)) return defaults;
+  const out: Record<string, unknown> = { ...defaults };
+  for (const key of Object.keys(defaults as Record<string, unknown>)) {
+    const value = (saved as Record<string, unknown>)[key];
+    if (value === undefined) continue;
+    const base = (defaults as Record<string, unknown>)[key];
+    out[key] = isPlainObject(value) && isPlainObject(base) ? mergeWithDefaults(value, base) : value;
+  }
+  return out as T;
+}
+
+// 본인/배우자 연금 데이터를 같은 모양으로 꺼낸다
+export function pensionsOf(state: StoreData, who: Who): PersonData {
+  if (who === "SPOUSE") return state.spouse;
+  return {
+    nationalPension: state.nationalPension,
+    additionalPayment: state.additionalPayment,
+    returnRepayment: state.returnRepayment,
+    retirementPensions: state.retirementPensions,
+    personalPensions: state.personalPensions,
+    pensionInsurances: state.pensionInsurances,
+  };
+}
+
+// who에 해당하는 사람의 필드만 바꾼 부분 상태를 만든다
+function patchPerson(state: StoreData, who: Who, patch: Partial<PersonData>): Partial<StoreData> {
+  if (who === "SPOUSE") return { spouse: { ...state.spouse, ...patch } };
+  return patch;
+}
+
 export const usePensionStore = create<PensionStore>()(
   persist(
     (set) => ({
-      // Initial States
-      nationalPension: initialNationalPension,
-      basicPension: initialBasicPension,
-      retirementPensions: [],
-      personalPensions: [],
-      pensionInsurances: [],
-      simulationParams: initialSimulationParams,
-      additionalPayment: initialAdditionalPayment,
+      ...initialData,
 
-      // Actions
-      setNationalPension: (data) =>
-        set((state) => ({
-          nationalPension: { ...state.nationalPension, ...data },
-        })),
+      setNationalPension: (data, who = "SELF") =>
+        set((state) => patchPerson(state, who, { nationalPension: { ...pensionsOf(state, who).nationalPension, ...data } })),
 
       setBasicPension: (data) =>
-        set((state) => ({
-          basicPension: { ...state.basicPension, ...data },
-        })),
+        set((state) => ({ basicPension: { ...state.basicPension, ...data } })),
 
-      addRetirementPension: (pension) =>
-        set((state) => ({
-          retirementPensions: [
-            ...state.retirementPensions,
-            { ...pension, id: crypto.randomUUID() },
-          ],
-        })),
+      addRetirementPension: (pension, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            retirementPensions: [...pensionsOf(state, who).retirementPensions, { ...pension, id: crypto.randomUUID() }],
+          })
+        ),
 
-      updateRetirementPension: (id, data) =>
-        set((state) => ({
-          retirementPensions: state.retirementPensions.map((p) =>
-            p.id === id ? { ...p, ...data } : p
-          ),
-        })),
+      updateRetirementPension: (id, data, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            retirementPensions: pensionsOf(state, who).retirementPensions.map((p) => (p.id === id ? { ...p, ...data } : p)),
+          })
+        ),
 
-      deleteRetirementPension: (id) =>
-        set((state) => ({
-          retirementPensions: state.retirementPensions.filter((p) => p.id !== id),
-        })),
+      deleteRetirementPension: (id, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            retirementPensions: pensionsOf(state, who).retirementPensions.filter((p) => p.id !== id),
+          })
+        ),
 
-      addPersonalPension: (pension) =>
-        set((state) => ({
-          personalPensions: [
-            ...state.personalPensions,
-            { ...pension, id: crypto.randomUUID() },
-          ],
-        })),
+      addPersonalPension: (pension, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            personalPensions: [...pensionsOf(state, who).personalPensions, { ...pension, id: crypto.randomUUID() }],
+          })
+        ),
 
-      updatePersonalPension: (id, data) =>
-        set((state) => ({
-          personalPensions: state.personalPensions.map((p) =>
-            p.id === id ? { ...p, ...data } : p
-          ),
-        })),
+      updatePersonalPension: (id, data, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            personalPensions: pensionsOf(state, who).personalPensions.map((p) => (p.id === id ? { ...p, ...data } : p)),
+          })
+        ),
 
-      deletePersonalPension: (id) =>
-        set((state) => ({
-          personalPensions: state.personalPensions.filter((p) => p.id !== id),
-        })),
+      deletePersonalPension: (id, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            personalPensions: pensionsOf(state, who).personalPensions.filter((p) => p.id !== id),
+          })
+        ),
 
-      addPensionInsurance: (insurance) =>
-        set((state) => ({
-          pensionInsurances: [
-            ...state.pensionInsurances,
-            { ...insurance, id: crypto.randomUUID() },
-          ],
-        })),
+      addPensionInsurance: (insurance, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            pensionInsurances: [...pensionsOf(state, who).pensionInsurances, { ...insurance, id: crypto.randomUUID() }],
+          })
+        ),
 
-      updatePensionInsurance: (id, data) =>
-        set((state) => ({
-          pensionInsurances: state.pensionInsurances.map((p) =>
-            p.id === id ? { ...p, ...data } : p
-          ),
-        })),
+      updatePensionInsurance: (id, data, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            pensionInsurances: pensionsOf(state, who).pensionInsurances.map((p) => (p.id === id ? { ...p, ...data } : p)),
+          })
+        ),
 
-      deletePensionInsurance: (id) =>
-        set((state) => ({
-          pensionInsurances: state.pensionInsurances.filter((p) => p.id !== id),
-        })),
-      
-      setRetirementPensions: (pensions) =>
-        set(() => ({
-          retirementPensions: pensions,
-        })),
+      deletePensionInsurance: (id, who = "SELF") =>
+        set((state) =>
+          patchPerson(state, who, {
+            pensionInsurances: pensionsOf(state, who).pensionInsurances.filter((p) => p.id !== id),
+          })
+        ),
 
-      setPersonalPensions: (pensions) =>
-        set(() => ({
-          personalPensions: pensions,
-        })),
+      setRetirementPensions: (pensions, who = "SELF") =>
+        set((state) => patchPerson(state, who, { retirementPensions: pensions })),
 
-      setPensionInsurances: (insurances) =>
-        set(() => ({
-          pensionInsurances: insurances,
-        })),
+      setPersonalPensions: (pensions, who = "SELF") =>
+        set((state) => patchPerson(state, who, { personalPensions: pensions })),
+
+      setPensionInsurances: (insurances, who = "SELF") =>
+        set((state) => patchPerson(state, who, { pensionInsurances: insurances })),
 
       setSimulationParams: (data) =>
-        set((state) => ({
-          simulationParams: { ...state.simulationParams, ...data },
-        })),
+        set((state) => ({ simulationParams: { ...state.simulationParams, ...data } })),
 
-      setAdditionalPayment: (data) =>
-        set((state) => ({
-          additionalPayment: { ...state.additionalPayment, ...data },
-        })),
+      setAdditionalPayment: (data, who = "SELF") =>
+        set((state) => patchPerson(state, who, { additionalPayment: { ...pensionsOf(state, who).additionalPayment, ...data } })),
 
-      importStoreData: (data) =>
-        set({
-          nationalPension: data.nationalPension || initialNationalPension,
-          basicPension: data.basicPension || initialBasicPension,
-          retirementPensions: data.retirementPensions || [],
-          personalPensions: data.personalPensions || [],
-          pensionInsurances: data.pensionInsurances || [],
-          simulationParams: data.simulationParams
-            ? { ...initialSimulationParams, ...data.simulationParams }
-            : initialSimulationParams,
-          additionalPayment: data.additionalPayment
-            ? { ...initialAdditionalPayment, ...data.additionalPayment }
-            : initialAdditionalPayment,
-        }),
+      setReturnRepayment: (data, who = "SELF") =>
+        set((state) => patchPerson(state, who, { returnRepayment: { ...pensionsOf(state, who).returnRepayment, ...data } })),
 
-      resetStore: () =>
-        set({
-          nationalPension: initialNationalPension,
-          basicPension: initialBasicPension,
-          retirementPensions: [],
-          personalPensions: [],
-          pensionInsurances: [],
-          simulationParams: initialSimulationParams,
-          additionalPayment: initialAdditionalPayment,
-        }),
+      // 백업 파일은 이전 버전일 수 있으므로 빠진 필드를 초기값으로 채운다
+      importStoreData: (data) => set(mergeWithDefaults(data, initialData)),
+
+      resetStore: () => set(initialData),
     }),
     {
       name: "pensionlab-store",
       version: 2,
+      // 이전 저장본에 없는 필드(배우자·반납·기초연금 입력 등)를 초기값으로 채운다
+      merge: (persisted, current) => mergeWithDefaults(persisted, current),
     }
   )
 );

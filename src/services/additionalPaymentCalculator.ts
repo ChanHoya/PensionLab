@@ -1,5 +1,9 @@
 import { NPS_RULES, premiumRateForYear } from "@/config/npsRules";
-import type { AdditionalPaymentState } from "@/store/usePensionStore";
+import type {
+  AdditionalPaymentState,
+  NationalPensionState,
+  SimulationParamsState,
+} from "@/store/usePensionStore";
 
 export function monthsBetween(fromYm: string, toYm: string): number {
   const [fy, fm] = fromYm.split("-").map(Number);
@@ -121,4 +125,225 @@ export function estimateTaxRefund(cost: CostResult, annualIncome: number, margin
     refund += Math.min(paid, annualIncome) * (marginalTaxRate / 100);
   });
   return refund;
+}
+
+export interface PensionIncrease {
+  beforeMonthly: number;
+  afterMonthly: number;
+  deltaMonthly: number;
+  totalMonthsBefore: number;
+  totalMonthsAfter: number;
+  becomesEligible: boolean;
+}
+
+// 기본연금액(연) ≈ 비례상수 × (A + B) × 가입월수 / 240.
+// 기존 기간의 평균 비례상수는 NPS 예상연금액으로 역산하고, 추납 월은 현행 1.29 적용.
+export function estimatePensionIncrease(
+  national: NationalPensionState,
+  months: number,
+  baseIncome: number
+): PensionIncrease {
+  const A = national.aValue || NPS_RULES.aValue;
+  const P = national.expectedTotalContributionMonths;
+  const bOld = national.bValue || national.currentStandardMonthlyIncome;
+  const c = NPS_RULES.replacementConstant;
+  const calibrated = national.expectedMonthlyPension > 0 && P >= NPS_RULES.minPensionMonths;
+  const alphaOld = calibrated ? (national.expectedMonthlyPension * 12 * 240) / ((A + bOld) * P) : c;
+  const monthly = (B: number, weightedMonths: number) => ((A + B) * weightedMonths) / 240 / 12;
+
+  const beforeMonthly =
+    P >= NPS_RULES.minPensionMonths
+      ? calibrated ? national.expectedMonthlyPension : monthly(bOld, alphaOld * P)
+      : 0;
+  const totalAfter = P + months;
+  const bNew = totalAfter > 0 ? (bOld * P + baseIncome * months) / totalAfter : baseIncome;
+  const afterMonthly = totalAfter >= NPS_RULES.minPensionMonths ? monthly(bNew, alphaOld * P + c * months) : 0;
+  return {
+    beforeMonthly,
+    afterMonthly,
+    deltaMonthly: afterMonthly - beforeMonthly,
+    totalMonthsBefore: P,
+    totalMonthsAfter: totalAfter,
+    becomesEligible: P < NPS_RULES.minPensionMonths && totalAfter >= NPS_RULES.minPensionMonths,
+  };
+}
+
+export interface BreakEven {
+  breakEvenAge: number | null;
+  yearsToBreakEven: number | null;
+  lifetimeGain: number;
+  cumulative: { age: number; received: number; cost: number }[];
+}
+
+// 현재가치 기준: 국민연금은 물가연동이므로 오늘 가치로 매년 Δ월액×12를 받는다
+export function calcBreakEven(deltaMonthly: number, netCost: number, params: SimulationParamsState): BreakEven {
+  const cumulative: BreakEven["cumulative"] = [];
+  let received = 0;
+  let breakEvenAge: number | null = null;
+  for (let age = params.nationalPensionStartAge; age <= params.expectedLifeExpectancy; age++) {
+    received += deltaMonthly * 12;
+    cumulative.push({ age, received: Math.round(received), cost: Math.round(netCost) });
+    if (breakEvenAge === null && received >= netCost) breakEvenAge = age;
+  }
+  return {
+    breakEvenAge,
+    yearsToBreakEven: breakEvenAge === null ? null : breakEvenAge - params.nationalPensionStartAge + 1,
+    lifetimeGain: received - netCost,
+    cumulative,
+  };
+}
+
+export interface IncomeOption {
+  label: string;
+  baseIncome: number;
+  cost: number;
+  deltaMonthly: number;
+  yearsToBreakEven: number | null;
+}
+
+// 같은 개월수에서 기준소득월액만 바꿔 비교 ("적은 금액 × 최장 기간" 원칙 확인용, 세전 비용)
+export function compareBaseIncomes(
+  ap: AdditionalPaymentState,
+  national: NationalPensionState,
+  params: SimulationParamsState,
+  months: number
+): IncomeOption[] {
+  const options = [
+    { label: "최소(지역 중위수)", baseIncome: NPS_RULES.voluntaryIncomeFloor },
+    { label: "현재 입력", baseIncome: effectiveBaseIncome(ap) },
+    { label: "A값(임의가입 상한)", baseIncome: NPS_RULES.aValue },
+  ];
+  return options.map((o) => {
+    const cost = calcAdditionalPaymentCost({ ...ap, baseIncome: o.baseIncome, enrollStatus: "REGIONAL" }, months).total;
+    const deltaMonthly = estimatePensionIncrease(national, months, o.baseIncome).deltaMonthly;
+    return { ...o, cost, deltaMonthly, yearsToBreakEven: calcBreakEven(deltaMonthly, cost, params).yearsToBreakEven };
+  });
+}
+
+export interface PaymentOption {
+  label: string;
+  installments: number; // 1 = 일시납
+  total: number;
+  principal: number;
+  interest: number;
+  monthlyMin: number; // 회차별 납부액 최소 (원금+이자)
+  monthlyMax: number; // 회차별 납부액 최대
+  lastDueYm: string;
+  taxRefund: number;
+  netCost: number;
+  deltaMonthly: number;
+  breakEvenAge: number | null;
+  lifetimeGain: number;
+}
+
+// 일시납 vs 분납(12·24·60회 + 사용자 선택 횟수) 납부액·수령액 비교
+export function compareLumpVsInstallment(
+  ap: AdditionalPaymentState,
+  national: NationalPensionState,
+  params: SimulationParamsState,
+  months: number
+): PaymentOption[] {
+  const counts = [...new Set([12, 24, NPS_RULES.maxInstallments, ap.installments])]
+    .filter((n) => n >= 2 && n <= NPS_RULES.maxInstallments)
+    .sort((a, b) => a - b);
+  // 연금 증가액은 납부 방식과 무관 (같은 개월수·기준소득)
+  const deltaMonthly = estimatePensionIncrease(national, months, effectiveBaseIncome(ap)).deltaMonthly;
+  const variants = [
+    { label: "일시납", installments: 1, ap: { ...ap, paymentMode: "LUMP" as const } },
+    ...counts.map((n) => ({
+      label: `분납 ${n}회`,
+      installments: n,
+      ap: { ...ap, paymentMode: "INSTALLMENT" as const, installments: n },
+    })),
+  ];
+  return variants.map((v) => {
+    const cost = calcAdditionalPaymentCost(v.ap, months);
+    const perRow = cost.rows.map((r) => r.principal + r.interest);
+    const taxRefund = estimateTaxRefund(cost, national.currentStandardMonthlyIncome * 12, ap.marginalTaxRate);
+    const netCost = cost.total - taxRefund;
+    const be = calcBreakEven(deltaMonthly, netCost, params);
+    return {
+      label: v.label,
+      installments: v.installments,
+      total: cost.total,
+      principal: cost.principal,
+      interest: cost.interest,
+      monthlyMin: Math.min(...perRow),
+      monthlyMax: Math.max(...perRow),
+      lastDueYm: cost.rows[cost.rows.length - 1].dueYm,
+      taxRefund,
+      netCost,
+      deltaMonthly,
+      breakEvenAge: be.breakEvenAge,
+      lifetimeGain: be.lifetimeGain,
+    };
+  });
+}
+
+export interface AdditionalPaymentPlan {
+  eligibility: Eligibility;
+  months: number;
+  cost: CostResult;
+  taxRefund: number;
+  netCost: number;
+  increase: PensionIncrease;
+  breakEven: BreakEven;
+  comparisons: IncomeOption[];
+  paymentOptions: PaymentOption[];
+  warnings: string[];
+}
+
+export function runAdditionalPaymentPlan(
+  ap: AdditionalPaymentState,
+  national: NationalPensionState,
+  params: SimulationParamsState
+): AdditionalPaymentPlan {
+  const eligibility = checkEligibility(ap);
+  const months = Math.min(ap.requestedMonths, eligibility.maxMonths);
+  const cost = calcAdditionalPaymentCost(ap, months);
+  const taxRefund = estimateTaxRefund(cost, national.currentStandardMonthlyIncome * 12, ap.marginalTaxRate);
+  const netCost = cost.total - taxRefund;
+  const increase = estimatePensionIncrease(national, months, effectiveBaseIncome(ap));
+  const breakEven = calcBreakEven(increase.deltaMonthly, netCost, params);
+  const comparisons = compareBaseIncomes(ap, national, params, months);
+  const paymentOptions = compareLumpVsInstallment(ap, national, params, months);
+
+  const warnings: string[] = [];
+  if (ap.requestedMonths > eligibility.maxMonths && eligibility.maxMonths > 0) {
+    warnings.push(`추납 가능 개월수는 최대 ${eligibility.maxMonths}개월입니다. 초과분은 제외하고 계산했습니다.`);
+  }
+  if (increase.becomesEligible) {
+    warnings.push("추납으로 최소 가입기간 10년(120개월)을 채워 노령연금 수급권이 생깁니다.");
+  }
+  if (ap.applyYm && yearOf(firstDueYmOf(ap.applyYm)) > yearOf(ap.applyYm)) {
+    warnings.push("12월에 신청하면 첫 납부기한이 다음 해 1월이라 인상된 보험료율이 적용됩니다. 11월 이전 신청을 권장합니다.");
+  }
+  const extra = cost.total - cost.lumpSumTotal;
+  if (ap.paymentMode === "INSTALLMENT" && extra > 0) {
+    warnings.push(`분납 시 해마다 오르는 보험료율과 분납이자로 일시납보다 약 ${Math.round(extra).toLocaleString()}만원을 더 냅니다.`);
+  }
+  if (
+    increase.beforeMonthly * 12 <= NPS_RULES.dependentIncomeCapAnnual &&
+    increase.afterMonthly * 12 > NPS_RULES.dependentIncomeCapAnnual
+  ) {
+    warnings.push("추납 후 공적연금이 연 2,000만원을 넘어 건강보험 피부양자 자격을 잃을 수 있습니다.");
+  }
+  return { eligibility, months, cost, taxRefund, netCost, increase, breakEven, comparisons, paymentOptions, warnings };
+}
+
+// 대시보드 시뮬레이션 반영용: 추납 후 값으로 바꾼 국민연금 상태 (반영 토글이 꺼져 있으면 원본 그대로)
+export function applyAdditionalPayment(
+  national: NationalPensionState,
+  ap: AdditionalPaymentState,
+  params: SimulationParamsState
+): NationalPensionState {
+  if (!ap.applyToSimulation || !ap.applyYm) return national;
+  const plan = runAdditionalPaymentPlan(ap, national, params);
+  if (plan.months === 0) return national;
+  return {
+    ...national,
+    expectedMonthlyPension: Math.round(plan.increase.afterMonthly * 10) / 10,
+    expectedTotalContributionMonths: plan.increase.totalMonthsAfter,
+    totalPaidAmount: Math.round(national.totalPaidAmount + plan.cost.total),
+  };
 }

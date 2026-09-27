@@ -7,6 +7,7 @@ import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 import { resolveAge } from "@/utils/age";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
+import BasicPensionForm from "@/components/BasicPensionForm";
 import { extractPdfText } from "@/utils/pdfText";
 
 type StepKind = "INFO" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SETTINGS";
@@ -1292,53 +1293,7 @@ export default function OnboardingPage() {
             )}
 
             {/* STEP 2: 기초연금 */}
-            {step.kind === "BASIC" && (
-              <div style={styles.formGroupList} className="animate-fade-in">
-                <div style={styles.infoAlert}>
-                  ℹ️ 기초연금은 65세 이상 대한민국 국적 소득하위 70% 가구에 지급됩니다. (2026년 기준)
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>가구 유형</label>
-                  <select
-                    className="premium-input"
-                    value={store.basicPension.householdType}
-                    onChange={(e) => store.setBasicPension({ householdType: e.target.value as "SINGLE" | "COUPLE" })}
-                  >
-                    <option value="SINGLE">단독 가구 (1인)</option>
-                    <option value="COUPLE">부부 가구 (2인)</option>
-                  </select>
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>소득 인정액 (만원)</label>
-                  <input
-                    type="number"
-                    className="premium-input"
-                    placeholder="근로소득, 재산소득, 부동산을 산정해 공단이 정한 인정액"
-                    value={store.basicPension.recognizedIncome || ""}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      // Estimate eligibility dynamically (2026 thresholds single: ~210만원, couple: ~330만원)
-                      const threshold = store.basicPension.householdType === "SINGLE" ? 210 : 336;
-                      const eligible = val <= threshold;
-                      const monthlyAmt = eligible ? (store.basicPension.householdType === "SINGLE" ? 34 : 54) : 0;
-                      store.setBasicPension({
-                        recognizedIncome: val,
-                        expectedEligibility: eligible,
-                        expectedMonthlyAmount: monthlyAmt,
-                      });
-                    }}
-                  />
-                </div>
-
-                <div style={styles.previewBox}>
-                  <h4 style={styles.previewTitle}>기초연금 예상 수급 결과</h4>
-                  <div style={styles.previewGrid}>
-                    <div>소득 기준 충족 여부: <strong>{store.basicPension.expectedEligibility ? "충족 (수급 가능)" : "초과 (수급 불가)"}</strong></div>
-                    <div>예상 월 수령액: <strong style={{ color: "var(--text-accent)" }}>{store.basicPension.expectedMonthlyAmount} 만원/월</strong></div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {step.kind === "BASIC" && <BasicPensionForm />}
 
             {/* STEP 3: 퇴직연금 */}
             {step.kind === "RETIREMENT" && (

@@ -4,6 +4,7 @@ import React from "react";
 import { usePensionStore, AdditionalPaymentState } from "@/store/usePensionStore";
 import { runAdditionalPaymentPlan, monthsBetween, firstDueYmOf } from "@/services/additionalPaymentCalculator";
 import { NPS_RULES } from "@/config/npsRules";
+import AdditionalPaymentInsights from "@/components/AdditionalPaymentInsights";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 
@@ -182,6 +183,7 @@ export default function AdditionalPaymentPanel() {
           ※ 현재가치 기준 추정치입니다. 정확한 추납 보험료와 연금 증가액은 국민연금공단(☎1355, 내곁에국민연금 앱) 추납 예상액 조회로 확인하세요.
         </p>
       </div>
+      {plan.months > 0 && ap.applyYm && <AdditionalPaymentInsights plan={plan} paymentMode={ap.paymentMode} />}
     </div>
   );
 }

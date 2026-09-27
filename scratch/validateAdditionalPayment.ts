@@ -60,7 +60,7 @@ assert.equal(checkEligibility({ ...ap, gapMonths: 200, resumeYm: "2020-01" }).ma
 assert.equal(checkEligibility({ ...ap, gapMonths: 130 }).eligible, false); // 중단기간 > 가입~재가입 120개월
 const refund = checkEligibility({ ...ap, receivedLumpSumRefund: true });
 assert.equal(refund.eligible, true);
-assert.equal(refund.issues.length, 1);
+assert.equal(refund.issues.length, 0); // 반납 선행 안내는 추납 의사결정 가이드에서 보여준다
 
 // F1: 중단 기간(gapMonths)이 음수면 0으로 취급 (자격 없음)
 assert.equal(checkEligibility({ ...ap, gapMonths: -24 }).maxMonths, 0);

@@ -86,7 +86,7 @@ const ap: AdditionalPaymentState = {
   gapMonths: 180,
   gapReason: "EXCLUDED",
   enrollStatus: "VOLUNTARY",
-  receivedLumpSumRefund: false,
+  receivedLumpSumRefund: true,
   requestedMonths: 119,
   baseIncome: 101.3,
   paymentMode: "LUMP",
@@ -140,5 +140,15 @@ assert.equal(addOnly.national.expectedMonthlyPension, legacy.expectedMonthlyPens
 assert.equal(addOnly.national.expectedTotalContributionMonths, legacy.expectedTotalContributionMonths);
 // 가입월수 누락 + 예상연금 있음 → 반영 안 함
 assert.equal(applyNpsOptions({ ...national, expectedTotalContributionMonths: 0 }, ap, rr, params).national.expectedMonthlyPension, 23.648);
+
+// 반환일시금 「받은 적 없음」이면 반납 입력이 남아 있어도 대안·대시보드에서 반납을 뺀다
+const noRefundAp = { ...ap, receivedLumpSumRefund: false };
+const [D2, B2, C2, A2] = compareRefundScenarios(national, rr, noRefundAp, params);
+assert.equal(B2.monthly, D2.monthly);
+assert.equal(B2.extraCost, 0);
+assert.equal(A2.monthly, C2.monthly);
+const noRefundApplied = applyNpsOptions(national, noRefundAp, rr, params);
+assert.equal(noRefundApplied.restoredMonths, 0);
+assert.equal(noRefundApplied.national.expectedMonthlyPension, legacy.expectedMonthlyPension);
 
 console.log("Return repayment validation success!");

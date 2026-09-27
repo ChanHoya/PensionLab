@@ -6,10 +6,11 @@ import { runAdditionalPaymentPlan, monthsBetween, firstDueYmOf, effectiveBaseInc
 import { personParams } from "@/services/coupleSimulation";
 import { NPS_RULES } from "@/config/npsRules";
 import AdditionalPaymentInsights from "@/components/AdditionalPaymentInsights";
-import ReturnRepaymentSection from "@/components/ReturnRepaymentSection";
+import ReturnRepaymentSection, { RefundScenarioComparison } from "@/components/ReturnRepaymentSection";
 import NpsHistoryUpload from "@/components/NpsHistoryUpload";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
+const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦"];
 
 // 공단 안내 기준 추납 가능 기간의 시작일
 const GAP_REASON_HINT: Record<AdditionalPaymentState["gapReason"], string> = {
@@ -33,6 +34,10 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
   const effectiveIncome = voluntary
     ? ap.baseIncome
     : effectiveBaseIncome({ ...ap, baseIncome: national.currentStandardMonthlyIncome || ap.baseIncome });
+  // 반환일시금을 받은 적 있으면 ② 반환일시금 반납이 끼어들어 이후 번호가 하나씩 밀린다
+  const hasRefund = ap.receivedLumpSumRefund;
+  const showInsights = plan.months > 0 && !!ap.applyYm;
+  const no = (i: number) => CIRCLED[i + (hasRefund ? 1 : 0)];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="animate-fade-in">
@@ -99,7 +104,9 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
         </div>
       </div>
 
-      <h4 style={styles.sectionTitle}>② 추납 조건</h4>
+      {hasRefund && <ReturnRepaymentSection who={who} title="② 반환일시금 반납" />}
+
+      <h4 style={styles.sectionTitle}>{no(1)} 추납 조건</h4>
       <div style={styles.fieldGrid}>
         <div style={styles.fieldRow}>
           <label style={styles.label}>추납 희망 개월수 <span style={styles.labelHint}>(가능: {plan.eligibility.maxMonths}개월)</span></label>
@@ -165,7 +172,7 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
       </div>
 
       <div style={styles.previewBox}>
-        <h4 style={styles.previewTitle}>③ 추납 결과 요약</h4>
+        <h4 style={styles.previewTitle}>{no(2)} 추납 결과 요약</h4>
         {plan.eligibility.issues.map((msg) => (
           <div key={msg} style={{ ...styles.warnAlert, marginBottom: "8px" }}>⚠ {msg}</div>
         ))}
@@ -195,8 +202,8 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
           ※ 현재가치 기준 추정치입니다. 정확한 추납 보험료와 연금 증가액은 국민연금공단(☎1355, 내곁에국민연금 앱) 추납 예상액 조회로 확인하세요.
         </p>
       </div>
-      {plan.months > 0 && ap.applyYm && <AdditionalPaymentInsights plan={plan} paymentMode={ap.paymentMode} isVoluntary={voluntary} />}
-      <ReturnRepaymentSection who={who} />
+      {showInsights && <AdditionalPaymentInsights plan={plan} paymentMode={ap.paymentMode} isVoluntary={voluntary} sectionNo={no(3)} />}
+      <RefundScenarioComparison who={who} title={`${no(showInsights ? 4 : 3)} 대안별 비교`} />
     </div>
   );
 }

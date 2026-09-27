@@ -12,26 +12,41 @@ import { extractPdfText } from "@/utils/pdfText";
 
 type StepKind = "INFO" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SETTINGS";
 
+interface StepGroup {
+  key: string;
+  badge: string; // 사이드바·헤더에 보이는 층 번호
+  title: string;
+  desc: string;
+}
+
+// 왼쪽 메뉴는 그룹 단위로 보여 주고, 그룹 안의 단계(본인·배우자·기초연금)는 오른쪽 박스의 탭으로 전환한다
+const GROUPS: StepGroup[] = [
+  { key: "info", badge: "0", title: "기본 정보 & 재무 목표", desc: "본인·배우자 정보 및 은퇴 생활비 목표 등" },
+  { key: "national", badge: "1", title: "국민연금 (1층)", desc: "국민연금 납부 내역·예상액·반납·추납 및 기초연금 수급 판정" },
+  { key: "retirement", badge: "2", title: "퇴직연금 (2층)", desc: "회사 퇴직연금 (DB/DC/IRP), 미입력 시 진단에서 제외" },
+  { key: "personal", badge: "3", title: "개인연금 (3층)", desc: "연금저축 및 연금보험, 미입력 시 진단에서 제외" },
+  { key: "settings", badge: "4", title: "기타 시뮬레이션 설정", desc: "물가상승률 및 국민연금 개시 연령 설정" },
+];
+
 interface StepDef {
   key: string;
   kind: StepKind;
   who: Who;
-  badge: string; // 사이드바·헤더에 보이는 층 번호
-  title: string;
-  desc: string;
+  group: string; // GROUPS의 key
+  tab: string; // 그룹 안 탭 이름
   spouseOnly?: boolean; // 배우자 있음일 때만 표시
 }
 
 const STEPS: StepDef[] = [
-  { key: "info", kind: "INFO", who: "SELF", badge: "0", title: "기본 정보 & 재무 목표", desc: "본인·배우자 정보 및 은퇴 생활비 목표 등" },
-  { key: "national-self", kind: "NATIONAL", who: "SELF", badge: "1", title: "국민연금 (1층, 본인)", desc: "국민연금 납부 내역·예상액·반납·추납" },
-  { key: "national-spouse", kind: "NATIONAL", who: "SPOUSE", badge: "1", title: "국민연금 (1층, 배우자)", desc: "미입력 시 진단에서 제외", spouseOnly: true },
-  { key: "basic", kind: "BASIC", who: "SELF", badge: "1", title: "기초연금 (1층, 본인/배우자)", desc: "가구 재산·소득으로 수급 판정" },
-  { key: "retirement-self", kind: "RETIREMENT", who: "SELF", badge: "2", title: "퇴직연금 (2층, 본인)", desc: "회사 퇴직연금 (DB/DC/IRP), 미입력 시 제외" },
-  { key: "retirement-spouse", kind: "RETIREMENT", who: "SPOUSE", badge: "2", title: "퇴직연금 (2층, 배우자)", desc: "미입력 시 진단에서 제외", spouseOnly: true },
-  { key: "personal-self", kind: "PERSONAL", who: "SELF", badge: "3", title: "개인연금 (3층, 본인)", desc: "연금저축 및 연금보험, 미입력 시 제외" },
-  { key: "personal-spouse", kind: "PERSONAL", who: "SPOUSE", badge: "3", title: "개인연금 (3층, 배우자)", desc: "미입력 시 진단에서 제외", spouseOnly: true },
-  { key: "settings", kind: "SETTINGS", who: "SELF", badge: "4", title: "기타 시뮬레이션 설정", desc: "물가상승률 및 국민연금 개시 연령 설정" },
+  { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "기본 정보" },
+  { key: "national-self", kind: "NATIONAL", who: "SELF", group: "national", tab: "본인" },
+  { key: "national-spouse", kind: "NATIONAL", who: "SPOUSE", group: "national", tab: "배우자", spouseOnly: true },
+  { key: "basic", kind: "BASIC", who: "SELF", group: "national", tab: "기초연금" },
+  { key: "retirement-self", kind: "RETIREMENT", who: "SELF", group: "retirement", tab: "본인" },
+  { key: "retirement-spouse", kind: "RETIREMENT", who: "SPOUSE", group: "retirement", tab: "배우자", spouseOnly: true },
+  { key: "personal-self", kind: "PERSONAL", who: "SELF", group: "personal", tab: "본인" },
+  { key: "personal-spouse", kind: "PERSONAL", who: "SPOUSE", group: "personal", tab: "배우자", spouseOnly: true },
+  { key: "settings", kind: "SETTINGS", who: "SELF", group: "settings", tab: "설정" },
 ];
 
 export default function OnboardingPage() {
@@ -43,6 +58,8 @@ export default function OnboardingPage() {
   const lastStepIndex = visibleSteps.length - 1;
   const stepIndex = Math.min(currentStep, lastStepIndex);
   const step = visibleSteps[stepIndex];
+  const group = GROUPS.find((g) => g.key === step.group)!;
+  const groupSteps = visibleSteps.filter((s) => s.group === step.group);
   const who = step.who;
   const person = pensionsOf(store, who);
   const [nationalInputMode, setNationalInputMode] = useState<"DETAILED" | "PDF" | "SYNC" | "ADDITIONAL">("DETAILED");
@@ -702,13 +719,14 @@ export default function OnboardingPage() {
           </div>
 
           <nav style={styles.stepList}>
-            {visibleSteps.map((s, i) => {
-              const isActive = i === stepIndex;
-              const isCompleted = i < stepIndex;
+            {GROUPS.map((g) => {
+              const groupKeys = visibleSteps.map((s) => s.group);
+              const isActive = g.key === step.group;
+              const isCompleted = groupKeys.lastIndexOf(g.key) < stepIndex;
               return (
                 <div
-                  key={s.key}
-                  onClick={() => goToStep(i)}
+                  key={g.key}
+                  onClick={() => goToStep(groupKeys.indexOf(g.key))}
                   style={{
                     ...styles.stepItem,
                     borderColor: isActive ? "rgba(99, 102, 241, 0.4)" : "transparent",
@@ -729,13 +747,13 @@ export default function OnboardingPage() {
                       boxShadow: (isActive || isCompleted) ? "0 0 12px rgba(99, 102, 241, 0.4)" : "none",
                     }}
                   >
-                    {isCompleted ? "✓" : s.badge}
+                    {isCompleted ? "✓" : g.badge}
                   </div>
                   <div style={styles.stepInfo}>
                     <div style={{ ...styles.stepTitle, fontWeight: isActive ? "700" : "500" }}>
-                      {s.title}
+                      {g.title}
                     </div>
-                    <div style={styles.stepDesc}>{s.desc}</div>
+                    <div style={styles.stepDesc}>{g.desc}</div>
                   </div>
                 </div>
               );
@@ -746,10 +764,25 @@ export default function OnboardingPage() {
         {/* Form Card */}
         <section style={styles.formCard} className="glass">
           <div style={styles.formHeader}>
-            <span style={styles.stepBadge}>STEP {step.badge}</span>
-            <h2 style={styles.formTitle}>{step.title}</h2>
-            <p style={styles.formDesc}>{step.desc}</p>
+            <span style={styles.stepBadge}>STEP {group.badge}</span>
+            <h2 style={styles.formTitle}>{group.title}</h2>
+            <p style={styles.formDesc}>{group.desc}</p>
           </div>
+
+          {groupSteps.length > 1 && (
+            <div style={styles.personTabs}>
+              {groupSteps.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => goToStep(visibleSteps.indexOf(s))}
+                  style={{ ...styles.personTab, ...(s.key === step.key ? styles.personTabActive : null) }}
+                >
+                  {s.tab}
+                </button>
+              ))}
+            </div>
+          )}
 
 
           <div key={step.key} style={styles.formBody}>
@@ -2317,6 +2350,30 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     flexDirection: "column",
     gap: "20px",
+  },
+  personTabs: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "8px",
+    marginBottom: "24px",
+  },
+  personTab: {
+    padding: "8px 22px",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    background: "transparent",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--border)",
+    borderRadius: "var(--radius-full)",
+    cursor: "pointer",
+    transition: "all var(--transition-fast)",
+  },
+  personTabActive: {
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+    borderColor: "transparent",
   },
   tabContainer: {
     display: "flex",

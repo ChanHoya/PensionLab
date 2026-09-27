@@ -765,24 +765,25 @@ export default function OnboardingPage() {
         <section style={styles.formCard} className="glass">
           <div style={styles.formHeader}>
             <span style={styles.stepBadge}>STEP {group.badge}</span>
-            <h2 style={styles.formTitle}>{group.title}</h2>
+            <div style={styles.titleRow}>
+              <h2 style={{ ...styles.formTitle, marginTop: 0 }}>{group.title}</h2>
+              {groupSteps.length > 1 && (
+                <div style={styles.personTabs}>
+                  {groupSteps.map((s) => (
+                    <button
+                      key={s.key}
+                      type="button"
+                      onClick={() => goToStep(visibleSteps.indexOf(s))}
+                      style={{ ...styles.personTab, ...(s.key === step.key ? styles.personTabActive : null) }}
+                    >
+                      {s.tab}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <p style={styles.formDesc}>{group.desc}</p>
           </div>
-
-          {groupSteps.length > 1 && (
-            <div style={styles.personTabs}>
-              {groupSteps.map((s) => (
-                <button
-                  key={s.key}
-                  type="button"
-                  onClick={() => goToStep(visibleSteps.indexOf(s))}
-                  style={{ ...styles.personTab, ...(s.key === step.key ? styles.personTabActive : null) }}
-                >
-                  {s.tab}
-                </button>
-              ))}
-            </div>
-          )}
 
 
           <div key={step.key} style={styles.formBody}>
@@ -2351,16 +2352,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: "20px",
   },
+  titleRow: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "12px 24px",
+    marginTop: "12px",
+  },
   personTabs: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "8px",
-    marginBottom: "24px",
+    gap: "10px",
   },
   personTab: {
-    padding: "8px 22px",
-    fontSize: "0.95rem",
-    fontWeight: 600,
+    padding: "10px 30px",
+    fontSize: "1.1rem",
+    fontWeight: 700,
     color: "var(--text-secondary)",
     background: "transparent",
     borderWidth: "1px",

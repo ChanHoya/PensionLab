@@ -15,10 +15,16 @@ const fmt = (v: number) => Math.round(v).toLocaleString();
 // 반환일시금 반납 입력 (반환일시금 「받은 적 있음」일 때만 표시)
 export default function ReturnRepaymentSection({ who, title }: { who: Who; title: string }) {
   const store = usePensionStore();
-  const rr = pensionsOf(store, who).returnRepayment;
+  const person = pensionsOf(store, who);
+  const rr = person.returnRepayment;
+  const params = personParams(store.simulationParams, who);
   const set = (data: Partial<ReturnRepaymentState>) => store.setReturnRepayment(data, who);
   const cost = isRepaymentReady(rr) ? calcRepaymentCost(rr) : null;
   const maxInstallments = maxRefundInstallments(rr.restoredMonths);
+  // 결과 요약은 대안 비교의 D(현행)·B(반납)를 그대로 쓴다
+  const [D, B] = compareRefundScenarios(person.nationalPension, rr, person.additionalPayment, params);
+  const hasNpsData = person.nationalPension.expectedTotalContributionMonths > 0;
+  const lifeYears = Math.max(0, params.expectedLifeExpectancy - params.nationalPensionStartAge + 1);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -73,14 +79,40 @@ export default function ReturnRepaymentSection({ who, title }: { who: Who; title
         </div>
       </div>
 
-      {cost && (
-        <div style={styles.previewBox}>
+      <div style={styles.previewBox}>
+        <h4 style={styles.previewTitle}>일시금 납부 결과 요약</h4>
+        {cost ? (
           <div style={styles.previewGrid}>
             <div>반납금: <strong>{fmt(cost.lumpSum)} 만원</strong> ({cost.source === "NOTICE" ? "공단 고지액" : `원금 ${fmt(cost.principal)}만원 + 이자 추정`})</div>
             <div>분할 {cost.installments}회 추가 이자: <strong>{fmt(cost.installmentInterest)} 만원</strong> → 총 <strong>{fmt(cost.total)} 만원</strong></div>
+            {hasNpsData && (
+              <>
+                <div>복원 개월수: <strong>{rr.restoredMonths}개월</strong> ({D.totalMonths} → {B.totalMonths}개월)</div>
+                <div>
+                  예상 연금 월액: <strong>{D.monthly.toFixed(1)} → {B.monthly.toFixed(1)} 만원</strong>{" "}
+                  <strong style={{ color: "var(--text-accent)" }}>(+{B.delta.toFixed(1)})</strong>
+                </div>
+                <div>
+                  손익분기: <strong style={{ color: "var(--text-accent)" }}>
+                    {B.recoverAgeExtra === null || B.recoverAgeExtra > params.expectedLifeExpectancy
+                      ? "기대수명 내 회수 불가"
+                      : `${B.recoverAgeExtra}세 (수령 ${Math.ceil(B.recoverAgeExtra - params.nationalPensionStartAge)}년차)`}
+                  </strong>
+                </div>
+                <div>기대수명({params.expectedLifeExpectancy}세)까지 순이익: <strong>{fmt(B.delta * 12 * lifeYears - cost.total)} 만원</strong></div>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div style={styles.labelHint}>반납 원금·수령년월·복원 개월수·복원 시작년월·신청년월을 입력하면 결과가 계산됩니다.</div>
+        )}
+        {cost && !hasNpsData && (
+          <div style={styles.labelHint}>「NPS 공단고서 상세 입력」에 총 예상 가입월수와 예상 연금 월액을 넣으면 늘어나는 연금액이 계산됩니다.</div>
+        )}
+        <p style={styles.note}>
+          ※ 복원 기간의 소득은 본인 평균소득(B값)과 같다고 가정한 현재가치 추정치입니다. 정확한 반납금과 연금 증가액은 국민연금공단(☎1355)에서 확인하세요.
+        </p>
+      </div>
     </div>
   );
 }

@@ -141,6 +141,7 @@ export interface RefundScenario {
   recoverAgeTotal: number | null; // 생애 총 납부보험료를 다 돌려받는 나이
   recoverAgeExtra: number | null; // 새로 낸 금액만 돌려받는 나이
   gainAtLifeExpectancy: number; // 기대수명까지 총 수령액 − 생애 총 납부보험료
+  annualReturn: number | null; // 총 납부보험료를 개시~기대수명 동안 연복리로 굴려 총 수령액이 되는 이자율(%)
 }
 
 // 현재가치 기준 원금 회수 나이 = 개시 나이 + 원금 ÷ 월액 ÷ 12 (소수 첫째 자리)
@@ -183,6 +184,8 @@ export function compareRefundScenarios(
   return variants.map((v) => {
     const p = estimateCombinedPension(national, v.r, v.a);
     const lifetimePremium = national.totalExpectedPremium + v.cost;
+    const delta = p.afterMonthly - base.afterMonthly;
+    const received = p.afterMonthly * 12 * years;
     return {
       id: v.id,
       label: v.label,
@@ -191,10 +194,12 @@ export function compareRefundScenarios(
       extraCost: v.cost,
       lifetimePremium,
       monthly: p.afterMonthly,
-      delta: p.afterMonthly - base.afterMonthly,
+      delta,
       recoverAgeTotal: recoverAge(start, lifetimePremium, p.afterMonthly),
-      recoverAgeExtra: v.cost > 0 ? recoverAge(start, v.cost, p.afterMonthly - base.afterMonthly) : null,
-      gainAtLifeExpectancy: p.afterMonthly * 12 * years - lifetimePremium,
+      recoverAgeExtra: v.cost > 0 ? recoverAge(start, v.cost, delta) : null,
+      gainAtLifeExpectancy: received - lifetimePremium,
+      annualReturn:
+        lifetimePremium > 0 && years > 0 ? (Math.pow(received / lifetimePremium, 1 / years) - 1) * 100 : null,
     };
   });
 }

@@ -123,6 +123,10 @@ assert.equal(A.totalMonths, 274);
 near(A.extraCost, 1456.23);
 assert.equal(A.recoverAgeTotal, 69);
 near(A.gainAtLifeExpectancy, 13429.02);
+// 연 환산 이자율 = (총 수령액 / 총 납부보험료)^(1/24년) − 1, 65~88세
+near(D.annualReturn!, (Math.pow((23.648 * 12 * 24) / 1229.129, 1 / 24) - 1) * 100, 1e-9);
+near(D.annualReturn!, 7.4, 0.01);
+assert.ok(B.annualReturn! > D.annualReturn!); // 반납이 현행보다 이자율이 높다
 
 // 대시보드 반영
 const both = applyNpsOptions(national, ap, rr, params);

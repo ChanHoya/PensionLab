@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePensionStore } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 import { resolveAge } from "@/utils/age";
+import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
 
 const STEPS = [
   { id: 0, title: "기본 정보 & 재무 목표", desc: "본인/가족 정보 및 은퇴 생활비 목표 등" },
@@ -20,7 +21,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const store = usePensionStore();
   const [currentStep, setCurrentStep] = useState(0);
-  const [nationalInputMode, setNationalInputMode] = useState<"SIMPLE" | "DETAILED" | "PDF" | "SYNC">("SIMPLE");
+  const [nationalInputMode, setNationalInputMode] = useState<"DETAILED" | "PDF" | "SYNC" | "ADDITIONAL">("DETAILED");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -553,41 +554,6 @@ export default function OnboardingPage() {
     }
   };
 
-  // Simple auto-calculation helper for National Pension
-  const handleSimpleNationalCalculate = (
-    months: number,
-    income: number,
-    totalMonths: number
-  ) => {
-    // Estimating based on simplified Korean National Pension formula
-    // A value for 2026 is approximately 3,000,000 KRW
-    const aVal = 300; // 300만원
-    const bVal = income;
-    
-    // Total premiums: standard monthly income * 9% (MVP baseline before reform) * totalMonths
-    const monthlyPremiumRate = 0.09;
-    const totalPrem = income * monthlyPremiumRate * totalMonths;
-    const paidToDate = income * monthlyPremiumRate * months;
-
-    // Expected monthly pension = 1.36 * (A + B) * (1 + 0.05 * (totalMonths - 20) / 12) * ...
-    // Simplified estimate:
-    const baseAmount = 0.2 * (aVal + bVal) * (totalMonths / 20); // rough approximation
-    const expectedPension = Math.max(0, Math.round(baseAmount * 1.5)); 
-    const basicPension = Math.round(expectedPension * 0.95);
-
-    store.setNationalPension({
-      contributionMonths: months,
-      totalPaidAmount: Math.round(paidToDate),
-      currentStandardMonthlyIncome: income,
-      expectedTotalContributionMonths: totalMonths,
-      expectedMonthlyPension: expectedPension,
-      totalExpectedPremium: Math.round(totalPrem),
-      basicPensionAmount: basicPension,
-      aValue: aVal,
-      bValue: bVal,
-    });
-  };
-
   const handleFinish = async () => {
     if (isSubmitting) return; // prevent double clicks
     setIsSubmitting(true);
@@ -1001,16 +967,6 @@ export default function OnboardingPage() {
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.tabContainer}>
                   <button
-                    onClick={() => setNationalInputMode("SIMPLE")}
-                    style={{
-                      ...styles.tabButton,
-                      borderBottomColor: nationalInputMode === "SIMPLE" ? "var(--primary)" : "transparent",
-                      color: nationalInputMode === "SIMPLE" ? "var(--primary)" : "var(--text-secondary)",
-                    }}
-                  >
-                    간편 시뮬레이션 입력
-                  </button>
-                  <button
                     onClick={() => setNationalInputMode("DETAILED")}
                     style={{
                       ...styles.tabButton,
@@ -1031,76 +987,18 @@ export default function OnboardingPage() {
                   >
                     📄 금융감독원 통합연금 자료 등록
                   </button>
+                  <button
+                    onClick={() => setNationalInputMode("ADDITIONAL")}
+                    style={{
+                      ...styles.tabButton,
+                      borderBottomColor: nationalInputMode === "ADDITIONAL" ? "var(--primary)" : "transparent",
+                      color: nationalInputMode === "ADDITIONAL" ? "var(--primary)" : "var(--text-secondary)",
+                    }}
+                    id="btn-tab-nps-additional"
+                  >
+                    ➕ 추가납부 대상 등록
+                  </button>
                 </div>
-
-                {nationalInputMode === "SIMPLE" && (
-                  <>
-                    <div style={styles.infoAlert}>
-                      💡 <strong>가입월수와 소득</strong>을 바탕으로 예상 연금 수령액과 납부액을 자동 모델링합니다.
-                    </div>
-                    <div style={styles.fieldRow}>
-                      <label style={styles.label}>현재 누적 가입 개월수 (개월)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        placeholder="예: 120"
-                        value={store.nationalPension.contributionMonths || ""}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          handleSimpleNationalCalculate(
-                            val,
-                            store.nationalPension.currentStandardMonthlyIncome,
-                            store.nationalPension.expectedTotalContributionMonths
-                          );
-                        }}
-                      />
-                    </div>
-                    <div style={styles.fieldRow}>
-                      <label style={styles.label}>현재 기준 월 소득액 (만원)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        placeholder="예: 350"
-                        value={store.nationalPension.currentStandardMonthlyIncome || ""}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          handleSimpleNationalCalculate(
-                            store.nationalPension.contributionMonths,
-                            val,
-                            store.nationalPension.expectedTotalContributionMonths
-                          );
-                        }}
-                      />
-                    </div>
-                    <div style={styles.fieldRow}>
-                      <label style={styles.label}>노령연금 총 예상가입기간 (개월수)</label>
-                      <input
-                        type="number"
-                        className="premium-input"
-                        placeholder="예: 360"
-                        value={store.nationalPension.expectedTotalContributionMonths || ""}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          handleSimpleNationalCalculate(
-                            store.nationalPension.contributionMonths,
-                            store.nationalPension.currentStandardMonthlyIncome,
-                            val
-                          );
-                        }}
-                      />
-                    </div>
-
-                    {/* Auto Calculated Results Preview */}
-                    <div style={styles.previewBox}>
-                      <h4 style={styles.previewTitle}>자동 연산된 예상 수치</h4>
-                      <div style={styles.previewGrid}>
-                        <div>총 예상 납부보험료: <strong>{store.nationalPension.totalExpectedPremium.toLocaleString()} 만원</strong></div>
-                        <div>현재까지 총 납부액: <strong>{store.nationalPension.totalPaidAmount.toLocaleString()} 만원</strong></div>
-                        <div>예상 연금 수령액: <strong style={{ color: "var(--text-accent)" }}>{store.nationalPension.expectedMonthlyPension.toLocaleString()} 만원/월</strong></div>
-                      </div>
-                    </div>
-                  </>
-                )}
 
                 {nationalInputMode === "DETAILED" && (
                   <>
@@ -1355,6 +1253,8 @@ export default function OnboardingPage() {
                 )}
 
                 {nationalInputMode === "PDF" && renderPdfUploadSection()}
+
+                {nationalInputMode === "ADDITIONAL" && <AdditionalPaymentPanel />}
               </div>
             )}
 

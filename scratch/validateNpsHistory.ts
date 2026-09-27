@@ -109,4 +109,33 @@ const none = parseNpsHistoryText("금융감독원 통합연금포털 연금 조�
 assert.equal(none.rows.length, 0);
 assert.equal(none.totalMonths, null);
 
+// F2: 비고(마지막 컬럼)가 빈 행 다음에 오는 행도 정상 분리되어야 한다 (row 끼워먹기 방지)
+const sampleEmptyNote = [
+  `2026년 09월 27일 (10:00) 조회일 총 가입기간 월수 30개월 금액 1,000,000원 ${HEADER}`,
+  "2000-01 ~ 2000-12 1,000,000원 12개월 1,080,000원 0개월 0원 사업장",
+  "2001-01 ~ 2001-06 1,000,000원 6개월 540,000원 0개월 0원 지역 지역가입",
+].join("\n");
+const parsedEmptyNote = parseNpsHistoryText(sampleEmptyNote);
+assert.equal(parsedEmptyNote.rows.length, 2);
+assert.equal(parsedEmptyNote.rows[0].note, "");
+assert.equal(parsedEmptyNote.rows[0].endYm, "2000-12");
+assert.equal(parsedEmptyNote.rows[1].startYm, "2001-01");
+assert.equal(parsedEmptyNote.rows[1].note, "지역가입");
+
+// F4: 반환 개월수가 한 행의 중간에서 끝나는 경우 refundYm/기간은 실제 반환된 달까지만 잡아야 한다
+const sampleMidRowRefund = [
+  "2026년 09월 27일 (10:00) 조회일 총 가입기간 월수 30개월 금액 3,000,000원",
+  "납부한 연금보험료 (반환일시금 지급내역 포함) 3,000,000원 (30개월) 반납금 납부액 0원 추납보험료 납부액 (개월) 0원 (0)",
+  "반환일시금 지급내역 반환일시금 총 지급기간 24개월 반환일시금 총 지급액 2,400,000원",
+  HEADER,
+  "1990-01 ~ 1992-06 100,000원 30개월 3,000,000원 0개월 0원 사업장 (주)단일행",
+].join("\n");
+const midRowRefund = deriveFromNpsHistory(parseNpsHistoryText(sampleMidRowRefund));
+assert.deepEqual(midRowRefund.returnRepayment, {
+  refundAmount: 240,
+  restoredMonths: 24,
+  periodStartYm: "1990-01",
+  refundYm: "1992-01",
+});
+
 console.log("NPS history validation success!");

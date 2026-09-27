@@ -502,12 +502,28 @@ export default function OnboardingPage() {
     expectedDeclaredRate: 2.5,
   });
 
+  // 단계를 넘어갈 때 이전 단계의 임시 동기화 상태(PDF 파싱 결과, NPS/FSS 인증 대기 등)가
+  // 다음 단계(특히 배우자 단계)로 새지 않도록 초기화한다.
+  const goToStep = (i: number) => {
+    setPdfParsed(false);
+    setPdfError("");
+    setNpsSynced(false);
+    setVerificationPending(false);
+    setJti(null);
+    setTwoWayInfo(null);
+    setFssSynced(false);
+    setFssVerificationPending(false);
+    setFssJti(null);
+    setFssTwoWayInfo(null);
+    setCurrentStep(i);
+  };
+
   const nextStep = () => {
-    if (stepIndex < lastStepIndex) setCurrentStep(stepIndex + 1);
+    if (stepIndex < lastStepIndex) goToStep(stepIndex + 1);
   };
 
   const prevStep = () => {
-    if (stepIndex > 0) setCurrentStep(stepIndex - 1);
+    if (stepIndex > 0) goToStep(stepIndex - 1);
   };
 
   // JSON 백업 저장
@@ -692,7 +708,7 @@ export default function OnboardingPage() {
               return (
                 <div
                   key={s.key}
-                  onClick={() => setCurrentStep(i)}
+                  onClick={() => goToStep(i)}
                   style={{
                     ...styles.stepItem,
                     borderColor: isActive ? "rgba(99, 102, 241, 0.4)" : "transparent",
@@ -736,7 +752,7 @@ export default function OnboardingPage() {
           </div>
 
 
-          <div style={styles.formBody}>
+          <div key={step.key} style={styles.formBody}>
             {/* STEP 0: 기본 정보 및 노후 재무 목표 */}
             {step.kind === "INFO" && (
               <div style={styles.formGroupList} className="animate-fade-in">

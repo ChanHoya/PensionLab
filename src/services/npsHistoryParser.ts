@@ -1,4 +1,5 @@
 import { monthsBetween } from "@/services/additionalPaymentCalculator";
+import { NPS_RULES, EXCLUDED_ADDITIONAL_FROM_YM } from "@/config/npsRules";
 import type {
   AdditionalPaymentState,
   EnrollStatus,
@@ -65,7 +66,7 @@ export function parseNpsHistoryText(raw: string): NpsHistoryParsed {
 
   const rows: NpsHistoryRow[] = [];
   const rowRe =
-    /(\d{4}-\d{2}) ~ (\d{4}-\d{2}) ([\d,]+)원 (\d+)개월 ([\d,]+)원 (\d+)개월 [\d,]+원 (\S+) (.*?)(?= \d{4}-\d{2} ~ \d{4}-\d{2} [\d,]+원| 예상연금월액|$)/g;
+    /(\d{4}-\d{2}) ~ (\d{4}-\d{2}) ([\d,]+)원 (\d+)개월 ([\d,]+)원 (\d+)개월 [\d,]+원 (\S+)(.*?)(?= \d{4}-\d{2} ~ \d{4}-\d{2} [\d,]+원| 예상연금월액|$)/g;
   for (const m of text.matchAll(rowRe)) {
     rows.push({
       startYm: m[1],
@@ -108,9 +109,6 @@ export interface NpsHistoryDerived {
   national: Partial<NationalPensionState>;
   notes: string[];
 }
-
-// 무소득배우자 등 적용제외 기간은 1999-04 이후만 추납 대상
-const EXCLUDED_ALLOWED_FROM = "1999-04";
 
 function addMonth(ym: string, n = 1): string {
   const [y, m] = ym.split("-").map(Number);
@@ -156,7 +154,7 @@ export function deriveFromNpsHistory(p: NpsHistoryParsed): NpsHistoryDerived {
   if (rows.length > 0) {
     const covered = monthSet(rows);
     for (let ym = rows[0].startYm; ym <= last.endYm; ym = addMonth(ym)) {
-      if (!covered.has(ym) && ym >= EXCLUDED_ALLOWED_FROM) excludedMonths++;
+      if (!covered.has(ym) && ym >= EXCLUDED_ADDITIONAL_FROM_YM) excludedMonths++;
     }
   }
   const gapMonths = Math.max(0, exemptMonths + excludedMonths - p.additionalPaidMonths);
@@ -171,7 +169,7 @@ export function deriveFromNpsHistory(p: NpsHistoryParsed): NpsHistoryDerived {
   if (gapMonths > 0) {
     additionalPayment.gapMonths = gapMonths;
     additionalPayment.gapReason = exemptMonths >= excludedMonths ? "EXEMPT" : "EXCLUDED";
-    additionalPayment.requestedMonths = Math.min(gapMonths, 119);
+    additionalPayment.requestedMonths = Math.min(gapMonths, NPS_RULES.maxAdditionalMonths);
     notes.push(`추납 가능 공백 ${gapMonths}개월 (납부예외 ${exemptMonths}개월, 가입 기록 없는 기간 ${excludedMonths}개월 — 1999년 4월 이후만)`);
     if (excludedMonths > 0) notes.push("가입 기록이 없는 기간은 무소득배우자 등 적용제외로 가정했습니다. 실제 사유를 확인하세요.");
     if (p.additionalPaidMonths > 0) notes.push(`이미 추납한 ${p.additionalPaidMonths}개월을 뺐습니다.`);
@@ -183,23 +181,27 @@ export function deriveFromNpsHistory(p: NpsHistoryParsed): NpsHistoryDerived {
   if (overdue > 0) notes.push(`미납(체납) ${overdue}개월은 추납 대상이 아니며 연체 납부로 처리해야 합니다.`);
 
   // 반환일시금: 금액·개월수만 표시되므로 가장 이른 납부 기간부터 그 개월수만큼을 반환 기간으로 본다
+  // (반환 개월수가 한 행의 중간에서 끝나면 그 행의 시작월부터 실제 반환된 달까지만 센다)
   const returnRepayment: Partial<ReturnRepaymentState> = {};
   if (p.refundMonths > 0 && p.repaidAmount === 0) {
     let acc = 0;
-    let endYm = "";
+    let lastRefundedYm = "";
     for (const r of paying) {
+      const accBefore = acc;
       acc += r.paidMonths;
-      endYm = r.endYm;
-      if (acc >= p.refundMonths) break;
+      if (acc >= p.refundMonths) {
+        lastRefundedYm = addMonth(r.startYm, p.refundMonths - accBefore - 1);
+        break;
+      }
     }
     returnRepayment.refundAmount = round1(p.refundAmount);
     returnRepayment.restoredMonths = p.refundMonths;
     if (paying.length > 0) {
       returnRepayment.periodStartYm = paying[0].startYm;
-      returnRepayment.refundYm = addMonth(endYm);
+      returnRepayment.refundYm = addMonth(lastRefundedYm);
     }
     notes.push(
-      `반환일시금 ${round1(p.refundAmount).toLocaleString()}만원 (${p.refundMonths}개월, ${paying[0]?.startYm ?? "?"} ~ ${endYm || "?"} 추정) — 반납하면 이 기간이 복원됩니다.`
+      `반환일시금 ${round1(p.refundAmount).toLocaleString()}만원 (${p.refundMonths}개월, ${paying[0]?.startYm ?? "?"} ~ ${lastRefundedYm || "?"} 추정) — 반납하면 이 기간이 복원됩니다.`
     );
     notes.push("반환일시금 수령년월은 PDF에 없어 반환 기간 다음 달로 넣었습니다. 실제 수령년월(또는 공단 반납 고지액)을 확인하세요.");
   } else if (p.refundMonths > 0) {

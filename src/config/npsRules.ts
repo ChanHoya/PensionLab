@@ -13,6 +13,8 @@ export const NPS_RULES = {
   dependentIncomeCapAnnual: 2000, // 건보 피부양자 소득기준 (만원/년)
 };
 
+export const EXCLUDED_ADDITIONAL_FROM_YM = "1999-04"; // 적용제외 기간 추납은 1999-04 이후만
+
 // 2025년까지 9%, 2026년부터 매년 0.5%p 인상, 2033년 13%에서 고정
 export function premiumRateForYear(year: number): number {
   if (year <= 2025) return 9.0;

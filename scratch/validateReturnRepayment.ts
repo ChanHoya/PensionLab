@@ -123,10 +123,6 @@ assert.equal(A.totalMonths, 274);
 near(A.extraCost, 1456.23);
 assert.equal(A.recoverAgeTotal, 69);
 near(A.gainAtLifeExpectancy, 13429.02);
-// 추가분 합산 회수 나이 = 65 + D 총원금 1229.129/23.648/12(4.33년) + 추가 납부액/증가 월액/12
-assert.equal(D.recoverAgeCombined, null);
-assert.equal(B.recoverAgeCombined, 72); // 4.33 + 311.04/9.88/12(2.62년) = 6.95년
-assert.equal(A.recoverAgeCombined, 73.1); // 4.33 + 1456.23/32.30/12(3.76년) = 8.09년
 // 연 환산 이자율 = (총 수령액 / 총 납부보험료)^(1/24년) − 1, 65~88세
 near(D.annualReturn!, (Math.pow((23.648 * 12 * 24) / 1229.129, 1 / 24) - 1) * 100, 1e-9);
 near(D.annualReturn!, 7.4, 0.01);

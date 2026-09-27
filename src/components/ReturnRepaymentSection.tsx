@@ -12,22 +12,17 @@ import { maxRefundInstallments } from "@/config/npsRules";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 
-// 반환일시금 반납 입력 + 대안 D(현행)·B(반납)·C(추납)·A(반납+추납) 비교
-export default function ReturnRepaymentSection({ who }: { who: Who }) {
+// 반환일시금 반납 입력 (반환일시금 「받은 적 있음」일 때만 표시)
+export default function ReturnRepaymentSection({ who, title }: { who: Who; title: string }) {
   const store = usePensionStore();
-  const person = pensionsOf(store, who);
-  const rr = person.returnRepayment;
-  const params = personParams(store.simulationParams, who);
+  const rr = pensionsOf(store, who).returnRepayment;
   const set = (data: Partial<ReturnRepaymentState>) => store.setReturnRepayment(data, who);
-  const ready = isRepaymentReady(rr);
-  const cost = ready ? calcRepaymentCost(rr) : null;
-  const scenarios = compareRefundScenarios(person.nationalPension, rr, person.additionalPayment, params);
+  const cost = isRepaymentReady(rr) ? calcRepaymentCost(rr) : null;
   const maxInstallments = maxRefundInstallments(rr.restoredMonths);
-  const best = Math.max(...scenarios.map((s) => s.gainAtLifeExpectancy));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <h4 style={styles.sectionTitle}>⑤ 반환일시금 반납</h4>
+      <h4 style={styles.sectionTitle}>{title}</h4>
       <div style={styles.infoAlert}>
         💡 예전에 받은 반환일시금을 이자와 함께 돌려주면 그 가입기간이 <strong>당시 소득대체율 그대로</strong> 되살아납니다
         (1988~1998년 가입분은 70%). 공단 반납 고지액을 입력하면 그 금액을, 비워 두면 공단 고시 연도별 정기예금 이자율로 추정합니다.
@@ -86,9 +81,29 @@ export default function ReturnRepaymentSection({ who }: { who: Who }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
 
+// 대안별 비교: 반환일시금이 있으면 D 현행·B 반납·C 추납·A 반납+추납, 없으면 D·C만
+export function RefundScenarioComparison({ who, title }: { who: Who; title: string }) {
+  const store = usePensionStore();
+  const person = pensionsOf(store, who);
+  const rr = person.returnRepayment;
+  const params = personParams(store.simulationParams, who);
+  const hasRefund = person.additionalPayment.receivedLumpSumRefund;
+  const ready = isRepaymentReady(rr);
+  const scenarios = compareRefundScenarios(person.nationalPension, rr, person.additionalPayment, params).filter(
+    (s) => hasRefund || s.id === "D" || s.id === "C"
+  );
+  const best = Math.max(...scenarios.map((s) => s.gainAtLifeExpectancy));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <div style={styles.previewBox}>
-        <h4 style={styles.previewTitle}>대안별 비교 (D 현행 · B 반납 · C 추납 · A 반납+추납)</h4>
+        <h4 style={styles.previewTitle}>
+          {title} ({hasRefund ? "D 현행 · B 반납 · C 추납 · A 반납+추납" : "D 현행 · C 추납"})
+        </h4>
         <div style={{ overflowX: "auto" }}>
           <table style={styles.table}>
             <thead>
@@ -120,10 +135,10 @@ export default function ReturnRepaymentSection({ who }: { who: Who }) {
           </table>
         </div>
         <p style={styles.note}>
-          생애 총 납부보험료 = 「NPS 공단고서 상세 입력」의 총 예상 납부보험료 + 추가 납부액. 추납(C·A)은 위 ①~④ 추납 입력을 그대로 씁니다.
+          생애 총 납부보험료 = 「NPS 공단고서 상세 입력」의 총 예상 납부보험료 + 추가 납부액. 추납 대안은 위 추납 조건 입력을 그대로 씁니다.
           반납 복원 기간의 소득은 본인 평균소득(B값)과 같다고 가정한 현재가치 추정치이며, 정확한 금액은 국민연금공단(☎1355)에서 확인하세요.
         </p>
-        {!ready && <p style={styles.note}>반납 원금·수령년월·복원 개월수·복원 시작년월·신청년월을 모두 입력하면 B·A 대안이 계산됩니다.</p>}
+        {hasRefund && !ready && <p style={styles.note}>반납 원금·수령년월·복원 개월수·복원 시작년월·신청년월을 모두 입력하면 B·A 대안이 계산됩니다.</p>}
       </div>
     </div>
   );

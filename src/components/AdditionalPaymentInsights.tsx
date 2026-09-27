@@ -20,9 +20,10 @@ interface Props {
   plan: AdditionalPaymentPlan;
   paymentMode: "LUMP" | "INSTALLMENT";
   isVoluntary: boolean;
+  sectionNo: string;
 }
 
-export default function AdditionalPaymentInsights({ plan, paymentMode, isVoluntary }: Props) {
+export default function AdditionalPaymentInsights({ plan, paymentMode, isVoluntary, sectionNo }: Props) {
   // 분납 회차를 연도별로 묶어 요율·금액 표시
   const byYear = new Map<string, { rate: number; count: number; amount: number }>();
   plan.cost.rows.forEach((r) => {
@@ -37,7 +38,7 @@ export default function AdditionalPaymentInsights({ plan, paymentMode, isVolunta
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <div style={styles.box}>
-        <h4 style={styles.title}>④ 일시납 vs 분할납부 비교 ({plan.months}개월 추납)</h4>
+        <h4 style={styles.title}>{sectionNo} 일시납 vs 분할납부 비교 ({plan.months}개월 추납)</h4>
         <div style={{ overflowX: "auto" }}>
           <table style={styles.table}>
             <thead>

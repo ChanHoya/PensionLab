@@ -156,7 +156,8 @@ export function compareRefundScenarios(
   ap: AdditionalPaymentState,
   params: SimulationParamsState
 ): RefundScenario[] {
-  const hasRefund = isRepaymentReady(rr);
+  // 반환일시금 「받은 적 없음」이면 반납 입력이 남아 있어도 반납 대안을 계산하지 않는다
+  const hasRefund = ap.receivedLumpSumRefund && isRepaymentReady(rr);
   const refundCost = hasRefund ? calcRepaymentCost(rr).total : 0;
   const weights = hasRefund ? restoredWeights(rr) : { wA: 0, wB: 0 };
   const restored = { months: hasRefund ? rr.restoredMonths : 0, ...weights };
@@ -216,7 +217,7 @@ export function applyNpsOptions(
   if (national.expectedTotalContributionMonths < NPS_RULES.minPensionMonths && national.expectedMonthlyPension > 0) {
     return unchanged;
   }
-  const useRefund = rr.applyToSimulation && isRepaymentReady(rr);
+  const useRefund = ap.receivedLumpSumRefund && rr.applyToSimulation && isRepaymentReady(rr);
   const plan = ap.applyToSimulation && ap.applyYm ? runAdditionalPaymentPlan(ap, national, params) : null;
   const useAdd = !!plan && plan.months > 0;
   if (!useRefund && !useAdd) return unchanged;

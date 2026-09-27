@@ -7,6 +7,7 @@ import { personParams } from "@/services/coupleSimulation";
 import { NPS_RULES } from "@/config/npsRules";
 import AdditionalPaymentInsights from "@/components/AdditionalPaymentInsights";
 import ReturnRepaymentSection from "@/components/ReturnRepaymentSection";
+import NpsHistoryUpload from "@/components/NpsHistoryUpload";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 
@@ -39,6 +40,7 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
         💡 소득이 없어 보험료를 못 낸 기간(납부예외·적용제외·군복무)을 나중에 채워 넣어 <strong>가입기간을 늘리는 제도</strong>입니다.
         최대 {NPS_RULES.maxAdditionalMonths}개월까지 가능하며, 적은 금액으로 긴 기간을 채울수록 효율이 좋습니다.
       </div>
+      <NpsHistoryUpload who={who} />
       {!hasNpsData && (
         <div style={styles.warnAlert}>
           ⚠ 「NPS 공단고서 상세 입력」 또는 「금융감독원 통합연금 자료 등록」 탭에서 총 예상 가입월수를 입력하지 않으면

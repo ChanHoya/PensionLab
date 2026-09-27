@@ -7,6 +7,7 @@ import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 import { resolveAge } from "@/utils/age";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
+import { extractPdfText } from "@/utils/pdfText";
 
 type StepKind = "INFO" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SETTINGS";
 
@@ -116,27 +117,7 @@ export default function OnboardingPage() {
     setPdfParsed(false);
 
     try {
-      // 1. pdfjs-dist 동적 로드
-      const pdfjs = await import("pdfjs-dist");
-      
-      // worker 설정: 패키지 자체 버전을 활용하여 호환 cdn 지정
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
-
-      let fullText = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: any) => item.str)
-          .join(" ");
-        fullText += pageText + "\n";
-      }
-
-      const cleanText = fullText.trim();
+      const cleanText = await extractPdfText(file);
       if (!cleanText) {
         throw new Error("PDF에서 텍스트를 추출할 수 없습니다. 보안 비밀번호가 해제된 PDF 파일인지 확인해 주세요.");
       }

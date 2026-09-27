@@ -129,6 +129,9 @@ export function RefundScenarioComparison({ who, title }: { who: Who; title: stri
     (s) => hasRefund || s.id === "D" || s.id === "C"
   );
   const best = Math.max(...scenarios.map((s) => s.gainAtLifeExpectancy));
+  // 나이와 연금 개시부터 걸리는 기간을 함께 표시: 69.3세 (4.3년)
+  const ageWithYears = (age: number | null) =>
+    age === null ? "-" : `${age.toFixed(1)}세 (${(age - params.nationalPensionStartAge).toFixed(1)}년)`;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -143,10 +146,10 @@ export function RefundScenarioComparison({ who, title }: { who: Who; title: stri
                 <th style={styles.th}>대안</th>
                 <th style={styles.th}>가입기간</th>
                 <th style={styles.th}>추가 납부액</th>
-                <th style={styles.th}>생애 총 납부보험료</th>
+                <th style={styles.th}>총 납부보험료</th>
                 <th style={styles.th}>예상 월 연금</th>
                 <th style={styles.th}>총원금 회수 나이</th>
-                <th style={styles.th}>추가분 회수 나이</th>
+                <th style={styles.th}>추가분 합산 회수 나이</th>
                 <th style={styles.th}>기대수명({params.expectedLifeExpectancy}세)까지 순이익</th>
               </tr>
             </thead>
@@ -158,16 +161,20 @@ export function RefundScenarioComparison({ who, title }: { who: Who; title: stri
                   <td style={styles.td}>{fmt(s.extraCost)} 만원</td>
                   <td style={styles.td}>{fmt(s.lifetimePremium)} 만원</td>
                   <td style={styles.td}>{s.monthly.toFixed(1)} 만원 {s.delta > 0 && `(+${s.delta.toFixed(1)})`}</td>
-                  <td style={styles.td}>{s.recoverAgeTotal === null ? "-" : `${s.recoverAgeTotal}세`}</td>
-                  <td style={styles.td}>{s.recoverAgeExtra === null ? "-" : `${s.recoverAgeExtra}세`}</td>
-                  <td style={styles.td}>{fmt(s.gainAtLifeExpectancy)} 만원</td>
+                  <td style={styles.td}>{ageWithYears(s.recoverAgeTotal)}</td>
+                  <td style={styles.td}>{ageWithYears(s.recoverAgeCombined)}</td>
+                  <td style={styles.td}>
+                    {fmt(s.gainAtLifeExpectancy)} 만원 {s.annualReturn !== null && `(${s.annualReturn.toFixed(1)}%)`}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <p style={styles.note}>
-          생애 총 납부보험료 = 「NPS 공단고서 상세 입력」의 총 예상 납부보험료 + 추가 납부액. 추납 대안은 위 추납 조건 입력을 그대로 씁니다.
+          총 납부보험료 = 「NPS 공단고서 상세 입력」의 총 예상 납부보험료 + 추가 납부액. 추납 대안은 위 추납 조건 입력을 그대로 씁니다.
+          ( ) 기간은 연금 개시({params.nationalPensionStartAge}세)부터 걸리는 기간입니다. 추가분 합산 회수 나이 = 현행(D) 총원금 회수 기간 + 추가 납부액을 늘어난 연금액으로 회수하는 기간.
+          순이익 옆 %는 총 납부보험료를 연금 개시부터 기대수명까지 연복리로 굴려 총 수령액이 되는 연 이자율입니다.
           반납 복원 기간의 소득은 본인 평균소득(B값)과 같다고 가정한 현재가치 추정치이며, 정확한 금액은 국민연금공단(☎1355)에서 확인하세요.
         </p>
         {hasRefund && !ready && <p style={styles.note}>반납 원금·수령년월·복원 개월수·복원 시작년월·신청년월을 모두 입력하면 B·A 대안이 계산됩니다.</p>}

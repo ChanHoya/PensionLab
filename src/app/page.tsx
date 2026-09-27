@@ -29,6 +29,11 @@ const LIBRARY_DOCUMENTS = [
     title: "장기 생존을 위한 코어-새틀라이트 전략",
     url: "/The_IRP_Master_Recipe.pdf",
     desc: "퇴직연금(IRP)의 장기 안정 자산(코어)과 자산 배분 펀드(새틀라이트) 최적 비율 배분 포트폴리오 레시피"
+  },
+  {
+    title: "국민연금 추가납부 플랜",
+    url: "/NPS_Additional_Payment_Plan.pdf",
+    desc: "생애주기 재무 설계도와 국민연금 추후납부(추납) 119개월 전략, 보험료율 인상기 일시납·분납 판단 가이드"
   }
 ];
 

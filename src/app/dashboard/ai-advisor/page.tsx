@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 import { runPensionSimulation } from "@/services/pensionCalculator";
+import { applyAdditionalPayment } from "@/services/additionalPaymentCalculator";
 import ThemeToggle from "@/components/ThemeToggle";
 import {
   ResponsiveContainer,
@@ -242,6 +243,7 @@ const renderMarkdown = (text: string) => {
 export default function AIAdvisorPage() {
   const router = useRouter();
   const store = usePensionStore();
+  const nationalForSim = applyAdditionalPayment(store.nationalPension, store.additionalPayment, store.simulationParams);
   const [isMounted, setIsMounted] = useState(false);
 
   // API Call States
@@ -273,7 +275,7 @@ export default function AIAdvisorPage() {
 
   // Run calculation simulation
   const simulation = runPensionSimulation(
-    store.nationalPension,
+    nationalForSim,
     store.basicPension,
     store.retirementPensions,
     store.personalPensions,
@@ -490,7 +492,7 @@ export default function AIAdvisorPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          nationalPension: store.nationalPension,
+          nationalPension: nationalForSim,
           basicPension: store.basicPension,
           retirementPensions: store.retirementPensions,
           personalPensions: store.personalPensions,
@@ -577,6 +579,21 @@ export default function AIAdvisorPage() {
             자산관리 탭의 수치 시뮬레이션을 넘어, AI가 3층 연금 구조·전체 보유 자산·소득 공백기를 종합 평가하고 <strong>투자 리밸런싱·세제 최적화·인출 전략</strong>에 대한 맞춤 처방전을 제공합니다.
           </p>
           <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "-4px" }}>AI 모델: Google Gemini 3.5 Flash</span>
+          {nationalForSim !== store.nationalPension && (
+            <div style={{
+              display: "inline-flex",
+              alignItems: "center",
+              width: "fit-content",
+              padding: "6px 14px",
+              borderRadius: "var(--radius-full)",
+              backgroundColor: "rgba(99, 102, 241, 0.1)",
+              color: "var(--text-accent)",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+            }}>
+              🔁 추납 {nationalForSim.expectedTotalContributionMonths - store.nationalPension.expectedTotalContributionMonths}개월 반영 (추정치 · 정확한 금액은 국민연금공단 1355 확인)
+            </div>
+          )}
         </section>
 
         {/* Current State Summary Card */}

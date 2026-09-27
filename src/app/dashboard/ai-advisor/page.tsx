@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 import { runPensionSimulation } from "@/services/pensionCalculator";
+import { applyAdditionalPayment } from "@/services/additionalPaymentCalculator";
 import ThemeToggle from "@/components/ThemeToggle";
 import {
   ResponsiveContainer,
@@ -242,6 +243,7 @@ const renderMarkdown = (text: string) => {
 export default function AIAdvisorPage() {
   const router = useRouter();
   const store = usePensionStore();
+  const nationalForSim = applyAdditionalPayment(store.nationalPension, store.additionalPayment, store.simulationParams);
   const [isMounted, setIsMounted] = useState(false);
 
   // API Call States
@@ -273,7 +275,7 @@ export default function AIAdvisorPage() {
 
   // Run calculation simulation
   const simulation = runPensionSimulation(
-    store.nationalPension,
+    nationalForSim,
     store.basicPension,
     store.retirementPensions,
     store.personalPensions,
@@ -490,7 +492,7 @@ export default function AIAdvisorPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          nationalPension: store.nationalPension,
+          nationalPension: nationalForSim,
           basicPension: store.basicPension,
           retirementPensions: store.retirementPensions,
           personalPensions: store.personalPensions,

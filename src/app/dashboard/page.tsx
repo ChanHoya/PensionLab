@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 import { runPensionSimulation } from "@/services/pensionCalculator";
 import { runWithdrawalSimulation, StrategySimulationResult } from "@/services/withdrawalCalculator";
+import { applyAdditionalPayment } from "@/services/additionalPaymentCalculator";
 import ThemeToggle from "@/components/ThemeToggle";
 
 // Import Recharts components
@@ -226,9 +227,12 @@ export default function DashboardPage() {
     );
   }
 
+  // 추가납부 탭에서 「대시보드 반영」을 켠 경우 추납 후 국민연금 값으로 시뮬레이션
+  const nationalForSim = applyAdditionalPayment(store.nationalPension, store.additionalPayment, store.simulationParams);
+
   // Run the basic pension simulation based on store states
   const simulation = runPensionSimulation(
-    store.nationalPension,
+    nationalForSim,
     store.basicPension,
     store.retirementPensions,
     store.personalPensions,
@@ -246,7 +250,7 @@ export default function DashboardPage() {
 
   // Run advanced withdrawal simulation
   const withdrawalSimulation = runWithdrawalSimulation(
-    store.nationalPension,
+    nationalForSim,
     store.basicPension,
     store.retirementPensions,
     store.personalPensions,

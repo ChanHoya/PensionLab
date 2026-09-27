@@ -484,6 +484,23 @@ export default function DashboardPage() {
           <span>🔒 <strong>개인정보 안심 보장</strong>: 회원님의 소중한 은퇴 설계 정보는 서버에 전송/저장되지 않으며, 오직 웹 브라우저(LocalStorage)에만 안전하게 보관되므로 유출 걱정 없이 안심하고 이용해 주세요.</span>
         </div>
 
+        {/* 추납 반영 배지: 추가납부 탭에서 대시보드 반영을 켠 경우에만 표시 */}
+        {nationalForSim !== store.nationalPension && (
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            width: "fit-content",
+            padding: "6px 14px",
+            borderRadius: "var(--radius-full)",
+            backgroundColor: "rgba(99, 102, 241, 0.1)",
+            color: "var(--text-accent)",
+            fontSize: "0.8rem",
+            fontWeight: 600,
+          }} className="animate-fade-in">
+            🔁 추납 {nationalForSim.expectedTotalContributionMonths - store.nationalPension.expectedTotalContributionMonths}개월 반영 (추정치 · 정확한 금액은 국민연금공단 1355 확인)
+          </div>
+        )}
+
         {/* Row 1: KPI Summary (5-column Grid) */}
         <section style={styles.kpiRow} className="animate-fade-in">
           {/* Card 1 */}

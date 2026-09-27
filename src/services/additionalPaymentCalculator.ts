@@ -45,7 +45,10 @@ export function checkEligibility(ap: AdditionalPaymentState): Eligibility {
   }
   if (ap.firstEnrollYm && ap.resumeYm) {
     const span = monthsBetween(ap.firstEnrollYm, ap.resumeYm);
-    if (ap.gapMonths > span) {
+    if (span <= 0) {
+      issues.push("지속 가입개시 년월이 최초 가입년월보다 뒤여야 합니다.");
+      blocked = true;
+    } else if (ap.gapMonths > span) {
       issues.push(`중단 기간(${ap.gapMonths}개월)이 최초 가입~지속 가입개시 사이(${span}개월)보다 깁니다.`);
       blocked = true;
     }
@@ -53,13 +56,21 @@ export function checkEligibility(ap: AdditionalPaymentState): Eligibility {
   if (ap.receivedLumpSumRefund) {
     issues.push("반환일시금을 받은 기간은 먼저 반납해야 추납 자격이 생깁니다.");
   }
-  const maxMonths = blocked ? 0 : Math.min(ap.gapMonths, NPS_RULES.maxAdditionalMonths);
+  if (!blocked && ap.gapMonths <= 0) {
+    issues.push("중단 기간(개월)을 입력하세요.");
+  }
+  const maxMonths = blocked ? 0 : Math.min(Math.max(0, ap.gapMonths), NPS_RULES.maxAdditionalMonths);
   return { eligible: maxMonths > 0, maxMonths, issues };
+}
+
+// 임의(계속)가입자만 기준소득월액을 스스로 선택할 수 있다
+export function isVoluntary(ap: AdditionalPaymentState): boolean {
+  return ap.enrollStatus === "VOLUNTARY" || ap.enrollStatus === "VOLUNTARY_CONT";
 }
 
 // 임의(계속)가입자는 [지역 중위수, A값], 그 외는 기준소득월액 [하한, 상한] 범위로 제한
 export function effectiveBaseIncome(ap: AdditionalPaymentState): number {
-  if (ap.enrollStatus === "VOLUNTARY" || ap.enrollStatus === "VOLUNTARY_CONT") {
+  if (isVoluntary(ap)) {
     return Math.min(NPS_RULES.aValue, Math.max(NPS_RULES.voluntaryIncomeFloor, ap.baseIncome));
   }
   return Math.min(NPS_RULES.incomeCap, Math.max(NPS_RULES.incomeFloor, ap.baseIncome));
@@ -102,7 +113,7 @@ export function calcAdditionalPaymentCost(ap: AdditionalPaymentState, months: nu
       rows: [{ dueYm: firstDueYm, rate: lumpRate, principal: lumpSumTotal, interest: 0 }],
     };
   }
-  const n = Math.min(NPS_RULES.maxInstallments, Math.max(1, ap.installments));
+  const n = Math.min(NPS_RULES.maxInstallments, Math.max(1, Math.floor(ap.installments)));
   const rows: PaymentRow[] = [];
   for (let k = 0; k < n; k++) {
     const dueYm = addMonths(firstDueYm, k);
@@ -299,16 +310,23 @@ export function runAdditionalPaymentPlan(
   params: SimulationParamsState
 ): AdditionalPaymentPlan {
   const eligibility = checkEligibility(ap);
-  const months = Math.min(ap.requestedMonths, eligibility.maxMonths);
-  const cost = calcAdditionalPaymentCost(ap, months);
-  const taxRefund = estimateTaxRefund(cost, national.currentStandardMonthlyIncome * 12, ap.marginalTaxRate);
+  const months = Math.max(0, Math.min(ap.requestedMonths, eligibility.maxMonths));
+  // 사업장·지역가입자는 신청일 기준소득월액(현재 소득)을 그대로 쓰고, 임의(계속)가입자만 금액을 선택한다
+  const apEff = isVoluntary(ap) ? ap : { ...ap, baseIncome: national.currentStandardMonthlyIncome || ap.baseIncome };
+  const cost = calcAdditionalPaymentCost(apEff, months);
+  const taxRefund = estimateTaxRefund(cost, national.currentStandardMonthlyIncome * 12, apEff.marginalTaxRate);
   const netCost = cost.total - taxRefund;
-  const increase = estimatePensionIncrease(national, months, effectiveBaseIncome(ap));
+  const increase = estimatePensionIncrease(national, months, effectiveBaseIncome(apEff));
   const breakEven = calcBreakEven(increase.deltaMonthly, netCost, params);
-  const comparisons = compareBaseIncomes(ap, national, params, months);
-  const paymentOptions = compareLumpVsInstallment(ap, national, params, months);
+  const comparisons = compareBaseIncomes(apEff, national, params, months);
+  const paymentOptions = compareLumpVsInstallment(apEff, national, params, months);
 
   const warnings: string[] = [];
+  if (national.expectedTotalContributionMonths < NPS_RULES.minPensionMonths && national.expectedMonthlyPension > 0) {
+    warnings.push(
+      "예상 연금액은 있는데 총 예상 가입월수가 비어 있거나 120개월 미만이라 연금 증가액을 계산할 수 없습니다. 「NPS 공단고서 상세 입력」 탭의 총 예상 가입월수를 확인하세요."
+    );
+  }
   if (ap.requestedMonths > eligibility.maxMonths && eligibility.maxMonths > 0) {
     warnings.push(`추납 가능 개월수는 최대 ${eligibility.maxMonths}개월입니다. 초과분은 제외하고 계산했습니다.`);
   }
@@ -338,12 +356,17 @@ export function applyAdditionalPayment(
   params: SimulationParamsState
 ): NationalPensionState {
   if (!ap.applyToSimulation || !ap.applyYm) return national;
+  // 예상 연금액은 있는데 총 예상 가입월수가 비어 있거나 120개월 미만이면 증가액을 계산할 근거가 없다
+  if (national.expectedTotalContributionMonths < NPS_RULES.minPensionMonths && national.expectedMonthlyPension > 0) {
+    return national;
+  }
   const plan = runAdditionalPaymentPlan(ap, national, params);
-  if (plan.months === 0) return national;
+  if (plan.months <= 0) return national;
   return {
     ...national,
     expectedMonthlyPension: Math.round(plan.increase.afterMonthly * 10) / 10,
     expectedTotalContributionMonths: plan.increase.totalMonthsAfter,
     totalPaidAmount: Math.round(national.totalPaidAmount + plan.cost.total),
+    contributionMonths: national.contributionMonths + plan.months,
   };
 }

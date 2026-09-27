@@ -19,9 +19,10 @@ const fmt = (v: number) => Math.round(v).toLocaleString();
 interface Props {
   plan: AdditionalPaymentPlan;
   paymentMode: "LUMP" | "INSTALLMENT";
+  isVoluntary: boolean;
 }
 
-export default function AdditionalPaymentInsights({ plan, paymentMode }: Props) {
+export default function AdditionalPaymentInsights({ plan, paymentMode, isVoluntary }: Props) {
   // 분납 회차를 연도별로 묶어 요율·금액 표시
   const byYear = new Map<string, { rate: number; count: number; amount: number }>();
   plan.cost.rows.forEach((r) => {
@@ -75,34 +76,36 @@ export default function AdditionalPaymentInsights({ plan, paymentMode }: Props) 
         </p>
       </div>
 
-      <div style={styles.box}>
-        <h4 style={styles.title}>기준소득월액별 비교 ({plan.months}개월 추납, 세전)</h4>
-        <div style={{ overflowX: "auto" }}>
-          <table style={styles.table}>
-            <thead>
-              <tr>
-                <th style={styles.th}>기준소득월액</th>
-                <th style={styles.th}>추납액</th>
-                <th style={styles.th}>연금 증가(월)</th>
-                <th style={styles.th}>회수 기간</th>
-              </tr>
-            </thead>
-            <tbody>
-              {plan.comparisons.map((o) => (
-                <tr key={o.label}>
-                  <td style={styles.td}>{o.label} · {fmt(o.baseIncome)}만원</td>
-                  <td style={styles.td}>{fmt(o.cost)} 만원</td>
-                  <td style={styles.td}>+{o.deltaMonthly.toFixed(1)} 만원</td>
-                  <td style={styles.td}>{o.yearsToBreakEven === null ? "회수 불가" : `${o.yearsToBreakEven}년`}</td>
+      {isVoluntary && (
+        <div style={styles.box}>
+          <h4 style={styles.title}>기준소득월액별 비교 ({plan.months}개월 추납, 세전)</h4>
+          <div style={{ overflowX: "auto" }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>기준소득월액</th>
+                  <th style={styles.th}>추납액</th>
+                  <th style={styles.th}>연금 증가(월)</th>
+                  <th style={styles.th}>회수 기간</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {plan.comparisons.map((o) => (
+                  <tr key={o.label}>
+                    <td style={styles.td}>{o.label} · {fmt(o.baseIncome)}만원</td>
+                    <td style={styles.td}>{fmt(o.cost)} 만원</td>
+                    <td style={styles.td}>+{o.deltaMonthly.toFixed(1)} 만원</td>
+                    <td style={styles.td}>{o.yearsToBreakEven === null ? "회수 불가" : `${o.yearsToBreakEven}년`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p style={styles.note}>
+            국민연금은 소득이 낮을수록 낸 돈 대비 많이 받도록 설계되어 있어, 금액을 높이기보다 <strong>적은 금액으로 가능한 한 긴 기간</strong>을 채우는 편이 회수가 빠릅니다.
+          </p>
         </div>
-        <p style={styles.note}>
-          국민연금은 소득이 낮을수록 낸 돈 대비 많이 받도록 설계되어 있어, 금액을 높이기보다 <strong>적은 금액으로 가능한 한 긴 기간</strong>을 채우는 편이 회수가 빠릅니다.
-        </p>
-      </div>
+      )}
 
       <div style={styles.box}>
         <h4 style={styles.title}>누적 추가 수령액 vs 순비용 (현재가치)</h4>

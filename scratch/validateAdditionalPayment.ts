@@ -5,6 +5,7 @@ import {
   installmentInterestFactor,
   checkEligibility,
   effectiveBaseIncome,
+  isVoluntary,
   calcAdditionalPaymentCost,
   estimateTaxRefund,
   estimatePensionIncrease,
@@ -28,7 +29,7 @@ const ap: AdditionalPaymentState = {
   resumeYm: "2008-03",
   gapMonths: 84,
   gapReason: "EXEMPT",
-  enrollStatus: "REGIONAL",
+  enrollStatus: "VOLUNTARY",
   receivedLumpSumRefund: false,
   requestedMonths: 84,
   baseIncome: 100,
@@ -61,12 +62,26 @@ const refund = checkEligibility({ ...ap, receivedLumpSumRefund: true });
 assert.equal(refund.eligible, true);
 assert.equal(refund.issues.length, 1);
 
+// F1: 중단 기간(gapMonths)이 음수면 0으로 취급 (자격 없음)
+assert.equal(checkEligibility({ ...ap, gapMonths: -24 }).maxMonths, 0);
+
+// F7: 지속 가입개시 년월이 최초 가입년월보다 앞서거나 같으면 별도 메시지로 차단
+const badSpan = checkEligibility({ ...ap, firstEnrollYm: "2010-01", resumeYm: "2005-01" });
+assert.ok(badSpan.issues.includes("지속 가입개시 년월이 최초 가입년월보다 뒤여야 합니다."));
+assert.equal(badSpan.eligible, false);
+
+// F7: 다른 차단 사유가 없고 중단 기간을 입력하지 않은 경우
+const noGap = checkEligibility({ ...ap, gapMonths: 0 });
+assert.ok(noGap.issues.includes("중단 기간(개월)을 입력하세요."));
+
 // 임의가입자 기준소득월액 범위 [100, A값], 그 외 [41, 659]
 near(effectiveBaseIncome({ ...ap, enrollStatus: "VOLUNTARY", baseIncome: 500 }), 319.3511);
 assert.equal(effectiveBaseIncome({ ...ap, enrollStatus: "VOLUNTARY", baseIncome: 50 }), 100);
-assert.equal(effectiveBaseIncome({ ...ap, baseIncome: 500 }), 500);
-assert.equal(effectiveBaseIncome({ ...ap, baseIncome: 800 }), 659);
-assert.equal(effectiveBaseIncome({ ...ap, baseIncome: 30 }), 41);
+assert.equal(effectiveBaseIncome({ ...ap, enrollStatus: "REGIONAL", baseIncome: 500 }), 500);
+assert.equal(effectiveBaseIncome({ ...ap, enrollStatus: "REGIONAL", baseIncome: 800 }), 659);
+assert.equal(effectiveBaseIncome({ ...ap, enrollStatus: "REGIONAL", baseIncome: 30 }), 41);
+assert.equal(isVoluntary(ap), true);
+assert.equal(isVoluntary({ ...ap, enrollStatus: "REGIONAL" }), false);
 
 // 일시납: 100만원 × 9.5%(납부기한 2026-11) × 84개월
 const lump = calcAdditionalPaymentCost(ap, 84);
@@ -96,6 +111,12 @@ assert.equal(inst.rows[2].dueYm, "2027-01");
 assert.equal(inst.rows[2].rate, 10.0);
 assert.equal(inst.rows[23].dueYm, "2028-10");
 assert.equal(inst.rows[23].rate, 10.5);
+
+// F6: 분납 횟수가 소수면 내림 처리
+assert.equal(
+  calcAdditionalPaymentCost({ ...ap, paymentMode: "INSTALLMENT", installments: 12.5 }, 84).rows.length,
+  12
+);
 
 // 소득공제 환급: 연소득 한도 내 × 한계세율
 near(estimateTaxRefund(lump, 3600, 16.5), 131.67);
@@ -148,6 +169,20 @@ assert.equal(plan.comparisons.length, 3);
 assert.equal(plan.comparisons[0].yearsToBreakEven, 5); // 최소 기준소득 (세전)
 assert.equal(plan.comparisons[2].yearsToBreakEven, 9); // A값 기준은 회수가 더 늦다
 
+// F4: 사업장·지역가입자는 신청한 baseIncome이 아니라 신청일 기준소득월액(현재 소득)을 그대로 쓴다
+// 300만원 × 9.5%(납부기한 2026-11) × 84개월
+near(
+  runAdditionalPaymentPlan({ ...ap, enrollStatus: "REGIONAL" }, national, params).cost.total,
+  2394
+);
+
+// F2: 예상 연금액은 있는데 총 예상 가입월수가 비어 있거나 120개월 미만이면 계산 불가
+const noEnrollMonths: NationalPensionState = { ...national, expectedTotalContributionMonths: 0 };
+assert.ok(
+  runAdditionalPaymentPlan(ap, noEnrollMonths, params).warnings.some((w) => w.includes("계산할 수 없습니다"))
+);
+assert.equal(applyAdditionalPayment(noEnrollMonths, ap, params), noEnrollMonths);
+
 // 분납 경고: 일시납보다 약 79만원 더
 const instPlan = runAdditionalPaymentPlan({ ...ap, paymentMode: "INSTALLMENT", installments: 24 }, national, params);
 assert.ok(instPlan.warnings.some((w) => w.includes("약 79만원")));
@@ -187,7 +222,11 @@ const applied = applyAdditionalPayment(national, ap, params);
 assert.equal(applied.expectedMonthlyPension, 96);
 assert.equal(applied.expectedTotalContributionMonths, 384);
 assert.equal(applied.totalPaidAmount, 6198);
+assert.equal(applied.contributionMonths, 324); // F5: 240 + 84
 assert.equal(applyAdditionalPayment(national, { ...ap, applyToSimulation: false }, params), national);
 assert.equal(applyAdditionalPayment(national, { ...ap, applyYm: "" }, params), national); // 신청 년월 미입력 → 반영 안 함
+
+// F1: 음수 희망 개월수는 반영되지 않는다 (같은 참조 반환)
+assert.equal(applyAdditionalPayment(national, { ...ap, requestedMonths: -24 }, params), national);
 
 console.log("Additional payment validation success!");

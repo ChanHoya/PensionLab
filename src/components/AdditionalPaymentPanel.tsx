@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePensionStore, AdditionalPaymentState } from "@/store/usePensionStore";
-import { runAdditionalPaymentPlan, monthsBetween, firstDueYmOf } from "@/services/additionalPaymentCalculator";
+import { runAdditionalPaymentPlan, monthsBetween, firstDueYmOf, effectiveBaseIncome, isVoluntary } from "@/services/additionalPaymentCalculator";
 import { NPS_RULES } from "@/config/npsRules";
 import AdditionalPaymentInsights from "@/components/AdditionalPaymentInsights";
 
@@ -23,7 +23,10 @@ export default function AdditionalPaymentPanel() {
   const plan = runAdditionalPaymentPlan(ap, store.nationalPension, store.simulationParams);
   const span = ap.firstEnrollYm && ap.resumeYm ? monthsBetween(ap.firstEnrollYm, ap.resumeYm) : 0;
   const hasNpsData = store.nationalPension.expectedTotalContributionMonths > 0;
-  const isVoluntary = ap.enrollStatus === "VOLUNTARY" || ap.enrollStatus === "VOLUNTARY_CONT";
+  const voluntary = isVoluntary(ap);
+  const effectiveIncome = voluntary
+    ? ap.baseIncome
+    : effectiveBaseIncome({ ...ap, baseIncome: store.nationalPension.currentStandardMonthlyIncome || ap.baseIncome });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="animate-fade-in">
@@ -33,8 +36,8 @@ export default function AdditionalPaymentPanel() {
       </div>
       {!hasNpsData && (
         <div style={styles.warnAlert}>
-          ⚠ 「NPS 공단고서 상세 입력」 또는 「금융감독원 통합연금 자료 등록」 탭에서 예상 가입기간·예상 연금액을 먼저 입력하면
-          추가 연금액이 훨씬 정확해집니다.
+          ⚠ 「NPS 공단고서 상세 입력」 또는 「금융감독원 통합연금 자료 등록」 탭에서 총 예상 가입월수를 입력하지 않으면
+          추가 연금액을 계산할 수 없습니다. 예상 가입기간·예상 연금액을 먼저 입력하세요.
         </div>
       )}
 
@@ -54,7 +57,7 @@ export default function AdditionalPaymentPanel() {
           <label style={styles.label}>
             중단 기간 (개월) {span > 0 && <span style={styles.labelHint}>(두 년월 사이 최대 {span}개월)</span>}
           </label>
-          <input type="number" className="premium-input" placeholder="예: 84" value={ap.gapMonths || ""}
+          <input type="number" className="premium-input" min={0} placeholder="예: 84" value={ap.gapMonths || ""}
             onChange={(e) => set({ gapMonths: Number(e.target.value) })} />
         </div>
         <div style={styles.fieldRow}>
@@ -93,20 +96,22 @@ export default function AdditionalPaymentPanel() {
       <div style={styles.fieldGrid}>
         <div style={styles.fieldRow}>
           <label style={styles.label}>추납 희망 개월수 <span style={styles.labelHint}>(가능: {plan.eligibility.maxMonths}개월)</span></label>
-          <input type="number" className="premium-input" value={ap.requestedMonths || ""}
+          <input type="number" className="premium-input" min={0} value={ap.requestedMonths || ""}
             onChange={(e) => set({ requestedMonths: Number(e.target.value) })} />
         </div>
         <div style={styles.fieldRow}>
           <label style={styles.label}>
             추납 기준소득월액 (만원)
             <span style={styles.labelHint}>
-              {isVoluntary
+              {voluntary
                 ? ` (임의가입: ${NPS_RULES.voluntaryIncomeFloor}~${Math.floor(NPS_RULES.aValue)}만원, 신청일 기준 A값 상한)`
-                : ` (${NPS_RULES.incomeFloor}~${NPS_RULES.incomeCap}만원)`}
+                : " (현재 기준소득월액 자동 적용)"}
             </span>
           </label>
-          <input type="number" className="premium-input" value={ap.baseIncome || ""}
-            onChange={(e) => set({ baseIncome: Number(e.target.value) })} />
+          <input type="number" className="premium-input" min={0}
+            readOnly={!voluntary}
+            value={voluntary ? (ap.baseIncome || "") : Math.round(effectiveIncome)}
+            onChange={(e) => voluntary && set({ baseIncome: Number(e.target.value) })} />
         </div>
         <div style={styles.fieldRow}>
           <label style={styles.label}>
@@ -127,19 +132,19 @@ export default function AdditionalPaymentPanel() {
           <>
             <div style={styles.fieldRow}>
               <label style={styles.label}>분납 횟수 <span style={styles.labelHint}>(최대 {NPS_RULES.maxInstallments}회)</span></label>
-              <input type="number" className="premium-input" value={ap.installments || ""}
+              <input type="number" className="premium-input" min={1} step={1} value={ap.installments || ""}
                 onChange={(e) => set({ installments: Number(e.target.value) })} />
             </div>
             <div style={styles.fieldRow}>
               <label style={styles.label}>분납이자율 (%/년) <span style={styles.labelHint}>(1년 만기 정기예금 이자율)</span></label>
-              <input type="number" step="0.1" className="premium-input" value={ap.installmentInterestRate}
+              <input type="number" step="0.1" min={0} className="premium-input" value={ap.installmentInterestRate}
                 onChange={(e) => set({ installmentInterestRate: Number(e.target.value) })} />
             </div>
           </>
         )}
         <div style={styles.fieldRow}>
           <label style={styles.label}>한계세율 (%) <span style={styles.labelHint}>(소득공제 환급 추정, 소득 없으면 0)</span></label>
-          <input type="number" step="0.1" className="premium-input" value={ap.marginalTaxRate}
+          <input type="number" step="0.1" min={0} className="premium-input" value={ap.marginalTaxRate}
             onChange={(e) => set({ marginalTaxRate: Number(e.target.value) })} />
         </div>
         <div style={styles.fieldRow}>
@@ -183,7 +188,7 @@ export default function AdditionalPaymentPanel() {
           ※ 현재가치 기준 추정치입니다. 정확한 추납 보험료와 연금 증가액은 국민연금공단(☎1355, 내곁에국민연금 앱) 추납 예상액 조회로 확인하세요.
         </p>
       </div>
-      {plan.months > 0 && ap.applyYm && <AdditionalPaymentInsights plan={plan} paymentMode={ap.paymentMode} />}
+      {plan.months > 0 && ap.applyYm && <AdditionalPaymentInsights plan={plan} paymentMode={ap.paymentMode} isVoluntary={voluntary} />}
     </div>
   );
 }

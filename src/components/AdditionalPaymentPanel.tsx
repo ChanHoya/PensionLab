@@ -104,7 +104,7 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
         </div>
       </div>
 
-      {hasRefund && <ReturnRepaymentSection who={who} title="② 반환일시금 반납" />}
+      {hasRefund && <ReturnRepaymentSection who={who} title="② 일시금 납부" />}
 
       <h4 style={styles.sectionTitle}>{no(1)} 추납 조건</h4>
       <div style={styles.fieldGrid}>

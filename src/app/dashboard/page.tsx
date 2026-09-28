@@ -363,35 +363,8 @@ export default function DashboardPage() {
   const handleDownloadPDF = async () => {
     setPdfDownloading(true);
     try {
-      const loadLib = () => {
-        return new Promise<any>((resolve, reject) => {
-          if ((window as any).html2canvas && (window as any).jsPDF) {
-            resolve({
-              html2canvas: (window as any).html2canvas,
-              jsPDF: (window as any).jsPDF,
-            });
-            return;
-          }
-          const s1 = document.createElement("script");
-          s1.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-          s1.onload = () => {
-            const s2 = document.createElement("script");
-            s2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
-            s2.onload = () => {
-              resolve({
-                html2canvas: (window as any).html2canvas,
-                jsPDF: (window as any).jspdf.jsPDF,
-              });
-            };
-            s2.onerror = reject;
-            document.body.appendChild(s2);
-          };
-          s1.onerror = reject;
-          document.body.appendChild(s1);
-        });
-      };
-
-      const { html2canvas, jsPDF } = await loadLib();
+      // 리포트 PDF 라이브러리는 외부 CDN 대신 앱 번들에서 필요할 때만 불러온다 (사내망 등 CDN 차단 환경 대비)
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
       const element = document.getElementById("withdrawal-report-root");
       if (!element) throw new Error("캡처할 영역을 찾을 수 없습니다.");
 

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePensionStore, basicForSimulation } from "@/store/usePensionStore";
+import { downloadElementAsPdf } from "@/utils/exportPdf";
 import { runWithdrawalSimulation, StrategySimulationResult } from "@/services/withdrawalCalculator";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
@@ -363,37 +364,10 @@ export default function DashboardPage() {
   const handleDownloadPDF = async () => {
     setPdfDownloading(true);
     try {
-      // 리포트 PDF 라이브러리는 외부 CDN 대신 앱 번들에서 필요할 때만 불러온다 (사내망 등 CDN 차단 환경 대비)
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas"), import("jspdf")]);
       const element = document.getElementById("withdrawal-report-root");
       if (!element) throw new Error("캡처할 영역을 찾을 수 없습니다.");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#0d0e1c",
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
-      const pdf = new jsPDF("p", "mm", "a4");
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`연금_인출전략_정밀분석_보고서_${Date.now()}.pdf`);
+      // 부부 시뮬레이션 PDF와 같은 공용 함수: 테마 배경 유지, JPEG로 용량 축소, 길면 여러 쪽
+      await downloadElementAsPdf(element, `연금_인출전략_정밀분석_보고서_${Date.now()}.pdf`);
     } catch (err) {
       console.error(err);
       alert("PDF 다운로드 중 오류가 발생했습니다. 다시 시도해주세요.");

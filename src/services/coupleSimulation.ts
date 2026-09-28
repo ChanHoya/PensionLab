@@ -40,11 +40,12 @@ export interface CoupleYear {
 
 export interface SmoothingSummary {
   startYear: number; // 사적연금 인출 시작 연도
-  levelMonthly: number; // 시작 연도 가구 월 수령액 (명목, 이후 물가만큼 증가·한 명 사망 후 70%)
+  endYear: number; // 사적연금 소진 연도 (본인 수령 종료 나이, 기본 본인 기대수명)
+  levelMonthly: number; // 시작 연도 가구 월 수령액 (명목) — 이후 소진 연도의 국민연금 수준까지 서서히 감소
   levelToday: number; // 같은 수준의 현재가치
   pot: number; // 보유 사적연금 적립금 (시작 연도 가치, 만원)
-  targetToday: number; // 목표 생활비 (현재가치, 만원/월)
-  requiredPot: number; // 목표 생활비 유지에 필요한 적립금 (시작 연도 가치, 만원)
+  targetToday: number; // 희망 월 생활비 (현재가치, 만원/월)
+  requiredPot: number; // 희망 생활비로 시작하는 데 필요한 적립금 (시작 연도 가치, 만원)
 }
 
 export interface CoupleSimulationResult {
@@ -58,37 +59,38 @@ type PrivateFlow = { retirement: number; personal: number; insurance: number };
 type SmoothingOverride = { self: PrivateFlow; spouse: PrivateFlow }[];
 
 const SMOOTHING_RATE = 0.03; // 사적연금 적립금 운용·할인 수익률 (퇴직연금 연금화 가정과 같은 연 3%)
-const SURVIVOR_TARGET_RATIO = 0.7; // 한 명 사망 후 1인 가구 목표 = 부부 목표의 70%
 const PRIVATE_KEYS = ["retirement", "personal", "insurance"] as const;
 
-// 가구 소득 평탄화: 국민연금을 바닥에 두고, 가구 목표(L × 물가지수, 사망 후 70%)에 모자란 만큼만 사적연금으로 채운다.
-// 사적연금 인출액의 현재가치가 기존 사적연금 흐름의 현재가치(적립금)와 같아지도록 L을 찾는다.
+// 가구 소득 평탄화: 국민연금을 바닥에 두고 모자란 만큼만 사적연금으로 채운다.
+// 가구 목표는 시작 수준 L에서 소진 연도의 국민연금 수준까지 매년 고르게 줄어, 사적연금 지급액이 서서히 줄다가 소진 연도에 0이 된다
+// (소진 뒤 급락 없음). 사적연금 인출액의 현재가치가 기존 사적연금 흐름의 현재가치(적립금)와 같아지도록 L을 찾는다.
 export function planHouseholdSmoothing(
   rows: CoupleYear[],
+  targetToday: number,
   inflationRate: number,
-  targetToday: number
+  endIndex: number
 ): { override: SmoothingOverride; summary: SmoothingSummary } {
   const privOf = (p: PersonYear | null) => (p ? p.retirement + p.personal + p.insurance : 0);
   const first = rows.findIndex((r) => privOf(r.self) + privOf(r.spouse) > 0);
   const start = Math.max(0, first);
-  const disc = (t: number) => (t < start ? 0 : 12 * Math.pow(1 + SMOOTHING_RATE, -(t - start))); // 월액 → 연액 현재가치
-  const growth = (t: number) => Math.pow(1 + inflationRate / 100, t - start);
+  const end = Math.min(rows.length - 1, Math.max(start, endIndex));
+  const disc = (t: number) => 12 * Math.pow(1 + SMOOTHING_RATE, -(t - start)); // 월액 → 연액 현재가치 (시작 연도 기준)
 
   let pot = 0;
   let potSelf = 0;
   const catPv: PrivateFlow = { retirement: 0, personal: 0, insurance: 0 };
   rows.forEach((r, t) => {
+    if (t < start) return;
     pot += (privOf(r.self) + privOf(r.spouse)) * disc(t);
     potSelf += privOf(r.self) * disc(t);
     PRIVATE_KEYS.forEach((k) => (catPv[k] += (r.self[k] + (r.spouse?.[k] ?? 0)) * disc(t)));
   });
 
-  const aliveCount = (r: CoupleYear) => (r.self.alive ? 1 : 0) + (r.spouse?.alive ? 1 : 0);
-  const factor = (r: CoupleYear, t: number) =>
-    aliveCount(r) === 0 ? 0 : growth(t) * (r.spouse && aliveCount(r) === 1 ? SURVIVOR_TARGET_RATIO : 1);
   const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0);
-  const drawAt = (L: number, r: CoupleYear, t: number) => (t < start ? 0 : Math.max(0, L * factor(r, t) - publicOf(r)));
-  const need = (L: number) => rows.reduce((a, r, t) => a + drawAt(L, r, t) * disc(t), 0);
+  const floorAtEnd = publicOf(rows[end]);
+  const target = (L: number, t: number) => (end > start ? L + (floorAtEnd - L) * ((t - start) / (end - start)) : L);
+  const drawAt = (L: number, t: number) => (t < start || t > end ? 0 : Math.max(0, target(L, t) - publicOf(rows[t])));
+  const need = (L: number) => rows.reduce((a, _r, t) => a + drawAt(L, t) * disc(t), 0);
 
   let lo = 0;
   let hi = 1;
@@ -108,7 +110,7 @@ export function planHouseholdSmoothing(
     insurance: pot > 0 ? (amount * catPv.insurance) / pot : 0,
   });
   const override = rows.map((r, t) => {
-    const d = drawAt(L, r, t);
+    const d = pot > 0 ? drawAt(L, t) : 0;
     const selfShare = r.self.alive && r.spouse?.alive ? wSelf : r.self.alive ? 1 : 0;
     return { self: split(d * selfShare), spouse: split(d * (1 - selfShare)) };
   });
@@ -117,7 +119,8 @@ export function planHouseholdSmoothing(
   return {
     override,
     summary: {
-      startYear: rows[start]?.year ?? rows[0]?.year ?? 0,
+      startYear: rows[start]?.year ?? 0,
+      endYear: rows[end]?.year ?? 0,
       levelMonthly: L,
       levelToday: L / startIndex,
       pot,
@@ -225,8 +228,10 @@ export function runCoupleSimulation(
   basic: BasicPensionState,
   baseYear: number = new Date().getFullYear()
 ): CoupleSimulationResult {
-  const selfParams = personParams(params, "SELF");
-  const spouseParams = personParams(params, "SPOUSE");
+  // 평탄화 모드의 수령 종료 나이는 소진 연도로만 쓰고, 적립금 산정용 기존 흐름은 상품별 기본 기간으로 계산
+  const trackParams = params.householdIncomeSmoothing ? { ...params, privatePensionEndAge: 0, spousePrivatePensionEndAge: 0 } : params;
+  const selfParams = personParams(trackParams, "SELF");
+  const spouseParams = personParams(trackParams, "SPOUSE");
   const st = track(self, selfParams);
   const sp = spouse ? track(spouse, spouseParams) : null;
   const selfAge0 = selfParams.currentAge;
@@ -326,6 +331,8 @@ export function runCoupleSimulation(
 
   const base = build();
   if (!params.householdIncomeSmoothing) return base;
-  const plan = planHouseholdSmoothing(base.rows, infl, params.targetMonthlySpending);
+  // 소진 연도: 본인 수령 종료 나이, 비우면 본인 기대수명
+  const endAge = params.privatePensionEndAge > 0 ? params.privatePensionEndAge : st.lifeExpectancy;
+  const plan = planHouseholdSmoothing(base.rows, params.targetMonthlySpending, infl, endAge - selfAge0);
   return { ...build(plan.override), smoothing: plan.summary };
 }

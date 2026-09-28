@@ -57,13 +57,20 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
       ))}
     </select>
   );
-  // 가구 소득 평탄화는 사적연금 인출 시점을 직접 정하므로 수령 종료 나이는 쓰지 않는다
+  // 가구 소득 평탄화: 본인 수령 종료 나이 = 부부 사적연금 소진 나이(비우면 본인 기대수명), 배우자 칸은 쓰지 않음
   const smoothing = params.householdIncomeSmoothing;
-  const endAgeInput = (value: number, key: "privatePensionEndAge" | "spousePrivatePensionEndAge") => (
-    <input type="number" min={0} className="premium-input" disabled={smoothing}
-      placeholder={smoothing ? "가구 소득 평탄화 중에는 사용 안 함" : "비우면 상품별 기본 기간"} value={value || ""}
-      onChange={(e) => setParam({ [key]: Number(e.target.value) })} />
-  );
+  const endAgeInput = (value: number, key: "privatePensionEndAge" | "spousePrivatePensionEndAge") => {
+    const unused = smoothing && key === "spousePrivatePensionEndAge";
+    const placeholder = unused
+      ? "평탄화 중에는 본인 칸 기준"
+      : smoothing
+        ? `소진 나이 · 비우면 ${params.expectedLifeExpectancy}세(기대수명)`
+        : "비우면 상품별 기본 기간";
+    return (
+      <input type="number" min={0} className="premium-input" disabled={unused} placeholder={placeholder} value={value || ""}
+        onChange={(e) => setParam({ [key]: Number(e.target.value) })} />
+    );
+  };
   const sm = result.smoothing;
   const potGap = sm ? sm.pot - sm.requiredPot : 0;
   const bothReceiving = rows.find(
@@ -180,12 +187,12 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         <div style={styles.infoAlert}>
           {sm.pot > 0 ? (
             <>
-              📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년부터 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
-              (현재가치 {fmt(sm.levelToday)}만원)을 받고, 이후 매년 물가만큼 늘어나며 한 명 사망 후에는 70% 수준입니다.
-              국민연금이 모자란 만큼만 퇴직·개인연금으로 채우므로 국민연금 개시 전에 사적연금을 더 많이 씁니다.
+              📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
+              (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 서서히 줄며 퇴직·개인연금을 모두 소진하고,
+              이후에는 국민연금만 받습니다. 국민연금이 모자란 만큼만 사적연금으로 채우므로 국민연금 개시 전에 더 많이 씁니다.
               <br />
               💰 사적연금 적립금({sm.startYear}년 가치): 보유 <strong>{fmt(sm.pot)}만원</strong> · 희망 월 생활비{" "}
-              {fmt(sm.targetToday)}만원(현재가치) 유지에 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}
+              {fmt(sm.targetToday)}만원(현재가치)으로 시작하는 데 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}
               <strong style={{ color: potGap >= 0 ? "var(--success)" : "var(--danger)" }}>
                 {potGap >= 0 ? `여유 ${fmt(potGap)}만원` : `부족 ${fmt(-potGap)}만원`}
               </strong>

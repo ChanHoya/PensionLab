@@ -92,6 +92,7 @@ export interface SimulationParamsState {
   spouseNationalPensionDeferYears: number; // 배우자 국민연금 연기
   privatePensionEndAge: number; // 본인 퇴직·개인연금·연금보험 수령 종료 나이 (0 = 상품별 기본 기간)
   spousePrivatePensionEndAge: number; // 배우자 사적연금 수령 종료 나이
+  householdIncomeSmoothing: boolean; // 가구 소득 평탄화: 국민연금 위에 사적연금으로 부족분만 채워 합계를 고르게
 }
 
 export type GapReason = "EXEMPT" | "EXCLUDED" | "MILITARY" | "ARREARS";
@@ -233,6 +234,7 @@ const initialSimulationParams: SimulationParamsState = {
   spouseNationalPensionDeferYears: 0,
   privatePensionEndAge: 0,
   spousePrivatePensionEndAge: 0,
+  householdIncomeSmoothing: false,
 };
 
 const initialAdditionalPayment: AdditionalPaymentState = {

@@ -166,4 +166,37 @@ for (let y = 2027; y <= 2045; y++) {
   assert.ok(Math.abs(ratio - 0.98) < 0.01, `${y} 체감 비율 ${ratio}`);
 }
 
+// 가구 소득 평탄화: 국민연금을 바닥에 두고 모자란 만큼만 사적연금으로 채우되,
+// 가구 합계는 시작 수준에서 소진 나이(기본: 본인 기대수명 80세 = 2046년)까지 서서히 줄어 국민연금 수준에 도달
+const bigIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 60000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
+const sm = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
+const smAt = (y: number) => sm.rows.find((row) => row.year === y)!;
+const privAt = (res: typeof sm, y: number) => {
+  const row = res.rows.find((x) => x.year === y)!;
+  return row.self.retirement + row.self.personal + row.self.insurance + (row.spouse?.retirement ?? 0) + (row.spouse?.personal ?? 0) + (row.spouse?.insurance ?? 0);
+};
+const level = sm.smoothing!.levelMonthly;
+assert.equal(sm.smoothing!.endYear, 2046);
+near(smAt(2026).household, level, 0.6); // 시작 수준
+assert.ok(level > 256, `level ${level}`); // 부부 국민연금 합(256)보다 높음
+for (let y = 2027; y <= 2046; y++) assert.ok(smAt(y).household <= smAt(y - 1).household + 0.6, `${y} 합계가 늘어남`);
+assert.ok(privAt(sm, 2026) > privAt(sm, 2036)); // 국민연금 전 사적연금이 더 많음
+assert.ok(privAt(sm, 2046) < 1); // 소진 나이에 거의 0 (국민연금 수준에 도달, 급락 없음)
+for (let y = 2047; y <= 2059; y++) assert.equal(privAt(sm, y), 0); // 소진 후 0
+// 사적연금 현재가치 합(연 3% 할인) = 적립금
+const pvDraw = sm.rows.reduce((a, row, t) => a + (privAt(sm, row.year) * 12) / Math.pow(1.03, t), 0);
+near(pvDraw / sm.smoothing!.pot, 1, 0.01);
+// 소진 나이 70세로 지정하면 2036년(70세)까지, 2037년부터 0
+const sm70 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true, privatePensionEndAge: 70 }, { ...basic, applyToSimulation: false }, 2026);
+assert.equal(sm70.smoothing!.endYear, 2036);
+assert.ok(privAt(sm70, 2035) > 0);
+assert.equal(privAt(sm70, 2037), 0);
+near(sm70.smoothing!.pot, sm.smoothing!.pot, 1); // 소진 나이는 적립금 크기에 영향 없음
+assert.ok(sm70.smoothing!.levelMonthly > level); // 짧게 쓰면 시작 수준이 높다
+// 희망 생활비를 유지 가능한 시작 수준으로 넣으면 필요 적립금 ≈ 보유 적립금
+const sm2 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true, targetMonthlySpending: level }, { ...basic, applyToSimulation: false }, 2026);
+near(sm2.smoothing!.requiredPot / sm2.smoothing!.pot, 1, 0.01);
+// 평탄화 끄면 smoothing 정보 없음
+assert.equal(r.smoothing, undefined);
+
 console.log("Couple simulation validation success!");

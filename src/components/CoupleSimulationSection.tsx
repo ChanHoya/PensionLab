@@ -188,8 +188,9 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           {sm.pot > 0 ? (
             <>
               📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
-              (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 서서히 줄며 퇴직·개인연금을 모두 소진하고,
-              이후에는 국민연금만 받습니다. 국민연금이 모자란 만큼만 사적연금으로 채우므로 국민연금 개시 전에 더 많이 씁니다.
+              (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 매년 물가만큼 늘어나는 총액을 유지하고,
+              그해까지 퇴직·개인연금을 모두 소진한 뒤에는 국민연금만 받습니다. 국민연금이 시작·증가하는 만큼 사적연금을 줄여
+              채우므로 총액이 튀지 않고, 국민연금 개시 전에 사적연금을 더 많이 씁니다.
               <br />
               💰 사적연금 적립금({sm.startYear}년 가치): 보유 <strong>{fmt(sm.pot)}만원</strong> · 희망 월 생활비{" "}
               {fmt(sm.targetToday)}만원(현재가치)으로 시작하는 데 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}

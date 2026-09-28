@@ -41,7 +41,7 @@ export interface CoupleYear {
 export interface SmoothingSummary {
   startYear: number; // 사적연금 인출 시작 연도
   endYear: number; // 사적연금 소진 연도 (본인 수령 종료 나이, 기본 본인 기대수명)
-  levelMonthly: number; // 시작 연도 가구 월 수령액 (명목) — 이후 소진 연도의 국민연금 수준까지 서서히 감소
+  levelMonthly: number; // 시작 연도 가구 월 수령액 (명목) — 소진 연도까지 매년 물가만큼 증가
   levelToday: number; // 같은 수준의 현재가치
   pot: number; // 보유 사적연금 적립금 (시작 연도 가치, 만원)
   targetToday: number; // 희망 월 생활비 (현재가치, 만원/월)
@@ -62,8 +62,9 @@ const SMOOTHING_RATE = 0.03; // 사적연금 적립금 운용·할인 수익률 
 const PRIVATE_KEYS = ["retirement", "personal", "insurance"] as const;
 
 // 가구 소득 평탄화: 국민연금을 바닥에 두고 모자란 만큼만 사적연금으로 채운다.
-// 가구 목표는 시작 수준 L에서 소진 연도의 국민연금 수준까지 매년 고르게 줄어, 사적연금 지급액이 서서히 줄다가 소진 연도에 0이 된다
-// (소진 뒤 급락 없음). 사적연금 인출액의 현재가치가 기존 사적연금 흐름의 현재가치(적립금)와 같아지도록 L을 찾는다.
+// 가구 총액은 인출 시작 수준 L에서 소진 연도까지 매년 물가만큼 일정한 비율로 늘어나고, 국민연금이 시작·증가하는 만큼
+// 사적연금 지급액이 줄어든다 (국민연금 개시로 총액이 튀지 않음). 소진 연도 이후에는 국민연금만.
+// 사적연금 인출액의 현재가치가 기존 사적연금 흐름의 현재가치(적립금)와 같아지도록 L을 찾는다.
 export function planHouseholdSmoothing(
   rows: CoupleYear[],
   targetToday: number,
@@ -87,8 +88,7 @@ export function planHouseholdSmoothing(
   });
 
   const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0);
-  const floorAtEnd = publicOf(rows[end]);
-  const target = (L: number, t: number) => (end > start ? L + (floorAtEnd - L) * ((t - start) / (end - start)) : L);
+  const target = (L: number, t: number) => L * Math.pow(1 + inflationRate / 100, t - start);
   const drawAt = (L: number, t: number) => (t < start || t > end ? 0 : Math.max(0, target(L, t) - publicOf(rows[t])));
   const need = (L: number) => rows.reduce((a, _r, t) => a + drawAt(L, t) * disc(t), 0);
 

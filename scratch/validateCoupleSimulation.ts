@@ -166,8 +166,8 @@ for (let y = 2027; y <= 2045; y++) {
   assert.ok(Math.abs(ratio - 0.98) < 0.01, `${y} 체감 비율 ${ratio}`);
 }
 
-// 가구 소득 평탄화: 국민연금을 바닥에 두고 모자란 만큼만 사적연금으로 채우되,
-// 가구 합계는 시작 수준에서 소진 나이(기본: 본인 기대수명 80세 = 2046년)까지 서서히 줄어 국민연금 수준에 도달
+// 가구 소득 평탄화: 국민연금을 바닥에 두고 모자란 만큼만 사적연금으로 채워, 가구 총액을
+// 인출 시작부터 소진 나이(기본: 본인 기대수명 80세 = 2046년)까지 매년 물가만큼(여기선 0%) 일정하게 유지
 const bigIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 60000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
 const sm = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
 const smAt = (y: number) => sm.rows.find((row) => row.year === y)!;
@@ -177,11 +177,11 @@ const privAt = (res: typeof sm, y: number) => {
 };
 const level = sm.smoothing!.levelMonthly;
 assert.equal(sm.smoothing!.endYear, 2046);
-near(smAt(2026).household, level, 0.6); // 시작 수준
 assert.ok(level > 256, `level ${level}`); // 부부 국민연금 합(256)보다 높음
-for (let y = 2027; y <= 2046; y++) assert.ok(smAt(y).household <= smAt(y - 1).household + 0.6, `${y} 합계가 늘어남`);
-assert.ok(privAt(sm, 2026) > privAt(sm, 2036)); // 국민연금 전 사적연금이 더 많음
-assert.ok(privAt(sm, 2046) < 1); // 소진 나이에 거의 0 (국민연금 수준에 도달, 급락 없음)
+// 국민연금 개시 전(2026)·남편만(2031)·둘 다(2036~2046) 모두 가구 총액이 같다 → 국민연금 개시로 튀지 않음
+for (let y = 2026; y <= 2046; y++) near(smAt(y).household, level, 0.6);
+assert.ok(privAt(sm, 2026) > privAt(sm, 2031)); // 국민연금 전 사적연금이 더 많음
+assert.ok(privAt(sm, 2031) > privAt(sm, 2036));
 for (let y = 2047; y <= 2059; y++) assert.equal(privAt(sm, y), 0); // 소진 후 0
 // 사적연금 현재가치 합(연 3% 할인) = 적립금
 const pvDraw = sm.rows.reduce((a, row, t) => a + (privAt(sm, row.year) * 12) / Math.pow(1.03, t), 0);

@@ -153,4 +153,11 @@ assert.equal(ret(earlyDec, 2026), ret(earlyDec, 2036));
 const sumRet = (res: typeof base) => res.rows.reduce((a, row) => a + row.self.retirement, 0);
 assert.ok(sumRet(earlyDec) <= sumRet(base));
 
+// 체감형 인출(120%→40%)도 적립금 총액 보존: 3% 할인한 현재가치 합이 균등 수령과 같다
+const pv = (res: typeof base) => res.rows.reduce((a, row, t) => a + (row.self.retirement * 12) / Math.pow(1.03, t), 0);
+const flatRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, params, basic, 2026);
+const decRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, decumulationStrategy: "DECREASING" }, basic, 2026);
+assert.ok(Math.abs(pv(decRes) / pv(flatRes) - 1) < 0.01, `PV ratio ${pv(decRes) / pv(flatRes)}`);
+assert.ok(ret(decRes, 2026) > ret(flatRes, 2026)); // 초반에 더 많이
+
 console.log("Couple simulation validation success!");

@@ -6,6 +6,7 @@ import {
   PensionInsuranceState,
   SimulationParamsState,
 } from "@/store/usePensionStore";
+import { getDecumulationMultiplier } from "@/services/withdrawalCalculator";
 
 export interface CashFlowItem {
   age: number;
@@ -48,6 +49,19 @@ function calculateFVAnnuity(pmt: number, rate: number, nperMonths: number): numb
  * Converts a lump sum into a monthly payout for a fixed period (in years)
  * using a PMT-style calculation with a discount rate.
  */
+// 체감 배율(120%→40%)을 곱해도 현재가치 총액이 균등 수령과 같도록 맞추는 보정 계수 (인출 전략 엔진의 가중 PMT와 같은 방식)
+function decumulationScale(years: number, ratePercent: number, strategy: string): number {
+  const r = ratePercent / 100;
+  let flat = 0;
+  let weighted = 0;
+  for (let t = 1; t <= years; t++) {
+    const discount = Math.pow(1 + r, -(t - 1));
+    flat += discount;
+    weighted += getDecumulationMultiplier(t, strategy) * discount;
+  }
+  return weighted > 0 ? flat / weighted : 1;
+}
+
 function calculateAnnuityPayout(lumpSum: number, periodYears: number, expectedReturnRate: number): number {
   if (periodYears <= 0) return 0;
   const nperMonths = periodYears * 12;
@@ -128,6 +142,9 @@ export function runPensionSimulation(
   const retirementAnnuityYears = capYears(Math.max(10, expectedLife - params.retirementAge), params.retirementAge);
   const retirementPayoutRate = Math.max(0.5, 3.0);
   const monthlyRetirementPayout = calculateAnnuityPayout(retirementLumpSum, retirementAnnuityYears, retirementPayoutRate);
+  // 체감형 인출이면 배율 합이 기간과 달라 총액이 어긋나므로 보정 (수령 종료 나이를 정하면 균등 분할이라 보정 불필요)
+  const strategyForScale = endAge === 0 ? params.decumulationStrategy : "FLAT";
+  const retirementScale = decumulationScale(retirementAnnuityYears, retirementPayoutRate, strategyForScale);
 
   // 4. Project Personal Pension Savings (3층 - 연금저축)
   let personalLumpSum = 0;
@@ -233,7 +250,7 @@ export function runPensionSimulation(
 
     // Retirement Pension Payout
     if (age >= params.retirementAge && age < params.retirementAge + retirementAnnuityYears) {
-      retirementPayout = monthlyRetirementPayout * decumulationMultiplier;
+      retirementPayout = monthlyRetirementPayout * decumulationMultiplier * retirementScale;
     }
 
     // Personal Pension Savings Payout
@@ -258,7 +275,7 @@ export function runPensionSimulation(
           else personalMultiplier = 0.4;
         }
 
-        personalPayout += payout * personalMultiplier;
+        personalPayout += payout * personalMultiplier * decumulationScale(receivingPeriod, pRealRate, strategyForScale);
       }
     });
 
@@ -271,7 +288,7 @@ export function runPensionSimulation(
           calculateFV(calculateFVAnnuity(i.monthlyPayment, iRealRate, Math.min(i.paymentPeriod, yearsToRetire) * 12), iRealRate, Math.max(0, yearsToRetire - Math.min(i.paymentPeriod, yearsToRetire)));
 
         const payout = calculateAnnuityPayout(iLump, payoutYears, iRealRate);
-        insurancePayout += payout * decumulationMultiplier;
+        insurancePayout += payout * decumulationMultiplier * decumulationScale(payoutYears, iRealRate, strategyForScale);
       }
     });
 

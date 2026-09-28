@@ -15,6 +15,7 @@ import {
 import type { CoupleSimulationResult, CoupleYear } from "@/services/coupleSimulation";
 import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
 import { NPS_RULES } from "@/config/npsRules";
+import ChartTooltip from "@/components/ChartTooltip";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -147,7 +148,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" fontSize={12} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip formatter={(v) => `${fmt(Number(v))} 만원`} />
+            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero />} />
             <Legend />
             <Area type="monotone" dataKey="본인국민연금" stackId="1" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
             <Area type="monotone" dataKey="배우자국민연금" stackId="1" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} />

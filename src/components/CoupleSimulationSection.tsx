@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef, useState } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -16,6 +16,7 @@ import type { CoupleSimulationResult, CoupleYear } from "@/services/coupleSimula
 import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
 import { NPS_RULES } from "@/config/npsRules";
 import ChartTooltip from "@/components/ChartTooltip";
+import { downloadElementAsPdf } from "@/utils/exportPdf";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -31,6 +32,20 @@ interface Props {
 export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions }: Props) {
   const { rows, firstDeath, lifetime } = result;
   const store = usePensionStore();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const handlePdf = async () => {
+    if (!cardRef.current) return;
+    setPdfBusy(true);
+    try {
+      await downloadElementAsPdf(cardRef.current, `부부통합_연금시뮬레이션_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert("PDF 생성 중 오류가 발생했습니다.");
+    } finally {
+      setPdfBusy(false);
+    }
+  };
   const params = store.simulationParams;
   const setParam = (data: Partial<SimulationParamsState>) => store.setSimulationParams(data);
   const deferSelect = (value: number, baseAge: number, key: "nationalPensionDeferYears" | "spouseNationalPensionDeferYears") => (
@@ -78,10 +93,16 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   };
 
   return (
-    <div style={styles.card}>
+    <div ref={cardRef} style={styles.card}>
       <div style={styles.header}>
         <h3 style={styles.title}>👫 부부 통합 연금 시뮬레이션</h3>
-        {actions}
+        {/* 버튼은 PDF 캡처에서 제외 */}
+        <div data-html2canvas-ignore style={styles.headerActions}>
+          <button type="button" onClick={handlePdf} disabled={pdfBusy} className="premium-button-secondary" style={styles.pdfButton}>
+            {pdfBusy ? "PDF 생성 중..." : "📄 PDF 다운로드"}
+          </button>
+          {actions}
+        </div>
       </div>
       <p style={styles.subtitle}>
         본인·배우자의 국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다. 먼저 사망한 쪽이 생기면 남은 배우자는
@@ -216,6 +237,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "16px",
   },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" },
+  headerActions: { display: "flex", gap: "6px", flexWrap: "wrap" },
+  pdfButton: { fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 },
   title: { fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 },
   optionGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
   optionField: { display: "flex", flexDirection: "column", gap: "6px" },

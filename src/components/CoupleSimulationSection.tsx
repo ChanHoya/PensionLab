@@ -13,6 +13,9 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { CoupleSimulationResult, CoupleYear } from "@/services/coupleSimulation";
+import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
+import { NPS_RULES } from "@/config/npsRules";
+import ChartTooltip from "@/components/ChartTooltip";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -20,12 +23,29 @@ const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
 interface Props {
   result: CoupleSimulationResult;
   selfStartAge: number; // 본인 국민연금 개시 나이
-  spouseStartAge: number; // 배우자 국민연금 개시 나이
+  spouseStartAge: number; // 배우자 국민연금 개시 나이 (연기 반영)
+  actions?: React.ReactNode; // 제목 오른쪽 버튼 (백업·복원)
 }
 
 // 부부 통합 연금 시뮬레이션: 본인·배우자 × 국민·기초·퇴직·개인연금 가구 합산 (명목, 만원/월)
-export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge }: Props) {
+export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions }: Props) {
   const { rows, firstDeath, lifetime } = result;
+  const store = usePensionStore();
+  const params = store.simulationParams;
+  const setParam = (data: Partial<SimulationParamsState>) => store.setSimulationParams(data);
+  const deferSelect = (value: number, baseAge: number, key: "nationalPensionDeferYears" | "spouseNationalPensionDeferYears") => (
+    <select className="premium-input" value={value} onChange={(e) => setParam({ [key]: Number(e.target.value) })}>
+      {Array.from({ length: NPS_RULES.maxDeferralYears + 1 }, (_, y) => (
+        <option key={y} value={y}>
+          {y === 0 ? `연기 안 함 (${baseAge}세부터)` : `${y}년 연기 · ${baseAge + y}세부터 (+${(NPS_RULES.deferralBonusPerYear * y * 100).toFixed(1)}%)`}
+        </option>
+      ))}
+    </select>
+  );
+  const endAgeInput = (value: number, key: "privatePensionEndAge" | "spousePrivatePensionEndAge") => (
+    <input type="number" min={0} className="premium-input" placeholder="비우면 상품별 기본 기간" value={value || ""}
+      onChange={(e) => setParam({ [key]: Number(e.target.value) })} />
+  );
   const bothReceiving = rows.find(
     (r) => r.spouse && r.self.alive && r.spouse.alive && r.self.age >= selfStartAge && r.spouse.age >= spouseStartAge
   );
@@ -59,10 +79,37 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
 
   return (
     <div style={styles.card}>
-      <h3 style={styles.title}>👫 부부 통합 연금 시뮬레이션</h3>
+      <div style={styles.header}>
+        <h3 style={styles.title}>👫 부부 통합 연금 시뮬레이션</h3>
+        {actions}
+      </div>
       <p style={styles.subtitle}>
         본인·배우자의 국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다. 먼저 사망한 쪽이 생기면 남은 배우자는
         국민연금법 제56조에 따라 유족연금(사망자 연금의 가입기간별 40~60%)과 「본인 연금 + 유족연금 30%」 중 큰 쪽을 받습니다. (명목 금액, 만원/월)
+      </p>
+
+      <div style={styles.optionGrid}>
+        <div style={styles.optionField}>
+          <label style={styles.optionLabel}>본인 국민연금 수령 시작</label>
+          {deferSelect(params.nationalPensionDeferYears, params.nationalPensionStartAge, "nationalPensionDeferYears")}
+        </div>
+        <div style={styles.optionField}>
+          <label style={styles.optionLabel}>배우자 국민연금 수령 시작</label>
+          {deferSelect(params.spouseNationalPensionDeferYears, params.spouseNationalPensionStartAge, "spouseNationalPensionDeferYears")}
+        </div>
+        <div style={styles.optionField}>
+          <label style={styles.optionLabel}>본인 퇴직·개인연금 수령 종료 나이</label>
+          {endAgeInput(params.privatePensionEndAge, "privatePensionEndAge")}
+        </div>
+        <div style={styles.optionField}>
+          <label style={styles.optionLabel}>배우자 퇴직·개인연금 수령 종료 나이</label>
+          {endAgeInput(params.spousePrivatePensionEndAge, "spousePrivatePensionEndAge")}
+        </div>
+      </div>
+      <p style={styles.note}>
+        ※ 국민연금은 최대 {NPS_RULES.maxDeferralYears}년 연기할 수 있고 1년마다 {(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%(월 0.6%) 늘어납니다.
+        유족연금은 연기 가산 전 금액 기준입니다. 수령 종료 나이를 정하면 퇴직연금·개인연금·연금보험을 그 나이까지 나눠 먼저 받습니다
+        (기간이 짧아지는 만큼 월 수령액이 커짐). 퇴직·개인연금 수령액은 기초연금 소득인정액에도 자동 반영됩니다.
       </p>
 
       <div style={styles.kpiGrid}>
@@ -101,7 +148,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" fontSize={12} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip formatter={(v) => `${fmt(Number(v))} 만원`} />
+            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero />} />
             <Legend />
             <Area type="monotone" dataKey="본인국민연금" stackId="1" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
             <Area type="monotone" dataKey="배우자국민연금" stackId="1" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} />
@@ -168,7 +215,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: "16px",
   },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" },
   title: { fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 },
+  optionGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
+  optionField: { display: "flex", flexDirection: "column", gap: "6px" },
+  optionLabel: { fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)" },
   subtitle: { fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 },
   kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
   kpi: { border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "12px 14px", backgroundColor: "var(--background)" },

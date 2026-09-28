@@ -11,6 +11,7 @@ import {
 } from "@/services/returnRepaymentCalculator";
 import { personParams } from "@/services/coupleSimulation";
 import { maxRefundInstallments } from "@/config/npsRules";
+import ChartTooltip from "@/components/ChartTooltip";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const SCENARIO_COLORS: Record<ScenarioId, string> = { D: "#94a3b8", B: "#f59e0b", C: "#a855f7", A: "#6366f1" };
@@ -202,7 +203,7 @@ export function RefundScenarioComparison({ who, title }: { who: Who; title: stri
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="age" tickFormatter={(v) => `${v}세`} stroke="var(--text-muted)" fontSize={12} />
                 <YAxis tickFormatter={(v) => fmt(v)} stroke="var(--text-muted)" fontSize={12} />
-                <Tooltip formatter={(v) => `${fmt(Number(v))} 만원`} labelFormatter={(l) => `${l}세`} />
+                <Tooltip content={<ChartTooltip labelSuffix="세" />} />
                 <Legend />
                 <ReferenceLine y={0} stroke="var(--text-muted)" label={{ value: "원금 회수선", position: "insideBottomRight", fill: "var(--text-muted)", fontSize: 11 }} />
                 {scenarios.map((s) => (

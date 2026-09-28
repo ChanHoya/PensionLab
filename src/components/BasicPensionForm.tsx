@@ -6,7 +6,7 @@ import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensi
 import { BASIC_PENSION_RULES, type Region } from "@/config/basicPensionRules";
 import { NPS_RULES } from "@/config/npsRules";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
-import { personParams } from "@/services/coupleSimulation";
+import { personParams, privatePensionAt } from "@/services/coupleSimulation";
 
 const REGION_LABEL: Record<Region, string> = {
   METRO: "대도시 (특별·광역시 구, 특례시)",
@@ -27,11 +27,11 @@ export default function BasicPensionForm() {
   const hasSpouse = store.simulationParams.hasSpouse;
   const set = (data: Partial<BasicPensionState>) => store.setBasicPension(data);
 
-  const person = (earned: number, other: number, occupational: boolean, n: NationalPensionState): BasicPensionPerson => ({
+  const person = (earned: number, other: number, occupational: boolean, n: NationalPensionState, privateIncome: number): BasicPensionPerson => ({
     alive: true,
     age: BASIC_PENSION_RULES.eligibleAge,
     earnedIncome: earned,
-    otherIncome: other,
+    otherIncome: other + privateIncome,
     nationalPension: n.expectedMonthlyPension,
     aShare: aShareOf(n),
     occupational,
@@ -52,10 +52,26 @@ export default function BasicPensionForm() {
     personParams(store.simulationParams, "SPOUSE")
   ).national;
 
+  // 사적연금(퇴직·개인연금·연금보험) 수령액은 2·3층 입력에서 65세 시점 월액(현재가치)을 자동으로 가져온다
+  const spouseParams = personParams(store.simulationParams, "SPOUSE");
+  const at65 = (currentAge: number) => Math.max(BASIC_PENSION_RULES.eligibleAge, currentAge);
+  const selfPrivate = privatePensionAt(
+    { national: selfNational, retirementPensions: store.retirementPensions, personalPensions: store.personalPensions, pensionInsurances: store.pensionInsurances },
+    store.simulationParams,
+    at65(store.simulationParams.currentAge)
+  );
+  const spousePrivate = hasSpouse
+    ? privatePensionAt(
+        { national: spouseNational, retirementPensions: store.spouse.retirementPensions, personalPensions: store.spouse.personalPensions, pensionInsurances: store.spouse.pensionInsurances },
+        spouseParams,
+        at65(spouseParams.currentAge)
+      )
+    : 0;
+
   // 두 사람 모두 65세 이상이고 생존한 시점 기준 (국민연금은 각자 예상 연금액)
   const result = calcBasicPension(
-    person(b.selfEarnedIncome, b.selfOtherIncome, b.selfOccupational, selfNational),
-    hasSpouse ? person(b.spouseEarnedIncome, b.spouseOtherIncome, b.spouseOccupational, spouseNational) : null,
+    person(b.selfEarnedIncome, b.selfOtherIncome, b.selfOccupational, selfNational, selfPrivate),
+    hasSpouse ? person(b.spouseEarnedIncome, b.spouseOtherIncome, b.spouseOccupational, spouseNational, spousePrivate) : null,
     household
   );
 
@@ -89,7 +105,7 @@ export default function BasicPensionForm() {
     <div style={styles.column}>
       <h4 style={styles.columnTitle}>{title}</h4>
       {numberField("65세 이후 상시근로소득 (만원/월)", b[earnedKey] as number, earnedKey, "(116만원 공제 후 70% 반영)")}
-      {numberField("사업·임대·이자·배당·사적연금 소득 (만원/월)", b[otherKey] as number, otherKey, "(100% 반영)")}
+      {numberField("사업·임대·이자·배당 등 기타 소득 (만원/월)", b[otherKey] as number, otherKey, "(100% 반영 · 사적연금은 자동 반영)")}
       <div style={styles.fieldRow}>
         <label style={styles.label}>직역연금 수급권</label>
         <select className="premium-input" value={b[occKey] ? "Y" : "N"}
@@ -106,7 +122,12 @@ export default function BasicPensionForm() {
       <div style={styles.infoAlert}>
         ℹ️ 기초연금은 만 65세 이상 가구의 소득인정액이 선정기준액(2026년 단독 월 {BASIC_PENSION_RULES.thresholdSingle}만원,
         부부 월 {BASIC_PENSION_RULES.thresholdCouple}만원) 이하일 때 받습니다. 부부가 모두 받으면 각각 20% 감액되고,
-        국민연금이 많으면 연계감액이 적용됩니다. 국민연금은 국민연금 단계에서 입력한 예상 연금액을 자동으로 씁니다.
+        국민연금이 많으면 연계감액이 적용됩니다. 국민연금은 국민연금 단계의 예상 연금액을, 퇴직·개인연금·연금보험은 2·3층 입력의
+        65세 시점 월 수령액을 자동으로 소득에 넣습니다.
+      </div>
+      <div style={styles.warnAlert}>
+        ⚠ 재산을 입력하지 않으면 재산 0원으로 계산해 실제보다 받기 쉬운 결과가 나옵니다. 가구 재산·소득을 확인해 입력한 뒤
+        아래 「대시보드 시뮬레이션에 반영」을 켜야 대시보드에 기초연금이 들어갑니다.
       </div>
 
       <h4 style={styles.sectionTitle}>① 가구 재산</h4>
@@ -131,11 +152,24 @@ export default function BasicPensionForm() {
         {hasSpouse && personColumn("배우자", "spouseEarnedIncome", "spouseOtherIncome", "spouseOccupational")}
       </div>
 
+      <div style={styles.fieldRow}>
+        <label style={styles.label}>대시보드 시뮬레이션에 반영</label>
+        <select className="premium-input" value={b.applyToSimulation ? "Y" : "N"}
+          onChange={(e) => set({ applyToSimulation: e.target.value === "Y" })}>
+          <option value="N">반영 안 함 (기본)</option>
+          <option value="Y">기초연금 수급액 반영</option>
+        </select>
+      </div>
+
       <div style={styles.previewBox}>
         <h4 style={styles.previewTitle}>기초연금 예상 수급 결과 ({hasSpouse ? "부부 모두 65세 이상일 때" : "65세 이상일 때"}, 현재가치)</h4>
         <div style={styles.previewGrid}>
           <div>소득인정액: <strong>{result.recognizedIncome.toFixed(1)} 만원/월</strong></div>
           <div>선정기준액: <strong>{result.threshold.toFixed(1)} 만원/월</strong></div>
+          <div>
+            사적연금 소득(자동): <strong>본인 {selfPrivate.toFixed(1)}{hasSpouse && ` · 배우자 ${spousePrivate.toFixed(1)}`} 만원/월</strong>
+          </div>
+          <div>대시보드 반영: <strong>{b.applyToSimulation ? "반영" : "반영 안 함"}</strong></div>
           <div>본인 기초연금: <strong style={{ color: "var(--text-accent)" }}>{result.self.toFixed(1)} 만원/월</strong></div>
           {hasSpouse && <div>배우자 기초연금: <strong style={{ color: "var(--text-accent)" }}>{result.spouse.toFixed(1)} 만원/월</strong></div>}
         </div>
@@ -178,6 +212,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "16px",
   },
   previewTitle: { fontSize: "0.9rem", fontWeight: 700, color: "var(--primary)", marginBottom: "10px" },
+  warnAlert: {
+    backgroundColor: "rgba(245, 158, 11, 0.08)",
+    border: "1px solid rgba(245, 158, 11, 0.25)",
+    borderLeft: "3px solid rgba(245, 158, 11, 0.7)",
+    borderRadius: "var(--radius-sm)",
+    padding: "10px 14px",
+    fontSize: "0.85rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.5,
+  },
   previewGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "0.85rem", color: "var(--text-secondary)" },
   note: { fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "8px", lineHeight: 1.5 },
 };

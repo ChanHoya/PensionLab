@@ -3,11 +3,10 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePensionStore } from "@/store/usePensionStore";
-import { runPensionSimulation } from "@/services/pensionCalculator";
+import { usePensionStore, basicForSimulation } from "@/store/usePensionStore";
 import { runWithdrawalSimulation, StrategySimulationResult } from "@/services/withdrawalCalculator";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
-import { runCoupleSimulation, personParams } from "@/services/coupleSimulation";
+import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 
@@ -231,6 +230,29 @@ export default function DashboardPage() {
     );
   }
 
+  // 백업·복원 버튼: 부부 시뮬레이션 제목 오른쪽 (배우자 없음이면 같은 자리 오른쪽 정렬)
+  const dataActions = (
+    <div style={{ display: "flex", gap: "6px" }}>
+      <button
+        id="btn-export-data"
+        onClick={handleExportData}
+        className="premium-button"
+        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+      >
+        📤 백업 (JSON 다운)
+      </button>
+      <button
+        id="btn-import-data"
+        onClick={() => document.getElementById("input-file-import")?.click()}
+        className="premium-button-secondary"
+        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+      >
+        📥 복원 (JSON 업)
+      </button>
+      <input type="file" id="input-file-import" accept=".json" onChange={handleImportData} style={{ display: "none" }} />
+    </div>
+  );
+
   // 반납·추납 「대시보드 반영」이 켜진 것만 적용한 국민연금 (본인·배우자)
   const selfApplied = applyNpsOptions(store.nationalPension, store.additionalPayment, store.returnRepayment, store.simulationParams);
   const nationalForSim = selfApplied.national;
@@ -260,28 +282,10 @@ export default function DashboardPage() {
     store.basicPension
   );
 
-  // Run the basic pension simulation based on store states
-  const simulation = runPensionSimulation(
-    nationalForSim,
-    store.basicPension,
-    store.retirementPensions,
-    store.personalPensions,
-    store.pensionInsurances,
-    store.simulationParams
-  );
-
-  const {
-    currentAge,
-    yearsToRetire,
-    totalAccumulatedAtRetirement,
-    monthlyAnnuityAtRetirement,
-    nationalPensionPremiumIncreaseTotal,
-  } = simulation;
-
   // Run advanced withdrawal simulation
   const withdrawalSimulation = runWithdrawalSimulation(
     nationalForSim,
-    store.basicPension,
+    basicForSimulation(store.basicPension),
     store.retirementPensions,
     store.personalPensions,
     store.pensionInsurances,
@@ -531,84 +535,15 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Row 1: KPI Summary (5-column Grid) */}
-        <section style={styles.kpiRow} className="animate-fade-in">
-          {/* Card 1 */}
-          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #6366f1" }} className="premium-card">
-            <span style={styles.kpiLabel}>은퇴 후 예상 월 연금액</span>
-            <h3 style={styles.kpiValue}>
-              <span className="gradient-text">{monthlyAnnuityAtRetirement.toLocaleString()}</span> 만원/월
-            </h3>
-            <p style={styles.kpiSub}>은퇴 나이 {store.simulationParams.retirementAge}세 수령 기준</p>
-          </div>
-
-          {/* Card 2 */}
-          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #8b5cf6" }} className="premium-card">
-            <span style={styles.kpiLabel}>은퇴 시 자산 규모</span>
-            <h3 style={styles.kpiValue}>
-              {totalAccumulatedAtRetirement >= 10000 
-                ? `${(totalAccumulatedAtRetirement / 10000).toFixed(2)} 억원`
-                : `${totalAccumulatedAtRetirement.toLocaleString()} 만원`
-              }
-            </h3>
-            <p style={styles.kpiSub}>퇴직+개인연금+연금보험 적립금 합산</p>
-          </div>
-
-          {/* Card 3 */}
-          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #ef4444" }} className="premium-card">
-            <span style={styles.kpiLabel}>2026 국민연금 개혁 영향</span>
-            <h3 style={{ ...styles.kpiValue, color: "var(--danger)" }}>
-              + {nationalPensionPremiumIncreaseTotal.toLocaleString()} 만원
-            </h3>
-            <p style={styles.kpiSub}>개혁안 인상(9%➔13%) 추가 보험료</p>
-          </div>
-
-          {/* Card 4 */}
-          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #f97316" }} className="premium-card">
-            <span style={styles.kpiLabel}>시뮬레이션 프로필</span>
-            <h3 style={styles.kpiValue}>
-              {currentAge} 세
-            </h3>
-            <p style={styles.kpiSub}>은퇴까지 남은 기간: <strong>{yearsToRetire}년</strong></p>
-          </div>
-
-          {/* Card 5: 로컬 데이터 관리 */}
-          <div style={{ ...styles.kpiCard, borderLeft: "3px solid #10b981", display: "flex", flexDirection: "column", justifyContent: "center", gap: "6px" }} className="premium-card">
-            <span style={styles.kpiLabel}>로컬 데이터 관리</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "4px" }}>
-              <button
-                id="btn-export-data"
-                onClick={handleExportData}
-                className="premium-button"
-                style={{ fontSize: "0.7rem", padding: "4px 8px", width: "100%", textAlign: "center", fontWeight: 700 }}
-              >
-                📤 백업 (JSON 다운)
-              </button>
-              <button
-                id="btn-import-data"
-                onClick={() => document.getElementById("input-file-import")?.click()}
-                className="premium-button-secondary"
-                style={{ fontSize: "0.7rem", padding: "4px 8px", width: "100%", textAlign: "center", fontWeight: 700 }}
-              >
-                📥 복원 (JSON 업)
-              </button>
-              <input
-                type="file"
-                id="input-file-import"
-                accept=".json"
-                onChange={handleImportData}
-                style={{ display: "none" }}
-              />
-            </div>
-          </div>
-        </section>
-
-        {hasSpouse && (
+        {hasSpouse ? (
           <CoupleSimulationSection
             result={coupleResult}
-            selfStartAge={store.simulationParams.nationalPensionStartAge}
-            spouseStartAge={store.simulationParams.spouseNationalPensionStartAge}
+            selfStartAge={store.simulationParams.nationalPensionStartAge + deferYearsOf(store.simulationParams)}
+            spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
+            actions={dataActions}
           />
+        ) : (
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>{dataActions}</div>
         )}
 
         {/* Row 2: Parameter Sliders (3-column layout) */}
@@ -1523,35 +1458,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.8rem",
     color: "var(--text-secondary)",
     lineHeight: 1.4,
-  },
-  kpiRow: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "10px",
-  },
-  kpiCard: {
-    padding: "12px",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    minHeight: "80px",
-  },
-  kpiLabel: {
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    color: "var(--text-secondary)",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-  },
-  kpiValue: {
-    fontSize: "1.4rem",
-    fontWeight: 700,
-    color: "var(--text-primary)",
-    margin: "6px 0 4px 0",
-  },
-  kpiSub: {
-    fontSize: "0.75rem",
-    color: "var(--text-muted)",
   },
   chartTitle: {
     fontSize: "1rem",

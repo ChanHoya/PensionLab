@@ -13,6 +13,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import type { AdditionalPaymentPlan } from "@/services/additionalPaymentCalculator";
+import ChartTooltip from "@/components/ChartTooltip";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 
@@ -115,7 +116,7 @@ export default function AdditionalPaymentInsights({ plan, paymentMode, isVolunta
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="age" tickFormatter={(v) => `${v}세`} stroke="var(--text-muted)" fontSize={12} />
             <YAxis tickFormatter={(v) => `${fmt(v)}`} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip formatter={(v) => `${fmt(Number(v))} 만원`} labelFormatter={(l) => `${l}세`} />
+            <Tooltip content={<ChartTooltip labelSuffix="세" />} />
             <Legend />
             <Line type="monotone" dataKey="received" name="누적 추가 수령액" stroke="var(--primary)" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="cost" name="순비용" stroke="#f59e0b" strokeDasharray="6 4" dot={false} />

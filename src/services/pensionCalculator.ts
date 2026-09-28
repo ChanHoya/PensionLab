@@ -6,6 +6,7 @@ import {
   PensionInsuranceState,
   SimulationParamsState,
 } from "@/store/usePensionStore";
+import { getDecumulationMultiplier } from "@/services/withdrawalCalculator";
 
 export interface CashFlowItem {
   age: number;
@@ -48,6 +49,19 @@ function calculateFVAnnuity(pmt: number, rate: number, nperMonths: number): numb
  * Converts a lump sum into a monthly payout for a fixed period (in years)
  * using a PMT-style calculation with a discount rate.
  */
+// 체감 배율(120%→40%)을 곱해도 현재가치 총액이 균등 수령과 같도록 맞추는 보정 계수 (인출 전략 엔진의 가중 PMT와 같은 방식)
+function decumulationScale(years: number, ratePercent: number, strategy: string): number {
+  const r = ratePercent / 100;
+  let flat = 0;
+  let weighted = 0;
+  for (let t = 1; t <= years; t++) {
+    const discount = Math.pow(1 + r, -(t - 1));
+    flat += discount;
+    weighted += getDecumulationMultiplier(t, strategy) * discount;
+  }
+  return weighted > 0 ? flat / weighted : 1;
+}
+
 function calculateAnnuityPayout(lumpSum: number, periodYears: number, expectedReturnRate: number): number {
   if (periodYears <= 0) return 0;
   const nperMonths = periodYears * 12;
@@ -65,9 +79,14 @@ export function runPensionSimulation(
   retirement: RetirementPensionState[],
   personal: PersonalPensionSavingsState[],
   insurance: PensionInsuranceState[],
-  params: SimulationParamsState
+  params: SimulationParamsState,
+  options: { privatePensionEndAge?: number } = {}
 ): SimulationResult {
   const currentYear = new Date().getFullYear();
+  // 사적연금 수령 종료 나이를 정하면 각 상품의 수령 기간을 그 나이(포함)까지로 줄인다
+  const endAge = options.privatePensionEndAge || 0;
+  const capYears = (years: number, startAge: number) =>
+    endAge > 0 ? Math.max(1, Math.min(years, endAge - startAge + 1)) : years;
 
   // 1. Dynamic current age inference or use store param
   const remainingMonthsToPay = Math.max(0, national.expectedTotalContributionMonths - national.contributionMonths);
@@ -120,9 +139,12 @@ export function runPensionSimulation(
   });
 
   // Convert retirement lump sum to a monthly annuity (assume received for 20 years or until expectancy)
-  const retirementAnnuityYears = Math.max(10, expectedLife - params.retirementAge);
+  const retirementAnnuityYears = capYears(Math.max(10, expectedLife - params.retirementAge), params.retirementAge);
   const retirementPayoutRate = Math.max(0.5, 3.0);
   const monthlyRetirementPayout = calculateAnnuityPayout(retirementLumpSum, retirementAnnuityYears, retirementPayoutRate);
+  // 체감형 인출이면 배율 합이 기간과 달라 총액이 어긋나므로 보정 (수령 종료 나이를 정하면 균등 분할이라 보정 불필요)
+  const strategyForScale = endAge === 0 ? params.decumulationStrategy : "FLAT";
+  const retirementScale = decumulationScale(retirementAnnuityYears, retirementPayoutRate, strategyForScale);
 
   // 4. Project Personal Pension Savings (3층 - 연금저축)
   let personalLumpSum = 0;
@@ -211,7 +233,8 @@ export function runPensionSimulation(
     // 은퇴 후 년수 계산 (체감형 인출 가중치 적용용 - Spending Smile)
     const yearsSinceRetirement = Math.max(0, age - params.retirementAge);
     let decumulationMultiplier = 1.0;
-    if (params.decumulationStrategy === "DECREASING" && age >= params.retirementAge) {
+    // 수령 종료 나이를 정하면 그 기간에 균등 분할 수령 (체감 배율 미적용)
+    if (params.decumulationStrategy === "DECREASING" && age >= params.retirementAge && endAge === 0) {
       if (yearsSinceRetirement <= 5) {
         decumulationMultiplier = 1.2; // 0~5년차 (활동기: 120%)
       } else if (yearsSinceRetirement <= 10) {
@@ -227,23 +250,24 @@ export function runPensionSimulation(
 
     // Retirement Pension Payout
     if (age >= params.retirementAge && age < params.retirementAge + retirementAnnuityYears) {
-      retirementPayout = monthlyRetirementPayout * decumulationMultiplier;
+      retirementPayout = monthlyRetirementPayout * decumulationMultiplier * retirementScale;
     }
 
     // Personal Pension Savings Payout
     personal.forEach((p) => {
-      if (age >= p.desiredStartAge && age < p.desiredStartAge + p.receivingPeriod) {
+      const receivingPeriod = capYears(p.receivingPeriod, p.desiredStartAge);
+      if (age >= p.desiredStartAge && age < p.desiredStartAge + receivingPeriod) {
         const pNominalRate = p.savingsType === "FUND" ? 4.5 : 2.5;
         const pRealRate = Math.max(0.5, pNominalRate);
         const pLump = calculateFV(p.totalAccumulated, pRealRate, Math.max(0, p.desiredStartAge - currentAge)) +
           calculateFV(calculateFVAnnuity(p.monthlyAnnualContribution, pRealRate, Math.max(0, Math.min(p.desiredStartAge - currentAge, params.retirementAge - currentAge)) * 12), pRealRate, Math.max(0, p.desiredStartAge - params.retirementAge));
 
-        const payout = calculateAnnuityPayout(pLump, p.receivingPeriod, pRealRate);
+        const payout = calculateAnnuityPayout(pLump, receivingPeriod, pRealRate);
         
         // 개인연금 수령 시작 후 나이에 맞춰 체감률 적용
         const yearsSinceStart = Math.max(0, age - p.desiredStartAge);
         let personalMultiplier = 1.0;
-        if (params.decumulationStrategy === "DECREASING") {
+        if (params.decumulationStrategy === "DECREASING" && endAge === 0) {
           if (yearsSinceStart <= 5) personalMultiplier = 1.2;
           else if (yearsSinceStart <= 10) personalMultiplier = 1.0;
           else if (yearsSinceStart <= 15) personalMultiplier = 0.8;
@@ -251,20 +275,20 @@ export function runPensionSimulation(
           else personalMultiplier = 0.4;
         }
 
-        personalPayout += payout * personalMultiplier;
+        personalPayout += payout * personalMultiplier * decumulationScale(receivingPeriod, pRealRate, strategyForScale);
       }
     });
 
     // Pension Insurance Payout
     insurance.forEach((i) => {
-      const payoutYears = Math.max(20, expectedLife - params.retirementAge);
+      const payoutYears = capYears(Math.max(20, expectedLife - params.retirementAge), params.retirementAge);
       if (age >= params.retirementAge && age < params.retirementAge + payoutYears) {
         const iRealRate = Math.max(0.5, i.expectedDeclaredRate);
         const iLump = calculateFV(i.totalAccumulated, iRealRate, yearsToRetire) +
           calculateFV(calculateFVAnnuity(i.monthlyPayment, iRealRate, Math.min(i.paymentPeriod, yearsToRetire) * 12), iRealRate, Math.max(0, yearsToRetire - Math.min(i.paymentPeriod, yearsToRetire)));
 
         const payout = calculateAnnuityPayout(iLump, payoutYears, iRealRate);
-        insurancePayout += payout * decumulationMultiplier;
+        insurancePayout += payout * decumulationMultiplier * decumulationScale(payoutYears, iRealRate, strategyForScale);
       }
     });
 

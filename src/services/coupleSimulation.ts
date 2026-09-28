@@ -60,6 +60,7 @@ const ZERO_BASIC: BasicPensionState = {
   spouseEarnedIncome: 0,
   spouseOtherIncome: 0,
   spouseOccupational: false,
+  applyToSimulation: false,
 };
 
 interface Track {
@@ -69,9 +70,25 @@ interface Track {
   national: NationalPensionState;
 }
 
+// 국민연금 연기 연수 (0~5년)
+export function deferYearsOf(params: SimulationParamsState): number {
+  return Math.min(NPS_RULES.maxDeferralYears, Math.max(0, Math.floor(params.nationalPensionDeferYears || 0)));
+}
+
 function track(p: PersonPensions, params: SimulationParamsState): Track {
+  // 연기하면 개시 나이가 늦어지고 1년당 7.2% 가산. 유족연금은 가산 전 기본 연금으로 계산하므로 national은 원래 값을 둔다
+  const defer = deferYearsOf(params);
+  const deferredNational = { ...p.national, expectedMonthlyPension: p.national.expectedMonthlyPension * (1 + NPS_RULES.deferralBonusPerYear * defer) };
   // 기초연금은 가구 단위로 따로 계산하므로 개인 시뮬레이션에서는 0으로 둔다
-  const sim = runPensionSimulation(p.national, ZERO_BASIC, p.retirementPensions, p.personalPensions, p.pensionInsurances, params);
+  const sim = runPensionSimulation(
+    deferredNational,
+    ZERO_BASIC,
+    p.retirementPensions,
+    p.personalPensions,
+    p.pensionInsurances,
+    { ...params, nationalPensionStartAge: params.nationalPensionStartAge + defer },
+    { privatePensionEndAge: params.privatePensionEndAge }
+  );
   return {
     startAge: params.nationalPensionStartAge,
     lifeExpectancy: params.expectedLifeExpectancy,
@@ -102,7 +119,19 @@ export function personParams(params: SimulationParamsState, who: "SELF" | "SPOUS
     retirementAge: params.spouseRetirementAge,
     expectedLifeExpectancy: params.spouseLifeExpectancy,
     nationalPensionStartAge: params.spouseNationalPensionStartAge,
+    nationalPensionDeferYears: params.spouseNationalPensionDeferYears,
+    privatePensionEndAge: params.spousePrivatePensionEndAge,
   };
+}
+
+// 기초연금 소득인정액에 넣을 사적연금(퇴직·개인연금·연금보험) 월 수령액, 그 나이 기준 현재가치
+export function privatePensionAt(p: PersonPensions, params: SimulationParamsState, age: number): number {
+  const sim = runPensionSimulation(p.national, ZERO_BASIC, p.retirementPensions, p.personalPensions, p.pensionInsurances, params, {
+    privatePensionEndAge: params.privatePensionEndAge,
+  });
+  const cf = sim.cashFlows.find((c) => c.age === age);
+  if (!cf) return 0;
+  return (cf.retirement + cf.personal + cf.insurance) / Math.pow(1 + params.inflationRate / 100, Math.max(0, age - sim.currentAge));
 }
 
 // 부부 통합 시뮬레이션: 사람별 국민·퇴직·개인연금 흐름 + 가구 기초연금 + 먼저 사망 시 중복급여 조정(국민연금법 제56조)
@@ -171,18 +200,20 @@ export function runCoupleSimulation(
     if (sp && sAlive && !pAlive) ({ national: sNational, choice: sChoice } = survivor(so.national, sp, pAge));
     if (sp && pAlive && !sAlive) ({ national: pNational, choice: pChoice } = survivor(po!.national, st, sAge));
 
-    const person = (alive: boolean, age: number, national: number, earned: number, other: number, occ: boolean, n: NationalPensionState): BasicPensionPerson => ({
+    // 사적연금 수령액은 소득인정액(연금소득)에 자동 반영
+    const person = (alive: boolean, age: number, national: number, earned: number, other: number, occ: boolean, n: NationalPensionState, o: ReturnType<typeof own>): BasicPensionPerson => ({
       alive,
       age,
       earnedIncome: earned * index,
-      otherIncome: other * index,
+      otherIncome: other * index + o.retirement + o.personal + o.insurance,
       nationalPension: national,
       aShare: aShareOf(n),
       occupational: occ,
     });
-    const b = calcBasicPension(
-      person(sAlive, sAge, sNational, basic.selfEarnedIncome, basic.selfOtherIncome, basic.selfOccupational, self.national),
-      sp ? person(pAlive, pAge, pNational, basic.spouseEarnedIncome, basic.spouseOtherIncome, basic.spouseOccupational, spouse!.national) : null,
+    // 「대시보드 반영 안 함」이면 기초연금을 계산하지 않는다
+    const b = !basic.applyToSimulation ? { self: 0, spouse: 0 } : calcBasicPension(
+      person(sAlive, sAge, sNational, basic.selfEarnedIncome, basic.selfOtherIncome, basic.selfOccupational, self.national, so),
+      sp ? person(pAlive, pAge, pNational, basic.spouseEarnedIncome, basic.spouseOtherIncome, basic.spouseOccupational, spouse!.national, po!) : null,
       {
         region: basic.region,
         generalProperty: basic.generalProperty * index,

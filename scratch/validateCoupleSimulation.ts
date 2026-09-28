@@ -166,4 +166,26 @@ for (let y = 2027; y <= 2045; y++) {
   assert.ok(Math.abs(ratio - 0.98) < 0.01, `${y} 체감 비율 ${ratio}`);
 }
 
+// 가구 소득 평탄화: 국민연금을 바닥에 두고 사적연금으로 부족분만 채워 합계를 일정하게(물가 0%) 유지
+const bigIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 60000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
+const sm = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
+const smAt = (y: number) => sm.rows.find((row) => row.year === y)!;
+const level = sm.smoothing!.levelMonthly;
+assert.ok(level > 256, `level ${level}`); // 부부 국민연금 합(256)보다 높은 수준
+// 국민연금 시작 전(2026~2030)·남편만(2031~2035)·둘 다(2036~) 모두 가구 합계가 같은 수준
+for (const y of [2026, 2030, 2031, 2035, 2036, 2046]) near(smAt(y).household, level, 0.6);
+// 국민연금이 없던 해에 사적연금을 더 많이 받는다
+const priv = (y: number) => smAt(y).self.retirement + smAt(y).self.personal + smAt(y).self.insurance;
+assert.ok(priv(2026) > priv(2036));
+// 남편 사망(2047) 후에는 목표의 70% (아내 유족연금 120으로 부족하면 사적연금이 채움)
+near(smAt(2050).household, Math.max(120, level * 0.7), 0.6);
+// 사적연금 현재가치 합(연 3% 할인) = 적립금
+const pvDraw = sm.rows.reduce((a, row, t) => a + ((row.self.retirement + row.self.personal + row.self.insurance + (row.spouse?.retirement ?? 0) + (row.spouse?.personal ?? 0) + (row.spouse?.insurance ?? 0)) * 12) / Math.pow(1.03, t), 0);
+near(pvDraw / sm.smoothing!.pot, 1, 0.01);
+// 목표 생활비를 유지 가능한 수준으로 넣으면 필요 적립금 ≈ 보유 적립금
+const sm2 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true, targetMonthlySpending: level }, { ...basic, applyToSimulation: false }, 2026);
+near(sm2.smoothing!.requiredPot / sm2.smoothing!.pot, 1, 0.01);
+// 평탄화 끄면 smoothing 정보 없음
+assert.equal(r.smoothing, undefined);
+
 console.log("Couple simulation validation success!");

@@ -57,10 +57,15 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
       ))}
     </select>
   );
+  // 가구 소득 평탄화는 사적연금 인출 시점을 직접 정하므로 수령 종료 나이는 쓰지 않는다
+  const smoothing = params.householdIncomeSmoothing;
   const endAgeInput = (value: number, key: "privatePensionEndAge" | "spousePrivatePensionEndAge") => (
-    <input type="number" min={0} className="premium-input" placeholder="비우면 상품별 기본 기간" value={value || ""}
+    <input type="number" min={0} className="premium-input" disabled={smoothing}
+      placeholder={smoothing ? "가구 소득 평탄화 중에는 사용 안 함" : "비우면 상품별 기본 기간"} value={value || ""}
       onChange={(e) => setParam({ [key]: Number(e.target.value) })} />
   );
+  const sm = result.smoothing;
+  const potGap = sm ? sm.pot - sm.requiredPot : 0;
   const bothReceiving = rows.find(
     (r) => r.spouse && r.self.alive && r.spouse.alive && r.self.age >= selfStartAge && r.spouse.age >= spouseStartAge
   );
@@ -128,10 +133,17 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
         <div style={styles.optionField}>
           <label style={styles.optionLabel}>퇴직·개인연금 인출 방식</label>
-          <select className="premium-input" value={params.decumulationStrategy}
-            onChange={(e) => setParam({ decumulationStrategy: e.target.value as SimulationParamsState["decumulationStrategy"] })}>
+          <select className="premium-input" value={smoothing ? "SMOOTH" : params.decumulationStrategy}
+            onChange={(e) =>
+              setParam(
+                e.target.value === "SMOOTH"
+                  ? { householdIncomeSmoothing: true, decumulationStrategy: "FLAT" }
+                  : { householdIncomeSmoothing: false, decumulationStrategy: e.target.value as SimulationParamsState["decumulationStrategy"] }
+              )
+            }>
             <option value="DECREASING">완만한 체감 (초기에 조금 많이, 매년 2%씩 감소)</option>
             <option value="FLAT">균등 수령 (매년 같은 금액)</option>
+            <option value="SMOOTH">가구 소득 평탄화 (국민연금 위에 부족분만 채움)</option>
           </select>
         </div>
       </div>
@@ -163,6 +175,26 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           <div style={styles.kpiHint}>본인 {fmt(lifetime.self)} · 배우자 {fmt(lifetime.spouse)}</div>
         </div>
       </div>
+
+      {sm && (
+        <div style={styles.infoAlert}>
+          {sm.pot > 0 ? (
+            <>
+              📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년부터 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
+              (현재가치 {fmt(sm.levelToday)}만원)을 받고, 이후 매년 물가만큼 늘어나며 한 명 사망 후에는 70% 수준입니다.
+              국민연금이 모자란 만큼만 퇴직·개인연금으로 채우므로 국민연금 개시 전에 사적연금을 더 많이 씁니다.
+              <br />
+              💰 사적연금 적립금({sm.startYear}년 가치): 보유 <strong>{fmt(sm.pot)}만원</strong> · 희망 월 생활비{" "}
+              {fmt(sm.targetToday)}만원(현재가치) 유지에 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}
+              <strong style={{ color: potGap >= 0 ? "var(--success)" : "var(--danger)" }}>
+                {potGap >= 0 ? `여유 ${fmt(potGap)}만원` : `부족 ${fmt(-potGap)}만원`}
+              </strong>
+            </>
+          ) : (
+            <>📏 가구 소득 평탄화: 퇴직·개인연금·연금보험 입력이 없어 채울 사적연금이 없습니다.</>
+          )}
+        </div>
+      )}
 
       {survivor && survivor.survivorChoice && (
         <div style={styles.infoAlert}>

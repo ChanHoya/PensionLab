@@ -12,7 +12,7 @@ import {
   CartesianGrid,
   ReferenceLine,
 } from "recharts";
-import type { CoupleSimulationResult, CoupleYear } from "@/services/coupleSimulation";
+import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/coupleSimulation";
 import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
 import { NPS_RULES } from "@/config/npsRules";
 import ChartTooltip from "@/components/ChartTooltip";
@@ -26,6 +26,21 @@ interface Props {
   selfStartAge: number; // 본인 국민연금 개시 나이
   spouseStartAge: number; // 배우자 국민연금 개시 나이 (연기 반영)
   actions?: React.ReactNode; // 제목 오른쪽 버튼 (백업·복원)
+}
+
+// x축 눈금: 연도 아래에 본인·배우자 나이 (사망 후에는 -)
+function YearAgeTick({ x, y, payload, rowsByYear }: { x?: number; y?: number; payload?: { value: number }; rowsByYear: Map<number, CoupleYear> }) {
+  const r = payload ? rowsByYear.get(Number(payload.value)) : undefined;
+  const age = (p: PersonYear | null | undefined) => (p && p.alive ? `${p.age}세` : "-");
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text textAnchor="middle" fill="var(--text-muted)" fontSize={11}>
+        <tspan x={0} dy={12}>{payload?.value}</tspan>
+        {r && <tspan x={0} dy={13}>{age(r.self)}</tspan>}
+        {r?.spouse && <tspan x={0} dy={13}>{age(r.spouse)}</tspan>}
+      </text>
+    </g>
+  );
 }
 
 // 부부 통합 연금 시뮬레이션: 본인·배우자 × 국민·기초·퇴직·개인연금 가구 합산 (명목, 만원/월)
@@ -80,6 +95,8 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   const beforeDeath = deathIndex > 0 ? rows[deathIndex - 1] : null;
   const afterDeath = deathIndex >= 0 ? rows[deathIndex] : null;
   const survivor = afterDeath ? (afterDeath.self.alive ? afterDeath.self : afterDeath.spouse) : null;
+
+  const rowsByYear = new Map(rows.map((r) => [r.year, r]));
 
   const chartData = rows.map((r) => ({
     year: r.year,
@@ -212,11 +229,12 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       )}
 
-      <div style={{ width: "100%", height: 320 }}>
+      <p style={{ ...styles.note, textAlign: "right" }}>가로축: 연도 / 본인 나이 / 배우자 나이 (사망 후 -)</p>
+      <div style={{ width: "100%", height: 350 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="year" stroke="var(--text-muted)" fontSize={12} />
+            <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
             <Tooltip content={<ChartTooltip labelSuffix="년" hideZero />} />
             <Legend />

@@ -49,7 +49,7 @@ function calculateFVAnnuity(pmt: number, rate: number, nperMonths: number): numb
  * Converts a lump sum into a monthly payout for a fixed period (in years)
  * using a PMT-style calculation with a discount rate.
  */
-// 체감 배율(120%→40%)을 곱해도 현재가치 총액이 균등 수령과 같도록 맞추는 보정 계수 (인출 전략 엔진의 가중 PMT와 같은 방식)
+// 체감 배율(매년 2% 감소)을 곱해도 현재가치 총액이 균등 수령과 같도록 맞추는 보정 계수 (인출 전략 엔진의 가중 PMT와 같은 방식)
 function decumulationScale(years: number, ratePercent: number, strategy: string): number {
   const r = ratePercent / 100;
   let flat = 0;
@@ -230,23 +230,9 @@ export function runPensionSimulation(
       basicPayout = basic.expectedMonthlyAmount * Math.pow(1 + params.inflationRate / 100, age - 65);
     }
 
-    // 은퇴 후 년수 계산 (체감형 인출 가중치 적용용 - Spending Smile)
+    // 체감형 인출 배율 (은퇴 후 경과 연수 기준, 매년 완만하게 감소). 수령 종료 나이를 정하면 균등 분할이라 미적용
     const yearsSinceRetirement = Math.max(0, age - params.retirementAge);
-    let decumulationMultiplier = 1.0;
-    // 수령 종료 나이를 정하면 그 기간에 균등 분할 수령 (체감 배율 미적용)
-    if (params.decumulationStrategy === "DECREASING" && age >= params.retirementAge && endAge === 0) {
-      if (yearsSinceRetirement <= 5) {
-        decumulationMultiplier = 1.2; // 0~5년차 (활동기: 120%)
-      } else if (yearsSinceRetirement <= 10) {
-        decumulationMultiplier = 1.0; // 6~10년차 (안정기: 100%)
-      } else if (yearsSinceRetirement <= 15) {
-        decumulationMultiplier = 0.8; // 11~15년차 (쇠퇴기: 80%)
-      } else if (yearsSinceRetirement <= 20) {
-        decumulationMultiplier = 0.6; // 16~20년차 (보호기: 60%)
-      } else {
-        decumulationMultiplier = 0.4; // 21년차 이후 (초고령 실버기: 40%)
-      }
-    }
+    const decumulationMultiplier = getDecumulationMultiplier(yearsSinceRetirement + 1, strategyForScale);
 
     // Retirement Pension Payout
     if (age >= params.retirementAge && age < params.retirementAge + retirementAnnuityYears) {
@@ -264,16 +250,9 @@ export function runPensionSimulation(
 
         const payout = calculateAnnuityPayout(pLump, receivingPeriod, pRealRate);
         
-        // 개인연금 수령 시작 후 나이에 맞춰 체감률 적용
+        // 개인연금 수령 시작 후 경과 연수에 맞춰 체감률 적용
         const yearsSinceStart = Math.max(0, age - p.desiredStartAge);
-        let personalMultiplier = 1.0;
-        if (params.decumulationStrategy === "DECREASING" && endAge === 0) {
-          if (yearsSinceStart <= 5) personalMultiplier = 1.2;
-          else if (yearsSinceStart <= 10) personalMultiplier = 1.0;
-          else if (yearsSinceStart <= 15) personalMultiplier = 0.8;
-          else if (yearsSinceStart <= 20) personalMultiplier = 0.6;
-          else personalMultiplier = 0.4;
-        }
+        const personalMultiplier = getDecumulationMultiplier(yearsSinceStart + 1, strategyForScale);
 
         personalPayout += payout * personalMultiplier * decumulationScale(receivingPeriod, pRealRate, strategyForScale);
       }

@@ -160,4 +160,10 @@ const decRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife
 assert.ok(Math.abs(pv(decRes) / pv(flatRes) - 1) < 0.01, `PV ratio ${pv(decRes) / pv(flatRes)}`);
 assert.ok(ret(decRes, 2026) > ret(flatRes, 2026)); // 초반에 더 많이
 
+// 완만한 체감: 매년 같은 비율(2%)로 줄어 5년마다 뚝 떨어지는 계단이 없다
+for (let y = 2027; y <= 2045; y++) {
+  const ratio = ret(decRes, y) / ret(decRes, y - 1);
+  assert.ok(Math.abs(ratio - 0.98) < 0.01, `${y} 체감 비율 ${ratio}`);
+}
+
 console.log("Couple simulation validation success!");

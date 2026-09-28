@@ -426,17 +426,16 @@ export function resolveDrawComposition(
   return { draws, updatedSources };
 }
 
+// 체감형 인출: 매년 2%씩 완만하게 줄인다 (예전 5년 단위 계단식 120→40%는 해마다 급감해 비현실적)
+export const DECREASING_ANNUAL_RATE = 0.02;
+
 /**
- * Calculates the decumulation multiplier for a given year index k
+ * Calculates the decumulation multiplier for a given year index k (k = 1이 첫해)
+ * 절대 수준은 가중 PMT·보정 계수가 총액에 맞춰 정하므로 여기서는 해마다의 상대 비율만 정한다
  */
 export function getDecumulationMultiplier(k: number, strategy: string): number {
   if (strategy !== "DECREASING") return 1.0;
-  const yearsSinceStart = k - 1;
-  if (yearsSinceStart <= 5) return 1.2;
-  if (yearsSinceStart <= 10) return 1.0;
-  if (yearsSinceStart <= 15) return 0.8;
-  if (yearsSinceStart <= 20) return 0.6;
-  return 0.4;
+  return Math.pow(1 - DECREASING_ANNUAL_RATE, k - 1);
 }
 
 /**

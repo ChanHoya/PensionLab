@@ -126,11 +126,20 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           <label style={styles.optionLabel}>배우자 퇴직·개인연금 수령 종료 나이</label>
           {endAgeInput(params.spousePrivatePensionEndAge, "spousePrivatePensionEndAge")}
         </div>
+        <div style={styles.optionField}>
+          <label style={styles.optionLabel}>퇴직·개인연금 인출 방식</label>
+          <select className="premium-input" value={params.decumulationStrategy}
+            onChange={(e) => setParam({ decumulationStrategy: e.target.value as SimulationParamsState["decumulationStrategy"] })}>
+            <option value="DECREASING">완만한 체감 (초기에 조금 많이, 매년 2%씩 감소)</option>
+            <option value="FLAT">균등 수령 (매년 같은 금액)</option>
+          </select>
+        </div>
       </div>
       <p style={styles.note}>
         ※ 국민연금은 최대 {NPS_RULES.maxDeferralYears}년 연기할 수 있고 1년마다 {(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%(월 0.6%) 늘어납니다.
         유족연금은 연기 가산 전 금액 기준입니다. 수령 종료 나이를 정하면 퇴직연금·개인연금·연금보험을 그 나이까지 나눠 먼저 받습니다
-        (기간이 짧아지는 만큼 월 수령액이 커짐). 퇴직·개인연금 수령액은 기초연금 소득인정액에도 자동 반영됩니다.
+        (기간이 짧아지는 만큼 월 수령액이 커짐). 인출 방식은 적립금 총액이 같도록 맞춘 배분 방식이며 인출전략(S0~S4)에도 같이 적용됩니다.
+        퇴직·개인연금 수령액은 기초연금 소득인정액에도 자동 반영됩니다.
       </p>
 
       <div style={styles.kpiGrid}>

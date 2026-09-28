@@ -58,6 +58,7 @@ const basic = {
   spouseEarnedIncome: 0,
   spouseOtherIncome: 0,
   spouseOccupational: false,
+  applyToSimulation: true,
 } as BasicPensionState;
 const empty = { retirementPensions: [], personalPensions: [], pensionInsurances: [] };
 const husband: PersonPensions = {
@@ -111,5 +112,45 @@ const solo = runCoupleSimulation(husband, null, { ...params, hasSpouse: false },
 assert.equal(solo.rows.length, 21);
 assert.equal(solo.firstDeath, null);
 assert.equal(solo.rows[0].spouse, null);
+
+// 기초연금 「대시보드 반영 안 함」이면 기초연금 0
+const noBasic = runCoupleSimulation(husband, wife, params, { ...basic, applyToSimulation: false }, 2026);
+assert.ok(noBasic.rows.every((row) => row.self.basic === 0 && (row.spouse?.basic ?? 0) === 0));
+near(noBasic.rows.find((row) => row.year === 2031)!.household, 200);
+
+// 사적연금 수령액은 소득인정액에 자동 반영: 월 500만원 연금보험을 받으면 기초연금 없음
+const richInsurance = [{ id: "i", insuranceType: "연금보험", totalAccumulated: 100000, monthlyPayment: 0, paymentPeriod: 0, expectedDeclaredRate: 0.5 }];
+const rich = runCoupleSimulation({ ...husband, pensionInsurances: richInsurance }, wife, params, basic, 2026);
+const rich2031 = rich.rows.find((row) => row.year === 2031)!;
+assert.ok(rich2031.self.insurance > 400);
+assert.equal(rich2031.self.basic, 0);
+
+// 국민연금 연기: 본인 2년 연기 → 67세부터 200 × (1 + 7.2% × 2) = 228.8
+const deferred = runCoupleSimulation(husband, wife, { ...params, nationalPensionDeferYears: 2 }, basic, 2026);
+const dAt = (y: number) => deferred.rows.find((row) => row.year === y)!;
+assert.equal(dAt(2032).self.national, 0); // 66세
+near(dAt(2033).self.national, 228.8, 0.5); // 67세 (엔진이 만원 단위 반올림)
+// 유족연금은 연기 가산 전 기본 연금 기준 (200 × 60%)
+near(dAt(2047).spouse!.national, 120);
+// 배우자 연기는 배우자에게만
+const spDeferred = runCoupleSimulation(husband, wife, { ...params, spouseNationalPensionDeferYears: 5 }, basic, 2026);
+assert.equal(spDeferred.rows.find((row) => row.year === 2040)!.spouse!.national, 0); // 아내 69세
+near(spDeferred.rows.find((row) => row.year === 2041)!.spouse!.national, 56 * 1.36, 0.5); // 70세
+near(spDeferred.rows.find((row) => row.year === 2031)!.self.national, 200);
+
+// 사적연금 수령 종료 나이 70세: 60~70세(11년)에 나눠 받고 71세부터 0, 기간이 짧아져 월 수령액은 커진다
+const irp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 20000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
+const base = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, params, basic, 2026);
+const early = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, privatePensionEndAge: 70 }, basic, 2026);
+const ret = (res: typeof base, y: number) => res.rows.find((row) => row.year === y)!.self.retirement;
+assert.ok(ret(base, 2037) > 0); // 기본(20년 분할): 71세에도 수령
+assert.ok(ret(early, 2036) > 0); // 70세까지 수령
+assert.equal(ret(early, 2037), 0); // 71세
+assert.ok(ret(early, 2026) > ret(base, 2026) * 1.5); // 11년 vs 20년 분할
+// 체감형 인출이어도 종료 나이를 정하면 균등 분할: 매년 같은 금액, 총액은 기본 20년 분할보다 크지 않다
+const earlyDec = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, decumulationStrategy: "DECREASING", privatePensionEndAge: 70 }, basic, 2026);
+assert.equal(ret(earlyDec, 2026), ret(earlyDec, 2036));
+const sumRet = (res: typeof base) => res.rows.reduce((a, row) => a + row.self.retirement, 0);
+assert.ok(sumRet(earlyDec) <= sumRet(base));
 
 console.log("Couple simulation validation success!");

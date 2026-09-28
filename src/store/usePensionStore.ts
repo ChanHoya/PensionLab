@@ -29,6 +29,7 @@ export interface BasicPensionState {
   spouseEarnedIncome: number;
   spouseOtherIncome: number;
   spouseOccupational: boolean;
+  applyToSimulation: boolean; // 대시보드 시뮬레이션에 기초연금 반영 (재산 미입력 시 0원으로 계산되므로 기본 반영 안 함)
 }
 
 export interface RetirementPensionState {
@@ -86,6 +87,11 @@ export interface SimulationParamsState {
   spouseRetirementAge: number;      // 배우자 은퇴 예상 나이
   spouseLifeExpectancy: number;     // 배우자 기대수명
   spouseNationalPensionStartAge: number; // 배우자 국민연금 개시 나이
+  // 부부 통합 시뮬레이션 옵션
+  nationalPensionDeferYears: number; // 본인 국민연금 연기 (0~5년, 1년당 7.2% 가산)
+  spouseNationalPensionDeferYears: number; // 배우자 국민연금 연기
+  privatePensionEndAge: number; // 본인 퇴직·개인연금·연금보험 수령 종료 나이 (0 = 상품별 기본 기간)
+  spousePrivatePensionEndAge: number; // 배우자 사적연금 수령 종료 나이
 }
 
 export type GapReason = "EXEMPT" | "EXCLUDED" | "MILITARY" | "ARREARS";
@@ -196,6 +202,7 @@ const initialBasicPension: BasicPensionState = {
   spouseEarnedIncome: 0,
   spouseOtherIncome: 0,
   spouseOccupational: false,
+  applyToSimulation: false,
 };
 
 const initialSimulationParams: SimulationParamsState = {
@@ -222,6 +229,10 @@ const initialSimulationParams: SimulationParamsState = {
   spouseRetirementAge: 60,
   spouseLifeExpectancy: 85,
   spouseNationalPensionStartAge: 65,
+  nationalPensionDeferYears: 0,
+  spouseNationalPensionDeferYears: 0,
+  privatePensionEndAge: 0,
+  spousePrivatePensionEndAge: 0,
 };
 
 const initialAdditionalPayment: AdditionalPaymentState = {
@@ -288,6 +299,11 @@ export function mergeWithDefaults<T>(saved: unknown, defaults: T): T {
     out[key] = isPlainObject(value) && isPlainObject(base) ? mergeWithDefaults(value, base) : value;
   }
   return out as T;
+}
+
+// 대시보드 엔진에 넘길 기초연금: 「반영 안 함」이면 수급액 0
+export function basicForSimulation(b: BasicPensionState): BasicPensionState {
+  return b.applyToSimulation ? b : { ...b, expectedMonthlyAmount: 0, expectedEligibility: false };
 }
 
 // 본인/배우자 연금 데이터를 같은 모양으로 꺼낸다

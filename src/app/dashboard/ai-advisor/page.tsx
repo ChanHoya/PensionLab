@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePensionStore } from "@/store/usePensionStore";
+import { usePensionStore, basicForSimulation } from "@/store/usePensionStore";
 import { runPensionSimulation } from "@/services/pensionCalculator";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -277,7 +277,7 @@ export default function AIAdvisorPage() {
   // Run calculation simulation
   const simulation = runPensionSimulation(
     nationalForSim,
-    store.basicPension,
+    basicForSimulation(store.basicPension),
     store.retirementPensions,
     store.personalPensions,
     store.pensionInsurances,
@@ -494,7 +494,7 @@ export default function AIAdvisorPage() {
         },
         body: JSON.stringify({
           nationalPension: nationalForSim,
-          basicPension: store.basicPension,
+          basicPension: basicForSimulation(store.basicPension),
           retirementPensions: store.retirementPensions,
           personalPensions: store.personalPensions,
           pensionInsurances: store.pensionInsurances,

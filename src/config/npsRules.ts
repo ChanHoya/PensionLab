@@ -11,6 +11,8 @@ export const NPS_RULES = {
   minPensionMonths: 120, // 노령연금 최소 가입기간
   replacementConstant: 1.29, // 2026년~ 소득대체율 43%의 비례상수
   dependentIncomeCapAnnual: 2000, // 건보 피부양자 소득기준 (만원/년)
+  deferralBonusPerYear: 0.072, // 연기연금 가산율 (월 0.6% × 12)
+  maxDeferralYears: 5, // 연기 최대 5년
 };
 
 export const EXCLUDED_ADDITIONAL_FROM_YM = "1999-04"; // 적용제외 기간 추납은 1999-04 이후만

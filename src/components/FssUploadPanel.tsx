@@ -37,6 +37,10 @@ export default function FssUploadPanel({ hasSpouse, files, onChange, analyzing, 
           통합연금포털의 항목별 화면을 PDF로 출력해 아래 칸에 등록한 뒤 「다음 단계」를 누르면, AI가 읽어 1층(국민연금)·2층(퇴직연금)·3층(개인연금)의
           「입력결과」에 채웁니다. 채워진 값은 각 단계에서 직접 고칠 수 있습니다.
         </p>
+        <p style={styles.alertText}>
+          ℹ️ 통합연금포털은 <strong>회원가입(본인인증) 후</strong> 이용할 수 있습니다. 가입 후 처음 연금정보를 조회하면 국민연금공단·금융회사에서
+          정보를 모으는 데 <strong>일정 기간이 걸려</strong> 바로 PDF를 받을 수 없으니, 미리 가입하고 조회를 신청해 두세요.
+        </p>
         <p style={{ ...styles.alertText, color: "var(--warning)" }}>
           ⚠️ 다운로드 시 설정된 PDF 비밀번호(보통 생년월일 6자리 또는 설정한 비밀번호)를 반드시 해제(인쇄용 PDF 저장 등으로 무암호화)한 후 업로드해주셔야
           자동 파싱이 가능합니다.

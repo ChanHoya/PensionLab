@@ -17,10 +17,11 @@ interface Props {
   colors?: Record<string, string>; // 항목 이름별 점 색 (선 색과 다르게 보일 때)
   showTotal?: boolean; // 제목 오른쪽에 항목 합계 표시 (누적 차트용)
   unit?: string; // 금액 단위 (예: "만원/월")
+  notes?: Record<string, string>; // 항목 이름별 보조 문구 (예: 납부총액/지급총액)
 }
 
 // Recharts 툴팁: 테마 색상 변수(라이트·다크 모두)와 작은 글씨, 항목별 색 점 (대시보드 인출전략 차트와 같은 모양)
-export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false, colors, showTotal = false, unit = "만원" }: Props) {
+export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false, colors, showTotal = false, unit = "만원", notes }: Props) {
   if (!active || !payload?.length) return null;
   const rows = hideZero ? payload.filter((e) => Number(e.value) !== 0) : payload;
   if (rows.length === 0) return null;
@@ -39,7 +40,10 @@ export default function ChartTooltip({ active, payload, label, labelSuffix = "",
               <span style={{ ...styles.dot, backgroundColor: colors?.[String(e.name)] ?? e.color }} />
               <span style={styles.name}>{e.name}</span>
             </div>
-            <span style={styles.value}>{Math.round(Number(e.value) || 0).toLocaleString()} {unit}</span>
+            <span style={styles.value}>
+              {Math.round(Number(e.value) || 0).toLocaleString()} {unit}
+              {notes?.[String(e.name)] && <span style={styles.note}> {notes[String(e.name)]}</span>}
+            </span>
           </div>
         ))}
       </div>
@@ -74,4 +78,5 @@ const styles: { [key: string]: React.CSSProperties } = {
   dot: { width: "8px", height: "8px", borderRadius: "50%" },
   name: { fontSize: "0.72rem", color: "var(--text-secondary)" },
   value: { fontSize: "0.72rem", fontWeight: 700, color: "var(--text-primary)" },
+  note: { fontWeight: 500, color: "var(--text-muted)" },
 };

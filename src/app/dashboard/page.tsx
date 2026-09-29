@@ -11,7 +11,6 @@ import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
-import SeriesTotalLabels from "@/components/SeriesTotalLabels";
 import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
 
@@ -31,7 +30,7 @@ import {
 } from "recharts";
 
 // Custom Tooltip component for Recharts ComposedChart
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = ({ active, payload, label, notes }: any) => {
   if (active && payload && payload.length) {
     const activePayload = payload.filter((entry: any) => (entry.value || 0) > 0);
     if (activePayload.length === 0) return null;
@@ -75,6 +74,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               </div>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 {entry.value.toLocaleString()} 만원/년
+                {notes?.[entry.dataKey] && <span style={{ fontWeight: 500, color: "var(--text-muted)" }}> {notes[entry.dataKey]}</span>}
               </span>
             </div>
           ))}
@@ -321,8 +321,7 @@ export default function DashboardPage() {
 
   const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as Lowercase<ScenarioTab>];
 
-  // 인출전략 그래프 안 (납부총액/지급총액): 가구 합, 지급은 그래프 기간 세전 수령 합계 (차트 값이 연 금액)
-  const scenarioStack = ["nationalPreTax", "basicPreTax", "retirementPreTax", "personalPreTax", "insurancePreTax", ...(activeTab === "S4" ? ["dividendPreTax"] : [])];
+  // 인출전략 그래프 툴팁의 (납부총액/지급총액): 가구 합, 지급은 그래프 기간 세전 수령 합계 (차트 값이 연 금액)
   const scenarioPaid: Record<string, number | null> = {
     nationalPreTax: selfPaid.national + (spousePaid?.national ?? 0),
     basicPreTax: null,
@@ -331,13 +330,13 @@ export default function DashboardPage() {
     insurancePreTax: selfPaid.insurance + (spousePaid?.insurance ?? 0),
     dividendPreTax: null,
   };
-  const scenarioTotalLabels = scenarioStack
-    .map((key) => {
+  const scenarioNotes = Object.fromEntries(
+    Object.keys(scenarioPaid).map((key) => {
       const payout = activeResult.flows.reduce((sum, f) => sum + (Number(f[key as keyof typeof f]) || 0), 0);
       const paidAmount = scenarioPaid[key];
-      return { key, payout, text: `(${paidAmount ? `${Math.round(paidAmount).toLocaleString()}만원` : "-"}/${Math.round(payout).toLocaleString()}만원)` };
+      return [key, `(${paidAmount ? `${Math.round(paidAmount).toLocaleString()}만원` : "-"}/${Math.round(payout).toLocaleString()}만원)`];
     })
-    .filter((l) => l.payout > 0);
+  );
 
   const totalFlows = activeResult.flows.reduce((acc, flow) => {
     return {
@@ -647,7 +646,7 @@ export default function DashboardPage() {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
                       <XAxis dataKey="age" tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
                       <YAxis tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
-                      <Tooltip content={<CustomTooltip />} />
+                      <Tooltip content={<CustomTooltip notes={scenarioNotes} />} />
                       <Legend wrapperStyle={{ fontSize: "0.75rem", marginTop: "10px" }} />
                       <Area type="monotone" dataKey="nationalPreTax" name="국민연금" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} isAnimationActive={false} />
                       <Area type="monotone" dataKey="basicPreTax" name="기초연금" stackId="1" stroke="#93c5fd" fill="#93c5fd" fillOpacity={0.4} isAnimationActive={false} />
@@ -658,12 +657,6 @@ export default function DashboardPage() {
                         <Area type="monotone" dataKey="dividendPreTax" name="커버드콜 배당" stackId="1" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.5} isAnimationActive={false} />
                       )}
                       <Line type="monotone" dataKey="totalPostTax" name="실질 세후 수령액" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
-                      <SeriesTotalLabels
-                        data={activeResult.flows as unknown as Record<string, number>[]}
-                        xKey="age"
-                        stack={scenarioStack}
-                        labels={scenarioTotalLabels}
-                      />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>

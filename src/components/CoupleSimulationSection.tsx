@@ -16,7 +16,6 @@ import {
 import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/coupleSimulation";
 import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
-import SeriesTotalLabels from "@/components/SeriesTotalLabels";
 import type { PaidTotals } from "@/services/paidTotals";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
@@ -115,7 +114,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   const survivorName = `${survivorLabel || "배우자"} 유족연금`;
   const visibleSeries = SERIES.filter((s) => chartData.some((d) => d[s.key] !== 0));
   const legendColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
-  // 그래프 안 (납부총액/지급총액): 납부가 없는 유족·기초연금은 「-」, 지급은 그래프 기간 명목 수령 합계
+  // 툴팁의 (납부총액/지급총액): 납부가 없는 유족·기초연금은 「-」, 지급은 그래프 기간 명목 수령 합계
   const paidOf: Record<string, number | null> = {
     본인국민연금: paid.self.national,
     유족연금: null,
@@ -127,11 +126,14 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
     "본인 개인연금": paid.self.personal + paid.self.insurance,
     "배우자 개인연금": paid.spouse ? paid.spouse.personal + paid.spouse.insurance : null,
   };
-  const totalLabels = visibleSeries.map((s) => {
-    const payout = chartData.reduce((sum, d) => sum + d[s.key] * 12, 0);
-    const paidAmount = paidOf[s.key];
-    return { key: s.key, text: `(${paidAmount ? `${fmt(paidAmount)}만원` : "-"}/${fmt(payout)}만원)` };
-  });
+  const totalNotes = Object.fromEntries(
+    visibleSeries.map((s) => {
+      const payout = chartData.reduce((sum, d) => sum + d[s.key] * 12, 0);
+      const paidAmount = paidOf[s.key];
+      const name = s.key === "유족연금" ? survivorName : s.key;
+      return [name, `(${paidAmount ? `${fmt(paidAmount)}만원` : "-"}/${fmt(payout)}만원)`];
+    })
+  );
 
   // 표: 5년 간격 + 사망 전후 해
   const keyRows = rows.filter(
@@ -279,7 +281,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal unit="만원/월" colors={legendColors} />} />
+            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal unit="만원/월" colors={legendColors} notes={totalNotes} />} />
             <Legend
               wrapperStyle={{ fontSize: "0.72rem" }}
               iconSize={10}
@@ -303,7 +305,6 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                 fillOpacity={s.fill ? 0.55 : 0.5}
               />
             ))}
-            <SeriesTotalLabels data={chartData} xKey="year" stack={visibleSeries.map((s) => s.key)} labels={totalLabels} />
             {firstDeath && (
               <ReferenceLine
                 x={firstDeath.year}
@@ -364,7 +365,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         배우자 유족연금의 50세 미만 지급정지·재혼 등 예외는 반영하지 않았습니다.
       </p>
       <p style={styles.note}>
-        ※ 그래프 안 (납부총액/지급총액): 납부는 국민연금 예상 납부보험료 총액, 퇴직·개인연금은 현재 적립금 + 은퇴까지 낼 납입액(DB형은 예상
+        ※ 그래프 툴팁의 (납부총액/지급총액): 납부는 국민연금 예상 납부보험료 총액, 퇴직·개인연금은 현재 적립금 + 은퇴까지 낼 납입액(DB형은 예상
         퇴직금)이고, 지급은 그래프 기간의 명목 수령액 합계입니다. 유족·기초연금은 납부가 없어 「-」로 표시합니다.
       </p>
       <p style={styles.note}>※ 추정치입니다. 정확한 금액은 국민연금공단(☎1355)·복지로에서 확인하세요.</p>

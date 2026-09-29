@@ -136,6 +136,7 @@ export default function DashboardPage() {
 
   // PDF download loading state
   const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [detailTableOpen, setDetailTableOpen] = useState(true); // 연도별 상세 표 접기
 
   // 왼쪽 입력 열 접기
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -657,9 +658,21 @@ export default function DashboardPage() {
 
             {/* 3. Detailed Year-by-Year Table */}
             <div style={styles.dashboardCard} className="premium-card">
-              <h3 style={styles.chartTitle}>연도별 상세 현금흐름 및 세후 시뮬레이션 표</h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                <h3 style={styles.chartTitle}>연도별 상세 현금흐름 및 세후 시뮬레이션 표</h3>
+                <button
+                  type="button"
+                  data-html2canvas-ignore
+                  onClick={() => setDetailTableOpen((v) => !v)}
+                  className="premium-button-secondary"
+                  style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700, whiteSpace: "nowrap" }}
+                >
+                  {detailTableOpen ? "▲ 접기" : "▼ 펼치기"}
+                </button>
+              </div>
               <p style={styles.chartSubtitle}>원 단위 계산식을 만 원 단위로 절사한 상세 연도별 테이블</p>
 
+              {detailTableOpen && (
               <div style={styles.tableWrapper}>
                 <table style={styles.table}>
                   <thead>
@@ -732,6 +745,7 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
 
             {/* 4. Compliance Footnotes */}

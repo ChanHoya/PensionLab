@@ -51,6 +51,11 @@ export interface PersonFlowParts {
   dividend: number;
 }
 
+// 퇴직·개인연금 인출 시작 나이 (입력 없으면 조회 시점 익년 = 현재 나이 + 1)
+export function privateDrawStartAgeOf(params: SimulationParamsState): number {
+  return params.privateDrawStartAge > 0 ? params.privateDrawStartAge : (params.currentAge || 35) + 1;
+}
+
 export interface SimulationYearFlow {
   age: number;
   year: number;
@@ -516,6 +521,7 @@ export function runWithdrawalSimulation(
   const otherIncomeAnnual = (customInputs.otherIncomeAnnual ?? 0) * 10000; // 만원 -> 원
   const publicPensionTaxableRatio = customInputs.publicPensionTaxableRatio ?? 0.5;
   const publicByAge = customInputs.publicPensionByAge;
+  const drawStartAge = privateDrawStartAgeOf(simulationParams); // S1/S2/S4 인출 시작 나이
   const privateByAge = customInputs.privateDrawByAge;
 
   // 1. 계좌 리스트 및 세부 재원 통합 초기 모델 생성 함수
@@ -529,8 +535,8 @@ export function runWithdrawalSimulation(
       let receivingPeriod = Math.max(10, expectedLife - simulationParams.retirementAge);
 
       if (strategyId === "S1" || strategyId === "S2" || strategyId === "S4") {
-        // 절세 평탄화 전략: 퇴직연금은 소득공백기(크레바스) 브릿지 자금으로 우선 배치하되 감면 극대화를 위해 수령기간 11년 이상 유지
-        payoutStartAge = simulationParams.retirementAge;
+        // 절세 평탄화 전략: 퇴직연금은 인출 시작 나이부터 소득공백기(크레바스) 브릿지 자금으로 쓰되 감면 극대화를 위해 수령기간 11년 이상 유지
+        payoutStartAge = drawStartAge;
         receivingPeriod = Math.max(11, Math.min(20, expectedLife - payoutStartAge));
       } else if (strategyId === "S3" && customInputs.s3CustomStartAges?.[p.id]) {
         payoutStartAge = customInputs.s3CustomStartAges[p.id];
@@ -569,9 +575,9 @@ export function runWithdrawalSimulation(
       // S1/S2/S4의 경우 인출 시작 연령 및 평탄화 기간 동적 설정
       if (strategyId === "S1" || strategyId === "S2" || strategyId === "S4") {
         if (strategyId === "S1" || strategyId === "S4") {
-          // S1 절세 평탄화: 개인연금을 은퇴 시점부터 인출 개시하여
+          // S1 절세 평탄화: 개인연금을 인출 시작 나이부터 인출 개시하여
           // 소득공백기(크레바스)를 메우고 전 기간 세금을 평탄화함
-          payoutStartAge = simulationParams.retirementAge;
+          payoutStartAge = drawStartAge;
           receivingPeriod = Math.max(10, expectedLife - payoutStartAge);
         } else {
           // S2(국민연금 5년 연기)의 경우:
@@ -585,7 +591,7 @@ export function runWithdrawalSimulation(
             payoutStartAge = p.desiredStartAge;
           } else {
             // 퇴직연금만으로 부족한 경우 -> 소득 공백기(크레바스)를 메우기 위해 개인연금을 은퇴 연령부터 조기 인출하여 브릿지 재원으로 활용
-            payoutStartAge = Math.max(55, simulationParams.retirementAge);
+            payoutStartAge = Math.max(55, drawStartAge);
           }
         }
         
@@ -639,8 +645,8 @@ export function runWithdrawalSimulation(
 
     // 세제비적격 연금보험 (3층)
     pensionInsurances.forEach((i) => {
-      let payoutStartAge = simulationParams.retirementAge;
-      let receivingPeriod = Math.max(20, expectedLife - simulationParams.retirementAge);
+      let payoutStartAge = strategyId === "S1" || strategyId === "S2" || strategyId === "S4" ? drawStartAge : simulationParams.retirementAge;
+      let receivingPeriod = Math.max(20, expectedLife - payoutStartAge);
 
       if (strategyId === "S3" && customInputs.s3CustomStartAges?.[i.id]) {
         payoutStartAge = customInputs.s3CustomStartAges[i.id];
@@ -698,7 +704,10 @@ export function runWithdrawalSimulation(
     const minPayoutAge = accounts.length > 0
       ? Math.min(...accounts.map(a => a.payoutStartAge))
       : simulationParams.retirementAge;
-    const decumStartAge = Math.min(simulationParams.retirementAge, minPayoutAge);
+    // S1/S2/S4는 인출 시작 나이부터, S0·S3는 계좌 개시 나이(또는 은퇴 나이) 중 이른 때부터
+    const decumStartAge = strategyId === "S1" || strategyId === "S2" || strategyId === "S4"
+      ? drawStartAge
+      : Math.min(simulationParams.retirementAge, minPayoutAge);
     // 자산 소진 목표 종료 연령: 가장 늦게 끝나는 계좌의 수령 종료 시점
     const horizonEndAge = accounts.length > 0
       ? Math.max(...accounts.map(a => a.payoutStartAge + a.receivingPeriod - 1))

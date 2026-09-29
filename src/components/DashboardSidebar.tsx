@@ -138,6 +138,12 @@ export default function DashboardSidebar(props: Props) {
       <details open style={styles.group}>
         <summary style={styles.summary}>퇴직·개인연금 인출</summary>
         <div style={styles.field}>
+          <label style={styles.label}>{hasSpouse ? "인출 시작 나이 (본인 나이 기준)" : "인출 시작 나이"}</label>
+          <input type="number" min={0} className="premium-input" style={styles.input} value={params.privateDrawStartAge || ""}
+            placeholder={`비우면 ${params.currentAge + 1}세(내년)`}
+            onChange={(e) => setParam({ privateDrawStartAge: Number(e.target.value) })} />
+        </div>
+        <div style={styles.field}>
           <label style={styles.label}>인출 방식</label>
           <select className="premium-input" style={styles.input} value={params.decumulationStrategy}
             onChange={(e) => setParam({ decumulationStrategy: e.target.value as SimulationParamsState["decumulationStrategy"] })}>
@@ -153,7 +159,7 @@ export default function DashboardSidebar(props: Props) {
             onChange={(e) => setParam({ privatePensionEndAge: Number(e.target.value) })} />
         </div>
         <p style={styles.note}>
-          {hasSpouse ? "부부의" : ""} 퇴직·개인연금 전체를 수령 종료 나이까지 나눠, 국민연금 위에 부족분만 채워 가구 총액을 고르게(또는 매년 2%씩 줄게)
+          {hasSpouse ? "부부의" : ""} 퇴직·개인연금 전체를 인출 시작 나이부터 수령 종료 나이까지 나눠, 국민연금 위에 부족분만 채워 가구 총액을 고르게(또는 매년 2%씩 줄게)
           받습니다. 국민연금 개시 때 총액이 튀거나 상품 만기 때 끊기지 않습니다. 부부 통합 시뮬레이션과 S0에 적용됩니다.
         </p>
       </details>

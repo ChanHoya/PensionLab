@@ -56,7 +56,8 @@ function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: num
 
 // 부부 통합 연금 시뮬레이션: 본인·배우자 × 국민·기초·퇴직·개인연금 가구 합산 (명목, 만원/월)
 export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions }: Props) {
-  const { rows, firstDeath, lifetime } = result;
+  const { rows, firstDeath, lifetime, survivorInfo: si } = result;
+  const survivorLabel = si ? WHO_LABEL[si.deceased === "SELF" ? "SPOUSE" : "SELF"] : "";
   const store = usePensionStore();
   const cardRef = useRef<HTMLDivElement>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -251,8 +252,51 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           <strong>{survivor.survivorChoice === "SURVIVOR" ? "유족연금" : "본인 노령연금 + 유족연금 30%"}</strong>을 선택해
           국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 받는 것이 유리합니다.
           {survivor.survivorChoice === "SURVIVOR" &&
-            " 유족연금을 고르면 본인 노령연금은 지급정지되지만, 그래프에는 본인 연금 수준을 이어서 표시하고 늘어나는 만큼을 「유족연금」으로 구분했습니다."}{" "}
+            firstDeath &&
+            ` 유족연금을 고르면 ${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금은 지급정지되지만, 그래프에는 그 연금 수준을 이어서 표시하고 늘어나는 만큼을 「유족연금」으로 구분했습니다.`}{" "}
           사망자의 퇴직·개인연금 잔액 상속은 반영하지 않았습니다.
+          {si && (
+            <details style={styles.details}>
+              <summary style={styles.summary}>유족연금 산정 기준과 계산 보기</summary>
+              <table style={{ ...styles.table, marginTop: "8px", maxWidth: "420px" }}>
+                <thead>
+                  <tr>
+                    <th style={styles.th}>사망자 가입기간</th>
+                    <th style={styles.th}>유족연금 (기본연금액 대비)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { label: "10년 미만", rate: 0.4 },
+                    { label: "10년 이상 ~ 20년 미만", rate: 0.5 },
+                    { label: "20년 이상", rate: 0.6 },
+                  ].map((row) => (
+                    <tr key={row.label} style={row.rate === si.rate ? styles.bestRow : undefined}>
+                      <td style={styles.td}>{row.label}</td>
+                      <td style={styles.td}>{row.rate * 100}%{row.rate === si.rate && " ← 적용"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p style={styles.detailText}>
+                <strong>{WHO_LABEL[si.deceased]}</strong> 가입 {si.months}개월(약 {Math.floor(si.months / 12)}년) → 지급률 {si.rate * 100}%.{" "}
+                {si.year}년 기본연금액 {fmt(si.basePension)}만원 × {si.rate * 100}% = 유족연금 <strong>{fmt(si.fullSurvivor)}만원</strong>
+              </p>
+              <p style={styles.detailText}>
+                중복급여 조정(국민연금법 제56조) — 둘 중 큰 쪽을 자동 선택:
+                <br />
+                {si.choice === "SURVIVOR" ? "✅" : "▫️"} ① 유족연금 전액 <strong>{fmt(si.fullSurvivor)}만원</strong> ({survivorLabel} 노령연금은 지급정지)
+                <br />
+                {si.choice === "OWN_PLUS_30" ? "✅" : "▫️"} ② {survivorLabel} 노령연금 {fmt(si.ownPension)}만원 + 유족연금 30% {fmt(si.fullSurvivor * 0.3)}만원 ={" "}
+                <strong>{fmt(si.ownPlus30)}만원</strong>
+              </p>
+              <p style={styles.note}>
+                ※ 기본연금액은 연기 가산(연 7.2%)·조기수령 감액 전 금액입니다. 노령연금 수급자가 사망하면 유족연금은 받던 노령연금액을 넘을 수
+                없습니다. 부양가족(19세 미만 자녀·부모 등)이 있으면 부양가족연금액이 더해지지만 여기에는 반영하지 않았습니다. 정확한 금액은
+                국민연금공단(☎1355)에서 확인하세요.
+              </p>
+            </details>
+          )}
         </div>
       )}
 
@@ -350,6 +394,10 @@ const styles: { [key: string]: React.CSSProperties } = {
   kpiLabel: { fontSize: "0.78rem", color: "var(--text-muted)" },
   kpiValue: { fontSize: "1.15rem", fontWeight: 700, color: "var(--text-accent)", marginTop: "4px" },
   kpiHint: { fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px" },
+  details: { marginTop: "10px" },
+  summary: { cursor: "pointer", fontWeight: 600, color: "var(--text-accent)", fontSize: "0.82rem" },
+  detailText: { fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.7, margin: "8px 0 0" },
+  bestRow: { backgroundColor: "rgba(16, 185, 129, 0.08)", fontWeight: 600 },
   infoAlert: {
     backgroundColor: "rgba(99, 102, 241, 0.07)",
     border: "1px solid rgba(99, 102, 241, 0.18)",

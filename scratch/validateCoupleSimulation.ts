@@ -98,6 +98,17 @@ assert.equal(at(2036).spouse!.survivorPart, 0); // 둘 다 생존 중에는 0
 assert.equal(at(2036).self.survivorPart, 0);
 near(at(2059).household, 120);
 near(r.lifetime.household, 65561.1);
+// 유족연금 산정 내역: 남편 가입 360개월(20년 이상) → 60%, 기본연금액 200 → 유족연금 120 vs 아내 56 + 30%(36) = 92 → 유족연금 선택
+const si = r.survivorInfo!;
+assert.equal(si.deceased, "SELF");
+assert.equal(si.year, 2047);
+assert.equal(si.months, 360);
+assert.equal(si.rate, 0.6);
+near(si.basePension, 200);
+near(si.fullSurvivor, 120);
+near(si.ownPension, 56);
+near(si.ownPlus30, 92);
+assert.equal(si.choice, "SURVIVOR");
 
 // 아내 연금이 더 크면 본인 연금 + 유족연금 30%를 고른다
 const r2 = runCoupleSimulation(
@@ -110,12 +121,18 @@ const r2 = runCoupleSimulation(
 const y2 = r2.rows.find((row) => row.year === 2047)!;
 near(y2.spouse!.national, 150 + 0.3 * 0.5 * 60); // 가입 130개월 → 유족 50%
 assert.equal(y2.spouse!.survivorChoice, "OWN_PLUS_30");
+// 남편 가입 130개월(10~20년) → 50%, 60 × 50% = 30 vs 아내 150 + 9 = 159 → 본인 연금 + 30% 선택
+assert.equal(r2.survivorInfo!.rate, 0.5);
+near(r2.survivorInfo!.fullSurvivor, 30);
+near(r2.survivorInfo!.ownPlus30, 159);
+assert.equal(r2.survivorInfo!.choice, "OWN_PLUS_30");
 near(y2.spouse!.survivorPart, 0.3 * 0.5 * 60); // 본인 연금 + 유족연금 30%: 30% 부분만 유족연금
 
 // 배우자 없음: 본인 기대수명까지만
 const solo = runCoupleSimulation(husband, null, { ...params, hasSpouse: false }, basic, 2026);
 assert.equal(solo.rows.length, 21);
 assert.equal(solo.firstDeath, null);
+assert.equal(solo.survivorInfo, null);
 assert.equal(solo.rows[0].spouse, null);
 
 // 기초연금 「대시보드 반영 안 함」이면 기초연금 0

@@ -120,7 +120,7 @@ export async function POST(request: Request) {
             currentAge: Number(simulationParams.currentAge) || 30,
             retirementAge: Number(simulationParams.retirementAge) || 60,
             expectedLifeExpectancy: Number(simulationParams.expectedLifeExpectancy) || 85,
-            inflationRate: Number(simulationParams.inflationRate) || 2.0,
+            inflationRate: Number(simulationParams.inflationRate) || 3.0,
             nationalPensionStartAge: Number(simulationParams.nationalPensionStartAge) || 65,
             hasSpouse: Boolean(simulationParams.hasSpouse),
             spouseAge: simulationParams.spouseAge ? Number(simulationParams.spouseAge) : null,

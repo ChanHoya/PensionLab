@@ -166,8 +166,8 @@ for (let y = 2027; y <= 2045; y++) {
   assert.ok(Math.abs(ratio - 0.98) < 0.01, `${y} 체감 비율 ${ratio}`);
 }
 
-// 가구 소득 평탄화: 국민연금을 바닥에 두고 모자란 만큼만 사적연금으로 채워, 가구 총액을
-// 인출 시작부터 소진 나이(기본: 본인 기대수명 80세 = 2046년)까지 매년 물가만큼(여기선 0%) 일정하게 유지
+// 가구 소득 평탄화: 가구 총액은 줄지 않고(유지 또는 증가) 소진 연도(기본: 본인 기대수명 80세 = 2046년)까지 매년 같은 비율,
+// 사적연금(총액 − 국민연금)은 국민연금이 모두 시작된 뒤 해마다 줄어 소진 연도 이후 0
 const bigIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 60000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
 const sm = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
 const smAt = (y: number) => sm.rows.find((row) => row.year === y)!;
@@ -177,12 +177,27 @@ const privAt = (res: typeof sm, y: number) => {
 };
 const level = sm.smoothing!.levelMonthly;
 assert.equal(sm.smoothing!.endYear, 2046);
-assert.ok(level > 256, `level ${level}`); // 부부 국민연금 합(256)보다 높음
-// 국민연금 개시 전(2026)·남편만(2031)·둘 다(2036~2046) 모두 가구 총액이 같다 → 국민연금 개시로 튀지 않음
+// 적립금이 커서 국민연금(256)보다 높은 수준 → 총액을 줄이지 않고 일정하게 유지
+assert.ok(level > 256, `level ${level}`);
+assert.equal(sm.smoothing!.annualGrowth, 0);
 for (let y = 2026; y <= 2046; y++) near(smAt(y).household, level, 0.6);
-assert.ok(privAt(sm, 2026) > privAt(sm, 2031)); // 국민연금 전 사적연금이 더 많음
-assert.ok(privAt(sm, 2031) > privAt(sm, 2036));
+for (let y = 2037; y <= 2046; y++) assert.ok(privAt(sm, y) <= privAt(sm, y - 1) + 0.6, `${y} 사적연금 증가`); // 국민연금 모두 개시 후 감소
+assert.ok(privAt(sm, 2026) > privAt(sm, 2036)); // 국민연금 전 사적연금이 더 많음
 for (let y = 2047; y <= 2059; y++) assert.equal(privAt(sm, y), 0); // 소진 후 0
+// 물가 3%, 적립금 3억: 총액이 국민연금 개시에도 튀지 않고 매년 같은 비율로 완만하게 늘며(0 < g < 물가),
+// 사적연금은 국민연금이 커지는 만큼 해마다 줄어 소진 연도에 거의 0
+const midIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 30000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
+const smM = runCoupleSimulation({ ...husband, retirementPensions: midIrp }, wife, { ...params, inflationRate: 3, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
+const mAt = (y: number) => smM.rows.find((row) => row.year === y)!;
+const gM = smM.smoothing!.annualGrowth;
+assert.ok(gM > 0 && gM < 0.03, `growth ${gM}`);
+for (let y = 2027; y <= 2046; y++) near(mAt(y).household / mAt(y - 1).household, 1 + gM, 0.004);
+for (let y = 2032; y <= 2046; y++) if (y !== 2036) assert.ok(privAt(smM, y) <= privAt(smM, y - 1) + 0.6, `mid ${y} 사적연금 증가`);
+assert.ok(privAt(smM, 2046) < 5);
+// 적립금이 너무 작으면(8천만원, 물가 0%) 국민연금 개시 때 계단은 피할 수 없지만 총액은 줄지 않는다
+const smallIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 8000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
+const smS = runCoupleSimulation({ ...husband, retirementPensions: smallIrp }, wife, { ...params, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
+for (let y = 2027; y <= 2046; y++) assert.ok(smS.rows.find((r0) => r0.year === y)!.household >= smS.rows.find((r0) => r0.year === y - 1)!.household - 0.6, `small ${y} 총액 감소`);
 // 사적연금 현재가치 합(연 3% 할인) = 적립금
 const pvDraw = sm.rows.reduce((a, row, t) => a + (privAt(sm, row.year) * 12) / Math.pow(1.03, t), 0);
 near(pvDraw / sm.smoothing!.pot, 1, 0.01);

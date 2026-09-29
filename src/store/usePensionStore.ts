@@ -210,7 +210,7 @@ const initialSimulationParams: SimulationParamsState = {
   currentAge: 35,
   retirementAge: 60,
   expectedLifeExpectancy: 85,
-  inflationRate: 2.0,
+  inflationRate: 3.0, // 최근 30년(1996~2025) 소비자물가 연평균 약 2.7%를 반올림
   nationalPensionStartAge: 65,
   hasSpouse: false,
   spouseAge: 35,

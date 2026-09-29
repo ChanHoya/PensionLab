@@ -41,7 +41,8 @@ export interface CoupleYear {
 export interface SmoothingSummary {
   startYear: number; // 사적연금 인출 시작 연도
   endYear: number; // 사적연금 소진 연도 (본인 수령 종료 나이, 기본 본인 기대수명)
-  levelMonthly: number; // 시작 연도 가구 월 수령액 (명목) — 소진 연도까지 매년 물가만큼 증가
+  annualGrowth: number; // 가구 총액의 연 변화율 (소진 연도에 국민연금 수준 도달)
+  levelMonthly: number; // 시작 연도 가구 월 수령액 (명목)
   levelToday: number; // 같은 수준의 현재가치
   pot: number; // 보유 사적연금 적립금 (시작 연도 가치, 만원)
   targetToday: number; // 희망 월 생활비 (현재가치, 만원/월)
@@ -62,8 +63,9 @@ const SMOOTHING_RATE = 0.03; // 사적연금 적립금 운용·할인 수익률 
 const PRIVATE_KEYS = ["retirement", "personal", "insurance"] as const;
 
 // 가구 소득 평탄화: 국민연금을 바닥에 두고 모자란 만큼만 사적연금으로 채운다.
-// 가구 총액은 인출 시작 수준 L에서 소진 연도까지 매년 물가만큼 일정한 비율로 늘어나고, 국민연금이 시작·증가하는 만큼
-// 사적연금 지급액이 줄어든다 (국민연금 개시로 총액이 튀지 않음). 소진 연도 이후에는 국민연금만.
+// 가구 총액 = L × (1+g)^경과연수 (인출 시작~소진 연도). g는 총액이 어느 해에도 국민연금 아래로 내려가지 않는 가장 완만한
+// 증가율(≥ 0)이라, 국민연금이 시작·증가하는 만큼 사적연금 지급액이 줄고 총액은 튀지 않는다. 소진 연도 이후에는 국민연금만.
+// (총액을 물가만큼 늘리면 물가연동인 국민연금과 같은 속도라 사적연금 몫이 줄지 않으므로, g는 적립금 크기로 정해진다)
 // 사적연금 인출액의 현재가치가 기존 사적연금 흐름의 현재가치(적립금)와 같아지도록 L을 찾는다.
 export function planHouseholdSmoothing(
   rows: CoupleYear[],
@@ -88,19 +90,40 @@ export function planHouseholdSmoothing(
   });
 
   const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0);
-  const target = (L: number, t: number) => L * Math.pow(1 + inflationRate / 100, t - start);
-  const drawAt = (L: number, t: number) => (t < start || t > end ? 0 : Math.max(0, target(L, t) - publicOf(rows[t])));
-  const need = (L: number) => rows.reduce((a, _r, t) => a + drawAt(L, t) * disc(t), 0);
-
-  let lo = 0;
-  let hi = 1;
-  while (need(hi) < pot && hi < 1e7) hi *= 2;
-  for (let i = 0; i < 100; i++) {
-    const mid = (lo + hi) / 2;
-    if (need(mid) < pot) lo = mid;
-    else hi = mid;
+  const pathAt = (L: number, g: number, t: number) => L * Math.pow(1 + g, t - start);
+  const drawAt = (L: number, g: number, t: number) => (t < start || t > end ? 0 : Math.max(0, pathAt(L, g, t) - publicOf(rows[t])));
+  const need = (L: number, g: number) => rows.reduce((a, _r, t) => a + drawAt(L, g, t) * disc(t), 0);
+  // 증가율 g일 때 적립금을 모두 쓰는 시작 수준 L (need는 L에 대해 증가)
+  const solveL = (g: number, amount: number) => {
+    let lo = 0;
+    let hi = 1;
+    while (need(hi, g) < amount && hi < 1e7) hi *= 2;
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (need(mid, g) < amount) lo = mid;
+      else hi = mid;
+    }
+    return (lo + hi) / 2;
+  };
+  // 총액이 국민연금보다 낮아지는 해의 최대 부족분 (0이면 국민연금 개시로 총액이 튀지 않음)
+  const maxJump = (L: number, g: number) => {
+    let worst = 0;
+    for (let t = start; t <= end; t++) worst = Math.max(worst, publicOf(rows[t]) - pathAt(L, g, t));
+    return worst;
+  };
+  // 총액을 줄이지 않고(g ≥ 0) 어느 해에도 국민연금 아래로 내려가지 않는 가장 완만한 증가율을 고른다.
+  // 적립금이 너무 작아 불가능하면 국민연금 개시 때 튀는 폭이 가장 작은 증가율.
+  let best = { g: 0, L: 0, jump: Infinity };
+  if (pot > 0) {
+    for (let step = 0; step <= 300; step++) {
+      const g = step * 0.0005; // 0% ~ 15%, 0.05%p 간격
+      const L = solveL(g, pot);
+      const jump = maxJump(L, g);
+      if (jump < best.jump - 0.01) best = { g, L, jump };
+      if (jump <= 0.5) break;
+    }
   }
-  const L = pot > 0 ? (lo + hi) / 2 : 0;
+  const { g, L } = best;
 
   // 인출액을 사람별(적립금 비율, 사망 후엔 생존자) · 상품별(적립금 비율)로 나눈다
   const wSelf = pot > 0 ? potSelf / pot : 1;
@@ -110,7 +133,7 @@ export function planHouseholdSmoothing(
     insurance: pot > 0 ? (amount * catPv.insurance) / pot : 0,
   });
   const override = rows.map((r, t) => {
-    const d = pot > 0 ? drawAt(L, t) : 0;
+    const d = pot > 0 ? drawAt(L, g, t) : 0;
     const selfShare = r.self.alive && r.spouse?.alive ? wSelf : r.self.alive ? 1 : 0;
     return { self: split(d * selfShare), spouse: split(d * (1 - selfShare)) };
   });
@@ -121,11 +144,12 @@ export function planHouseholdSmoothing(
     summary: {
       startYear: rows[start]?.year ?? 0,
       endYear: rows[end]?.year ?? 0,
+      annualGrowth: g,
       levelMonthly: L,
       levelToday: L / startIndex,
       pot,
       targetToday,
-      requiredPot: need(targetToday * startIndex),
+      requiredPot: need(targetToday * startIndex, g),
     },
   };
 }

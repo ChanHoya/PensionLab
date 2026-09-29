@@ -2051,9 +2051,12 @@ export default function OnboardingPage() {
                   ⚙️ 물가상승률 및 은퇴 후 연금 수령 개시 나이 등의 시뮬레이션 기본 파라미터를 설정합니다.
                 </div>
                 <div style={styles.fieldRow}>
-                  <label style={styles.label}>장기 물가상승률 (%)</label>
+                  <label style={styles.label}>
+                    장기 물가상승률 (%) <span style={styles.labelHint}>(기본 3% · 최근 30년 평균 약 2.7%)</span>
+                  </label>
                   <input
                     type="number"
+                    step="0.1"
                     className="premium-input"
                     value={store.simulationParams.inflationRate}
                     onChange={(e) => store.setSimulationParams({ inflationRate: Number(e.target.value) })}

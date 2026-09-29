@@ -25,6 +25,8 @@ export async function POST(request: Request) {
     const prompt = `
 당신은 대한민국 금융감독원 통합연금포털의 연금 정보 조회 PDF 보고서에서 텍스트를 추출한 데이터를 정밀 분석하는 전문 파서(Parser) AI입니다.
 주어진 PDF 텍스트에서 1층(국민연금), 2층(퇴직연금 DB/DC/IRP), 3층(개인연금저축/연금보험) 데이터를 찾아서 아래 명시된 정확한 JSON 스키마로 가공하여 반환해 주십시오.
+텍스트에는 여러 PDF(전체 연금계약정보, 국민연금·퇴직연금·개인연금 계약상세 등)가 "=== [문서 종류] 파일명 ===" 머리글로 구분되어 이어 붙어 있을 수 있습니다.
+같은 계약이 여러 문서에 나오면 한 번만 담고, 값이 다르면 계약상세 문서의 값을 우선하십시오.
 
 [분석할 PDF 텍스트 데이터]
 """
@@ -51,6 +53,8 @@ ${pdfText}
     // 2층 퇴직연금 목록 (DB, DC, IRP 유형 구분)
     {
       "pensionType": "DB" or "DC" or "IRP",
+      "provider": string or null, // 금융회사명 (예: ○○은행, ○○생명)
+      "productName": string or null, // 상품명
       "avgSalary": number or null, // DB형일 때 평균급여 (만원 단위)
       "yearsOfService": number or null, // DB형일 때 현재 근속연수 (년 단위)
       "salaryGrowthRate": number or null, // DB형일 때 임금상승률 (%, 기본값 3.0)
@@ -63,6 +67,8 @@ ${pdfText}
     // 3층 개인연금저축 목록 (연금저축 신탁/펀드/보험 등)
     {
       "savingsType": "TRUST" or "FUND" or "INSURANCE", // 신탁 ➔ TRUST, 펀드 ➔ FUND, 생명/손해보험 ➔ INSURANCE
+      "provider": string or null, // 금융회사명 (예: ○○은행, ○○생명)
+      "productName": string or null, // 상품명
       "totalAccumulated": number or null, // 누적적립금 (만원 단위)
       "monthlyAnnualContribution": number or null, // 월 납입액 (만원 단위)
       "desiredStartAge": number or null, // 수령 희망나이 (세 단위, 기본값 65)
@@ -73,6 +79,8 @@ ${pdfText}
     // 3층 일반 세제비적격 연금보험 목록
     {
       "insuranceType": "SAVING" or "VARIABLE", // 일반저축성연금 ➔ SAVING, 변액연금 ➔ VARIABLE
+      "provider": string or null, // 금융회사명 (예: ○○은행, ○○생명)
+      "productName": string or null, // 상품명
       "totalAccumulated": number or null, // 누적적립금 (만원 단위)
       "monthlyPayment": number or null, // 월 납입액 (만원 단위)
       "paymentPeriod": number or null, // 납입기간 (년 단위, 기본값 10)

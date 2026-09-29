@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
-import { resolveAge } from "@/utils/age";
+import { resolveAge, resolveBirthYear } from "@/utils/age";
 import { statutoryPensionStartAge } from "@/config/npsRules";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
 import BasicPensionForm from "@/components/BasicPensionForm";
@@ -836,10 +836,12 @@ export default function OnboardingPage() {
                         onBlur={() => {
                           const resolved = resolveAge(ageInput);
                           if (resolved !== null) {
-                            // 나이(출생연도)로 국민연금 법정 개시 나이를 기본값으로 맞춘다 (대시보드에서 조정 가능)
+                            // 출생연도(주민번호 앞자리면 정확, 나이면 근사)로 국민연금 법정 개시 나이를 맞춘다
+                            const birthYear = resolveBirthYear(ageInput) ?? new Date().getFullYear() - resolved;
                             store.setSimulationParams({
                               currentAge: resolved,
-                              nationalPensionStartAge: statutoryPensionStartAge(new Date().getFullYear() - resolved),
+                              birthYear,
+                              nationalPensionStartAge: statutoryPensionStartAge(birthYear),
                             });
                             setAgeInput(String(resolved));
                           } else {
@@ -889,9 +891,11 @@ export default function OnboardingPage() {
                           onBlur={() => {
                             const resolved = resolveAge(spouseAgeInput);
                             if (resolved !== null) {
+                              const spouseBirthYear = resolveBirthYear(spouseAgeInput) ?? new Date().getFullYear() - resolved;
                               store.setSimulationParams({
                                 spouseAge: resolved,
-                                spouseNationalPensionStartAge: statutoryPensionStartAge(new Date().getFullYear() - resolved),
+                                spouseBirthYear,
+                                spouseNationalPensionStartAge: statutoryPensionStartAge(spouseBirthYear),
                               });
                               setSpouseAgeInput(String(resolved));
                             } else {

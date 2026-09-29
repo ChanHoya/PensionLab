@@ -400,29 +400,47 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 }
 
 
-/* 대시보드: 왼쪽 입력 열(접기 가능) : 오른쪽 결과 = 1 : 4, 좁은 화면에서는 위아래로 쌓음 */
+/* 대시보드: 제목줄 고정, 왼쪽 입력 열(접기 가능) : 오른쪽 결과 = 1 : 4.
+   입력 열은 화면 세로 높이 안에서 자체 스크롤, 결과 칸만 스크롤. 좁은 화면에서는 위아래로 쌓고 페이지 전체 스크롤 */
+.dash-page {
+  height: 100vh;
+}
+.dash-body {
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 12px !important;
+}
 .dash-layout {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(250px, 1fr) 4fr;
   gap: 16px;
-  align-items: start;
 }
 .dash-layout.collapsed {
   grid-template-columns: 44px 1fr;
 }
-.dash-layout > .dash-sidebar {
-  position: sticky;
-  top: 12px;
-  max-height: calc(100vh - 24px);
+.dash-layout > .dash-sidebar,
+.dash-layout > .dash-results {
+  height: 100%;
+  min-height: 0;
   overflow-y: auto;
 }
+.dash-layout > .dash-results {
+  padding-right: 4px;
+}
 @media (max-width: 900px) {
+  .dash-page {
+    height: auto;
+    overflow: visible !important;
+  }
   .dash-layout,
   .dash-layout.collapsed {
     grid-template-columns: 1fr;
   }
-  .dash-layout > .dash-sidebar {
-    position: static;
-    max-height: none;
+  .dash-layout > .dash-sidebar,
+  .dash-layout > .dash-results {
+    height: auto;
+    overflow: visible;
   }
 }

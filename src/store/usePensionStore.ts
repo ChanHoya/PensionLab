@@ -70,6 +70,8 @@ export interface SimulationParamsState {
   nationalPensionStartAge: number;
   hasSpouse: boolean;
   spouseAge?: number;
+  birthYear?: number; // 출생연도 (국민연금 법정 개시 나이 판정, 없으면 현재연도 − 나이)
+  spouseBirthYear?: number;
   childrenCount: number;
   childrenAges: string;
   targetMonthlySpending: number;

@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
 import { NPS_RULES } from "@/config/npsRules";
+import { statutoryStartAgeOf } from "@/services/coupleSimulation";
 
 // 대시보드 왼쪽 입력 열: 시뮬레이션·시나리오에 쓰는 모든 입력을 그룹별로 모은다 (접으면 결과가 전체 폭 사용)
 interface Props {
@@ -25,6 +26,21 @@ export default function DashboardSidebar(props: Props) {
   const params = store.simulationParams;
   const hasSpouse = params.hasSpouse;
   const setParam = (data: Partial<SimulationParamsState>) => store.setSimulationParams(data);
+
+  // 국민연금 개시 나이는 출생연도별 법정 나이로 고정 (늦추려면 「수령 시작」 연기). 예전 저장값(예: 70세)도 맞춘다
+  const selfStatutory = statutoryStartAgeOf(params, "SELF");
+  const spouseStatutory = statutoryStartAgeOf(params, "SPOUSE");
+  // 출생연도: 온보딩에서 주민번호 앞자리로 저장된 값, 없으면 올해 − 나이 (생일 전이면 1년 차이 가능)
+  const thisYear = new Date().getFullYear();
+  const selfBirth = params.birthYear || thisYear - params.currentAge;
+  const spouseBirth = params.spouseBirthYear || thisYear - (params.spouseAge ?? params.currentAge);
+  const setSimulationParams = store.setSimulationParams;
+  useEffect(() => {
+    const fix: Partial<SimulationParamsState> = {};
+    if (params.nationalPensionStartAge !== selfStatutory) fix.nationalPensionStartAge = selfStatutory;
+    if (hasSpouse && params.spouseNationalPensionStartAge !== spouseStatutory) fix.spouseNationalPensionStartAge = spouseStatutory;
+    if (Object.keys(fix).length > 0) setSimulationParams(fix);
+  }, [params.nationalPensionStartAge, params.spouseNationalPensionStartAge, selfStatutory, spouseStatutory, hasSpouse, setSimulationParams]);
 
   if (props.collapsed) {
     return (
@@ -109,22 +125,26 @@ export default function DashboardSidebar(props: Props) {
 
       <details open style={styles.group}>
         <summary style={styles.summary}>기본</summary>
-        {slider("현재 나이", params.currentAge, "세", 20, 70, 1, (v) => setParam({ currentAge: v }))}
-        {slider("은퇴 나이", params.retirementAge, "세", 50, 75, 1, (v) => setParam({ retirementAge: v }))}
-        {slider("기대수명", params.expectedLifeExpectancy, "세", 75, 100, 1, (v) => setParam({ expectedLifeExpectancy: v }))}
+        {slider("본인 기대수명", params.expectedLifeExpectancy, "세", 75, 105, 1, (v) => setParam({ expectedLifeExpectancy: v }))}
+        {hasSpouse && slider("배우자 기대수명", params.spouseLifeExpectancy, "세", 75, 105, 1, (v) => setParam({ spouseLifeExpectancy: v }))}
         {slider("물가상승률", params.inflationRate, "%", 0.5, 6, 0.1, (v) => setParam({ inflationRate: v }))}
         <p style={styles.note}>기본 3% (최근 30년 평균 약 2.7%)</p>
       </details>
 
       <details open style={styles.group}>
         <summary style={styles.summary}>국민연금</summary>
-        {slider("본인 개시 연령", params.nationalPensionStartAge, "세", 60, 70, 1, (v) => setParam({ nationalPensionStartAge: v }))}
-        {hasSpouse && slider("배우자 개시 연령", params.spouseNationalPensionStartAge, "세", 60, 70, 1, (v) => setParam({ spouseNationalPensionStartAge: v }))}
-        {deferSelect("본인 수령 시작", params.nationalPensionDeferYears, params.nationalPensionStartAge, "nationalPensionDeferYears")}
-        {hasSpouse && deferSelect("배우자 수령 시작", params.spouseNationalPensionDeferYears, params.spouseNationalPensionStartAge, "spouseNationalPensionDeferYears")}
+        {deferSelect(`본인 수령 시작 (${selfBirth}년생 · 법정 ${selfStatutory}세)`, params.nationalPensionDeferYears, selfStatutory, "nationalPensionDeferYears")}
+        {hasSpouse &&
+          deferSelect(
+            `배우자 수령 시작 (${spouseBirth}년생 · 법정 ${spouseStatutory}세)`,
+            params.spouseNationalPensionDeferYears,
+            spouseStatutory,
+            "spouseNationalPensionDeferYears"
+          )}
         <p style={styles.note}>
-          개시 연령 기본값은 출생연도별 법정 나이(1969년생 이후 65세). 최대 {NPS_RULES.maxDeferralYears}년 연기, 1년마다 +
-          {(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%. 시뮬레이션과 모든 시나리오에 같이 적용됩니다.
+          법정 개시 나이는 출생연도로 정해집니다 (1965~68년생 64세, 1969년생 이후 65세). 최대 {NPS_RULES.maxDeferralYears}년 연기,
+          1년마다 +{(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%. 시뮬레이션과 모든 시나리오에 같이 적용됩니다.
+          {(!params.birthYear || (hasSpouse && !params.spouseBirthYear)) && " 출생연도가 다르면 「정보 재입력」에서 주민번호 앞자리로 나이를 다시 입력하세요."}
         </p>
       </details>
 

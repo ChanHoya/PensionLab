@@ -86,6 +86,14 @@ export default function DashboardSidebar(props: Props) {
     ...store.retirementPensions.map((p) => ({ id: p.id, name: `${p.pensionType} 퇴직연금` })),
     ...store.personalPensions.map((p) => ({ id: p.id, name: `개인연금저축 (${p.savingsType})` })),
     ...store.pensionInsurances.map((i) => ({ id: i.id, name: `연금보험 (${i.insuranceType})` })),
+    // 배우자 계좌 (가구 기준 시나리오)
+    ...(hasSpouse
+      ? [
+          ...store.spouse.retirementPensions.map((p) => ({ id: p.id, name: `배우자 ${p.pensionType} 퇴직연금` })),
+          ...store.spouse.personalPensions.map((p) => ({ id: p.id, name: `배우자 개인연금저축 (${p.savingsType})` })),
+          ...store.spouse.pensionInsurances.map((i) => ({ id: i.id, name: `배우자 연금보험 (${i.insuranceType})` })),
+        ]
+      : []),
   ];
   const coveredCallAsset = params.coveredCallAsset || 5000;
   const coveredCallRate = params.coveredCallDividendRate || 9.0;

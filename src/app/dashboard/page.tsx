@@ -3,15 +3,15 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePensionStore, basicForSimulation } from "@/store/usePensionStore";
+import { usePensionStore } from "@/store/usePensionStore";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
-import { runWithdrawalSimulation, StrategySimulationResult } from "@/services/withdrawalCalculator";
+import type { StrategySimulationResult } from "@/services/withdrawalCalculator";
+import { runHouseholdScenarios } from "@/services/householdScenarios";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import { NPS_RULES } from "@/config/npsRules";
 
 // Import Recharts components
 import {
@@ -215,11 +215,24 @@ export default function DashboardPage() {
         defaultStartAges[i.id] = store.simulationParams.retirementAge;
         defaultPeriods[i.id] = 20;
       });
+      // 배우자 계좌 (가구 기준 시나리오)
+      store.spouse.retirementPensions.forEach(p => {
+        defaultStartAges[p.id] = store.simulationParams.spouseRetirementAge;
+        defaultPeriods[p.id] = 10;
+      });
+      store.spouse.personalPensions.forEach(p => {
+        defaultStartAges[p.id] = p.desiredStartAge;
+        defaultPeriods[p.id] = p.receivingPeriod;
+      });
+      store.spouse.pensionInsurances.forEach(i => {
+        defaultStartAges[i.id] = store.simulationParams.spouseRetirementAge;
+        defaultPeriods[i.id] = 20;
+      });
 
       setS3StartAges(defaultStartAges);
       setS3Periods(defaultPeriods);
     }
-  }, [isMounted, store.retirementPensions, store.personalPensions, store.pensionInsurances, store.simulationParams.retirementAge]);
+  }, [isMounted, store.retirementPensions, store.personalPensions, store.pensionInsurances, store.spouse, store.simulationParams.retirementAge, store.simulationParams.spouseRetirementAge]);
 
   if (!isMounted) {
     return (
@@ -263,45 +276,32 @@ export default function DashboardPage() {
     store.spouse.returnRepayment,
     personParams(store.simulationParams, "SPOUSE")
   );
-  const coupleResult = runCoupleSimulation(
-    {
-      national: nationalForSim,
-      retirementPensions: store.retirementPensions,
-      personalPensions: store.personalPensions,
-      pensionInsurances: store.pensionInsurances,
-    },
-    hasSpouse
-      ? {
-          national: spouseApplied.national,
-          retirementPensions: store.spouse.retirementPensions,
-          personalPensions: store.spouse.personalPensions,
-          pensionInsurances: store.spouse.pensionInsurances,
-        }
-      : null,
-    store.simulationParams,
-    store.basicPension
-  );
+  const selfPensions = {
+    national: nationalForSim,
+    retirementPensions: store.retirementPensions,
+    personalPensions: store.personalPensions,
+    pensionInsurances: store.pensionInsurances,
+  };
+  const spousePensions = hasSpouse
+    ? {
+        national: spouseApplied.national,
+        retirementPensions: store.spouse.retirementPensions,
+        personalPensions: store.spouse.personalPensions,
+        pensionInsurances: store.spouse.pensionInsurances,
+      }
+    : null;
+  const coupleResult = runCoupleSimulation(selfPensions, spousePensions, store.simulationParams, store.basicPension);
 
-  // 인출전략 시나리오: 왼쪽 입력의 국민연금 연기(개시 나이 + 연기, 1년당 7.2% 가산)를 시뮬레이션과 같게 적용
-  const selfDefer = deferYearsOf(store.simulationParams);
-  const withdrawalNational = { ...nationalForSim, expectedMonthlyPension: nationalForSim.expectedMonthlyPension * (1 + NPS_RULES.deferralBonusPerYear * selfDefer) };
-  const withdrawalParams = { ...store.simulationParams, nationalPensionStartAge: store.simulationParams.nationalPensionStartAge + selfDefer };
-  const withdrawalSimulation = runWithdrawalSimulation(
-    withdrawalNational,
-    basicForSimulation(store.basicPension),
-    store.retirementPensions,
-    store.personalPensions,
-    store.pensionInsurances,
-    withdrawalParams,
-    {
-      personalTaxCreditRatio,
-      retirementLumpSumTaxRate,
-      otherIncomeAnnual,
-      publicPensionTaxableRatio,
-      s3CustomStartAges: s3StartAges,
-      s3CustomPeriods: s3Periods,
-    }
-  );
+  // 인출전략 시나리오: 부부 가구 기준. 국민연금·기초연금(연기·유족연금 포함)은 위 시뮬레이션 값을 그대로 쓰고
+  // 세금·건보료·사적연금 한도는 사람별로 계산해 합산한다
+  const withdrawalSimulation = runHouseholdScenarios(selfPensions, spousePensions, store.simulationParams, store.basicPension, coupleResult, {
+    personalTaxCreditRatio,
+    retirementLumpSumTaxRate,
+    otherIncomeAnnual,
+    publicPensionTaxableRatio,
+    s3CustomStartAges: s3StartAges,
+    s3CustomPeriods: s3Periods,
+  });
 
   const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as Lowercase<ScenarioTab>];
 
@@ -473,8 +473,9 @@ export default function DashboardPage() {
                 </div>
                 <h3 style={styles.dashboardTitle}>인출전략 시나리오 비교 (세후)</h3>
                 <p style={styles.chartSubtitle}>
-                  위 시뮬레이션과 같은 입력(나이·국민연금 개시/연기·물가·기초연금)에 세금·건보료를 얹어 인출 방식별로 비교합니다.
-                  국민연금 연기는 왼쪽 입력의 「수령 시작」으로 모든 시나리오에 같이 적용됩니다.
+                  {hasSpouse ? "부부 가구 기준입니다. " : ""}국민연금·기초연금(연기·유족연금 포함)은 위 시뮬레이션 값을 그대로 쓰고,
+                  퇴직·개인연금 인출 방식만 시나리오별로 달리해 세금·건보료를 {hasSpouse ? "사람별로 계산한 뒤 합산" : "계산"}합니다.
+                  재산·금융소득·기타 소득과 S4 배당(부부 분산을 끄면)은 본인 명의로 봅니다.
                 </p>
               </div>
 
@@ -515,7 +516,7 @@ export default function DashboardPage() {
                     <h5 style={styles.compareName}>{strat.strategyName}</h5>
                     <div style={{ ...styles.divider, margin: "6px 0" }} />
                     <div style={styles.compareValueRow}>
-                      <span style={styles.compareLabel}>생애 총 수령액 (세후)</span>
+                      <span style={styles.compareLabel}>{hasSpouse ? "가구 " : ""}생애 총 수령액 (세후)</span>
                       <span style={styles.compareVal}>{strat.lifetimeTotalPostTax.toLocaleString()} 만원</span>
                     </div>
                     <div style={styles.compareValueRow}>
@@ -662,7 +663,8 @@ export default function DashboardPage() {
                 <table style={styles.table}>
                   <thead>
                     <tr style={styles.trHeader}>
-                      <th style={styles.th}>나이</th>
+                      <th style={styles.th}>{hasSpouse ? "본인 나이" : "나이"}</th>
+                      {hasSpouse && <th style={styles.th}>배우자 나이</th>}
                       <th style={styles.th}>연도</th>
                       <th style={styles.th}>세전 합계</th>
                       <th style={styles.th}>국민연금</th>
@@ -681,6 +683,7 @@ export default function DashboardPage() {
                     {activeResult.flows.map((flow) => (
                       <tr key={flow.age} style={styles.tr}>
                         <td style={styles.td}>{flow.age}세</td>
+                        {hasSpouse && <td style={styles.td}>{flow.spouseAge ? `${flow.spouseAge}세` : "-"}</td>}
                         <td style={styles.td}>{flow.year}년</td>
                         <td style={{ ...styles.td, fontWeight: 700 }}>{flow.totalPreTax.toLocaleString()}</td>
                         <td style={styles.td}>{flow.nationalPreTax.toLocaleString()}</td>
@@ -707,6 +710,7 @@ export default function DashboardPage() {
                       borderBottom: "2px solid var(--border)",
                     }}>
                       <td style={{ padding: "7px 8px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>합계</td>
+                      {hasSpouse && <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>}
                       <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>
                       <td style={{ padding: "7px 8px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>{totalFlows.totalPreTax.toLocaleString()}</td>
                       <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.nationalPreTax.toLocaleString()}</td>

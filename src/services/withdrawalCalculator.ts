@@ -44,6 +44,7 @@ export interface PensionAccountModel {
 export interface SimulationYearFlow {
   age: number;
   year: number;
+  spouseAge?: number; // 가구 합산 시 배우자 나이 (배우자 사망 후 없음)
   
   // 수령액 (세전)
   nationalPreTax: number;
@@ -479,6 +480,8 @@ export function runWithdrawalSimulation(
     publicPensionTaxableRatio?: number; // 국민연금 과세비율 (0.0~1.0, 기본 0.5)
     s3CustomStartAges?: { [accountId: string]: number }; // S3 계좌별 인출 개시 나이
     s3CustomPeriods?: { [accountId: string]: number }; // S3 계좌별 인출 기간
+    // 나이별 국민연금·기초연금 월액(만원, 명목). 주면 엔진 자체 계산 대신 이 값을 쓴다 (부부 통합 시뮬레이션과 같은 기준)
+    publicPensionByAge?: Record<number, { national: number; basic: number }>;
   } = {}
 ): {
   s0: StrategySimulationResult;
@@ -497,6 +500,7 @@ export function runWithdrawalSimulation(
   const retirementLumpSumTaxRate = customInputs.retirementLumpSumTaxRate ?? 0.08;
   const otherIncomeAnnual = (customInputs.otherIncomeAnnual ?? 0) * 10000; // 만원 -> 원
   const publicPensionTaxableRatio = customInputs.publicPensionTaxableRatio ?? 0.5;
+  const publicByAge = customInputs.publicPensionByAge;
 
   // 1. 계좌 리스트 및 세부 재원 통합 초기 모델 생성 함수
   const createUnifiedAccounts = (strategyId: "S0" | "S1" | "S2" | "S3" | "S4"): PensionAccountModel[] => {
@@ -697,12 +701,17 @@ export function runWithdrawalSimulation(
       const df = Math.pow(1 + weightedR, -t);
       const mult = getDecumulationMultiplier(t + 1, simulationParams.decumulationStrategy);
       let natP = 0, basP = 0;
-      // 공적연금 물가연동 증액분을 PV 합산에 반영
-      if (portAge >= effectiveNatStartPort) {
-        natP = (national.expectedMonthlyPension * 12) * deferMultPort * Math.pow(1 + inflationRate, portAge - effectiveNatStartPort) * 10000;
-      }
-      if (portAge >= 65 && basic.expectedEligibility) {
-        basP = (basic.expectedMonthlyAmount * 12) * Math.pow(1 + inflationRate, portAge - 65) * 10000;
+      if (publicByAge) {
+        natP = (publicByAge[portAge]?.national ?? 0) * 12 * 10000;
+        basP = (publicByAge[portAge]?.basic ?? 0) * 12 * 10000;
+      } else {
+        // 공적연금 물가연동 증액분을 PV 합산에 반영
+        if (portAge >= effectiveNatStartPort) {
+          natP = (national.expectedMonthlyPension * 12) * deferMultPort * Math.pow(1 + inflationRate, portAge - effectiveNatStartPort) * 10000;
+        }
+        if (portAge >= 65 && basic.expectedEligibility) {
+          basP = (basic.expectedMonthlyAmount * 12) * Math.pow(1 + inflationRate, portAge - 65) * 10000;
+        }
       }
       pvPublicPension += (natP + basP) * df;
       portfolioDenominator += mult * df;
@@ -750,7 +759,11 @@ export function runWithdrawalSimulation(
           ? simulationParams.nationalPensionStartAge + 5
           : simulationParams.nationalPensionStartAge;
 
-      if (age >= nationalPensionStartAge) {
+      if (publicByAge) {
+        // 외부(시뮬레이션) 공적연금 사용: 연기·물가연동·유족연금·기초연금 판정이 이미 반영된 값
+        nationalPreTax = (publicByAge[age]?.national ?? 0) * 12 * 10000;
+        basicPreTax = (publicByAge[age]?.basic ?? 0) * 12 * 10000;
+      } else if (age >= nationalPensionStartAge) {
         // 국민연금 연기 시 매년 +7.2% 증액 효과 반영
         const deferYears = Math.max(0, nationalPensionStartAge - simulationParams.nationalPensionStartAge);
         const deferMultiplier = 1 + deferYears * 0.072;
@@ -760,7 +773,7 @@ export function runWithdrawalSimulation(
         nationalPreTax = (national.expectedMonthlyPension * 12) * deferMultiplier * indexation * 10000;
       }
 
-      if (age >= 65 && basic.expectedEligibility) {
+      if (!publicByAge && age >= 65 && basic.expectedEligibility) {
         // 기초연금도 매년 물가상승률만큼 증액
         const basicIndexation = Math.pow(1 + inflationRate, age - 65);
         basicPreTax = (basic.expectedMonthlyAmount * 12) * basicIndexation * 10000;

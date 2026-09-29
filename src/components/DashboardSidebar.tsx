@@ -85,19 +85,6 @@ export default function DashboardSidebar(props: Props) {
       </select>
     </div>
   );
-  // 가구 소득 평탄화: 본인 수령 종료 나이 = 부부 사적연금 소진 나이(비우면 본인 기대수명), 배우자 칸은 쓰지 않음
-  const smoothing = params.householdIncomeSmoothing;
-  const endAge = (label: string, value: number, key: "privatePensionEndAge" | "spousePrivatePensionEndAge") => {
-    const unused = smoothing && key === "spousePrivatePensionEndAge";
-    return (
-      <div style={styles.field}>
-        <label style={styles.label}>{label}</label>
-        <input type="number" min={0} className="premium-input" style={styles.input} disabled={unused} value={value || ""}
-          placeholder={unused ? "평탄화 중에는 본인 칸 기준" : smoothing ? `비우면 ${params.expectedLifeExpectancy}세(기대수명)` : "비우면 상품별 기본 기간"}
-          onChange={(e) => setParam({ [key]: Number(e.target.value) })} />
-      </div>
-    );
-  };
   const accounts = [
     ...store.retirementPensions.map((p) => ({ id: p.id, name: `${p.pensionType} 퇴직연금` })),
     ...store.personalPensions.map((p) => ({ id: p.id, name: `개인연금저축 (${p.savingsType})` })),
@@ -152,23 +139,22 @@ export default function DashboardSidebar(props: Props) {
         <summary style={styles.summary}>퇴직·개인연금 인출</summary>
         <div style={styles.field}>
           <label style={styles.label}>인출 방식</label>
-          <select className="premium-input" style={styles.input} value={smoothing ? "SMOOTH" : params.decumulationStrategy}
-            onChange={(e) =>
-              setParam(
-                e.target.value === "SMOOTH"
-                  ? { householdIncomeSmoothing: true, decumulationStrategy: "FLAT" }
-                  : { householdIncomeSmoothing: false, decumulationStrategy: e.target.value as SimulationParamsState["decumulationStrategy"] }
-              )
-            }>
-            <option value="SMOOTH">가구 소득 평탄화</option>
-            <option value="DECREASING">완만한 체감 (매년 2%↓)</option>
-            <option value="FLAT">균등 수령</option>
+          <select className="premium-input" style={styles.input} value={params.decumulationStrategy}
+            onChange={(e) => setParam({ decumulationStrategy: e.target.value as SimulationParamsState["decumulationStrategy"] })}>
+            <option value="FLAT">가구 평탄화 · 총액 유지</option>
+            <option value="DECREASING">가구 평탄화 · 완만한 체감 (매년 2%↓)</option>
           </select>
         </div>
-        {endAge("본인 수령 종료 나이", params.privatePensionEndAge, "privatePensionEndAge")}
-        {hasSpouse && endAge("배우자 수령 종료 나이", params.spousePrivatePensionEndAge, "spousePrivatePensionEndAge")}
+        {/* 가구 사적연금 소진 나이 (본인 나이 기준). 배우자 칸은 가구 평탄화에서 쓰지 않아 두지 않는다 */}
+        <div style={styles.field}>
+          <label style={styles.label}>{hasSpouse ? "사적연금 수령 종료 나이 (본인 나이 기준)" : "사적연금 수령 종료 나이"}</label>
+          <input type="number" min={0} className="premium-input" style={styles.input} value={params.privatePensionEndAge || ""}
+            placeholder={`비우면 ${params.expectedLifeExpectancy}세(기대수명)`}
+            onChange={(e) => setParam({ privatePensionEndAge: Number(e.target.value) })} />
+        </div>
         <p style={styles.note}>
-          평탄화: 국민연금 위에 부족분만 사적연금으로 채워 총액을 고르게. 수령 종료 나이를 정하면 그 나이까지 모두 받습니다.
+          {hasSpouse ? "부부의" : ""} 퇴직·개인연금 전체를 수령 종료 나이까지 나눠, 국민연금 위에 부족분만 채워 가구 총액을 고르게(또는 매년 2%씩 줄게)
+          받습니다. 국민연금 개시 때 총액이 튀거나 상품 만기 때 끊기지 않습니다. 부부 통합 시뮬레이션과 S0에 적용됩니다.
         </p>
       </details>
 
@@ -183,6 +169,7 @@ export default function DashboardSidebar(props: Props) {
 
       <details style={styles.group}>
         <summary style={styles.summary}>S3 커스텀 · 계좌별 인출</summary>
+        <p style={styles.note}>계좌별 개시·기간은 인출전략 S3(사용자 정의 커스텀 전략) 탭에만 적용됩니다.</p>
         {accounts.length === 0 ? (
           <p style={styles.note}>등록된 퇴직·개인연금이 없습니다.</p>
         ) : (

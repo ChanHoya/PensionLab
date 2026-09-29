@@ -46,7 +46,6 @@ const params = {
   spouseNationalPensionDeferYears: 0,
   privatePensionEndAge: 0,
   spousePrivatePensionEndAge: 0,
-  householdIncomeSmoothing: false,
 } as SimulationParamsState;
 const basic = { applyToSimulation: false } as BasicPensionState;
 const husband: PersonPensions = {

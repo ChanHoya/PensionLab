@@ -17,23 +17,10 @@ import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/
 import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
 import type { PaidTotals } from "@/services/paidTotals";
+import { PENSION_SERIES, SURVIVOR_FILL } from "@/components/pensionSeries";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
-// 유족연금 층은 선을 본인국민연금과 같은 보라로 이어 그리되, 채우기·범례·툴팁 색은 톤다운된 분홍
-const SURVIVOR_FILL = "#9d5c7d";
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
-// 쌓는 순서대로. 같은 종류는 같은 색 계열로 본인 진하게·배우자 연하게
-const SERIES = [
-  { key: "본인국민연금", color: "#6366f1" },
-  { key: "유족연금", color: "#6366f1", fill: SURVIVOR_FILL },
-  { key: "배우자국민연금", color: "#ec4899" },
-  { key: "본인 기초연금", color: "#d97706" },
-  { key: "배우자 기초연금", color: "#fbbf24" },
-  { key: "본인 퇴직연금", color: "#059669" },
-  { key: "배우자 퇴직연금", color: "#34d399" },
-  { key: "본인 개인연금", color: "#0284c7" },
-  { key: "배우자 개인연금", color: "#38bdf8" },
-];
 
 interface Props {
   result: CoupleSimulationResult;
@@ -112,7 +99,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   }));
   // 금액이 있는 계열만 그래프·범례에 표시. 유족연금은 받는 사람 기준 이름 (예: 배우자 유족연금)
   const survivorName = `${survivorLabel || "배우자"} 유족연금`;
-  const visibleSeries = SERIES.filter((s) => chartData.some((d) => d[s.key] !== 0));
+  const visibleSeries = PENSION_SERIES.filter((s) => chartData.some((d) => d[s.key] !== 0));
   const legendColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
   // 툴팁의 (납부총액/지급총액): 납부가 없는 유족·기초연금은 「-」, 지급은 그래프 기간 명목 수령 합계
   const paidOf: Record<string, number | null> = {
@@ -286,7 +273,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
 
       <div style={{ width: "100%", height: 350 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 24, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
@@ -319,7 +306,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                 x={firstDeath.year}
                 stroke="var(--text-muted)"
                 strokeDasharray="6 4"
-                label={{ value: `${WHO_LABEL[firstDeath.who]} 사망`, fill: "var(--text-muted)", fontSize: 12 }}
+                label={{ value: `${WHO_LABEL[firstDeath.who]} 기대수명`, position: "top", fill: "var(--text-muted)", fontSize: 12 }}
               />
             )}
           </AreaChart>

@@ -26,11 +26,14 @@ import {
   Bar,
   Area,
   Line,
-  ComposedChart
+  ComposedChart,
+  ReferenceLine,
+  DefaultLegendContent,
 } from "recharts";
+import { PENSION_SERIES, SURVIVOR_FILL } from "@/components/pensionSeries";
 
 // Custom Tooltip component for Recharts ComposedChart
-const CustomTooltip = ({ active, payload, label, notes }: any) => {
+const CustomTooltip = ({ active, payload, label, notes, colors }: any) => {
   if (active && payload && payload.length) {
     const activePayload = payload.filter((entry: any) => (entry.value || 0) > 0);
     if (activePayload.length === 0) return null;
@@ -69,7 +72,7 @@ const CustomTooltip = ({ active, payload, label, notes }: any) => {
           {activePayload.map((entry: any, index: number) => (
             <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: entry.color }} />
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: colors?.[entry.name] ?? entry.color }} />
                 <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{entry.name}</span>
               </div>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
@@ -321,22 +324,51 @@ export default function DashboardPage() {
 
   const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as Lowercase<ScenarioTab>];
 
-  // 인출전략 그래프 툴팁의 (납부총액/지급총액): 가구 합, 지급은 그래프 기간 세전 수령 합계 (차트 값이 연 금액)
+  // 인출전략 그래프: 부부 통합 시뮬레이션과 같은 계열(사람별·유족연금)과 색. 값은 연 세전 금액(만원)
+  const survivorName = `${coupleResult.survivorInfo?.deceased === "SPOUSE" ? "본인" : "배우자"} 유족연금`;
+  const scenarioChartData: Record<string, number>[] = activeResult.flows.map((f) => {
+    const s = f.parts?.self;
+    const p = f.parts?.spouse;
+    const svSelf = f.parts?.survivorSelf ?? 0;
+    const svSpouse = f.parts?.survivorSpouse ?? 0;
+    return {
+      age: f.age,
+      본인국민연금: Math.max(0, (s?.national ?? f.nationalPreTax) - svSelf),
+      유족연금: svSelf + svSpouse,
+      배우자국민연금: Math.max(0, (p?.national ?? 0) - svSpouse),
+      "본인 기초연금": s?.basic ?? f.basicPreTax,
+      "배우자 기초연금": p?.basic ?? 0,
+      "본인 퇴직연금": s?.retirement ?? f.retirementPreTax,
+      "배우자 퇴직연금": p?.retirement ?? 0,
+      "본인 개인연금": (s?.personal ?? f.personalPreTax) + (s?.insurance ?? f.insurancePreTax),
+      "배우자 개인연금": (p?.personal ?? 0) + (p?.insurance ?? 0),
+      "커버드콜 배당": f.dividendPreTax,
+      totalPostTax: f.totalPostTax,
+    };
+  });
+  // 금액이 있는 계열만 (기초연금처럼 입력이 없으면 빠진다)
+  const scenarioSeries = [...PENSION_SERIES, { key: "커버드콜 배당", color: "#a78bfa" }].filter((s) =>
+    scenarioChartData.some((d) => d[s.key] > 0)
+  );
+  const scenarioColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
+  // 툴팁의 (납부총액/지급총액): 지급은 그래프 기간 세전 수령 합계
   const scenarioPaid: Record<string, number | null> = {
-    nationalPreTax: selfPaid.national + (spousePaid?.national ?? 0),
-    basicPreTax: null,
-    retirementPreTax: selfPaid.retirement + (spousePaid?.retirement ?? 0),
-    personalPreTax: selfPaid.personal + (spousePaid?.personal ?? 0),
-    insurancePreTax: selfPaid.insurance + (spousePaid?.insurance ?? 0),
-    dividendPreTax: null,
+    본인국민연금: selfPaid.national,
+    배우자국민연금: spousePaid?.national ?? null,
+    "본인 퇴직연금": selfPaid.retirement,
+    "배우자 퇴직연금": spousePaid?.retirement ?? null,
+    "본인 개인연금": selfPaid.personal + selfPaid.insurance,
+    "배우자 개인연금": spousePaid ? spousePaid.personal + spousePaid.insurance : null,
   };
   const scenarioNotes = Object.fromEntries(
-    Object.keys(scenarioPaid).map((key) => {
-      const payout = activeResult.flows.reduce((sum, f) => sum + (Number(f[key as keyof typeof f]) || 0), 0);
+    scenarioSeries.map(({ key }) => {
+      const payout = scenarioChartData.reduce((sum, d) => sum + d[key], 0);
       const paidAmount = scenarioPaid[key];
       return [key, `(${paidAmount ? `${Math.round(paidAmount).toLocaleString()}만원` : "-"}/${Math.round(payout).toLocaleString()}만원)`];
     })
   );
+  const firstDeath = coupleResult.firstDeath;
+  const firstDeathAge = firstDeath ? activeResult.flows.find((f) => f.year === firstDeath.year)?.age : undefined;
 
   const totalFlows = activeResult.flows.reduce((acc, flow) => {
     return {
@@ -642,21 +674,44 @@ export default function DashboardPage() {
                 </p>
                 <div style={{ height: 250, width: "100%" }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={activeResult.flows} margin={{ top: 6, right: 10, left: 15, bottom: 0 }}>
+                    <ComposedChart data={scenarioChartData} margin={{ top: 22, right: 10, left: 15, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
                       <XAxis dataKey="age" tickFormatter={(age) => `${age}세`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
                       <YAxis tickFormatter={(val) => `${val}만`} tick={{ fontSize: 10, fill: "var(--text-muted)" }} tickLine={false} />
-                      <Tooltip content={<CustomTooltip notes={scenarioNotes} />} />
-                      <Legend wrapperStyle={{ fontSize: "0.75rem", marginTop: "10px" }} />
-                      <Area type="monotone" dataKey="nationalPreTax" name="국민연금" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.4} isAnimationActive={false} />
-                      <Area type="monotone" dataKey="basicPreTax" name="기초연금" stackId="1" stroke="#93c5fd" fill="#93c5fd" fillOpacity={0.4} isAnimationActive={false} />
-                      <Area type="monotone" dataKey="retirementPreTax" name="퇴직연금" stackId="1" stroke="#facc15" fill="#facc15" fillOpacity={0.4} isAnimationActive={false} />
-                      <Area type="monotone" dataKey="personalPreTax" name="개인연금" stackId="1" stroke="#f97316" fill="#f97316" fillOpacity={0.4} isAnimationActive={false} />
-                      <Area type="monotone" dataKey="insurancePreTax" name="연금보험" stackId="1" stroke="#f87171" fill="#f87171" fillOpacity={0.4} isAnimationActive={false} />
-                      {activeTab === "S4" && (
-                        <Area type="monotone" dataKey="dividendPreTax" name="커버드콜 배당" stackId="1" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.5} isAnimationActive={false} />
-                      )}
+                      <Tooltip content={<CustomTooltip notes={scenarioNotes} colors={scenarioColors} />} />
+                      <Legend
+                        wrapperStyle={{ fontSize: "0.72rem", marginTop: "10px" }}
+                        iconSize={10}
+                        itemSorter={null}
+                        content={(props) => (
+                          <DefaultLegendContent
+                            {...props}
+                            payload={props.payload?.map((item) => ({ ...item, color: scenarioColors[String(item.value)] ?? item.color }))}
+                          />
+                        )}
+                      />
+                      {scenarioSeries.map((s) => (
+                        <Area
+                          key={s.key}
+                          type="monotone"
+                          dataKey={s.key}
+                          name={s.key === "유족연금" ? survivorName : s.key}
+                          stackId="1"
+                          stroke={s.color}
+                          fill={s.fill ?? s.color}
+                          fillOpacity={s.fill ? 0.55 : 0.5}
+                          isAnimationActive={false}
+                        />
+                      ))}
                       <Line type="monotone" dataKey="totalPostTax" name="실질 세후 수령액" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
+                      {firstDeath && firstDeathAge !== undefined && (
+                        <ReferenceLine
+                          x={firstDeathAge}
+                          stroke="var(--text-muted)"
+                          strokeDasharray="6 4"
+                          label={{ value: `${firstDeath.who === "SELF" ? "본인" : "배우자"} 기대수명`, position: "top", fill: "var(--text-muted)", fontSize: 11 }}
+                        />
+                      )}
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>

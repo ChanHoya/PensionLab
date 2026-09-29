@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 import { resolveAge, resolveBirthYear } from "@/utils/age";
-import { statutoryPensionStartAge } from "@/config/npsRules";
+import { statutoryPensionStartAge, estimateBasicPensionAmount, NPS_RULES } from "@/config/npsRules";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
 import BasicPensionForm from "@/components/BasicPensionForm";
 import { extractPdfText } from "@/utils/pdfText";
@@ -1143,12 +1143,23 @@ export default function OnboardingPage() {
                         />
                       </div>
                       <div style={styles.fieldRow}>
-                        <label style={styles.label}>기본연금액 (만원)</label>
+                        <label style={styles.label}>
+                          기본연금액 (만원/월) <span style={styles.labelHint}>자동 계산 · 가입월수·A값·B값, 현행 비례상수 기준 근사</span>
+                        </label>
+                        {/* 표시용 근사값 (계산에는 예상 연금 월액을 쓴다) */}
                         <input
                           type="number"
                           className="premium-input"
-                          value={person.nationalPension.basicPensionAmount || ""}
-                          onChange={(e) => store.setNationalPension({ basicPensionAmount: Number(e.target.value) }, who)}
+                          readOnly
+                          tabIndex={-1}
+                          style={{ opacity: 0.75, cursor: "default" }}
+                          value={(() => {
+                            const n = person.nationalPension;
+                            const months = n.expectedTotalContributionMonths || n.contributionMonths;
+                            const A = n.aValue || NPS_RULES.aValue;
+                            const B = n.bValue || n.currentStandardMonthlyIncome;
+                            return months > 0 && B > 0 ? Math.round(estimateBasicPensionAmount(months, A, B)) : "";
+                          })()}
                         />
                       </div>
                       <div style={styles.fieldRow}>

@@ -29,7 +29,9 @@ export interface PersonYear {
   insurance: number;
   total: number;
   survivorChoice: SurvivorChoice | null; // 배우자 사망 후 중복급여 조정 선택
-  survivorPart: number; // national 중 사망한 배우자에게서 온 유족연금 몫 (유족연금 선택 시 전부, 본인+30% 선택 시 30%)
+  // national 중 유족연금으로 구분해 그리는 몫. 본인+30% 선택 시 30% 부분, 유족연금 선택 시 「유족연금 − 본인 연금」
+  // (유족연금 선택 시 본인 연금은 지급정지되지만, 그래프는 본인 연금 수준을 이어 그리고 늘어나는 만큼을 유족연금으로 표시)
+  survivorPart: number;
 }
 
 export interface CoupleYear {
@@ -305,7 +307,7 @@ export function runCoupleSimulation(
         if (benefit <= 0) return { national: ownNational, choice: null as SurvivorChoice | null, part: 0 };
         const withOwn = ownNational + SURVIVOR_OVERLAP_RATE * benefit;
         return benefit > withOwn
-          ? { national: benefit, choice: "SURVIVOR" as SurvivorChoice, part: benefit }
+          ? { national: benefit, choice: "SURVIVOR" as SurvivorChoice, part: benefit - ownNational }
           : { national: withOwn, choice: "OWN_PLUS_30" as SurvivorChoice, part: SURVIVOR_OVERLAP_RATE * benefit };
       };
       let sNational = so.national;

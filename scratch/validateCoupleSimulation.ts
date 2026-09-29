@@ -92,8 +92,8 @@ assert.equal(at(2036).self.basic, 0);
 assert.equal(at(2047).self.alive, false);
 near(at(2047).spouse!.national, 120);
 assert.equal(at(2047).spouse!.survivorChoice, "SURVIVOR");
-// 유족연금 선택: 총 120 중 아내 본인 연금(56)은 이어서 표시하고 늘어나는 64를 유족연금 몫으로 구분
-near(at(2047).spouse!.survivorPart, 120 - 56);
+// 유족연금 선택: 아내 노령연금은 지급정지 → 받는 국민연금 120 전부가 유족연금 (단일 층)
+near(at(2047).spouse!.survivorPart, 120);
 assert.equal(at(2036).spouse!.survivorPart, 0); // 둘 다 생존 중에는 0
 assert.equal(at(2036).self.survivorPart, 0);
 near(at(2059).household, 120);

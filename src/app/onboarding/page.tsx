@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
+import FullscreenToggle from "@/components/FullscreenToggle";
 import AiHelper from "@/components/AiHelper";
 import { resolveAge, resolveBirthYear } from "@/utils/age";
 import { statutoryPensionStartAge, estimateBasicPensionAmount, NPS_RULES } from "@/config/npsRules";
@@ -693,6 +694,7 @@ export default function OnboardingPage() {
               style={{ display: "none" }}
               onChange={handleLoadData}
             />
+            <FullscreenToggle />
             <ThemeToggle />
           </div>
         </div>

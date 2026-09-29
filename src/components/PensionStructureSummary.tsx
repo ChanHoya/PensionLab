@@ -1,13 +1,19 @@
 "use client";
 
 import React from "react";
-import type { BasicPensionState, PersonData } from "@/store/usePensionStore";
+import type { BasicPensionState, PersonData, SimulationParamsState } from "@/store/usePensionStore";
+import { personParams } from "@/services/coupleSimulation";
+import { paidTotalsOf } from "@/services/paidTotals";
 
 interface Props {
   self: PersonData;
   spouse: PersonData | null; // 배우자 없음이면 null
   basic: BasicPensionState;
+  params: SimulationParamsState; // 층별 규모(납부·적립 총액) 계산용
 }
+
+// 층 폭: 규모 순서만 보이게 1·2·3위를 100% · 88% · 76%로 (실제 비율은 차이가 너무 커 맞추지 않는다)
+const RANK_WIDTHS = ["100%", "88%", "76%"];
 
 interface Card {
   title: string;
@@ -66,13 +72,24 @@ function personalCards(p: PersonData): Card[] {
   ];
 }
 
-// 입력 내용을 3층 연금 구조로 그린다: 위에서부터 3층(개인)·2층(퇴직)·1층(공적), 아래층일수록 넓게
-export default function PensionStructureSummary({ self, spouse, basic }: Props) {
+// 입력 내용을 3층 연금 구조로 그린다: 위에서부터 3층(개인)·2층(퇴직)·1층(공적).
+// 층 폭은 가구 납부·적립 총액(국민연금 예상 납부보험료, 퇴직·개인연금 적립금 + 은퇴까지 납입액)의 크기 순서로 정한다
+export default function PensionStructureSummary({ self, spouse, basic, params }: Props) {
   const people = spouse ? [{ label: "본인", data: self }, { label: "배우자", data: spouse }] : [{ label: "본인", data: self }];
+  const paidOf = (p: PersonData, prm: SimulationParamsState) =>
+    paidTotalsOf({ national: p.nationalPension, retirementPensions: p.retirementPensions, personalPensions: p.personalPensions, pensionInsurances: p.pensionInsurances }, prm);
+  const paid = [paidOf(self, params), ...(spouse ? [paidOf(spouse, personParams(params, "SPOUSE"))] : [])];
+  const sizes = {
+    personal: paid.reduce((a, t) => a + t.personal + t.insurance, 0),
+    retirement: paid.reduce((a, t) => a + t.retirement, 0),
+    national: paid.reduce((a, t) => a + t.national, 0),
+  };
+  // 크기 순위(같으면 같은 폭). 0원인 층은 가장 좁게
+  const widthOf = (v: number) => RANK_WIDTHS[Object.values(sizes).filter((x) => x > v).length];
   const layers = [
-    { badge: "3층", title: "개인연금", color: "#0ea5e9", width: "84%", cards: personalCards },
-    { badge: "2층", title: "퇴직연금", color: "#10b981", width: "92%", cards: retirementCards },
-    { badge: "1층", title: "국민연금", color: "#6366f1", width: "100%", cards: nationalCards },
+    { badge: "3층", title: "개인연금", color: "#0ea5e9", size: sizes.personal, cards: personalCards },
+    { badge: "2층", title: "퇴직연금", color: "#10b981", size: sizes.retirement, cards: retirementCards },
+    { badge: "1층", title: "국민연금", color: "#6366f1", size: sizes.national, cards: nationalCards },
   ];
 
   return (
@@ -83,10 +100,11 @@ export default function PensionStructureSummary({ self, spouse, basic }: Props) 
       </div>
 
       {layers.map((layer) => (
-        <div key={layer.badge} style={{ ...styles.layer, width: layer.width, borderColor: layer.color }}>
+        <div key={layer.badge} style={{ ...styles.layer, width: widthOf(layer.size), borderColor: layer.color }}>
           <div style={{ ...styles.layerHead, color: layer.color }}>
             <span style={{ ...styles.badge, backgroundColor: layer.color }}>{layer.badge}</span>
             {layer.title}
+            <span style={styles.layerSize}>{spouse ? "가구 " : ""}납부·적립 총액 {fmt(layer.size)}만원</span>
           </div>
           <div style={{ ...styles.people, gridTemplateColumns: `repeat(${people.length}, minmax(0, 1fr))` }}>
             {people.map((person) => {
@@ -152,6 +170,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   layerHead: { display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", marginBottom: "10px" },
   badge: { color: "#ffffff", borderRadius: "999px", padding: "2px 10px", fontSize: "0.75rem" },
+  layerSize: { marginLeft: "auto", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)" },
   people: { display: "grid", gap: "12px" },
   personCol: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
   personLabel: { fontSize: "0.78rem", fontWeight: 700, color: "var(--text-muted)" },

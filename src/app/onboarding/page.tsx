@@ -28,7 +28,7 @@ const GROUPS: StepGroup[] = [
   { key: "national", badge: "1", title: "국민연금 (1층)", desc: "국민연금 납부 내역·예상액·반납·추납 및 기초연금 수급 판정" },
   { key: "retirement", badge: "2", title: "퇴직연금 (2층)", desc: "회사 퇴직연금 (DB/DC/IRP), 미입력 시 진단에서 제외" },
   { key: "personal", badge: "3", title: "개인연금 (3층)", desc: "연금저축 및 연금보험, 미입력 시 진단에서 제외" },
-  { key: "summary", badge: "4", title: "3층 연금 구조", desc: "입력한 계약을 3층 구조로 확인하고 종합 분석" },
+  { key: "summary", badge: "4", title: "전체 연금 내역", desc: "입력한 계약을 3층 구조로 확인하고 종합 분석" },
 ];
 
 interface StepDef {
@@ -51,7 +51,7 @@ const STEPS: StepDef[] = [
   { key: "retirement-spouse", kind: "RETIREMENT", who: "SPOUSE", group: "retirement", tab: "배우자", spouseOnly: true },
   { key: "personal-self", kind: "PERSONAL", who: "SELF", group: "personal", tab: "본인" },
   { key: "personal-spouse", kind: "PERSONAL", who: "SPOUSE", group: "personal", tab: "배우자", spouseOnly: true },
-  { key: "summary", kind: "SUMMARY", who: "SELF", group: "summary", tab: "3층 구조" },
+  { key: "summary", kind: "SUMMARY", who: "SELF", group: "summary", tab: "전체 연금 내역" },
 ];
 
 const EMPTY_RETIREMENT = {
@@ -2100,12 +2100,13 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* 4단계: 3층 연금 구조 도식 */}
+            {/* 4단계: 전체 연금 내역 (3층 구조 도식) */}
             {step.kind === "SUMMARY" && (
               <PensionStructureSummary
                 self={pensionsOf(store, "SELF")}
                 spouse={store.simulationParams.hasSpouse ? pensionsOf(store, "SPOUSE") : null}
                 basic={store.basicPension}
+                params={store.simulationParams}
               />
             )}
           </div>
@@ -2121,7 +2122,7 @@ export default function OnboardingPage() {
               이전 단계
             </button>
 
-            {/* 마지막 단계(3층 연금 구조)에서 종합 분석하기 → 시뮬레이션 화면 */}
+            {/* 마지막 단계(전체 연금 내역)에서 종합 분석하기 → 시뮬레이션 화면 */}
             <div style={{ display: "flex", gap: "8px" }}>
               {stepIndex < lastStepIndex && (
                 <button

@@ -144,7 +144,7 @@ export default function DashboardPage() {
   const [publicPensionTaxableRatio, setPublicPensionTaxableRatio] = useState(0.5);
 
   // Tab Selection for withdrawal simulator
-  const [activeTab, setActiveTab] = useState<ScenarioTab>("S1");
+  const [selectedTab, setActiveTab] = useState<ScenarioTab | null>(null); // 고르기 전에는 추천(Best) 전략
 
   // S3 Custom sliders state
   const [s3StartAges, setS3StartAges] = useState<{ [id: string]: number }>({});
@@ -322,27 +322,40 @@ export default function DashboardPage() {
     s3CustomPeriods: s3Periods,
   });
 
-  const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as Lowercase<ScenarioTab>];
+  // 선택 전에는 생애 세후 수령액이 가장 많은 추천(Best) 전략을 보여 주고 강조한다
+  const resultOf = (k: ScenarioTab) => withdrawalSimulation[k.toLowerCase() as Lowercase<ScenarioTab>];
+  const bestTab = (["S0", "S1", "S3", "S4"] as ScenarioTab[]).reduce((b, k) =>
+    resultOf(k).lifetimeTotalPostTax > resultOf(b).lifetimeTotalPostTax ? k : b
+  );
+  const activeTab: ScenarioTab = selectedTab ?? bestTab;
+  const activeResult: StrategySimulationResult = resultOf(activeTab);
 
   // 인출전략 그래프: 부부 통합 시뮬레이션과 같은 계열(사람별·유족연금)과 색. 값은 연 세전 금액(만원)
   const survivorName = `${coupleResult.survivorInfo?.deceased === "SPOUSE" ? "본인" : "배우자"} 유족연금`;
   const scenarioChartData: Record<string, number>[] = activeResult.flows.map((f) => {
-    const s = f.parts?.self;
-    const p = f.parts?.spouse;
+    // 사람별 내역이 있으면 사망 후 없는 쪽은 0 (가구 합으로 채우면 유족연금이 본인 몫으로 한 번 더 쌓인다)
+    const zero = { national: 0, basic: 0, retirement: 0, personal: 0, insurance: 0, dividend: 0 };
+    const s = f.parts
+      ? (f.parts.self ?? zero)
+      : { national: f.nationalPreTax, basic: f.basicPreTax, retirement: f.retirementPreTax, personal: f.personalPreTax, insurance: f.insurancePreTax, dividend: f.dividendPreTax };
+    const p = f.parts?.spouse ?? zero;
     const svSelf = f.parts?.survivorSelf ?? 0;
     const svSpouse = f.parts?.survivorSpouse ?? 0;
+    // 만원 단위로 반올림: 월액×12 환산에서 남는 소수(예: 유족연금만 받는 해의 0.5만원)가 계열로 보이지 않게
+    const r = (v: number) => Math.max(0, Math.round(v));
     return {
       age: f.age,
-      본인국민연금: Math.max(0, (s?.national ?? f.nationalPreTax) - svSelf),
-      유족연금: svSelf + svSpouse,
-      배우자국민연금: Math.max(0, (p?.national ?? 0) - svSpouse),
-      "본인 기초연금": s?.basic ?? f.basicPreTax,
-      "배우자 기초연금": p?.basic ?? 0,
-      "본인 퇴직연금": s?.retirement ?? f.retirementPreTax,
-      "배우자 퇴직연금": p?.retirement ?? 0,
-      "본인 개인연금": (s?.personal ?? f.personalPreTax) + (s?.insurance ?? f.insurancePreTax),
-      "배우자 개인연금": (p?.personal ?? 0) + (p?.insurance ?? 0),
-      "커버드콜 배당": f.dividendPreTax,
+      year: f.year,
+      본인국민연금: r(s.national - svSelf),
+      유족연금: r(svSelf + svSpouse),
+      배우자국민연금: r(p.national - svSpouse),
+      "본인 기초연금": r(s.basic),
+      "배우자 기초연금": r(p.basic),
+      "본인 퇴직연금": r(s.retirement),
+      "배우자 퇴직연금": r(p.retirement),
+      "본인 개인연금": r(s.personal + s.insurance),
+      "배우자 개인연금": r(p.personal + p.insurance),
+      "커버드콜 배당": r(f.dividendPreTax),
       totalPostTax: f.totalPostTax,
     };
   });

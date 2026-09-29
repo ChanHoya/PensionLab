@@ -57,6 +57,20 @@ export interface CoupleSimulationResult {
   firstDeath: { who: "SELF" | "SPOUSE"; year: number; age: number } | null;
   lifetime: { self: number; spouse: number; household: number }; // 생애 누적 수령액 (만원, 명목)
   smoothing?: SmoothingSummary; // 가구 소득 평탄화를 켰을 때만
+  survivorInfo: SurvivorInfo | null; // 첫 사망 연도의 유족연금 산정 내역 (배우자 없음·사망 없음이면 null)
+}
+
+// 유족연금 산정 내역 (국민연금법 제74조 지급률, 제56조 중복급여 조정) — 첫 사망 연도 기준, 명목 만원/월
+export interface SurvivorInfo {
+  deceased: "SELF" | "SPOUSE";
+  year: number;
+  months: number; // 사망자 가입기간 (총 예상 가입월수)
+  rate: number; // 유족연금 지급률 0.4 / 0.5 / 0.6
+  basePension: number; // 사망자 기본연금액 (연기 가산 전, 그해 물가 반영)
+  fullSurvivor: number; // ① 유족연금 전액 = 기본연금액 × 지급률
+  ownPension: number; // 남은 배우자 본인 노령연금
+  ownPlus30: number; // ② 본인 연금 + 유족연금 30%
+  choice: SurvivorChoice; // 큰 쪽 자동 선택
 }
 
 type PrivateFlow = { retirement: number; personal: number; insurance: number };
@@ -273,6 +287,7 @@ export function runCoupleSimulation(
   const build = (override?: SmoothingOverride): CoupleSimulationResult => {
     const rows: CoupleYear[] = [];
     let firstDeath: CoupleSimulationResult["firstDeath"] = null;
+    let survivorInfo: SurvivorInfo | null = null;
     const lifetime = { self: 0, spouse: 0, household: 0 };
 
     for (let t = 0; t <= horizon; t++) {
@@ -318,6 +333,30 @@ export function runCoupleSimulation(
       let pPart = 0;
       if (sp && sAlive && !pAlive) ({ national: sNational, choice: sChoice, part: sPart } = survivor(so.national, sp, pAge));
       if (sp && pAlive && !sAlive) ({ national: pNational, choice: pChoice, part: pPart } = survivor(po!.national, st, sAge));
+      // 첫 사망 연도의 산정 내역을 남긴다 (화면의 「유족연금 산정 기준」 설명용)
+      if (!survivorInfo && sp && sAlive !== pAlive) {
+        const deceasedSelf = !sAlive;
+        const dead = deceasedSelf ? st : sp;
+        const months = dead.national.expectedTotalContributionMonths;
+        const rate = survivorRateForMonths(months);
+        const basePension = wouldBeNational(dead, deceasedSelf ? sAge : pAge, infl);
+        const fullSurvivor = rate * basePension;
+        const ownPension = deceasedSelf ? po!.national : so.national;
+        const choice = deceasedSelf ? pChoice : sChoice;
+        if (fullSurvivor > 0 && choice) {
+          survivorInfo = {
+            deceased: deceasedSelf ? "SELF" : "SPOUSE",
+            year,
+            months,
+            rate,
+            basePension,
+            fullSurvivor,
+            ownPension,
+            ownPlus30: ownPension + SURVIVOR_OVERLAP_RATE * fullSurvivor,
+            choice,
+          };
+        }
+      }
 
       // 사적연금 수령액은 소득인정액(연금소득)에 자동 반영
       const person = (alive: boolean, age: number, national: number, earned: number, other: number, occ: boolean, n: NationalPensionState, o: ReturnType<typeof own>): BasicPensionPerson => ({
@@ -355,7 +394,7 @@ export function runCoupleSimulation(
       lifetime.household += household * 12;
       rows.push({ year, self: selfYear, spouse: spouseYear, household });
     }
-    return { rows, firstDeath, lifetime };
+    return { rows, firstDeath, lifetime, survivorInfo };
   };
 
   const base = build();

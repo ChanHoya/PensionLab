@@ -111,10 +111,12 @@ export default function DashboardSidebar(props: Props) {
       <details open style={styles.group}>
         <summary style={styles.summary}>국민연금</summary>
         {slider("본인 개시 연령", params.nationalPensionStartAge, "세", 60, 70, 1, (v) => setParam({ nationalPensionStartAge: v }))}
+        {hasSpouse && slider("배우자 개시 연령", params.spouseNationalPensionStartAge, "세", 60, 70, 1, (v) => setParam({ spouseNationalPensionStartAge: v }))}
         {deferSelect("본인 수령 시작", params.nationalPensionDeferYears, params.nationalPensionStartAge, "nationalPensionDeferYears")}
         {hasSpouse && deferSelect("배우자 수령 시작", params.spouseNationalPensionDeferYears, params.spouseNationalPensionStartAge, "spouseNationalPensionDeferYears")}
         <p style={styles.note}>
-          최대 {NPS_RULES.maxDeferralYears}년 연기, 1년마다 +{(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%. 시뮬레이션과 모든 시나리오에 같이 적용됩니다.
+          개시 연령 기본값은 출생연도별 법정 나이(1969년생 이후 65세). 최대 {NPS_RULES.maxDeferralYears}년 연기, 1년마다 +
+          {(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%. 시뮬레이션과 모든 시나리오에 같이 적용됩니다.
         </p>
       </details>
 

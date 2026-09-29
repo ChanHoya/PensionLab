@@ -6,11 +6,12 @@ import Link from "next/link";
 import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 import { resolveAge } from "@/utils/age";
+import { statutoryPensionStartAge } from "@/config/npsRules";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
 import BasicPensionForm from "@/components/BasicPensionForm";
 import { extractPdfText } from "@/utils/pdfText";
 
-type StepKind = "INFO" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SETTINGS";
+type StepKind = "INFO" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL";
 
 interface StepGroup {
   key: string;
@@ -25,7 +26,6 @@ const GROUPS: StepGroup[] = [
   { key: "national", badge: "1", title: "국민연금 (1층)", desc: "국민연금 납부 내역·예상액·반납·추납 및 기초연금 수급 판정" },
   { key: "retirement", badge: "2", title: "퇴직연금 (2층)", desc: "회사 퇴직연금 (DB/DC/IRP), 미입력 시 진단에서 제외" },
   { key: "personal", badge: "3", title: "개인연금 (3층)", desc: "연금저축 및 연금보험, 미입력 시 진단에서 제외" },
-  { key: "settings", badge: "4", title: "기타 시뮬레이션 설정", desc: "물가상승률 및 국민연금 개시 연령 설정" },
 ];
 
 interface StepDef {
@@ -46,7 +46,6 @@ const STEPS: StepDef[] = [
   { key: "retirement-spouse", kind: "RETIREMENT", who: "SPOUSE", group: "retirement", tab: "배우자", spouseOnly: true },
   { key: "personal-self", kind: "PERSONAL", who: "SELF", group: "personal", tab: "본인" },
   { key: "personal-spouse", kind: "PERSONAL", who: "SPOUSE", group: "personal", tab: "배우자", spouseOnly: true },
-  { key: "settings", kind: "SETTINGS", who: "SELF", group: "settings", tab: "설정" },
 ];
 
 export default function OnboardingPage() {
@@ -837,7 +836,11 @@ export default function OnboardingPage() {
                         onBlur={() => {
                           const resolved = resolveAge(ageInput);
                           if (resolved !== null) {
-                            store.setSimulationParams({ currentAge: resolved });
+                            // 나이(출생연도)로 국민연금 법정 개시 나이를 기본값으로 맞춘다 (대시보드에서 조정 가능)
+                            store.setSimulationParams({
+                              currentAge: resolved,
+                              nationalPensionStartAge: statutoryPensionStartAge(new Date().getFullYear() - resolved),
+                            });
                             setAgeInput(String(resolved));
                           } else {
                             setAgeInput(store.simulationParams.currentAge ? String(store.simulationParams.currentAge) : "");
@@ -886,7 +889,10 @@ export default function OnboardingPage() {
                           onBlur={() => {
                             const resolved = resolveAge(spouseAgeInput);
                             if (resolved !== null) {
-                              store.setSimulationParams({ spouseAge: resolved });
+                              store.setSimulationParams({
+                                spouseAge: resolved,
+                                spouseNationalPensionStartAge: statutoryPensionStartAge(new Date().getFullYear() - resolved),
+                              });
                               setSpouseAgeInput(String(resolved));
                             } else {
                               setSpouseAgeInput(store.simulationParams.spouseAge != null ? String(store.simulationParams.spouseAge) : "");
@@ -2044,46 +2050,6 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            {/* STEP 5: 설계 기준 설정 */}
-            {step.kind === "SETTINGS" && (
-              <div style={styles.formGroupList} className="animate-fade-in">
-                <div style={styles.infoAlert}>
-                  ⚙️ 물가상승률 및 은퇴 후 연금 수령 개시 나이 등의 시뮬레이션 기본 파라미터를 설정합니다.
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>
-                    장기 물가상승률 (%) <span style={styles.labelHint}>(기본 3% · 최근 30년 평균 약 2.7%)</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    className="premium-input"
-                    value={store.simulationParams.inflationRate}
-                    onChange={(e) => store.setSimulationParams({ inflationRate: Number(e.target.value) })}
-                  />
-                </div>
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>국민연금 수령 개시 연령 (세)</label>
-                  <input
-                    type="number"
-                    className="premium-input"
-                    value={store.simulationParams.nationalPensionStartAge}
-                    onChange={(e) => store.setSimulationParams({ nationalPensionStartAge: Number(e.target.value) })}
-                  />
-                </div>
-                {store.simulationParams.hasSpouse && (
-                  <div style={styles.fieldRow}>
-                    <label style={styles.label}>배우자 국민연금 수령 개시 연령 (세)</label>
-                    <input
-                      type="number"
-                      className="premium-input"
-                      value={store.simulationParams.spouseNationalPensionStartAge}
-                      onChange={(e) => store.setSimulationParams({ spouseNationalPensionStartAge: Number(e.target.value) })}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           <div style={styles.formFooterActions}>
@@ -2097,25 +2063,29 @@ export default function OnboardingPage() {
               이전 단계
             </button>
 
-            {stepIndex < lastStepIndex ? (
-              <button
-                type="button"
-                onClick={nextStep}
-                className="premium-button"
-              >
-                다음 단계
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleFinish}
-                disabled={isSubmitting}
-                className="premium-button"
-                style={{ background: "var(--gradient-secondary)" }}
-              >
-                {isSubmitting ? "저장 중..." : "설계 분석 완료 🚀"}
-              </button>
-            )}
+            {/* 마지막 단계(개인연금)에서는 어느 탭에서든 바로 결과 보기, 배우자 탭이 남았으면 다음 단계도 함께 */}
+            <div style={{ display: "flex", gap: "8px" }}>
+              {stepIndex < lastStepIndex && (
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className={step.group === visibleSteps[lastStepIndex].group ? "premium-button-secondary" : "premium-button"}
+                >
+                  다음 단계
+                </button>
+              )}
+              {step.group === visibleSteps[lastStepIndex].group && (
+                <button
+                  type="button"
+                  onClick={handleFinish}
+                  disabled={isSubmitting}
+                  className="premium-button"
+                  style={{ background: "var(--gradient-secondary)" }}
+                >
+                  {isSubmitting ? "저장 중..." : "결과 보기 🚀"}
+                </button>
+              )}
+            </div>
           </div>
         </section>
       </div>

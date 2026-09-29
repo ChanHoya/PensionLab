@@ -5,6 +5,7 @@ import {
   bWeightForYear,
   survivorRateForMonths,
   maxRefundInstallments,
+  statutoryPensionStartAge,
 } from "../src/config/npsRules";
 import {
   refundInterestFactor,
@@ -41,6 +42,15 @@ assert.equal(survivorRateForMonths(240), 0.6);
 assert.equal(maxRefundInstallments(11), 3);
 assert.equal(maxRefundInstallments(30), 12);
 assert.equal(maxRefundInstallments(60), 24);
+// 출생연도별 법정 노령연금 개시 나이
+assert.equal(statutoryPensionStartAge(1952), 60);
+assert.equal(statutoryPensionStartAge(1953), 61);
+assert.equal(statutoryPensionStartAge(1957), 62);
+assert.equal(statutoryPensionStartAge(1961), 63);
+assert.equal(statutoryPensionStartAge(1965), 64);
+assert.equal(statutoryPensionStartAge(1968), 64);
+assert.equal(statutoryPensionStartAge(1969), 65);
+assert.equal(statutoryPensionStartAge(1990), 65);
 
 // 참고 사례: 1996-03 반환일시금 104.4만원, 1993-10부터 30개월 복원, 2026-10 반납 신청
 const rr: ReturnRepaymentState = {

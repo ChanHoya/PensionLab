@@ -11,6 +11,8 @@ import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
+import SeriesTotalLabels from "@/components/SeriesTotalLabels";
+import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
 
 // Import Recharts components
@@ -303,6 +305,8 @@ export default function DashboardPage() {
       }
     : null;
   const coupleResult = runCoupleSimulation(selfPensions, spousePensions, store.simulationParams, store.basicPension);
+  const selfPaid = paidTotalsOf(selfPensions, store.simulationParams);
+  const spousePaid = spousePensions ? paidTotalsOf(spousePensions, personParams(store.simulationParams, "SPOUSE")) : null;
 
   // 인출전략 시나리오: 부부 가구 기준. 국민연금·기초연금(연기·유족연금 포함)은 위 시뮬레이션 값을 그대로 쓰고
   // 세금·건보료·사적연금 한도는 사람별로 계산해 합산한다
@@ -316,6 +320,24 @@ export default function DashboardPage() {
   });
 
   const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as Lowercase<ScenarioTab>];
+
+  // 인출전략 그래프 안 (납부총액/지급총액): 가구 합, 지급은 그래프 기간 세전 수령 합계 (차트 값이 연 금액)
+  const scenarioStack = ["nationalPreTax", "basicPreTax", "retirementPreTax", "personalPreTax", "insurancePreTax", ...(activeTab === "S4" ? ["dividendPreTax"] : [])];
+  const scenarioPaid: Record<string, number | null> = {
+    nationalPreTax: selfPaid.national + (spousePaid?.national ?? 0),
+    basicPreTax: null,
+    retirementPreTax: selfPaid.retirement + (spousePaid?.retirement ?? 0),
+    personalPreTax: selfPaid.personal + (spousePaid?.personal ?? 0),
+    insurancePreTax: selfPaid.insurance + (spousePaid?.insurance ?? 0),
+    dividendPreTax: null,
+  };
+  const scenarioTotalLabels = scenarioStack
+    .map((key) => {
+      const payout = activeResult.flows.reduce((sum, f) => sum + (Number(f[key as keyof typeof f]) || 0), 0);
+      const paidAmount = scenarioPaid[key];
+      return { key, payout, text: `(${paidAmount ? `${Math.round(paidAmount).toLocaleString()}만원` : "-"}/${Math.round(payout).toLocaleString()}만원)` };
+    })
+    .filter((l) => l.payout > 0);
 
   const totalFlows = activeResult.flows.reduce((acc, flow) => {
     return {
@@ -345,7 +367,7 @@ export default function DashboardPage() {
 
   const barChartData = [
     {
-      name: "As-Is (S0)",
+      name: "시뮬레이션 기준 (S0)",
       "세후 수령액": withdrawalSimulation.s0.lifetimeTotalPostTax,
       "세금 & 건보료": withdrawalSimulation.s0.lifetimeTotalTaxAndHI,
     },
@@ -466,13 +488,18 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ① 연금 통합 시뮬레이션 (기본) */}
-        <CoupleSimulationSection
-          result={coupleResult}
-          selfStartAge={store.simulationParams.nationalPensionStartAge + deferYearsOf(store.simulationParams)}
-          spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
-          actions={dataActions}
-        />
+        {/* ① 부부 통합 연금 시뮬레이션 (배우자 있을 때만). 없으면 백업·복원 버튼만 따로 둔다 */}
+        {hasSpouse ? (
+          <CoupleSimulationSection
+            result={coupleResult}
+            selfStartAge={store.simulationParams.nationalPensionStartAge + deferYearsOf(store.simulationParams)}
+            spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
+            actions={dataActions}
+            paid={{ self: selfPaid, spouse: spousePaid }}
+          />
+        ) : (
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>{dataActions}</div>
+        )}
 
         {/* ② 인출전략 시나리오 비교 (세후) */}
         <section style={styles.resultContainer} className="animate-fade-in">
@@ -486,8 +513,8 @@ export default function DashboardPage() {
                 </div>
                 <h3 style={styles.dashboardTitle}>인출전략 시나리오 비교 (세후)</h3>
                 <p style={styles.chartSubtitle}>
-                  {hasSpouse ? "부부 가구 기준입니다. " : ""}국민연금·기초연금(연기·유족연금 포함)은 위 시뮬레이션 값을 그대로 쓰고,
-                  퇴직·개인연금 인출 방식만 시나리오별로 달리해 세금·건보료를 {hasSpouse ? "사람별로 계산한 뒤 합산" : "계산"}합니다.
+                  {hasSpouse ? "부부 가구 기준입니다. 국민연금·기초연금(연기·유족연금 포함)은 위 부부 통합 시뮬레이션 값을 그대로 쓰고," : "국민연금·기초연금(연기 포함)은 통합 시뮬레이션 값을 그대로 쓰고,"}
+                  S0는 퇴직·개인연금도 통합 시뮬레이션의 인출 방식(왼쪽 입력 옵션) 그대로, 나머지는 인출 방식만 시나리오별로 달리해 세금·건보료를 {hasSpouse ? "사람별로 계산한 뒤 합산" : "계산"}합니다.
                   재산·금융소득·기타 소득과 S4 배당(부부 분산을 끄면)은 본인 명의로 봅니다.
                 </p>
               </div>
@@ -631,6 +658,12 @@ export default function DashboardPage() {
                         <Area type="monotone" dataKey="dividendPreTax" name="커버드콜 배당" stackId="1" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.5} isAnimationActive={false} />
                       )}
                       <Line type="monotone" dataKey="totalPostTax" name="실질 세후 수령액" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
+                      <SeriesTotalLabels
+                        data={activeResult.flows as unknown as Record<string, number>[]}
+                        xKey="age"
+                        stack={scenarioStack}
+                        labels={scenarioTotalLabels}
+                      />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
@@ -660,7 +693,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: "10px" }}>
-                {activeTab === "S0" && "As-Is 전략은 세법상 사적연금 1,500만 원 한도 및 퇴직소득세 한도를 고려하지 않고 임의 수령하는 계획입니다. 특정 연도에 수령액이 과밀되어 16.5% 분리과세나 높은 종합소득세 누진세율이 적용될 수 있습니다."}
+                {activeTab === "S0" && "통합 시뮬레이션 기준(S0)은 왼쪽 입력 옵션의 인출 방식(평탄화·체감·수령 종료 나이)대로 퇴직·개인연금을 받을 때의 세금·건보료를 계산합니다. 세법상 사적연금 수령 한도(연 1,500만원)를 넘는 해에는 16.5% 분리과세나 종합과세가 적용될 수 있어, 절세형(S1)과 비교해 보세요."}
                 {activeTab === "S1" && "절세 평탄화 전략은 사적연금 수령 한도(1,500만 원) 내로 수령액을 균등 분산하여 3.3%~5.5% 수준의 저율과세 혜택을 100% 누리며, 퇴직연금 수령 기간을 11년 이상 확보하여 퇴직소득세를 최대 40% 감면받을 수 있도록 최적화했습니다."}
                 {activeTab === "S3" && "커스텀 전략 조정을 통해 본인만의 최적의 절세 구간을 찾을 수 있습니다. 가능한 사적연금 인출액을 고르게 평탄화하고 수령 기간을 10년 이상 길게 설계하는 것이 절세의 핵심입니다."}
                 {activeTab === "S4" && "하이브리드 전략은 커버드콜 ETF 등 월 분배형 상품의 배당소득을 인당 연 1,000만원 이하로 통제하여 건보료 피부양자 자격을 방어하고, 부족한 생활비는 건보료가 비과세인 사적연금(연 1,500만원 한도)/퇴직연금에서 우선 인출하여 세금과 건강보험료를 동시에 최소화합니다."}

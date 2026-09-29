@@ -54,6 +54,19 @@ const STEPS: StepDef[] = [
   { key: "summary", kind: "SUMMARY", who: "SELF", group: "summary", tab: "3층 구조" },
 ];
 
+const EMPTY_RETIREMENT = {
+  pensionType: "DC" as "DB" | "DC" | "IRP",
+  avgSalary: 0,
+  yearsOfService: 0,
+  salaryGrowthRate: 0,
+  totalAccumulated: 0,
+  monthlyContribution: 0,
+  companyMatchRate: 20,
+  expectedReturnRate: 0,
+};
+const EMPTY_PERSONAL = { savingsType: "FUND" as "FUND" | "INSURANCE", totalAccumulated: 0, monthlyAnnualContribution: 0, desiredStartAge: 0, receivingPeriod: 0 };
+const EMPTY_INSURANCE = { insuranceType: "일반연금보험", totalAccumulated: 0, monthlyPayment: 0, paymentPeriod: 0, expectedDeclaredRate: 0 };
+
 // 입력결과 목록에서 계약별로 고칠 수 있는 숫자 칸
 const RETIREMENT_EDIT_FIELDS = {
   DB: [
@@ -467,39 +480,27 @@ export default function OnboardingPage() {
   };
 
   // Local state for temporary Retirement Pension inputs
-  const [tempRetirement, setTempRetirement] = useState({
-    pensionType: "DC" as "DB" | "DC" | "IRP",
-    avgSalary: 400,
-    yearsOfService: 10,
-    salaryGrowthRate: 3.0,
-    totalAccumulated: 3000,
-    monthlyContribution: 20,
-    companyMatchRate: 20,
-    expectedReturnRate: 4.5,
-  });
+  // 추가 등록 폼: 버튼을 눌러야 열리고, 예시 숫자 없이 빈 칸으로 시작한다 (비운 비율·나이·기간은 추가할 때 기본값)
+  const [addForm, setAddForm] = useState<"RETIREMENT" | "PERSONAL" | "INSURANCE" | null>(null);
+  const [tempRetirement, setTempRetirement] = useState(EMPTY_RETIREMENT);
 
   // Local state for temporary Personal Pension inputs
-  const [tempPersonal, setTempPersonal] = useState({
-    savingsType: "FUND" as "FUND" | "INSURANCE",
-    totalAccumulated: 1000,
-    monthlyAnnualContribution: 30,
-    desiredStartAge: 65,
-    receivingPeriod: 20,
-  });
+  const [tempPersonal, setTempPersonal] = useState(EMPTY_PERSONAL);
 
   // Local state for temporary Pension Insurance inputs
-  const [tempInsurance, setTempInsurance] = useState({
-    insuranceType: "일반연금보험",
-    totalAccumulated: 1500,
-    monthlyPayment: 20,
-    paymentPeriod: 10,
-    expectedDeclaredRate: 2.5,
-  });
+  const [tempInsurance, setTempInsurance] = useState(EMPTY_INSURANCE);
+  const openAddForm = (kind: "RETIREMENT" | "PERSONAL" | "INSURANCE") => {
+    setTempRetirement(EMPTY_RETIREMENT);
+    setTempPersonal(EMPTY_PERSONAL);
+    setTempInsurance(EMPTY_INSURANCE);
+    setAddForm(kind);
+  };
 
   // 단계를 넘어갈 때 이전 단계의 임시 동기화 상태(PDF 파싱 결과, NPS/FSS 인증 대기 등)가
   // 다음 단계(특히 배우자 단계)로 새지 않도록 초기화한다.
   const goToStep = (i: number) => {
     setFssError("");
+    setAddForm(null);
     setNpsSynced(false);
     setVerificationPending(false);
     setJti(null);
@@ -1395,7 +1396,12 @@ export default function OnboardingPage() {
                       <div style={styles.emptyText}>등록된 퇴직연금이 없습니다. 아래에서 정보를 추가해 주세요.</div>
                     )}
 
-                    {/* Form to Add Retirement Pension */}
+                    {/* 추가 등록: 버튼을 누르면 빈 입력 칸을 연다 */}
+                    {addForm !== "RETIREMENT" ? (
+                      <button type="button" onClick={() => openAddForm("RETIREMENT")} style={styles.addBtn}>
+                        + 퇴직연금 추가 등록
+                      </button>
+                    ) : (
                     <div style={styles.addFormBox}>
                       <h4 style={styles.addFormTitle}>퇴직연금 추가 등록</h4>
                       <div style={{ ...styles.fieldRow, marginBottom: 12 }}>
@@ -1438,7 +1444,7 @@ export default function OnboardingPage() {
                             <input
                               type="number"
                               className="premium-input"
-                              value={tempRetirement.avgSalary}
+                              value={tempRetirement.avgSalary || ""}
                               onChange={(e) => setTempRetirement({ ...tempRetirement, avgSalary: Number(e.target.value) })}
                             />
                           </div>
@@ -1447,7 +1453,7 @@ export default function OnboardingPage() {
                             <input
                               type="number"
                               className="premium-input"
-                              value={tempRetirement.yearsOfService}
+                              value={tempRetirement.yearsOfService || ""}
                               onChange={(e) => setTempRetirement({ ...tempRetirement, yearsOfService: Number(e.target.value) })}
                             />
                           </div>
@@ -1456,7 +1462,8 @@ export default function OnboardingPage() {
                             <input
                               type="number"
                               className="premium-input"
-                              value={tempRetirement.salaryGrowthRate}
+                              placeholder="비우면 3"
+                              value={tempRetirement.salaryGrowthRate || ""}
                               onChange={(e) => setTempRetirement({ ...tempRetirement, salaryGrowthRate: Number(e.target.value) })}
                             />
                           </div>
@@ -1468,7 +1475,7 @@ export default function OnboardingPage() {
                             <input
                               type="number"
                               className="premium-input"
-                              value={tempRetirement.totalAccumulated}
+                              value={tempRetirement.totalAccumulated || ""}
                               onChange={(e) => setTempRetirement({ ...tempRetirement, totalAccumulated: Number(e.target.value) })}
                             />
                           </div>
@@ -1477,7 +1484,7 @@ export default function OnboardingPage() {
                             <input
                               type="number"
                               className="premium-input"
-                              value={tempRetirement.monthlyContribution}
+                              value={tempRetirement.monthlyContribution || ""}
                               onChange={(e) => setTempRetirement({ ...tempRetirement, monthlyContribution: Number(e.target.value) })}
                             />
                           </div>
@@ -1486,24 +1493,38 @@ export default function OnboardingPage() {
                             <input
                               type="number"
                               className="premium-input"
-                              value={tempRetirement.expectedReturnRate}
+                              placeholder="비우면 3"
+                              value={tempRetirement.expectedReturnRate || ""}
                               onChange={(e) => setTempRetirement({ ...tempRetirement, expectedReturnRate: Number(e.target.value) })}
                             />
                           </div>
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          store.addRetirementPension(tempRetirement, who);
-                          alert("퇴직연금이 추가되었습니다.");
-                        }}
-                        style={styles.addBtn}
-                      >
-                        + 리스트에 추가하기
-                      </button>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            store.addRetirementPension(
+                              {
+                                ...tempRetirement,
+                                salaryGrowthRate: tempRetirement.salaryGrowthRate || 3,
+                                expectedReturnRate: tempRetirement.expectedReturnRate || 3,
+                              },
+                              who
+                            );
+                            setAddForm(null);
+                          }}
+                          style={{ ...styles.addBtn, flex: 1 }}
+                        >
+                          + 리스트에 추가하기
+                        </button>
+                        <button type="button" onClick={() => setAddForm(null)} className="premium-button-secondary">
+                          취소
+                        </button>
+                      </div>
                     </div>
+                    )}
                   </>
                 )}
 
@@ -1726,63 +1747,82 @@ export default function OnboardingPage() {
                           </div>
                         )}
 
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>유형</label>
-                          <select
-                            className="premium-input"
-                            value={tempPersonal.savingsType}
-                            onChange={(e) => setTempPersonal({ ...tempPersonal, savingsType: e.target.value as "FUND" | "INSURANCE" })}
-                          >
-                            <option value="FUND">연금저축펀드</option>
-                            <option value="INSURANCE">연금저축보험</option>
-                          </select>
-                        </div>
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>총 평가금 (만원)</label>
-                          <input
-                            type="number"
-                            className="premium-input"
-                            value={tempPersonal.totalAccumulated}
-                            onChange={(e) => setTempPersonal({ ...tempPersonal, totalAccumulated: Number(e.target.value) })}
-                          />
-                        </div>
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>월/연 납입액 (만원)</label>
-                          <input
-                            type="number"
-                            className="premium-input"
-                            value={tempPersonal.monthlyAnnualContribution}
-                            onChange={(e) => setTempPersonal({ ...tempPersonal, monthlyAnnualContribution: Number(e.target.value) })}
-                          />
-                        </div>
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>희망수령나이 / 기간(년)</label>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <input
-                              type="number"
-                              className="premium-input"
-                              placeholder="개시나이"
-                              value={tempPersonal.desiredStartAge}
-                              onChange={(e) => setTempPersonal({ ...tempPersonal, desiredStartAge: Number(e.target.value) })}
-                            />
-                            <input
-                              type="number"
-                              className="premium-input"
-                              placeholder="수령기간"
-                              value={tempPersonal.receivingPeriod}
-                              onChange={(e) => setTempPersonal({ ...tempPersonal, receivingPeriod: Number(e.target.value) })}
-                            />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            store.addPersonalPension(tempPersonal, who);
-                          }}
-                          style={styles.addBtnCompact}
-                        >
-                          + 연금저축 추가
-                        </button>
+                        {addForm !== "PERSONAL" ? (
+                          <button type="button" onClick={() => openAddForm("PERSONAL")} style={styles.addBtnCompact}>
+                            + 연금저축 추가 등록
+                          </button>
+                        ) : (
+                          <>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>유형</label>
+                              <select
+                                className="premium-input"
+                                value={tempPersonal.savingsType}
+                                onChange={(e) => setTempPersonal({ ...tempPersonal, savingsType: e.target.value as "FUND" | "INSURANCE" })}
+                              >
+                                <option value="FUND">연금저축펀드</option>
+                                <option value="INSURANCE">연금저축보험</option>
+                              </select>
+                            </div>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>총 평가금 (만원)</label>
+                              <input
+                                type="number"
+                                className="premium-input"
+                                value={tempPersonal.totalAccumulated || ""}
+                                onChange={(e) => setTempPersonal({ ...tempPersonal, totalAccumulated: Number(e.target.value) })}
+                              />
+                            </div>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>월/연 납입액 (만원)</label>
+                              <input
+                                type="number"
+                                className="premium-input"
+                                value={tempPersonal.monthlyAnnualContribution || ""}
+                                onChange={(e) => setTempPersonal({ ...tempPersonal, monthlyAnnualContribution: Number(e.target.value) })}
+                              />
+                            </div>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>희망수령나이 / 기간(년)</label>
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <input
+                                  type="number"
+                                  className="premium-input"
+                                  placeholder="비우면 65세"
+                                  value={tempPersonal.desiredStartAge || ""}
+                                  onChange={(e) => setTempPersonal({ ...tempPersonal, desiredStartAge: Number(e.target.value) })}
+                                />
+                                <input
+                                  type="number"
+                                  className="premium-input"
+                                  placeholder="비우면 20년"
+                                  value={tempPersonal.receivingPeriod || ""}
+                                  onChange={(e) => setTempPersonal({ ...tempPersonal, receivingPeriod: Number(e.target.value) })}
+                                />
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  store.addPersonalPension({ ...tempPersonal, desiredStartAge: tempPersonal.desiredStartAge || 65, receivingPeriod: tempPersonal.receivingPeriod || 20 }, who);
+                                  setAddForm(null);
+                                }}
+                                style={{ ...styles.addBtnCompact, flex: 1 }}
+                              >
+                                + 연금저축 추가
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setAddForm(null)}
+                                className="premium-button-secondary"
+                                style={{ padding: "6px 12px", fontSize: "0.8rem" }}
+                              >
+                                취소
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       {/* Right Column: Pension Insurance */}
@@ -1810,61 +1850,80 @@ export default function OnboardingPage() {
                           </div>
                         )}
 
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>보험 상품 구분</label>
-                          <input
-                            type="text"
-                            className="premium-input"
-                            value={tempInsurance.insuranceType}
-                            onChange={(e) => setTempInsurance({ ...tempInsurance, insuranceType: e.target.value })}
-                          />
-                        </div>
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>총 납입액 (만원)</label>
-                          <input
-                            type="number"
-                            className="premium-input"
-                            value={tempInsurance.totalAccumulated}
-                            onChange={(e) => setTempInsurance({ ...tempInsurance, totalAccumulated: Number(e.target.value) })}
-                          />
-                        </div>
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>월 납입액 (만원)</label>
-                          <input
-                            type="number"
-                            className="premium-input"
-                            value={tempInsurance.monthlyPayment}
-                            onChange={(e) => setTempInsurance({ ...tempInsurance, monthlyPayment: Number(e.target.value) })}
-                          />
-                        </div>
-                        <div style={styles.fieldRowCompact}>
-                          <label style={styles.labelCompact}>납입 기간(년) / 공시이율(%)</label>
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <input
-                              type="number"
-                              className="premium-input"
-                              placeholder="납입기간"
-                              value={tempInsurance.paymentPeriod}
-                              onChange={(e) => setTempInsurance({ ...tempInsurance, paymentPeriod: Number(e.target.value) })}
-                            />
-                            <input
-                              type="number"
-                              className="premium-input"
-                              placeholder="공시이율"
-                              value={tempInsurance.expectedDeclaredRate}
-                              onChange={(e) => setTempInsurance({ ...tempInsurance, expectedDeclaredRate: Number(e.target.value) })}
-                            />
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            store.addPensionInsurance(tempInsurance, who);
-                          }}
-                          style={styles.addBtnCompact}
-                        >
-                          + 연금보험 추가
-                        </button>
+                        {addForm !== "INSURANCE" ? (
+                          <button type="button" onClick={() => openAddForm("INSURANCE")} style={styles.addBtnCompact}>
+                            + 연금보험 추가 등록
+                          </button>
+                        ) : (
+                          <>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>보험 상품 구분</label>
+                              <input
+                                type="text"
+                                className="premium-input"
+                                value={tempInsurance.insuranceType}
+                                onChange={(e) => setTempInsurance({ ...tempInsurance, insuranceType: e.target.value })}
+                              />
+                            </div>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>총 납입액 (만원)</label>
+                              <input
+                                type="number"
+                                className="premium-input"
+                                value={tempInsurance.totalAccumulated || ""}
+                                onChange={(e) => setTempInsurance({ ...tempInsurance, totalAccumulated: Number(e.target.value) })}
+                              />
+                            </div>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>월 납입액 (만원)</label>
+                              <input
+                                type="number"
+                                className="premium-input"
+                                value={tempInsurance.monthlyPayment || ""}
+                                onChange={(e) => setTempInsurance({ ...tempInsurance, monthlyPayment: Number(e.target.value) })}
+                              />
+                            </div>
+                            <div style={styles.fieldRowCompact}>
+                              <label style={styles.labelCompact}>납입 기간(년) / 공시이율(%)</label>
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <input
+                                  type="number"
+                                  className="premium-input"
+                                  placeholder="비우면 10년"
+                                  value={tempInsurance.paymentPeriod || ""}
+                                  onChange={(e) => setTempInsurance({ ...tempInsurance, paymentPeriod: Number(e.target.value) })}
+                                />
+                                <input
+                                  type="number"
+                                  className="premium-input"
+                                  placeholder="비우면 2.5%"
+                                  value={tempInsurance.expectedDeclaredRate || ""}
+                                  onChange={(e) => setTempInsurance({ ...tempInsurance, expectedDeclaredRate: Number(e.target.value) })}
+                                />
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  store.addPensionInsurance({ ...tempInsurance, paymentPeriod: tempInsurance.paymentPeriod || 10, expectedDeclaredRate: tempInsurance.expectedDeclaredRate || 2.5 }, who);
+                                  setAddForm(null);
+                                }}
+                                style={{ ...styles.addBtnCompact, flex: 1 }}
+                              >
+                                + 연금보험 추가
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setAddForm(null)}
+                                className="premium-button-secondary"
+                                style={{ padding: "6px 12px", fontSize: "0.8rem" }}
+                              >
+                                취소
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </>

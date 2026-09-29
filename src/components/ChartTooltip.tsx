@@ -16,10 +16,11 @@ interface Props {
   hideZero?: boolean; // 값이 0인 항목 숨김
   colors?: Record<string, string>; // 항목 이름별 점 색 (선 색과 다르게 보일 때)
   showTotal?: boolean; // 제목 오른쪽에 항목 합계 표시 (누적 차트용)
+  unit?: string; // 금액 단위 (예: "만원/월")
 }
 
 // Recharts 툴팁: 테마 색상 변수(라이트·다크 모두)와 작은 글씨, 항목별 색 점 (대시보드 인출전략 차트와 같은 모양)
-export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false, colors, showTotal = false }: Props) {
+export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false, colors, showTotal = false, unit = "만원" }: Props) {
   if (!active || !payload?.length) return null;
   const rows = hideZero ? payload.filter((e) => Number(e.value) !== 0) : payload;
   if (rows.length === 0) return null;
@@ -29,7 +30,7 @@ export default function ChartTooltip({ active, payload, label, labelSuffix = "",
     <div style={styles.box}>
       <p style={styles.title}>
         <span>{label}{labelSuffix}</span>
-        {showTotal && <span>합계 {Math.round(total).toLocaleString()} 만원</span>}
+        {showTotal && <span>합계 {Math.round(total).toLocaleString()} {unit}</span>}
       </p>
       <div style={styles.list}>
         {rows.map((e) => (
@@ -38,7 +39,7 @@ export default function ChartTooltip({ active, payload, label, labelSuffix = "",
               <span style={{ ...styles.dot, backgroundColor: colors?.[String(e.name)] ?? e.color }} />
               <span style={styles.name}>{e.name}</span>
             </div>
-            <span style={styles.value}>{Math.round(Number(e.value) || 0).toLocaleString()} 만원</span>
+            <span style={styles.value}>{Math.round(Number(e.value) || 0).toLocaleString()} {unit}</span>
           </div>
         ))}
       </div>

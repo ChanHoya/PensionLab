@@ -69,6 +69,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   const survivorLabel = si ? WHO_LABEL[si.deceased === "SELF" ? "SPOUSE" : "SELF"] : "";
   const cardRef = useRef<HTMLDivElement>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [tableOpen, setTableOpen] = useState(true); // 연도별 요약 표 접기
   const handlePdf = async () => {
     if (!cardRef.current) return;
     setPdfBusy(true);
@@ -258,7 +259,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal colors={legendColors} />} />
+            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal unit="만원/월" colors={legendColors} />} />
             <Legend
               wrapperStyle={{ fontSize: "0.72rem" }}
               iconSize={10}
@@ -294,6 +295,19 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </ResponsiveContainer>
       </div>
 
+      <div style={styles.header}>
+        <span style={styles.tableTitle}>연도별 요약 (5년 간격 + 사망 전후)</span>
+        <button
+          type="button"
+          data-html2canvas-ignore
+          onClick={() => setTableOpen((v) => !v)}
+          className="premium-button-secondary"
+          style={styles.pdfButton}
+        >
+          {tableOpen ? "▲ 접기" : "▼ 펼치기"}
+        </button>
+      </div>
+      {tableOpen && (
       <div style={{ overflowX: "auto" }}>
         <table style={styles.table}>
           <thead>
@@ -322,6 +336,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           </tbody>
         </table>
       </div>
+      )}
       <p style={styles.note}>
         ※ 각자의 기대수명까지 생존한다고 가정합니다. 기초연금은 해마다 가구 소득인정액으로 다시 판정합니다
         (한 사람만 65세 이상이면 감액 없음, 둘 다 받으면 각 20% 감액, 사망 후 단독가구 기준).
@@ -346,6 +361,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   headerActions: { display: "flex", gap: "6px", flexWrap: "wrap" },
   pdfButton: { fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 },
   title: { fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 },
+  tableTitle: { fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" },
   subtitle: { fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 },
   kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
   kpi: { border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "12px 14px", backgroundColor: "var(--background)" },

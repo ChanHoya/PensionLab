@@ -33,6 +33,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const activePayload = payload.filter((entry: any) => (entry.value || 0) > 0);
     if (activePayload.length === 0) return null;
+    // 차트 값은 연 금액(만원). 합계는 쌓인 세전 항목만 (세후 선 제외)
+    const preTaxTotal = activePayload
+      .filter((entry: { dataKey?: string }) => entry.dataKey !== "totalPostTax")
+      .reduce((sum: number, entry: { value?: number }) => sum + (entry.value || 0), 0);
+    const year = payload[0]?.payload?.year;
 
     return (
       <div style={{
@@ -51,8 +56,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           fontWeight: 700,
           color: "var(--text-primary)",
           borderBottom: "1px solid var(--border)",
-          paddingBottom: "6px"
-        }}>{label}세</p>
+          paddingBottom: "6px",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "20px",
+        }}>
+          <span>{label}세{year ? ` · ${year}년` : ""}</span>
+          <span>세전 합계 {preTaxTotal.toLocaleString()} 만원/년</span>
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           {activePayload.map((entry: any, index: number) => (
             <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
@@ -61,7 +72,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{entry.name}</span>
               </div>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                {entry.value.toLocaleString()} 만원
+                {entry.value.toLocaleString()} 만원/년
               </span>
             </div>
           ))}
@@ -136,6 +147,7 @@ export default function DashboardPage() {
 
   // PDF download loading state
   const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [detailTableOpen, setDetailTableOpen] = useState(true); // 연도별 상세 표 접기
 
   // 왼쪽 입력 열 접기
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -657,9 +669,21 @@ export default function DashboardPage() {
 
             {/* 3. Detailed Year-by-Year Table */}
             <div style={styles.dashboardCard} className="premium-card">
-              <h3 style={styles.chartTitle}>연도별 상세 현금흐름 및 세후 시뮬레이션 표</h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+                <h3 style={styles.chartTitle}>연도별 상세 현금흐름 및 세후 시뮬레이션 표</h3>
+                <button
+                  type="button"
+                  data-html2canvas-ignore
+                  onClick={() => setDetailTableOpen((v) => !v)}
+                  className="premium-button-secondary"
+                  style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700, whiteSpace: "nowrap" }}
+                >
+                  {detailTableOpen ? "▲ 접기" : "▼ 펼치기"}
+                </button>
+              </div>
               <p style={styles.chartSubtitle}>원 단위 계산식을 만 원 단위로 절사한 상세 연도별 테이블</p>
 
+              {detailTableOpen && (
               <div style={styles.tableWrapper}>
                 <table style={styles.table}>
                   <thead>
@@ -732,6 +756,7 @@ export default function DashboardPage() {
                   </tbody>
                 </table>
               </div>
+              )}
             </div>
 
             {/* 4. Compliance Footnotes */}

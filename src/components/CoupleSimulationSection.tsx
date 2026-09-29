@@ -256,12 +256,21 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
               (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 총액이{" "}
               {sm.annualGrowth > 0 ? (
                 <>매년 <strong>{(sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 늘어납니다.</>
+              ) : sm.annualGrowth < 0 ? (
+                <>매년 <strong>{(-sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 줄어듭니다(완만한 체감).</>
               ) : (
                 <>같은 수준으로 유지됩니다.</>
               )}{" "}
-              국민연금이 시작·증가하는 만큼 퇴직·개인연금을 해마다 줄여 {sm.endYear}년까지 모두 쓰므로 국민연금 개시 때 총액이 튀지 않습니다.
-              (총액을 물가만큼 늘리면 물가연동인 국민연금과 같은 속도라 사적연금이 줄지 않으므로, 증가율은 국민연금 아래로 내려가지 않는
-              가장 완만한 값으로 적립금 크기에 맞춰 정해집니다)
+              국민연금이 시작·증가하는 만큼 퇴직·개인연금을 해마다 줄여 {sm.endYear}년까지 나눠 쓰므로 국민연금 개시 때 총액이 튀지 않고
+              상품 만기 때 끊기지 않습니다.
+              {sm.annualGrowth >= 0 ? (
+                <>
+                  {" "}(총액을 물가만큼 늘리면 물가연동인 국민연금과 같은 속도라 사적연금이 줄지 않으므로, 증가율은 국민연금 아래로 내려가지 않는
+                  가장 완만한 값으로 적립금 크기에 맞춰 정해집니다)
+                </>
+              ) : (
+                <> 총액이 국민연금 수준까지 내려가면 그 뒤로는 국민연금만 받습니다.</>
+              )}
               <br />
               💰 사적연금 적립금({sm.startYear}년 가치): 보유 <strong>{fmt(sm.pot)}만원</strong> · 희망 월 생활비{" "}
               {fmt(sm.targetToday)}만원(현재가치)으로 시작하는 데 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}

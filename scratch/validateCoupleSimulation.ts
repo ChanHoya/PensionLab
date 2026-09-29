@@ -144,7 +144,7 @@ near(noBasic.rows.find((row) => row.year === 2031)!.household, 200);
 const richInsurance = [{ id: "i", insuranceType: "연금보험", totalAccumulated: 100000, monthlyPayment: 0, paymentPeriod: 0, expectedDeclaredRate: 0.5 }];
 const rich = runCoupleSimulation({ ...husband, pensionInsurances: richInsurance }, wife, params, basic, 2026);
 const rich2031 = rich.rows.find((row) => row.year === 2031)!;
-assert.ok(rich2031.self.insurance > 400);
+assert.ok(rich2031.self.insurance > 300); // 가구 평탄화: 국민연금 개시 뒤에는 부족분만 채워 월 388만원
 assert.equal(rich2031.self.basic, 0);
 
 // 국민연금 연기: 본인 2년 연기 → 67세부터 200 × (1 + 7.2% × 2) = 228.8
@@ -160,38 +160,36 @@ assert.equal(spDeferred.rows.find((row) => row.year === 2040)!.spouse!.national,
 near(spDeferred.rows.find((row) => row.year === 2041)!.spouse!.national, 56 * 1.36, 0.5); // 70세
 near(spDeferred.rows.find((row) => row.year === 2031)!.self.national, 200);
 
-// 사적연금 수령 종료 나이 70세: 60~70세(11년)에 나눠 받고 71세부터 0, 기간이 짧아져 월 수령액은 커진다
+// 사적연금은 항상 가구 평탄화: 수령 종료 나이(비우면 본인 기대수명 80세 = 2046년)까지 나눠 받고 그 뒤 0
+// 70세로 정하면 2036년(70세)까지, 기간이 짧아져 월 수령액은 커진다
 const irp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 20000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
 const base = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, params, basic, 2026);
 const early = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, privatePensionEndAge: 70 }, basic, 2026);
 const ret = (res: typeof base, y: number) => res.rows.find((row) => row.year === y)!.self.retirement;
-assert.ok(ret(base, 2037) > 0); // 기본(20년 분할): 71세에도 수령
+assert.ok(ret(base, 2046) > 0); // 기대수명(80세)까지 수령 — 상품 만기로 먼저 끊기지 않는다
+assert.equal(ret(base, 2047), 0);
 assert.ok(ret(early, 2036) > 0); // 70세까지 수령
 assert.equal(ret(early, 2037), 0); // 71세
-assert.ok(ret(early, 2026) > ret(base, 2026) * 1.5); // 11년 vs 20년 분할
-// 체감형 인출이어도 종료 나이를 정하면 균등 분할: 매년 같은 금액, 총액은 기본 20년 분할보다 크지 않다
-const earlyDec = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, decumulationStrategy: "DECREASING", privatePensionEndAge: 70 }, basic, 2026);
-assert.equal(ret(earlyDec, 2026), ret(earlyDec, 2036));
-const sumRet = (res: typeof base) => res.rows.reduce((a, row) => a + row.self.retirement, 0);
-assert.ok(sumRet(earlyDec) <= sumRet(base));
+assert.ok(ret(early, 2026) > ret(base, 2026)); // 짧게 나누면 더 많이
 
-// 체감형 인출(120%→40%)도 적립금 총액 보존: 3% 할인한 현재가치 합이 균등 수령과 같다
+// 완만한 체감: 가구 총액이 매년 2%씩 줄다가 국민연금 수준에 닿으면 국민연금만 (절벽 없이)
 const pv = (res: typeof base) => res.rows.reduce((a, row, t) => a + (row.self.retirement * 12) / Math.pow(1.03, t), 0);
 const flatRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, params, basic, 2026);
 const decRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, decumulationStrategy: "DECREASING" }, basic, 2026);
-assert.ok(Math.abs(pv(decRes) / pv(flatRes) - 1) < 0.01, `PV ratio ${pv(decRes) / pv(flatRes)}`);
-assert.ok(ret(decRes, 2026) > ret(flatRes, 2026)); // 초반에 더 많이
-
-// 완만한 체감: 매년 같은 비율(2%)로 줄어 5년마다 뚝 떨어지는 계단이 없다
-for (let y = 2027; y <= 2045; y++) {
-  const ratio = ret(decRes, y) / ret(decRes, y - 1);
-  assert.ok(Math.abs(ratio - 0.98) < 0.01, `${y} 체감 비율 ${ratio}`);
+assert.equal(decRes.smoothing!.annualGrowth, -0.02);
+const dAtH = (y: number) => decRes.rows.find((row) => row.year === y)!;
+for (let y = 2027; y <= 2046; y++) {
+  if (ret(decRes, y) > 0.5) near(dAtH(y).household / dAtH(y - 1).household, 0.98, 0.004);
+  else assert.ok(dAtH(y).household >= dAtH(y - 1).household * 0.98 - 0.6, `${y} 체감 후 급감`);
 }
+// 체감이어도 적립금 현재가치는 같고, 초반에 더 많이 받는다
+assert.ok(Math.abs(pv(decRes) / pv(flatRes) - 1) < 0.01, `PV ratio ${pv(decRes) / pv(flatRes)}`);
+assert.ok(ret(decRes, 2026) > ret(flatRes, 2026));
 
 // 가구 소득 평탄화: 가구 총액은 줄지 않고(유지 또는 증가) 소진 연도(기본: 본인 기대수명 80세 = 2046년)까지 매년 같은 비율,
 // 사적연금(총액 − 국민연금)은 국민연금이 모두 시작된 뒤 해마다 줄어 소진 연도 이후 0
 const bigIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 60000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
-const sm = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
+const sm = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params }, { ...basic, applyToSimulation: false }, 2026);
 const smAt = (y: number) => sm.rows.find((row) => row.year === y)!;
 const privAt = (res: typeof sm, y: number) => {
   const row = res.rows.find((x) => x.year === y)!;
@@ -209,7 +207,7 @@ for (let y = 2047; y <= 2059; y++) assert.equal(privAt(sm, y), 0); // 소진 후
 // 물가 3%, 적립금 3억: 총액이 국민연금 개시에도 튀지 않고 매년 같은 비율로 완만하게 늘며(0 < g < 물가),
 // 사적연금은 국민연금이 커지는 만큼 해마다 줄어 소진 연도에 거의 0
 const midIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 30000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
-const smM = runCoupleSimulation({ ...husband, retirementPensions: midIrp }, wife, { ...params, inflationRate: 3, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
+const smM = runCoupleSimulation({ ...husband, retirementPensions: midIrp }, wife, { ...params, inflationRate: 3 }, { ...basic, applyToSimulation: false }, 2026);
 const mAt = (y: number) => smM.rows.find((row) => row.year === y)!;
 const gM = smM.smoothing!.annualGrowth;
 assert.ok(gM > 0 && gM < 0.03, `growth ${gM}`);
@@ -218,22 +216,22 @@ for (let y = 2032; y <= 2046; y++) if (y !== 2036) assert.ok(privAt(smM, y) <= p
 assert.ok(privAt(smM, 2046) < 5);
 // 적립금이 너무 작으면(8천만원, 물가 0%) 국민연금 개시 때 계단은 피할 수 없지만 총액은 줄지 않는다
 const smallIrp = [{ id: "r", pensionType: "IRP" as const, totalAccumulated: 8000, monthlyContribution: 0, companyMatchRate: 0, expectedReturnRate: 3 }];
-const smS = runCoupleSimulation({ ...husband, retirementPensions: smallIrp }, wife, { ...params, householdIncomeSmoothing: true }, { ...basic, applyToSimulation: false }, 2026);
+const smS = runCoupleSimulation({ ...husband, retirementPensions: smallIrp }, wife, { ...params }, { ...basic, applyToSimulation: false }, 2026);
 for (let y = 2027; y <= 2046; y++) assert.ok(smS.rows.find((r0) => r0.year === y)!.household >= smS.rows.find((r0) => r0.year === y - 1)!.household - 0.6, `small ${y} 총액 감소`);
 // 사적연금 현재가치 합(연 3% 할인) = 적립금
 const pvDraw = sm.rows.reduce((a, row, t) => a + (privAt(sm, row.year) * 12) / Math.pow(1.03, t), 0);
 near(pvDraw / sm.smoothing!.pot, 1, 0.01);
 // 소진 나이 70세로 지정하면 2036년(70세)까지, 2037년부터 0
-const sm70 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true, privatePensionEndAge: 70 }, { ...basic, applyToSimulation: false }, 2026);
+const sm70 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, privatePensionEndAge: 70 }, { ...basic, applyToSimulation: false }, 2026);
 assert.equal(sm70.smoothing!.endYear, 2036);
 assert.ok(privAt(sm70, 2035) > 0);
 assert.equal(privAt(sm70, 2037), 0);
 near(sm70.smoothing!.pot, sm.smoothing!.pot, 1); // 소진 나이는 적립금 크기에 영향 없음
 assert.ok(sm70.smoothing!.levelMonthly > level); // 짧게 쓰면 시작 수준이 높다
 // 희망 생활비를 유지 가능한 시작 수준으로 넣으면 필요 적립금 ≈ 보유 적립금
-const sm2 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, householdIncomeSmoothing: true, targetMonthlySpending: level }, { ...basic, applyToSimulation: false }, 2026);
+const sm2 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, targetMonthlySpending: level }, { ...basic, applyToSimulation: false }, 2026);
 near(sm2.smoothing!.requiredPot / sm2.smoothing!.pot, 1, 0.01);
-// 평탄화 끄면 smoothing 정보 없음
-assert.equal(r.smoothing, undefined);
+// 사적연금이 없어도 항상 평탄화 요약이 있다 (적립금 0)
+assert.equal(r.smoothing?.pot, 0);
 
 console.log("Couple simulation validation success!");

@@ -1,4 +1,5 @@
 import { runPensionSimulation, type CashFlowItem } from "@/services/pensionCalculator";
+import { DECREASING_ANNUAL_RATE } from "@/services/withdrawalCalculator";
 import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensionCalculator";
 import { NPS_RULES, SURVIVOR_OVERLAP_RATE, survivorRateForMonths, statutoryPensionStartAge } from "@/config/npsRules";
 import type {
@@ -83,11 +84,13 @@ const PRIVATE_KEYS = ["retirement", "personal", "insurance"] as const;
 // 증가율(≥ 0)이라, 국민연금이 시작·증가하는 만큼 사적연금 지급액이 줄고 총액은 튀지 않는다. 소진 연도 이후에는 국민연금만.
 // (총액을 물가만큼 늘리면 물가연동인 국민연금과 같은 속도라 사적연금 몫이 줄지 않으므로, g는 적립금 크기로 정해진다)
 // 사적연금 인출액의 현재가치가 기존 사적연금 흐름의 현재가치(적립금)와 같아지도록 L을 찾는다.
+// declineRate > 0(완만한 체감)이면 g = -declineRate로 고정해 총액이 매년 그만큼 줄어드는 경로로 나눈다.
 export function planHouseholdSmoothing(
   rows: CoupleYear[],
   targetToday: number,
   inflationRate: number,
-  endIndex: number
+  endIndex: number,
+  declineRate: number = 0
 ): { override: SmoothingOverride; summary: SmoothingSummary } {
   const privOf = (p: PersonYear | null) => (p ? p.retirement + p.personal + p.insurance : 0);
   const first = rows.findIndex((r) => privOf(r.self) + privOf(r.spouse) > 0);
@@ -136,7 +139,9 @@ export function planHouseholdSmoothing(
   // 총액을 줄이지 않고(g ≥ 0) 어느 해에도 국민연금 아래로 내려가지 않는 가장 완만한 증가율을 고른다.
   // 적립금이 너무 작아 불가능하면 국민연금 개시 때 튀는 폭이 가장 작은 증가율.
   let best = { g: 0, L: 0, jump: Infinity };
-  if (pot > 0) {
+  if (pot > 0 && declineRate > 0) {
+    best = { g: -declineRate, L: solveL(-declineRate, pot), jump: 0 };
+  } else if (pot > 0) {
     for (let step = 0; step <= 300; step++) {
       const g = step * 0.0005; // 0% ~ 15%, 0.05%p 간격
       const L = solveL(g, pot);
@@ -289,8 +294,8 @@ export function runCoupleSimulation(
   basic: BasicPensionState,
   baseYear: number = new Date().getFullYear()
 ): CoupleSimulationResult {
-  // 평탄화 모드의 수령 종료 나이는 소진 연도로만 쓰고, 적립금 산정용 기존 흐름은 상품별 기본 기간으로 계산
-  const trackParams = params.householdIncomeSmoothing ? { ...params, privatePensionEndAge: 0, spousePrivatePensionEndAge: 0 } : params;
+  // 사적연금은 항상 가구 평탄화로 나눈다. 수령 종료 나이는 소진 연도로만 쓰고, 적립금 산정용 기존 흐름은 상품별 기본 기간으로 계산
+  const trackParams = { ...params, privatePensionEndAge: 0, spousePrivatePensionEndAge: 0 };
   const selfParams = personParams(trackParams, "SELF");
   const spouseParams = personParams(trackParams, "SPOUSE");
   const st = track(self, selfParams);
@@ -418,9 +423,9 @@ export function runCoupleSimulation(
   };
 
   const base = build();
-  if (!params.householdIncomeSmoothing) return base;
-  // 소진 연도: 본인 수령 종료 나이, 비우면 본인 기대수명
+  // 소진 연도: 본인 수령 종료 나이, 비우면 본인 기대수명. 인출 방식이 완만한 체감이면 총액을 매년 2%씩 줄인다
   const endAge = params.privatePensionEndAge > 0 ? params.privatePensionEndAge : st.lifeExpectancy;
-  const plan = planHouseholdSmoothing(base.rows, params.targetMonthlySpending, infl, endAge - selfAge0);
+  const declineRate = params.decumulationStrategy === "DECREASING" ? DECREASING_ANNUAL_RATE : 0;
+  const plan = planHouseholdSmoothing(base.rows, params.targetMonthlySpending, infl, endAge - selfAge0, declineRate);
   return { ...build(plan.override), smoothing: plan.summary };
 }

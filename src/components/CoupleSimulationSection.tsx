@@ -14,8 +14,6 @@ import {
   DefaultLegendContent,
 } from "recharts";
 import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/coupleSimulation";
-import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
-import { NPS_RULES } from "@/config/npsRules";
 import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
 
@@ -58,7 +56,6 @@ function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: num
 export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions }: Props) {
   const { rows, firstDeath, lifetime, survivorInfo: si } = result;
   const survivorLabel = si ? WHO_LABEL[si.deceased === "SELF" ? "SPOUSE" : "SELF"] : "";
-  const store = usePensionStore();
   const cardRef = useRef<HTMLDivElement>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const handlePdf = async () => {
@@ -73,31 +70,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
       setPdfBusy(false);
     }
   };
-  const params = store.simulationParams;
-  const setParam = (data: Partial<SimulationParamsState>) => store.setSimulationParams(data);
-  const deferSelect = (value: number, baseAge: number, key: "nationalPensionDeferYears" | "spouseNationalPensionDeferYears") => (
-    <select className="premium-input" value={value} onChange={(e) => setParam({ [key]: Number(e.target.value) })}>
-      {Array.from({ length: NPS_RULES.maxDeferralYears + 1 }, (_, y) => (
-        <option key={y} value={y}>
-          {y === 0 ? `연기 안 함 (${baseAge}세부터)` : `${y}년 연기 · ${baseAge + y}세부터 (+${(NPS_RULES.deferralBonusPerYear * y * 100).toFixed(1)}%)`}
-        </option>
-      ))}
-    </select>
-  );
-  // 가구 소득 평탄화: 본인 수령 종료 나이 = 부부 사적연금 소진 나이(비우면 본인 기대수명), 배우자 칸은 쓰지 않음
-  const smoothing = params.householdIncomeSmoothing;
-  const endAgeInput = (value: number, key: "privatePensionEndAge" | "spousePrivatePensionEndAge") => {
-    const unused = smoothing && key === "spousePrivatePensionEndAge";
-    const placeholder = unused
-      ? "평탄화 중에는 본인 칸 기준"
-      : smoothing
-        ? `소진 나이 · 비우면 ${params.expectedLifeExpectancy}세(기대수명)`
-        : "비우면 상품별 기본 기간";
-    return (
-      <input type="number" min={0} className="premium-input" disabled={unused} placeholder={placeholder} value={value || ""}
-        onChange={(e) => setParam({ [key]: Number(e.target.value) })} />
-    );
-  };
+  const hasSpouse = rows.some((r) => r.spouse);
   const sm = result.smoothing;
   const potGap = sm ? sm.pot - sm.requiredPot : 0;
   const bothReceiving = rows.find(
@@ -138,7 +111,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   return (
     <div ref={cardRef} style={styles.card}>
       <div style={styles.header}>
-        <h3 style={styles.title}>👫 부부 통합 연금 시뮬레이션</h3>
+        <h3 style={styles.title}>{hasSpouse ? "👫 부부 통합 연금 시뮬레이션" : "📈 연금 통합 시뮬레이션"}</h3>
         {/* 버튼은 PDF 캡처에서 제외 */}
         <div data-html2canvas-ignore style={styles.headerActions}>
           <button type="button" onClick={handlePdf} disabled={pdfBusy} className="premium-button-secondary" style={styles.pdfButton}>
@@ -148,61 +121,21 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       </div>
       <p style={styles.subtitle}>
-        본인·배우자의 국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다. 먼저 사망한 쪽이 생기면 남은 배우자는
-        국민연금법 제56조에 따라 유족연금(사망자 연금의 가입기간별 40~60%)과 「본인 연금 + 유족연금 30%」 중 큰 쪽을 받습니다. (명목 금액, 만원/월)
-      </p>
-
-      <div style={styles.optionGrid}>
-        <div style={styles.optionField}>
-          <label style={styles.optionLabel}>본인 국민연금 수령 시작</label>
-          {deferSelect(params.nationalPensionDeferYears, params.nationalPensionStartAge, "nationalPensionDeferYears")}
-        </div>
-        <div style={styles.optionField}>
-          <label style={styles.optionLabel}>배우자 국민연금 수령 시작</label>
-          {deferSelect(params.spouseNationalPensionDeferYears, params.spouseNationalPensionStartAge, "spouseNationalPensionDeferYears")}
-        </div>
-        <div style={styles.optionField}>
-          <label style={styles.optionLabel}>본인 퇴직·개인연금 수령 종료 나이</label>
-          {endAgeInput(params.privatePensionEndAge, "privatePensionEndAge")}
-        </div>
-        <div style={styles.optionField}>
-          <label style={styles.optionLabel}>배우자 퇴직·개인연금 수령 종료 나이</label>
-          {endAgeInput(params.spousePrivatePensionEndAge, "spousePrivatePensionEndAge")}
-        </div>
-        <div style={styles.optionField}>
-          <label style={styles.optionLabel}>물가상승률 (%) · 기본 3%</label>
-          <input type="number" min={0} max={10} step={0.1} className="premium-input" value={params.inflationRate}
-            onChange={(e) => setParam({ inflationRate: Number(e.target.value) })} />
-        </div>
-        <div style={styles.optionField}>
-          <label style={styles.optionLabel}>퇴직·개인연금 인출 방식</label>
-          <select className="premium-input" value={smoothing ? "SMOOTH" : params.decumulationStrategy}
-            onChange={(e) =>
-              setParam(
-                e.target.value === "SMOOTH"
-                  ? { householdIncomeSmoothing: true, decumulationStrategy: "FLAT" }
-                  : { householdIncomeSmoothing: false, decumulationStrategy: e.target.value as SimulationParamsState["decumulationStrategy"] }
-              )
-            }>
-            <option value="DECREASING">완만한 체감 (초기에 조금 많이, 매년 2%씩 감소)</option>
-            <option value="FLAT">균등 수령 (매년 같은 금액)</option>
-            <option value="SMOOTH">가구 소득 평탄화 (국민연금 위에 부족분만 채움)</option>
-          </select>
-        </div>
-      </div>
-      <p style={styles.note}>
-        ※ 국민연금은 최대 {NPS_RULES.maxDeferralYears}년 연기할 수 있고 1년마다 {(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%(월 0.6%) 늘어납니다.
-        유족연금은 연기 가산 전 금액 기준입니다. 수령 종료 나이를 정하면 퇴직연금·개인연금·연금보험을 그 나이까지 나눠 먼저 받습니다
-        (기간이 짧아지는 만큼 월 수령액이 커짐). 인출 방식은 적립금 총액이 같도록 맞춘 배분 방식이며 인출전략(S0~S4)에도 같이 적용됩니다.
-        퇴직·개인연금 수령액은 기초연금 소득인정액에도 자동 반영됩니다.
+        {hasSpouse
+          ? "본인·배우자의 국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다. 먼저 사망한 쪽이 생기면 남은 배우자는 국민연금법 제56조에 따라 유족연금(사망자 연금의 가입기간별 40~60%)과 「본인 연금 + 유족연금 30%」 중 큰 쪽을 받습니다."
+          : "국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다."}{" "}
+        (명목 금액, 만원/월 · 입력은 왼쪽 「입력 옵션」에서 바꿉니다)
       </p>
 
       <div style={styles.kpiGrid}>
+        {hasSpouse && (
         <div style={styles.kpi}>
           <div style={styles.kpiLabel}>부부 모두 국민연금 수령 시 가구 월 연금</div>
           <div style={styles.kpiValue}>{bothReceiving ? `${fmt(bothReceiving.household)} 만원` : "-"}</div>
           <div style={styles.kpiHint}>{bothReceiving ? `${bothReceiving.year}년 (본인 ${bothReceiving.self.age}세 / 배우자 ${bothReceiving.spouse!.age}세)` : "수령 기간이 겹치지 않음"}</div>
         </div>
+        )}
+        {hasSpouse && (
         <div style={styles.kpi}>
           <div style={styles.kpiLabel}>첫 사망 전 → 후 가구 월 연금</div>
           <div style={styles.kpiValue}>
@@ -212,10 +145,11 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             {firstDeath ? `${WHO_LABEL[firstDeath.who]} 기대수명 이후 (${firstDeath.year}년)` : "배우자 정보 없음"}
           </div>
         </div>
+        )}
         <div style={styles.kpi}>
-          <div style={styles.kpiLabel}>생애 누적 가구 수령액</div>
+          <div style={styles.kpiLabel}>생애 누적 {hasSpouse ? "가구 " : ""}수령액</div>
           <div style={styles.kpiValue}>{fmt(lifetime.household)} 만원</div>
-          <div style={styles.kpiHint}>본인 {fmt(lifetime.self)} · 배우자 {fmt(lifetime.spouse)}</div>
+          {hasSpouse && <div style={styles.kpiHint}>본인 {fmt(lifetime.self)} · 배우자 {fmt(lifetime.spouse)}</div>}
         </div>
       </div>
 
@@ -389,9 +323,6 @@ const styles: { [key: string]: React.CSSProperties } = {
   headerActions: { display: "flex", gap: "6px", flexWrap: "wrap" },
   pdfButton: { fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 },
   title: { fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 },
-  optionGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
-  optionField: { display: "flex", flexDirection: "column", gap: "6px" },
-  optionLabel: { fontSize: "0.82rem", fontWeight: 600, color: "var(--text-primary)" },
   subtitle: { fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 },
   kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
   kpi: { border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "12px 14px", backgroundColor: "var(--background)" },

@@ -15,6 +15,13 @@ export const NPS_RULES = {
   maxDeferralYears: 5, // 연기 최대 5년
 };
 
+// 출생연도별 노령연금 법정 개시 나이 (1952년생 이전 60세, 4년마다 1세씩 늦춰져 1969년생 이후 65세)
+export function statutoryPensionStartAge(birthYear: number): number {
+  if (birthYear <= 1952) return 60;
+  if (birthYear >= 1969) return 65;
+  return 61 + Math.floor((birthYear - 1953) / 4);
+}
+
 export const EXCLUDED_ADDITIONAL_FROM_YM = "1999-04"; // 적용제외 기간 추납은 1999-04 이후만
 
 // 2025년까지 9%, 2026년부터 매년 0.5%p 인상, 2033년 13%에서 고정

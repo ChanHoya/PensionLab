@@ -33,6 +33,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const activePayload = payload.filter((entry: any) => (entry.value || 0) > 0);
     if (activePayload.length === 0) return null;
+    // 차트 값은 연 금액(만원). 합계는 쌓인 세전 항목만 (세후 선 제외)
+    const preTaxTotal = activePayload
+      .filter((entry: { dataKey?: string }) => entry.dataKey !== "totalPostTax")
+      .reduce((sum: number, entry: { value?: number }) => sum + (entry.value || 0), 0);
+    const year = payload[0]?.payload?.year;
 
     return (
       <div style={{
@@ -51,8 +56,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           fontWeight: 700,
           color: "var(--text-primary)",
           borderBottom: "1px solid var(--border)",
-          paddingBottom: "6px"
-        }}>{label}세</p>
+          paddingBottom: "6px",
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "20px",
+        }}>
+          <span>{label}세{year ? ` · ${year}년` : ""}</span>
+          <span>세전 합계 {preTaxTotal.toLocaleString()} 만원/년</span>
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
           {activePayload.map((entry: any, index: number) => (
             <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
@@ -61,7 +72,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                 <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{entry.name}</span>
               </div>
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                {entry.value.toLocaleString()} 만원
+                {entry.value.toLocaleString()} 만원/년
               </span>
             </div>
           ))}

@@ -249,7 +249,10 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         <div style={styles.infoAlert}>
           🕊 {firstDeath && WHO_LABEL[firstDeath.who]} 사망 후 남은 배우자는{" "}
           <strong>{survivor.survivorChoice === "SURVIVOR" ? "유족연금" : "본인 노령연금 + 유족연금 30%"}</strong>을 선택해
-          국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 받는 것이 유리합니다. 사망자의 퇴직·개인연금 잔액 상속은 반영하지 않았습니다.
+          국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 받는 것이 유리합니다.
+          {survivor.survivorChoice === "SURVIVOR" &&
+            " 유족연금을 고르면 본인 노령연금은 지급정지되지만, 그래프에는 본인 연금 수준을 이어서 표시하고 늘어나는 만큼을 「유족연금」으로 구분했습니다."}{" "}
+          사망자의 퇴직·개인연금 잔액 상속은 반영하지 않았습니다.
         </div>
       )}
 

@@ -29,7 +29,8 @@ interface Props {
 }
 
 // x축 눈금: 연도 아래에 본인·배우자 나이 (사망 후에는 -)
-function YearAgeTick({ x, y, payload, rowsByYear }: { x?: number; y?: number; payload?: { value: number }; rowsByYear: Map<number, CoupleYear> }) {
+// 첫 눈금 왼쪽에는 줄 머리글(본인·배우자)을 붙인다
+function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: number; payload?: { value: number }; index?: number; rowsByYear: Map<number, CoupleYear> }) {
   const r = payload ? rowsByYear.get(Number(payload.value)) : undefined;
   const age = (p: PersonYear | null | undefined) => (p && p.alive ? `${p.age}세` : "-");
   return (
@@ -39,6 +40,12 @@ function YearAgeTick({ x, y, payload, rowsByYear }: { x?: number; y?: number; pa
         {r && <tspan x={0} dy={13}>{age(r.self)}</tspan>}
         {r?.spouse && <tspan x={0} dy={13}>{age(r.spouse)}</tspan>}
       </text>
+      {index === 0 && r && (
+        <text textAnchor="end" fill="var(--text-secondary)" fontSize={11} fontWeight={600}>
+          <tspan x={-26} dy={25}>본인</tspan>
+          {r.spouse && <tspan x={-26} dy={13}>배우자</tspan>}
+        </text>
+      )}
     </g>
   );
 }
@@ -156,6 +163,11 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           {endAgeInput(params.spousePrivatePensionEndAge, "spousePrivatePensionEndAge")}
         </div>
         <div style={styles.optionField}>
+          <label style={styles.optionLabel}>물가상승률 (%) · 기본 3%</label>
+          <input type="number" min={0} max={10} step={0.1} className="premium-input" value={params.inflationRate}
+            onChange={(e) => setParam({ inflationRate: Number(e.target.value) })} />
+        </div>
+        <div style={styles.optionField}>
           <label style={styles.optionLabel}>퇴직·개인연금 인출 방식</label>
           <select className="premium-input" value={smoothing ? "SMOOTH" : params.decumulationStrategy}
             onChange={(e) =>
@@ -205,9 +217,15 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           {sm.pot > 0 ? (
             <>
               📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
-              (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 매년 물가만큼 늘어나는 총액을 유지하고,
-              그해까지 퇴직·개인연금을 모두 소진한 뒤에는 국민연금만 받습니다. 국민연금이 시작·증가하는 만큼 사적연금을 줄여
-              채우므로 총액이 튀지 않고, 국민연금 개시 전에 사적연금을 더 많이 씁니다.
+              (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 총액이{" "}
+              {sm.annualGrowth > 0 ? (
+                <>매년 <strong>{(sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 늘어납니다.</>
+              ) : (
+                <>같은 수준으로 유지됩니다.</>
+              )}{" "}
+              국민연금이 시작·증가하는 만큼 퇴직·개인연금을 해마다 줄여 {sm.endYear}년까지 모두 쓰므로 국민연금 개시 때 총액이 튀지 않습니다.
+              (총액을 물가만큼 늘리면 물가연동인 국민연금과 같은 속도라 사적연금이 줄지 않으므로, 증가율은 국민연금 아래로 내려가지 않는
+              가장 완만한 값으로 적립금 크기에 맞춰 정해집니다)
               <br />
               💰 사적연금 적립금({sm.startYear}년 가치): 보유 <strong>{fmt(sm.pot)}만원</strong> · 희망 월 생활비{" "}
               {fmt(sm.targetToday)}만원(현재가치)으로 시작하는 데 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}
@@ -229,7 +247,6 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       )}
 
-      <p style={{ ...styles.note, textAlign: "right" }}>가로축: 연도 / 본인 나이 / 배우자 나이 (사망 후 -)</p>
       <div style={{ width: "100%", height: 350 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>

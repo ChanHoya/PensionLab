@@ -88,6 +88,14 @@ near(hh.s1.lifetimeTotalPostTax, hh.s1.flows.reduce((a, f) => a + f.totalPostTax
 // 목표 대비 부족액은 가구 기준 (월 400만원 × 12)
 for (const f of hh.s1.flows) near(f.deficit, Math.max(0, 400 * 12 - f.totalPostTax), 1.01);
 
+// 2-1) S0는 통합 시뮬레이션의 퇴직·개인연금 인출액을 그대로 쓴다 (연도별 가구 합)
+assert.equal(hh.s0.strategyName, "통합 시뮬레이션 기준 인출");
+for (const r of sim.rows) {
+  const simPrivate = (r.self.retirement + r.self.personal + r.self.insurance + (r.spouse ? r.spouse.retirement + r.spouse.personal + r.spouse.insurance : 0)) * 12;
+  const f = hh.s0.flows.find((x) => x.year === r.year);
+  near(f ? f.retirementPreTax + f.personalPreTax + f.insurancePreTax : 0, simPrivate, 2);
+}
+
 // 3) S4 커버드콜: 분산 안 함 → 본인 명의 1,000만원 한도, 분산 → 인당 1,000만원 (가구 2,000만원)
 const div1 = runHouseholdScenarios(husband, wife, params, basic, sim, inputs, 2026).s4.flows.find((f) => f.year === 2031)!;
 const div2 = runHouseholdScenarios(husband, wife, { ...params, isCoupleDivided: true }, basic, sim, inputs, 2026).s4.flows.find((f) => f.year === 2031)!;

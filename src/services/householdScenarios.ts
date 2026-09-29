@@ -16,9 +16,11 @@ export interface WithdrawalInputs {
 }
 
 type PublicByAge = Record<number, { national: number; basic: number }>;
+type PrivateByAge = Record<number, { retirement: number; personal: number; insurance: number }>;
 
 // 부부 가구 인출전략 시나리오: 사람별로 인출전략 엔진을 돌려(세금·건보료·사적연금 한도는 사람별) 연도별로 합산한다.
 // 국민연금·기초연금(연기·물가연동·유족연금·기초연금 판정)은 부부 통합 시뮬레이션 값을 그대로 넣어 기준을 맞춘다.
+// S0는 퇴직·개인연금 인출액도 시뮬레이션 값(입력 옵션의 인출 방식·평탄화·수령 종료 나이)을 그대로 쓴다.
 // 재산세 과세표준·금융소득·기타 소득은 본인에게만 둬 중복 계산을 막고, S4 커버드콜은 부부 분산 시 반씩, 아니면 본인 명의.
 export function runHouseholdScenarios(
   self: PersonPensions,
@@ -31,9 +33,17 @@ export function runHouseholdScenarios(
 ): Record<ScenarioKey, StrategySimulationResult> {
   const selfPublic: PublicByAge = {};
   const spousePublic: PublicByAge = {};
+  const selfPrivate: PrivateByAge = {};
+  const spousePrivate: PrivateByAge = {};
   couple.rows.forEach((r) => {
-    if (r.self.alive) selfPublic[r.self.age] = { national: r.self.national, basic: r.self.basic };
-    if (r.spouse?.alive) spousePublic[r.spouse.age] = { national: r.spouse.national, basic: r.spouse.basic };
+    if (r.self.alive) {
+      selfPublic[r.self.age] = { national: r.self.national, basic: r.self.basic };
+      selfPrivate[r.self.age] = { retirement: r.self.retirement, personal: r.self.personal, insurance: r.self.insurance };
+    }
+    if (r.spouse?.alive) {
+      spousePublic[r.spouse.age] = { national: r.spouse.national, basic: r.spouse.basic };
+      spousePrivate[r.spouse.age] = { retirement: r.spouse.retirement, personal: r.spouse.personal, insurance: r.spouse.insurance };
+    }
   });
 
   const divided = !!spouse && params.isCoupleDivided;
@@ -42,6 +52,7 @@ export function runHouseholdScenarios(
   const selfRun = runWithdrawalSimulation(self.national, basic, self.retirementPensions, self.personalPensions, self.pensionInsurances, selfParams, {
     ...inputs,
     publicPensionByAge: selfPublic,
+    privateDrawByAge: selfPrivate,
   });
   const spouseRun = spouse
     ? runWithdrawalSimulation(
@@ -51,7 +62,7 @@ export function runHouseholdScenarios(
         spouse.personalPensions,
         spouse.pensionInsurances,
         { ...personParams(params, "SPOUSE"), propertyTaxBase: 0, financialIncome: 0, coveredCallAsset: divided ? asset / 2 : 0, isCoupleDivided: false },
-        { ...inputs, otherIncomeAnnual: 0, publicPensionByAge: spousePublic }
+        { ...inputs, otherIncomeAnnual: 0, publicPensionByAge: spousePublic, privateDrawByAge: spousePrivate }
       )
     : null;
 

@@ -98,11 +98,17 @@ export function planHouseholdSmoothing(
   let pot = 0;
   let potSelf = 0;
   const catPv: PrivateFlow = { retirement: 0, personal: 0, insurance: 0 };
+  const catPvSelf: PrivateFlow = { retirement: 0, personal: 0, insurance: 0 };
+  const catPvSpouse: PrivateFlow = { retirement: 0, personal: 0, insurance: 0 };
   rows.forEach((r, t) => {
     if (t < start) return;
     pot += (privOf(r.self) + privOf(r.spouse)) * disc(t);
     potSelf += privOf(r.self) * disc(t);
-    PRIVATE_KEYS.forEach((k) => (catPv[k] += (r.self[k] + (r.spouse?.[k] ?? 0)) * disc(t)));
+    PRIVATE_KEYS.forEach((k) => {
+      catPvSelf[k] += r.self[k] * disc(t);
+      catPvSpouse[k] += (r.spouse?.[k] ?? 0) * disc(t);
+      catPv[k] += (r.self[k] + (r.spouse?.[k] ?? 0)) * disc(t);
+    });
   });
 
   const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0);
@@ -141,17 +147,25 @@ export function planHouseholdSmoothing(
   }
   const { g, L } = best;
 
-  // 인출액을 사람별(적립금 비율, 사망 후엔 생존자) · 상품별(적립금 비율)로 나눈다
+  // 인출액을 사람별(적립금 비율, 사망 후엔 생존자) · 상품별로 나눈다.
+  // 둘 다 살아 있으면 각자 자기 상품 비율, 한 사람만 남으면 가구 전체 상품 비율 (사망자 적립금까지 이어 쓰므로)
   const wSelf = pot > 0 ? potSelf / pot : 1;
-  const split = (amount: number): PrivateFlow => ({
-    retirement: pot > 0 ? (amount * catPv.retirement) / pot : 0,
-    personal: pot > 0 ? (amount * catPv.personal) / pot : 0,
-    insurance: pot > 0 ? (amount * catPv.insurance) / pot : 0,
-  });
+  const split = (amount: number, mix: PrivateFlow): PrivateFlow => {
+    const total = mix.retirement + mix.personal + mix.insurance;
+    return {
+      retirement: total > 0 ? (amount * mix.retirement) / total : 0,
+      personal: total > 0 ? (amount * mix.personal) / total : 0,
+      insurance: total > 0 ? (amount * mix.insurance) / total : 0,
+    };
+  };
   const override = rows.map((r, t) => {
     const d = pot > 0 ? drawAt(L, g, t) : 0;
-    const selfShare = r.self.alive && r.spouse?.alive ? wSelf : r.self.alive ? 1 : 0;
-    return { self: split(d * selfShare), spouse: split(d * (1 - selfShare)) };
+    const both = r.self.alive && !!r.spouse?.alive;
+    const selfShare = both ? wSelf : r.self.alive ? 1 : 0;
+    return {
+      self: split(d * selfShare, both ? catPvSelf : catPv),
+      spouse: split(d * (1 - selfShare), both ? catPvSpouse : catPv),
+    };
   });
 
   const startIndex = Math.pow(1 + inflationRate / 100, start);

@@ -16,6 +16,8 @@ import {
 import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/coupleSimulation";
 import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
+import SeriesTotalLabels from "@/components/SeriesTotalLabels";
+import type { PaidTotals } from "@/services/paidTotals";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 // 유족연금 층은 선을 본인국민연금과 같은 보라로 이어 그리되, 채우기·범례·툴팁 색은 톤다운된 분홍
@@ -39,6 +41,7 @@ interface Props {
   selfStartAge: number; // 본인 국민연금 개시 나이
   spouseStartAge: number; // 배우자 국민연금 개시 나이 (연기 반영)
   actions?: React.ReactNode; // 제목 오른쪽 버튼 (백업·복원)
+  paid: { self: PaidTotals; spouse: PaidTotals | null }; // 그래프 안 (납부총액/지급총액) 표기용
 }
 
 // x축 눈금: 연도 아래에 본인·배우자 나이 (사망 후에는 -)
@@ -64,7 +67,7 @@ function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: num
 }
 
 // 부부 통합 연금 시뮬레이션: 본인·배우자 × 국민·기초·퇴직·개인연금 가구 합산 (명목, 만원/월)
-export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions }: Props) {
+export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions, paid }: Props) {
   const { rows, firstDeath, lifetime, survivorInfo: si } = result;
   const survivorLabel = si ? WHO_LABEL[si.deceased === "SELF" ? "SPOUSE" : "SELF"] : "";
   const cardRef = useRef<HTMLDivElement>(null);
@@ -112,6 +115,23 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   const survivorName = `${survivorLabel || "배우자"} 유족연금`;
   const visibleSeries = SERIES.filter((s) => chartData.some((d) => d[s.key] !== 0));
   const legendColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
+  // 그래프 안 (납부총액/지급총액): 납부가 없는 유족·기초연금은 「-」, 지급은 그래프 기간 명목 수령 합계
+  const paidOf: Record<string, number | null> = {
+    본인국민연금: paid.self.national,
+    유족연금: null,
+    배우자국민연금: paid.spouse?.national ?? null,
+    "본인 기초연금": null,
+    "배우자 기초연금": null,
+    "본인 퇴직연금": paid.self.retirement,
+    "배우자 퇴직연금": paid.spouse?.retirement ?? null,
+    "본인 개인연금": paid.self.personal + paid.self.insurance,
+    "배우자 개인연금": paid.spouse ? paid.spouse.personal + paid.spouse.insurance : null,
+  };
+  const totalLabels = visibleSeries.map((s) => {
+    const payout = chartData.reduce((sum, d) => sum + d[s.key] * 12, 0);
+    const paidAmount = paidOf[s.key];
+    return { key: s.key, text: `(${paidAmount ? `${fmt(paidAmount)}만원` : "-"}/${fmt(payout)}만원)` };
+  });
 
   // 표: 5년 간격 + 사망 전후 해
   const keyRows = rows.filter(
@@ -283,6 +303,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                 fillOpacity={s.fill ? 0.55 : 0.5}
               />
             ))}
+            <SeriesTotalLabels data={chartData} xKey="year" stack={visibleSeries.map((s) => s.key)} labels={totalLabels} />
             {firstDeath && (
               <ReferenceLine
                 x={firstDeath.year}
@@ -341,6 +362,10 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         ※ 각자의 기대수명까지 생존한다고 가정합니다. 기초연금은 해마다 가구 소득인정액으로 다시 판정합니다
         (한 사람만 65세 이상이면 감액 없음, 둘 다 받으면 각 20% 감액, 사망 후 단독가구 기준).
         배우자 유족연금의 50세 미만 지급정지·재혼 등 예외는 반영하지 않았습니다.
+      </p>
+      <p style={styles.note}>
+        ※ 그래프 안 (납부총액/지급총액): 납부는 국민연금 예상 납부보험료 총액, 퇴직·개인연금은 현재 적립금 + 은퇴까지 낼 납입액(DB형은 예상
+        퇴직금)이고, 지급은 그래프 기간의 명목 수령액 합계입니다. 유족·기초연금은 납부가 없어 「-」로 표시합니다.
       </p>
       <p style={styles.note}>※ 추정치입니다. 정확한 금액은 국민연금공단(☎1355)·복지로에서 확인하세요.</p>
     </div>

@@ -482,6 +482,8 @@ export function runWithdrawalSimulation(
     s3CustomPeriods?: { [accountId: string]: number }; // S3 계좌별 인출 기간
     // 나이별 국민연금·기초연금 월액(만원, 명목). 주면 엔진 자체 계산 대신 이 값을 쓴다 (부부 통합 시뮬레이션과 같은 기준)
     publicPensionByAge?: Record<number, { national: number; basic: number }>;
+    // 나이별 퇴직·개인연금·연금보험 수령 월액(만원, 명목). 주면 S0는 이 금액대로 인출한다 (통합 시뮬레이션의 인출 방식)
+    privateDrawByAge?: Record<number, { retirement: number; personal: number; insurance: number }>;
   } = {}
 ): {
   s0: StrategySimulationResult;
@@ -501,6 +503,7 @@ export function runWithdrawalSimulation(
   const otherIncomeAnnual = (customInputs.otherIncomeAnnual ?? 0) * 10000; // 만원 -> 원
   const publicPensionTaxableRatio = customInputs.publicPensionTaxableRatio ?? 0.5;
   const publicByAge = customInputs.publicPensionByAge;
+  const privateByAge = customInputs.privateDrawByAge;
 
   // 1. 계좌 리스트 및 세부 재원 통합 초기 모델 생성 함수
   const createUnifiedAccounts = (strategyId: "S0" | "S1" | "S2" | "S3" | "S4"): PensionAccountModel[] => {
@@ -788,7 +791,58 @@ export function runWithdrawalSimulation(
       // S0(현재 계약대로 수령): 각 연금 계좌가 약정 기간 동안 자체 잔고로
       // 정액(레벨) 연금을 지급하는 "계약대로 자연 지급" 방식. 포트폴리오 재배분/
       // 체감 인출 없이 통합연금포털과 동일하게 상품별 약정 스케줄대로 지급.
-      if (strategyId === "S0") {
+      if (strategyId === "S0" && privateByAge) {
+        // 통합 시뮬레이션 기준: 종류별 인출액은 시뮬레이션 값을 그대로 쓰고, 세금용 재원 구성만 같은 종류 계좌에서 잔액 비례로 가져온다.
+        // 두 계산기의 적립 가정이 달라 계좌 잔고가 먼저 바닥나면, 남는 금액은 운용수익으로 보고
+        // 퇴직·개인연금은 연금소득세(세액공제분과 같은 분류), 비적격 연금보험은 비과세로 처리한다
+        const target = privateByAge[age];
+        const byCategory = { RETIREMENT: target?.retirement ?? 0, PERSONAL: target?.personal ?? 0, INSURANCE: target?.insurance ?? 0 };
+        (Object.keys(byCategory) as (keyof typeof byCategory)[]).forEach((cat) => {
+          const amount = byCategory[cat] * 12 * 10000;
+          const pool = accounts.filter((a) => a.category === cat && a.balance > 0);
+          const poolBalance = pool.reduce((sum, a) => sum + a.balance, 0);
+          if (amount <= 0) return;
+
+          let drawn = 0;
+          pool.forEach((acc) => {
+            const drawAmount = Math.min(acc.balance, (amount * acc.balance) / poolBalance);
+            if (drawAmount <= 0) return;
+            drawn += drawAmount;
+
+            accountPayoutYears[acc.id]++;
+            const k = accountPayoutYears[acc.id];
+            const { draws, updatedSources } = resolveDrawComposition(acc.sources, drawAmount);
+            acc.sources = updatedSources;
+            acc.balance -= drawAmount;
+
+            drawNonCredited += draws["NON_CREDITED"] || 0;
+            drawDeferredRetirement += draws["DEFERRED_RETIREMENT"] || 0;
+            drawTaxCredited += draws["TAX_CREDITED"] || 0;
+            drawNonQualified += draws["NON_QUALIFIED"] || 0;
+
+            if (cat === "RETIREMENT") retirementPreTax += drawAmount;
+            else if (cat === "PERSONAL") personalPreTax += drawAmount;
+            else insurancePreTax += drawAmount;
+
+            const limit = calcWithdrawalLimit(acc.balance + drawAmount, k);
+            if (draws["DEFERRED_RETIREMENT"]) {
+              taxOnRetirement += calcTaxOnDeferredRetirement(draws["DEFERRED_RETIREMENT"], retirementLumpSumTaxRate, k, limit);
+            }
+          });
+
+          const shortfall = amount - drawn;
+          if (shortfall > 0) {
+            if (cat === "INSURANCE") {
+              drawNonQualified += shortfall;
+              insurancePreTax += shortfall;
+            } else {
+              drawTaxCredited += shortfall;
+              if (cat === "RETIREMENT") retirementPreTax += shortfall;
+              else personalPreTax += shortfall;
+            }
+          }
+        });
+      } else if (strategyId === "S0") {
         accounts.forEach((acc) => {
           const inWindow = age >= acc.payoutStartAge && age <= acc.payoutStartAge + acc.receivingPeriod - 1;
           if (!inWindow || acc.balance <= 0) return;
@@ -1184,7 +1238,7 @@ export function runWithdrawalSimulation(
     };
   };
 
-  const s0 = simulateStrategy("S0", "현재 계약대로 수령 (균등인출)");
+  const s0 = simulateStrategy("S0", privateByAge ? "통합 시뮬레이션 기준 인출" : "현재 계약대로 수령 (균등인출)");
   const s1 = simulateStrategy("S1", "절세 평탄화 인출전략");
   const s2 = simulateStrategy("S2", "절세형 + 국민연금 5년 연기");
   const s3 = simulateStrategy("S3", "사용자 정의 커스텀 전략");

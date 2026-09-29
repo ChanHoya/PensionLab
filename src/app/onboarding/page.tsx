@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePensionStore, pensionsOf, type Who } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
+import AiHelper from "@/components/AiHelper";
 import { resolveAge, resolveBirthYear } from "@/utils/age";
 import { statutoryPensionStartAge, estimateBasicPensionAmount, NPS_RULES } from "@/config/npsRules";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
@@ -651,19 +652,30 @@ export default function OnboardingPage() {
 
       <header style={styles.header}>
         <div style={styles.headerContent}>
-          {/* 좌: 로고 + 부제목 */}
-          <div style={styles.headerLeft}>
-            <Link href="/" style={{ textDecoration: "none" }}>
-              <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
-            </Link>
-            <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
-          </div>
-          {/* 우: 개인정보 안심보장 + JSON저장 + 불러오기 + 테마토글 */}
-          <div style={styles.headerRight}>
+          {/* 좌: 로고 + 부제목 + 개인정보 안심보장 */}
+          <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+            <div style={styles.headerLeft}>
+              <Link href="/" style={{ textDecoration: "none" }}>
+                <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
+              </Link>
+              <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
+            </div>
             <div style={styles.privacyChip}>
               <span style={{ fontSize: "0.9rem" }}>🔒</span>
               <span><strong>개인정보 안심 보장</strong> — 모든 데이터는 이 기기에만 저장됩니다.</span>
             </div>
+          </div>
+          {/* 우: AI 도우미 + JSON저장 + 불러오기 + 테마토글 */}
+          <div style={styles.headerRight}>
+            <AiHelper
+              pageName={`입력 화면(${group.title}${groupSteps.length > 1 ? ` · ${step.tab}` : ""})`}
+              examples={[
+                "이 단계에서 무엇을 입력해야 하나요?",
+                "통합연금포털 PDF는 어디서 받나요?",
+                "추가납부(추납)와 반환일시금 반납은 어떤 차이가 있나요?",
+              ]}
+              buttonStyle={styles.saveBtn}
+            />
             <button onClick={handleSaveData} style={styles.saveBtn} title="현재 입력 데이터를 JSON으로 저장">
               💾 저장
             </button>

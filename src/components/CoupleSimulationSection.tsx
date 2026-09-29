@@ -138,12 +138,66 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
           {actions}
         </div>
       </div>
-      <p style={styles.subtitle}>
+      <div style={styles.subtitle}>
         {hasSpouse
           ? "본인·배우자의 국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다. 먼저 사망한 쪽이 생기면 남은 배우자는 국민연금법 제56조에 따라 유족연금(사망자 연금의 가입기간별 40~60%)과 「본인 연금 + 유족연금 30%」 중 큰 쪽을 받습니다."
           : "국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다."}{" "}
         (명목 금액, 만원/월 · 입력은 왼쪽 「입력 옵션」에서 바꿉니다)
-      </p>
+        {survivor && survivor.survivorChoice && firstDeath && (
+          <>
+            {" "}이 입력에서는 {WHO_LABEL[firstDeath.who]} 사망 후 남은 배우자가{" "}
+            <strong>
+              {survivor.survivorChoice === "SURVIVOR"
+                ? `유족연금(${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금은 지급정지)`
+                : `${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금 + 유족연금 30%`}
+            </strong>
+            을 선택해 국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 받는 것이 유리합니다. 사망자의 퇴직·개인연금 잔액
+            상속은 반영하지 않았습니다.
+            {si && (
+              <details style={styles.details}>
+                <summary style={styles.summary}>유족연금 산정 기준과 계산 보기</summary>
+                <table style={{ ...styles.table, marginTop: "8px", maxWidth: "420px" }}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>사망자 가입기간</th>
+                      <th style={styles.th}>유족연금 (기본연금액 대비)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { label: "10년 미만", rate: 0.4 },
+                      { label: "10년 이상 ~ 20년 미만", rate: 0.5 },
+                      { label: "20년 이상", rate: 0.6 },
+                    ].map((row) => (
+                      <tr key={row.label} style={row.rate === si.rate ? styles.bestRow : undefined}>
+                        <td style={styles.td}>{row.label}</td>
+                        <td style={styles.td}>{row.rate * 100}%{row.rate === si.rate && " ← 적용"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={styles.detailText}>
+                  <strong>{WHO_LABEL[si.deceased]}</strong> 가입 {si.months}개월(약 {Math.floor(si.months / 12)}년) → 지급률 {si.rate * 100}%.{" "}
+                  {si.year}년 기본연금액 {fmt(si.basePension)}만원 × {si.rate * 100}% = 유족연금 <strong>{fmt(si.fullSurvivor)}만원</strong>
+                </p>
+                <p style={styles.detailText}>
+                  중복급여 조정(국민연금법 제56조) — 둘 중 큰 쪽을 자동 선택:
+                  <br />
+                  {si.choice === "SURVIVOR" ? "✅" : "▫️"} ① 유족연금 전액 <strong>{fmt(si.fullSurvivor)}만원</strong> ({survivorLabel} 노령연금은 지급정지)
+                  <br />
+                  {si.choice === "OWN_PLUS_30" ? "✅" : "▫️"} ② {survivorLabel} 노령연금 {fmt(si.ownPension)}만원 + 유족연금 30% {fmt(si.fullSurvivor * 0.3)}만원 ={" "}
+                  <strong>{fmt(si.ownPlus30)}만원</strong>
+                </p>
+                <p style={styles.note}>
+                  ※ 기본연금액은 연기 가산(연 7.2%)·조기수령 감액 전 금액입니다. 노령연금 수급자가 사망하면 유족연금은 받던 노령연금액을 넘을 수
+                  없습니다. 부양가족(19세 미만 자녀·부모 등)이 있으면 부양가족연금액이 더해지지만 여기에는 반영하지 않았습니다. 정확한 금액은
+                  국민연금공단(☎1355)에서 확인하세요.
+                </p>
+              </details>
+            )}
+          </>
+        )}
+      </div>
 
       <div style={styles.kpiGrid}>
         {hasSpouse && (
@@ -171,9 +225,9 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       </div>
 
-      {(sm || survivor?.survivorChoice) && (
+      {sm && (
         <div style={styles.infoAlert}>
-          {sm && (sm.pot > 0 ? (
+          {sm.pot > 0 ? (
             <>
               📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
               (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 총액이{" "}
@@ -194,63 +248,6 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             </>
           ) : (
             <>📏 가구 소득 평탄화: 퇴직·개인연금·연금보험 입력이 없어 채울 사적연금이 없습니다.</>
-          ))}
-          {survivor && survivor.survivorChoice && (
-            <div style={sm ? styles.alertSection : undefined}>
-              🕊 {firstDeath && WHO_LABEL[firstDeath.who]} 사망 후 남은 배우자는{" "}
-              <strong>
-                {survivor.survivorChoice === "SURVIVOR"
-                  ? "유족연금"
-                  : `${firstDeath ? WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"] : ""} 노령연금 + 유족연금 30%`}
-              </strong>을 선택해
-              국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 받는 것이 유리합니다.
-              {survivor.survivorChoice === "SURVIVOR" &&
-                firstDeath &&
-                ` 유족연금을 고르면 ${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금은 지급정지되어 유족연금만 받습니다.`}{" "}
-              사망자의 퇴직·개인연금 잔액 상속은 반영하지 않았습니다.
-              {si && (
-                <details style={styles.details}>
-                  <summary style={styles.summary}>유족연금 산정 기준과 계산 보기</summary>
-                  <table style={{ ...styles.table, marginTop: "8px", maxWidth: "420px" }}>
-                    <thead>
-                      <tr>
-                        <th style={styles.th}>사망자 가입기간</th>
-                        <th style={styles.th}>유족연금 (기본연금액 대비)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { label: "10년 미만", rate: 0.4 },
-                        { label: "10년 이상 ~ 20년 미만", rate: 0.5 },
-                        { label: "20년 이상", rate: 0.6 },
-                      ].map((row) => (
-                        <tr key={row.label} style={row.rate === si.rate ? styles.bestRow : undefined}>
-                          <td style={styles.td}>{row.label}</td>
-                          <td style={styles.td}>{row.rate * 100}%{row.rate === si.rate && " ← 적용"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <p style={styles.detailText}>
-                    <strong>{WHO_LABEL[si.deceased]}</strong> 가입 {si.months}개월(약 {Math.floor(si.months / 12)}년) → 지급률 {si.rate * 100}%.{" "}
-                    {si.year}년 기본연금액 {fmt(si.basePension)}만원 × {si.rate * 100}% = 유족연금 <strong>{fmt(si.fullSurvivor)}만원</strong>
-                  </p>
-                  <p style={styles.detailText}>
-                    중복급여 조정(국민연금법 제56조) — 둘 중 큰 쪽을 자동 선택:
-                    <br />
-                    {si.choice === "SURVIVOR" ? "✅" : "▫️"} ① 유족연금 전액 <strong>{fmt(si.fullSurvivor)}만원</strong> ({survivorLabel} 노령연금은 지급정지)
-                    <br />
-                    {si.choice === "OWN_PLUS_30" ? "✅" : "▫️"} ② {survivorLabel} 노령연금 {fmt(si.ownPension)}만원 + 유족연금 30% {fmt(si.fullSurvivor * 0.3)}만원 ={" "}
-                    <strong>{fmt(si.ownPlus30)}만원</strong>
-                  </p>
-                  <p style={styles.note}>
-                    ※ 기본연금액은 연기 가산(연 7.2%)·조기수령 감액 전 금액입니다. 노령연금 수급자가 사망하면 유족연금은 받던 노령연금액을 넘을 수
-                    없습니다. 부양가족(19세 미만 자녀·부모 등)이 있으면 부양가족연금액이 더해지지만 여기에는 반영하지 않았습니다. 정확한 금액은
-                    국민연금공단(☎1355)에서 확인하세요.
-                  </p>
-                </details>
-              )}
-            </div>
           )}
         </div>
       )}
@@ -369,7 +366,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "var(--text-secondary)",
     lineHeight: 1.6,
   },
-  alertSection: { marginTop: "10px", paddingTop: "10px", borderTop: "1px dashed rgba(99, 102, 241, 0.3)" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", color: "var(--text-secondary)" },
   th: { textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--border)", color: "var(--text-primary)", fontWeight: 600, whiteSpace: "nowrap" },
   td: { padding: "6px 8px", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" },

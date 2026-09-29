@@ -14,10 +14,11 @@ interface Props {
   label?: string | number;
   labelSuffix?: string; // 제목 뒤에 붙일 단위 (예: "세")
   hideZero?: boolean; // 값이 0인 항목 숨김
+  colors?: Record<string, string>; // 항목 이름별 점 색 (선 색과 다르게 보일 때)
 }
 
 // Recharts 툴팁: 테마 색상 변수(라이트·다크 모두)와 작은 글씨, 항목별 색 점 (대시보드 인출전략 차트와 같은 모양)
-export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false }: Props) {
+export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false, colors }: Props) {
   if (!active || !payload?.length) return null;
   const rows = hideZero ? payload.filter((e) => Number(e.value) !== 0) : payload;
   if (rows.length === 0) return null;
@@ -29,7 +30,7 @@ export default function ChartTooltip({ active, payload, label, labelSuffix = "",
         {rows.map((e) => (
           <div key={String(e.name)} style={styles.row}>
             <div style={styles.nameWrap}>
-              <span style={{ ...styles.dot, backgroundColor: e.color }} />
+              <span style={{ ...styles.dot, backgroundColor: colors?.[String(e.name)] ?? e.color }} />
               <span style={styles.name}>{e.name}</span>
             </div>
             <span style={styles.value}>{Math.round(Number(e.value) || 0).toLocaleString()} 만원</span>

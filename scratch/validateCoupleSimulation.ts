@@ -92,6 +92,9 @@ assert.equal(at(2036).self.basic, 0);
 assert.equal(at(2047).self.alive, false);
 near(at(2047).spouse!.national, 120);
 assert.equal(at(2047).spouse!.survivorChoice, "SURVIVOR");
+near(at(2047).spouse!.survivorPart, 120); // 유족연금 선택: 받는 국민연금 전부가 남편 몫(유족연금)
+assert.equal(at(2036).spouse!.survivorPart, 0); // 둘 다 생존 중에는 0
+assert.equal(at(2036).self.survivorPart, 0);
 near(at(2059).household, 120);
 near(r.lifetime.household, 65561.1);
 
@@ -106,6 +109,7 @@ const r2 = runCoupleSimulation(
 const y2 = r2.rows.find((row) => row.year === 2047)!;
 near(y2.spouse!.national, 150 + 0.3 * 0.5 * 60); // 가입 130개월 → 유족 50%
 assert.equal(y2.spouse!.survivorChoice, "OWN_PLUS_30");
+near(y2.spouse!.survivorPart, 0.3 * 0.5 * 60); // 본인 연금 + 유족연금 30%: 30% 부분만 유족연금
 
 // 배우자 없음: 본인 기대수명까지만
 const solo = runCoupleSimulation(husband, null, { ...params, hasSpouse: false }, basic, 2026);

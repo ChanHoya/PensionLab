@@ -29,6 +29,7 @@ export interface PersonYear {
   insurance: number;
   total: number;
   survivorChoice: SurvivorChoice | null; // 배우자 사망 후 중복급여 조정 선택
+  survivorPart: number; // national 중 사망한 배우자에게서 온 유족연금 몫 (유족연금 선택 시 전부, 본인+30% 선택 시 30%)
 }
 
 export interface CoupleYear {
@@ -301,18 +302,20 @@ export function runCoupleSimulation(
         const benefit =
           survivorRateForMonths(deceased.national.expectedTotalContributionMonths) *
           wouldBeNational(deceased, deceasedAge, infl);
-        if (benefit <= 0) return { national: ownNational, choice: null as SurvivorChoice | null };
+        if (benefit <= 0) return { national: ownNational, choice: null as SurvivorChoice | null, part: 0 };
         const withOwn = ownNational + SURVIVOR_OVERLAP_RATE * benefit;
         return benefit > withOwn
-          ? { national: benefit, choice: "SURVIVOR" as SurvivorChoice }
-          : { national: withOwn, choice: "OWN_PLUS_30" as SurvivorChoice };
+          ? { national: benefit, choice: "SURVIVOR" as SurvivorChoice, part: benefit }
+          : { national: withOwn, choice: "OWN_PLUS_30" as SurvivorChoice, part: SURVIVOR_OVERLAP_RATE * benefit };
       };
       let sNational = so.national;
       let sChoice: SurvivorChoice | null = null;
+      let sPart = 0;
       let pNational = po?.national ?? 0;
       let pChoice: SurvivorChoice | null = null;
-      if (sp && sAlive && !pAlive) ({ national: sNational, choice: sChoice } = survivor(so.national, sp, pAge));
-      if (sp && pAlive && !sAlive) ({ national: pNational, choice: pChoice } = survivor(po!.national, st, sAge));
+      let pPart = 0;
+      if (sp && sAlive && !pAlive) ({ national: sNational, choice: sChoice, part: sPart } = survivor(so.national, sp, pAge));
+      if (sp && pAlive && !sAlive) ({ national: pNational, choice: pChoice, part: pPart } = survivor(po!.national, st, sAge));
 
       // 사적연금 수령액은 소득인정액(연금소득)에 자동 반영
       const person = (alive: boolean, age: number, national: number, earned: number, other: number, occ: boolean, n: NationalPensionState, o: ReturnType<typeof own>): BasicPensionPerson => ({
@@ -338,12 +341,12 @@ export function runCoupleSimulation(
         index
       );
 
-      const mk = (alive: boolean, age: number, national: number, o: ReturnType<typeof own>, basicAmt: number, choice: SurvivorChoice | null): PersonYear => {
+      const mk = (alive: boolean, age: number, national: number, o: ReturnType<typeof own>, basicAmt: number, choice: SurvivorChoice | null, part: number): PersonYear => {
         const total = alive ? national + basicAmt + o.retirement + o.personal + o.insurance : 0;
-        return { alive, age, national: alive ? national : 0, basic: alive ? basicAmt : 0, retirement: o.retirement, personal: o.personal, insurance: o.insurance, total, survivorChoice: choice };
+        return { alive, age, national: alive ? national : 0, basic: alive ? basicAmt : 0, retirement: o.retirement, personal: o.personal, insurance: o.insurance, total, survivorChoice: choice, survivorPart: alive ? part : 0 };
       };
-      const selfYear = mk(sAlive, sAge, sNational, so, b.self, sChoice);
-      const spouseYear = sp ? mk(pAlive, pAge, pNational, po!, b.spouse, pChoice) : null;
+      const selfYear = mk(sAlive, sAge, sNational, so, b.self, sChoice, sPart);
+      const spouseYear = sp ? mk(pAlive, pAge, pNational, po!, b.spouse, pChoice, pPart) : null;
       const household = selfYear.total + (spouseYear?.total ?? 0);
       lifetime.self += selfYear.total * 12;
       lifetime.spouse += (spouseYear?.total ?? 0) * 12;

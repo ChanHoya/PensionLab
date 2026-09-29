@@ -11,6 +11,7 @@ import {
   Legend,
   CartesianGrid,
   ReferenceLine,
+  DefaultLegendContent,
 } from "recharts";
 import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/coupleSimulation";
 import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
@@ -19,6 +20,9 @@ import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
+// 유족연금 층은 선을 본인국민연금과 같은 보라로 이어 그리되, 채우기·범례·툴팁 색은 톤다운된 분홍
+const SURVIVOR_FILL = "#9d5c7d";
+const LEGEND_COLORS: Record<string, string> = { 유족연금: SURVIVOR_FILL };
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
 
 interface Props {
@@ -107,8 +111,10 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
 
   const chartData = rows.map((r) => ({
     year: r.year,
-    본인국민연금: Math.round(r.self.national),
-    배우자국민연금: Math.round(r.spouse?.national ?? 0),
+    // 사망 후 남은 배우자가 받는 유족연금은 사망자 국민연금에서 온 몫이라 따로 표시 (본인국민연금 층과 이어지게 바로 위에 쌓음)
+    본인국민연금: Math.round(r.self.national - r.self.survivorPart),
+    유족연금: Math.round(r.self.survivorPart + (r.spouse?.survivorPart ?? 0)),
+    배우자국민연금: Math.round((r.spouse?.national ?? 0) - (r.spouse?.survivorPart ?? 0)),
     기초연금: Math.round(r.self.basic + (r.spouse?.basic ?? 0)),
     퇴직연금: Math.round(r.self.retirement + (r.spouse?.retirement ?? 0)),
     개인연금보험: Math.round(r.self.personal + r.self.insurance + (r.spouse?.personal ?? 0) + (r.spouse?.insurance ?? 0)),
@@ -253,9 +259,17 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero />} />
-            <Legend />
+            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero colors={LEGEND_COLORS} />} />
+            <Legend
+              content={(props) => (
+                <DefaultLegendContent
+                  {...props}
+                  payload={props.payload?.map((item) => ({ ...item, color: LEGEND_COLORS[String(item.value)] ?? item.color }))}
+                />
+              )}
+            />
             <Area type="monotone" dataKey="본인국민연금" stackId="1" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
+            <Area type="monotone" dataKey="유족연금" stackId="1" stroke="#6366f1" fill={SURVIVOR_FILL} fillOpacity={0.55} />
             <Area type="monotone" dataKey="배우자국민연금" stackId="1" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} />
             <Area type="monotone" dataKey="기초연금" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.5} />
             <Area type="monotone" dataKey="퇴직연금" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.5} />

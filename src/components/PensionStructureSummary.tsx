@@ -4,6 +4,7 @@ import React from "react";
 import type { BasicPensionState, PersonData, SimulationParamsState } from "@/store/usePensionStore";
 import { personParams } from "@/services/coupleSimulation";
 import { paidTotalsOf } from "@/services/paidTotals";
+import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 
 interface Props {
   self: PersonData;
@@ -25,12 +26,14 @@ const fmt = (v?: number) => Math.round(v || 0).toLocaleString();
 const nameOf = (provider?: string, productName?: string) => [provider, productName].filter(Boolean).join(" · ") || undefined;
 const SAVINGS_LABEL = { FUND: "연금저축펀드", INSURANCE: "연금저축보험" } as const;
 
-function nationalCards(p: PersonData): Card[] {
+function nationalCards(p: PersonData, applied?: { restoredMonths: number; addedMonths: number }): Card[] {
   const n = p.nationalPension;
   if (!n.expectedMonthlyPension && !n.contributionMonths) return [];
+  const extra = [applied?.addedMonths ? `추납 ${applied.addedMonths}개월` : "", applied?.restoredMonths ? `반납 ${applied.restoredMonths}개월` : ""].filter(Boolean);
   return [
     {
       title: "국민연금",
+      sub: extra.length ? `${extra.join(" · ")} 반영` : undefined,
       lines: [
         `예상 월 ${fmt(n.expectedMonthlyPension)}만원`,
         `가입 ${fmt(n.contributionMonths)}개월 → 예상 ${fmt(n.expectedTotalContributionMonths)}개월`,
@@ -74,11 +77,18 @@ function personalCards(p: PersonData): Card[] {
 
 // 입력 내용을 3층 연금 구조로 그린다: 위에서부터 3층(개인)·2층(퇴직)·1층(공적).
 // 층 폭은 가구 납부·적립 총액(국민연금 예상 납부보험료, 퇴직·개인연금 적립금 + 은퇴까지 납입액)의 크기 순서로 정한다
-export default function PensionStructureSummary({ self, spouse, basic, params }: Props) {
+export default function PensionStructureSummary({ self: selfRaw, spouse: spouseRaw, basic, params }: Props) {
+  // 추가납부·일시금 반납을 「시뮬레이션 반영」으로 고른 경우 국민연금에 더한다 (대시보드 시뮬레이션과 같은 기준)
+  const spouseParams = personParams(params, "SPOUSE");
+  const selfApplied = applyNpsOptions(selfRaw.nationalPension, selfRaw.additionalPayment, selfRaw.returnRepayment, params);
+  const spouseApplied = spouseRaw ? applyNpsOptions(spouseRaw.nationalPension, spouseRaw.additionalPayment, spouseRaw.returnRepayment, spouseParams) : null;
+  const self: PersonData = { ...selfRaw, nationalPension: selfApplied.national };
+  const spouse: PersonData | null = spouseRaw && spouseApplied ? { ...spouseRaw, nationalPension: spouseApplied.national } : null;
+  const appliedOf = (d: PersonData) => (d === self ? selfApplied : spouseApplied ?? undefined);
   const people = spouse ? [{ label: "본인", data: self }, { label: "배우자", data: spouse }] : [{ label: "본인", data: self }];
   const paidOf = (p: PersonData, prm: SimulationParamsState) =>
     paidTotalsOf({ national: p.nationalPension, retirementPensions: p.retirementPensions, personalPensions: p.personalPensions, pensionInsurances: p.pensionInsurances }, prm);
-  const paid = [paidOf(self, params), ...(spouse ? [paidOf(spouse, personParams(params, "SPOUSE"))] : [])];
+  const paid = [paidOf(self, params), ...(spouse ? [paidOf(spouse, spouseParams)] : [])];
   const sizes = {
     personal: paid.reduce((a, t) => a + t.personal + t.insurance, 0),
     retirement: paid.reduce((a, t) => a + t.retirement, 0),
@@ -89,7 +99,7 @@ export default function PensionStructureSummary({ self, spouse, basic, params }:
   const layers = [
     { badge: "3층", title: "개인연금", color: "#0ea5e9", size: sizes.personal, cards: personalCards },
     { badge: "2층", title: "퇴직연금", color: "#10b981", size: sizes.retirement, cards: retirementCards },
-    { badge: "1층", title: "국민연금", color: "#6366f1", size: sizes.national, cards: nationalCards },
+    { badge: "1층", title: "국민연금", color: "#6366f1", size: sizes.national, cards: (d: PersonData) => nationalCards(d, appliedOf(d)) },
   ];
 
   return (

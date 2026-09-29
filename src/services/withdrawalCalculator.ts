@@ -41,6 +41,16 @@ export interface PensionAccountModel {
   paymentPeriod?: number;
 }
 
+// 부부 가구 합산 흐름의 사람별 세전 수령 내역 (만원/년)
+export interface PersonFlowParts {
+  national: number;
+  basic: number;
+  retirement: number;
+  personal: number;
+  insurance: number;
+  dividend: number;
+}
+
 export interface SimulationYearFlow {
   age: number;
   year: number;
@@ -79,6 +89,9 @@ export interface SimulationYearFlow {
 
   // 목표 대비 과부족
   deficit: number;
+
+  // 부부 가구 합산 시 사람별 내역과 국민연금 중 유족연금 몫 (만원/년, 가구 시나리오에서만)
+  parts?: { self?: PersonFlowParts; spouse?: PersonFlowParts; survivorSelf: number; survivorSpouse: number };
 }
 
 export interface StrategySimulationResult {

@@ -1,4 +1,4 @@
-import { runWithdrawalSimulation, type SimulationYearFlow, type StrategySimulationResult } from "@/services/withdrawalCalculator";
+import { runWithdrawalSimulation, type PersonFlowParts, type SimulationYearFlow, type StrategySimulationResult } from "@/services/withdrawalCalculator";
 import { personParams, type CoupleSimulationResult, type PersonPensions } from "@/services/coupleSimulation";
 import type { BasicPensionState, SimulationParamsState } from "@/store/usePensionStore";
 
@@ -71,9 +71,15 @@ export function runHouseholdScenarios(
   const target = (params.targetMonthlySpending || 300) * 12;
   const retireT = params.retirementAge - selfAge0;
 
+  const rowByYear = new Map(couple.rows.map((r) => [r.year, r]));
+  const partsOf = (f?: SimulationYearFlow): PersonFlowParts | undefined =>
+    f && { national: f.nationalPreTax, basic: f.basicPreTax, retirement: f.retirementPreTax, personal: f.personalPreTax, insurance: f.insurancePreTax, dividend: f.dividendPreTax };
+
   const merge = (key: ScenarioKey): StrategySimulationResult => {
     const a = selfRun[key];
     const b = spouseRun?.[key];
+    const selfByT = new Map(a.flows.map((f) => [f.age - selfAge0, f]));
+    const spouseByT = new Map((b?.flows ?? []).map((f) => [f.age - spouseAge0, f]));
     // 경과 연수(t) 기준으로 합산 — 엔진의 year는 실행 시점 연도라 쓰지 않는다
     const byT = new Map<number, SimulationYearFlow>();
     const add = (f: SimulationYearFlow, t: number) => {
@@ -99,6 +105,13 @@ export function runHouseholdScenarios(
         year: baseYear + t,
         spouseAge: spouseAlive.has(t) ? spouseAge0 + t : undefined,
         deficit: Math.max(0, target - f.totalPostTax), // 가구 목표 생활비 대비
+        // 그래프용 사람별 내역 (유족연금 몫은 통합 시뮬레이션 값, 월 → 연)
+        parts: {
+          self: partsOf(selfByT.get(t)),
+          spouse: partsOf(spouseByT.get(t)),
+          survivorSelf: (rowByYear.get(baseYear + t)?.self.survivorPart ?? 0) * 12,
+          survivorSpouse: (rowByYear.get(baseYear + t)?.spouse?.survivorPart ?? 0) * 12,
+        },
       }));
     const lostSpouse = b?.lostDependencyAge !== undefined ? b.lostDependencyAge - spouseAge0 + selfAge0 : undefined;
     return {

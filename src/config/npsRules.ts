@@ -15,6 +15,12 @@ export const NPS_RULES = {
   maxDeferralYears: 5, // 연기 최대 5년
 };
 
+// 기본연금액(월, 만원) 근사: 비례상수 × (A + B) × 가입월수 / 240 ÷ 12
+// 현행 비례상수(1.29) 기준이라 가입 시기별 소득대체율 차이는 반영하지 않는다 (표시용, 계산에는 예상연금월액을 쓴다)
+export function estimateBasicPensionAmount(months: number, aValue: number, bValue: number): number {
+  return (NPS_RULES.replacementConstant * (aValue + bValue) * months) / 240 / 12;
+}
+
 // 출생연도별 노령연금 법정 개시 나이 (1952년생 이전 60세, 4년마다 1세씩 늦춰져 1969년생 이후 65세)
 export function statutoryPensionStartAge(birthYear: number): number {
   if (birthYear <= 1952) return 60;

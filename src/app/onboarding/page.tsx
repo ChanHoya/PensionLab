@@ -10,8 +10,10 @@ import { statutoryPensionStartAge } from "@/config/npsRules";
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
 import BasicPensionForm from "@/components/BasicPensionForm";
 import { extractPdfText } from "@/utils/pdfText";
+import FssUploadPanel, { FSS_SLOTS, emptyFssFiles, type FssFiles, type FssSlot } from "@/components/FssUploadPanel";
+import PensionStructureSummary from "@/components/PensionStructureSummary";
 
-type StepKind = "INFO" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL";
+type StepKind = "INFO" | "GOAL" | "FSS" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SUMMARY";
 
 interface StepGroup {
   key: string;
@@ -22,10 +24,11 @@ interface StepGroup {
 
 // 왼쪽 메뉴는 그룹 단위로 보여 주고, 그룹 안의 단계(본인·배우자·기초연금)는 오른쪽 박스의 탭으로 전환한다
 const GROUPS: StepGroup[] = [
-  { key: "info", badge: "0", title: "기본 정보 & 재무 목표", desc: "본인·배우자 정보 및 은퇴 생활비 목표 등" },
+  { key: "info", badge: "0", title: "기본 정보", desc: "본인·배우자 정보, 재무 목표, 금감원 통합연금 자료 업로드" },
   { key: "national", badge: "1", title: "국민연금 (1층)", desc: "국민연금 납부 내역·예상액·반납·추납 및 기초연금 수급 판정" },
   { key: "retirement", badge: "2", title: "퇴직연금 (2층)", desc: "회사 퇴직연금 (DB/DC/IRP), 미입력 시 진단에서 제외" },
   { key: "personal", badge: "3", title: "개인연금 (3층)", desc: "연금저축 및 연금보험, 미입력 시 진단에서 제외" },
+  { key: "summary", badge: "4", title: "3층 연금 구조", desc: "입력한 계약을 3층 구조로 확인하고 종합 분석" },
 ];
 
 interface StepDef {
@@ -38,7 +41,9 @@ interface StepDef {
 }
 
 const STEPS: StepDef[] = [
-  { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "기본 정보" },
+  { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "기본정보" },
+  { key: "goal", kind: "GOAL", who: "SELF", group: "info", tab: "재무목표" },
+  { key: "fss", kind: "FSS", who: "SELF", group: "info", tab: "금감원 자료 업로드" },
   { key: "national-self", kind: "NATIONAL", who: "SELF", group: "national", tab: "본인" },
   { key: "national-spouse", kind: "NATIONAL", who: "SPOUSE", group: "national", tab: "배우자", spouseOnly: true },
   { key: "basic", kind: "BASIC", who: "SELF", group: "national", tab: "기초연금" },
@@ -46,7 +51,63 @@ const STEPS: StepDef[] = [
   { key: "retirement-spouse", kind: "RETIREMENT", who: "SPOUSE", group: "retirement", tab: "배우자", spouseOnly: true },
   { key: "personal-self", kind: "PERSONAL", who: "SELF", group: "personal", tab: "본인" },
   { key: "personal-spouse", kind: "PERSONAL", who: "SPOUSE", group: "personal", tab: "배우자", spouseOnly: true },
+  { key: "summary", kind: "SUMMARY", who: "SELF", group: "summary", tab: "3층 구조" },
 ];
+
+// 입력결과 목록에서 계약별로 고칠 수 있는 숫자 칸
+const RETIREMENT_EDIT_FIELDS = {
+  DB: [
+    { key: "yearsOfService", label: "근속 (년)" },
+    { key: "avgSalary", label: "평균급여 (만원)" },
+    { key: "salaryGrowthRate", label: "임금상승률 (%)" },
+  ],
+  DC: [
+    { key: "totalAccumulated", label: "적립금 (만원)" },
+    { key: "monthlyContribution", label: "월 납입 (만원)" },
+    { key: "expectedReturnRate", label: "수익률 (%)" },
+  ],
+} as const;
+const PERSONAL_EDIT_FIELDS = [
+  { key: "totalAccumulated", label: "적립금 (만원)" },
+  { key: "monthlyAnnualContribution", label: "납입액 (만원)" },
+  { key: "desiredStartAge", label: "개시 나이" },
+  { key: "receivingPeriod", label: "수령기간 (년)" },
+] as const;
+const INSURANCE_EDIT_FIELDS = [
+  { key: "totalAccumulated", label: "적립금 (만원)" },
+  { key: "monthlyPayment", label: "월 납입 (만원)" },
+  { key: "paymentPeriod", label: "납입기간 (년)" },
+  { key: "expectedDeclaredRate", label: "공시이율 (%)" },
+] as const;
+
+const contractName = (p: { provider?: string; productName?: string }) =>
+  [p.provider, p.productName].filter(Boolean).join(" · ");
+
+function EditFields<T extends object>({
+  fields,
+  value,
+  onChange,
+}: {
+  fields: readonly { key: keyof T & string; label: string }[];
+  value: T;
+  onChange: (patch: Partial<T>) => void;
+}) {
+  return (
+    <div style={styles.editGrid}>
+      {fields.map((f) => (
+        <label key={f.key} style={styles.editField}>
+          <span style={styles.labelCompact}>{f.label}</span>
+          <input
+            type="number"
+            className="premium-input"
+            value={Number(value[f.key]) || ""}
+            onChange={(e) => onChange({ [f.key]: Number(e.target.value) } as Partial<T>)}
+          />
+        </label>
+      ))}
+    </div>
+  );
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -61,14 +122,15 @@ export default function OnboardingPage() {
   const groupSteps = visibleSteps.filter((s) => s.group === step.group);
   const who = step.who;
   const person = pensionsOf(store, who);
-  const [nationalInputMode, setNationalInputMode] = useState<"DETAILED" | "PDF" | "SYNC" | "ADDITIONAL">("DETAILED");
+  const [nationalInputMode, setNationalInputMode] = useState<"DETAILED" | "SYNC" | "ADDITIONAL">("DETAILED");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
   // PDF 파싱 관련 상태 변수들
-  const [pdfParsing, setPdfParsing] = useState(false);
-  const [pdfParsed, setPdfParsed] = useState(false);
-  const [pdfError, setPdfError] = useState("");
+  // 금감원 통합연금 PDF (사람별·항목별). 「다음 단계」에서 한 번에 분석
+  const [fssFiles, setFssFiles] = useState<Record<Who, FssFiles>>({ SELF: emptyFssFiles(), SPOUSE: emptyFssFiles() });
+  const [fssAnalyzing, setFssAnalyzing] = useState(false);
+  const [fssError, setFssError] = useState("");
 
   useEffect(() => {
     setIsMounted(true);
@@ -116,7 +178,7 @@ export default function OnboardingPage() {
   const [npsSynced, setNpsSynced] = useState(false);
 
   // FSS Codef API 연동 관련 상태 변수들
-  const [fssInputMode, setFssInputMode] = useState<"MANUAL" | "PDF" | "SYNC">("MANUAL");
+  const [fssInputMode, setFssInputMode] = useState<"MANUAL" | "SYNC">("MANUAL");
   const [fssName, setFssName] = useState("홍길동");
   const [fssPhone, setFssPhone] = useState("010-1234-5678");
   const [fssBirth, setFssBirth] = useState("19800101");
@@ -128,204 +190,120 @@ export default function OnboardingPage() {
   const [fssSyncing, setFssSyncing] = useState(false);
   const [fssSynced, setFssSynced] = useState(false);
 
-  const handlePdfUpload = async (file: File) => {
-    setPdfParsing(true);
-    setPdfError("");
-    setPdfParsed(false);
+  // 금감원 자료 분석 결과를 한 사람의 1~3층 입력값에 채운다 (목록은 새로 읽은 계약으로 교체)
+  const applyParsedFss = (parsedData: any, target: Who) => {
+    const current = pensionsOf(usePensionStore.getState(), target).nationalPension;
+    if (parsedData.nationalPension) {
+      const months = parsedData.nationalPension.contributionMonths || 0;
+      const totalPaid = parsedData.nationalPension.totalPaidAmount || 0;
+      let income = parsedData.nationalPension.currentStandardMonthlyIncome || 0;
 
-    try {
-      const cleanText = await extractPdfText(file);
-      if (!cleanText) {
-        throw new Error("PDF에서 텍스트를 추출할 수 없습니다. 보안 비밀번호가 해제된 PDF 파일인지 확인해 주세요.");
+      if (!income && months > 0 && totalPaid > 0) {
+        // 국민연금 보험료율 9% 기준 역산: 소득 = 총납부액 / (개월수 * 0.09)
+        income = Math.round(totalPaid / (months * 0.09));
       }
 
-      // 2. 백엔드 API 호출하여 AI 파싱 요청
-      const res = await fetch("/api/pension/pdf-parse", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdfText: cleanText }),
+      store.setNationalPension({
+        contributionMonths: months,
+        currentStandardMonthlyIncome: income,
+        expectedMonthlyPension: parsedData.nationalPension.expectedMonthlyPension || 0,
+        totalPaidAmount: totalPaid || Math.round(income * 0.09 * months),
+        expectedTotalContributionMonths: parsedData.nationalPension.expectedTotalContributionMonths || current.expectedTotalContributionMonths,
+        totalExpectedPremium: parsedData.nationalPension.totalExpectedPremium || current.totalExpectedPremium,
+      }, target);
+    }
+
+    if (parsedData.retirementPensions && parsedData.retirementPensions.length > 0) {
+      store.setRetirementPensions([], target);
+      parsedData.retirementPensions.forEach((p: any) => {
+        store.addRetirementPension({
+          pensionType: p.pensionType || "DC",
+          avgSalary: p.avgSalary || 0,
+          yearsOfService: p.yearsOfService || 0,
+          salaryGrowthRate: p.salaryGrowthRate || 3.0,
+          totalAccumulated: p.totalAccumulated || 0,
+          monthlyContribution: p.monthlyContribution || 0,
+          expectedReturnRate: p.expectedReturnRate || 3.0,
+          companyMatchRate: 0,
+          provider: p.provider || undefined,
+          productName: p.productName || undefined,
+        }, target);
       });
+    }
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "AI 분석 도중 오류가 발생했습니다.");
-      }
+    if (parsedData.personalPensions && parsedData.personalPensions.length > 0) {
+      store.setPersonalPensions([], target);
+      parsedData.personalPensions.forEach((p: any) => {
+        store.addPersonalPension({
+          savingsType: p.savingsType === "INSURANCE" ? "INSURANCE" : "FUND",
+          totalAccumulated: p.totalAccumulated || 0,
+          monthlyAnnualContribution: p.monthlyAnnualContribution || 0,
+          desiredStartAge: p.desiredStartAge || 65,
+          receivingPeriod: p.receivingPeriod || 20,
+          provider: p.provider || undefined,
+          productName: p.productName || undefined,
+        }, target);
+      });
+    }
 
-      const parsedData = await res.json();
-
-      // 3. Zustand store에 데이터 매핑
-      if (parsedData.nationalPension) {
-        const months = parsedData.nationalPension.contributionMonths || 0;
-        const totalPaid = parsedData.nationalPension.totalPaidAmount || 0;
-        let income = parsedData.nationalPension.currentStandardMonthlyIncome || 0;
-
-        if (!income && months > 0 && totalPaid > 0) {
-          // 국민연금 보험료율 9% 기준 역산: 소득 = 총납부액 / (개월수 * 0.09)
-          income = Math.round(totalPaid / (months * 0.09));
-        }
-
-        store.setNationalPension({
-          contributionMonths: months,
-          currentStandardMonthlyIncome: income,
-          expectedMonthlyPension: parsedData.nationalPension.expectedMonthlyPension || 0,
-          totalPaidAmount: totalPaid || Math.round(income * 0.09 * months),
-          expectedTotalContributionMonths: parsedData.nationalPension.expectedTotalContributionMonths || person.nationalPension.expectedTotalContributionMonths,
-          totalExpectedPremium: parsedData.nationalPension.totalExpectedPremium || person.nationalPension.totalExpectedPremium,
-          basicPensionAmount: person.nationalPension.basicPensionAmount,
-          aValue: person.nationalPension.aValue,
-          bValue: person.nationalPension.bValue,
-        }, who);
-      }
-
-      if (parsedData.retirementPensions && parsedData.retirementPensions.length > 0) {
-        store.setRetirementPensions([], who);
-        parsedData.retirementPensions.forEach((p: any) => {
-          store.addRetirementPension({
-            pensionType: p.pensionType || "DC",
-            avgSalary: p.avgSalary || 0,
-            yearsOfService: p.yearsOfService || 0,
-            salaryGrowthRate: p.salaryGrowthRate || 3.0,
-            totalAccumulated: p.totalAccumulated || 0,
-            monthlyContribution: p.monthlyContribution || 0,
-            expectedReturnRate: p.expectedReturnRate || 3.0,
-            companyMatchRate: 0,
-          }, who);
-        });
-      }
-
-      if (parsedData.personalPensions && parsedData.personalPensions.length > 0) {
-        store.setPersonalPensions([], who);
-        parsedData.personalPensions.forEach((p: any) => {
-          store.addPersonalPension({
-            savingsType: p.savingsType || "FUND",
-            totalAccumulated: p.totalAccumulated || 0,
-            monthlyAnnualContribution: p.monthlyAnnualContribution || 0,
-            desiredStartAge: p.desiredStartAge || 65,
-            receivingPeriod: p.receivingPeriod || 20,
-          }, who);
-        });
-      }
-
-      if (parsedData.pensionInsurances && parsedData.pensionInsurances.length > 0) {
-        store.setPensionInsurances([], who);
-        parsedData.pensionInsurances.forEach((p: any) => {
-          store.addPensionInsurance({
-            insuranceType: p.insuranceType || "SAVING",
-            totalAccumulated: p.totalAccumulated || 0,
-            monthlyPayment: p.monthlyPayment || 0,
-            paymentPeriod: p.paymentPeriod || 10,
-            expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
-          }, who);
-        });
-      }
-
-      setPdfParsed(true);
-      alert("🎉 금융감독원 통합연금 PDF 자료 분석이 완료되어 모든 연금 데이터가 자동으로 채워졌습니다!");
-    } catch (err: any) {
-      console.error(err);
-      setPdfError(err.message || "PDF 파일을 분석하는 중 예기치 못한 에러가 발생했습니다.");
-    } finally {
-      setPdfParsing(false);
+    if (parsedData.pensionInsurances && parsedData.pensionInsurances.length > 0) {
+      store.setPensionInsurances([], target);
+      parsedData.pensionInsurances.forEach((p: any) => {
+        store.addPensionInsurance({
+          insuranceType: p.insuranceType === "VARIABLE" ? "변액연금보험" : "일반연금보험",
+          totalAccumulated: p.totalAccumulated || 0,
+          monthlyPayment: p.monthlyPayment || 0,
+          paymentPeriod: p.paymentPeriod || 10,
+          expectedDeclaredRate: p.expectedDeclaredRate || 2.5,
+          provider: p.provider || undefined,
+          productName: p.productName || undefined,
+        }, target);
+      });
     }
   };
 
-  const renderPdfUploadSection = () => {
-    return (
-      <div style={styles.pdfUploadBox} className="animate-fade-in">
-        <div style={styles.infoAlert}>
-          📄 <strong>금융감독원 통합연금포털 PDF 등록</strong>
-          <p style={{ fontSize: "0.85rem", marginTop: 4, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-            통합연금포털에서 다운로드받은 PDF 파일을 등록하시면 1층(국민연금), 2층(퇴직연금), 3층(개인연금) 정보가 한 번에 자동 입력됩니다.
-          </p>
-          <p style={{ fontSize: "0.8rem", marginTop: 4, color: "var(--warning)", lineHeight: 1.5 }}>
-            ⚠️ 다운로드 시 설정된 PDF 비밀번호(보통 생년월일 6자리 또는 설정한 비밀번호)를 반드시 해제(인쇄용 PDF 저장 등으로 무암호화)한 후 업로드해주셔야 자동 파싱이 가능합니다.
-          </p>
-        </div>
+  const fssPeople: Who[] = store.simulationParams.hasSpouse ? ["SELF", "SPOUSE"] : ["SELF"];
+  const hasFssFiles = fssPeople.some((w) => FSS_SLOTS.some((slot) => fssFiles[w][slot.key].length > 0));
 
-        <div style={styles.portalGuideCard}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-            <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>금융감독원 통합연금포털 바로가기</span>
-            <a 
-              href="https://100lifeplan.fss.or.kr" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              style={{
-                color: "var(--primary-light)",
-                fontWeight: 700,
-                textDecoration: "underline",
-                fontSize: "0.9rem"
-              }}
-            >
-              100lifeplan.fss.or.kr
-            </a>
-          </div>
-        </div>
+  // 등록한 금감원 PDF를 사람별로 텍스트 추출 → 문서 종류 머리글을 붙여 이어 붙인 뒤 AI 분석
+  const analyzeFssFiles = async (): Promise<boolean> => {
+    setFssAnalyzing(true);
+    setFssError("");
+    try {
+      for (const target of fssPeople) {
+        const parts: string[] = [];
+        for (const slot of FSS_SLOTS) {
+          for (const file of fssFiles[target][slot.key]) {
+            const text = await extractPdfText(file);
+            if (!text) {
+              throw new Error(`「${file.name}」에서 텍스트를 추출할 수 없습니다. 보안 비밀번호가 해제된 PDF 파일인지 확인해 주세요.`);
+            }
+            parts.push(`=== [${slot.label}] ${file.name} ===\n${text}`);
+          }
+        }
+        if (parts.length === 0) continue;
 
-        <div 
-          style={{
-            ...styles.dropZone,
-            borderColor: pdfParsing ? "var(--primary)" : "rgba(99, 102, 241, 0.3)",
-          }}
-        >
-          {pdfParsing ? (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <div style={styles.miniSpinner} />
-              <span style={{ fontSize: "0.95rem", color: "var(--text-primary)", fontWeight: 700 }}>
-                통합연금 PDF 데이터를 추출하여 AI 분석 중입니다...
-              </span>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: "2.5rem" }}>📥</span>
-              <span style={{ fontSize: "0.95rem", color: "var(--text-secondary)", textAlign: "center", maxWidth: "320px", lineHeight: 1.4 }}>
-                이곳에 통합연금 PDF 파일을 드래그하여 놓거나 아래 버튼을 클릭하여 선택하세요.
-              </span>
-              <input
-                type="file"
-                accept=".pdf"
-                style={{ display: "none" }}
-                id="pdf-file-input"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    await handlePdfUpload(file);
-                  }
-                }}
-              />
-              <button 
-                type="button" 
-                className="premium-button"
-                style={{ padding: "8px 20px", fontSize: "0.85rem", marginTop: 4 }}
-                onClick={() => document.getElementById("pdf-file-input")?.click()}
-              >
-                파일 선택하기
-              </button>
-            </div>
-          )}
-        </div>
-
-        {pdfError && (
-          <div style={{ ...styles.errorBanner, marginTop: 16 }}>
-            <span style={{ marginRight: 8 }}>⚠️</span> <span>{pdfError}</span>
-          </div>
-        )}
-
-        {pdfParsed && (
-          <div style={{ ...styles.previewBox, marginTop: 16, borderLeft: "4px solid var(--success)" }} className="animate-fade-in">
-            <h4 style={{ ...styles.previewTitle, color: "var(--success-light)" }}>✓ 연금 정보 자동 연동 완료</h4>
-            <div style={{ ...styles.previewGrid, fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: 8 }}>
-              <div>국민연금: <strong>{person.nationalPension.contributionMonths > 0 ? `${person.nationalPension.contributionMonths}개월 (예상 ${person.nationalPension.expectedMonthlyPension}만원/월)` : "정보 없음"}</strong></div>
-              <div>퇴직연금 계좌수: <strong>{person.retirementPensions.length}개</strong></div>
-              <div>개인연금 계좌수: <strong>{person.personalPensions.length}개</strong></div>
-              <div>연금보험 계좌수: <strong>{person.pensionInsurances.length}개</strong></div>
-            </div>
-            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: 10 }}>
-              * 각 단계별 메뉴 탭에서 상세 내용을 확인하고 보완할 수 있습니다.
-            </p>
-          </div>
-        )}
-      </div>
-    );
+        const res = await fetch("/api/pension/pdf-parse", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pdfText: parts.join("\n\n") }),
+        });
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || "AI 분석 도중 오류가 발생했습니다.");
+        }
+        applyParsedFss(await res.json(), target);
+        // 분석이 끝난 사람의 파일은 비워 두어, 다시 「다음 단계」를 눌러도 직접 고친 값을 덮어쓰지 않게 한다
+        setFssFiles((prev) => ({ ...prev, [target]: emptyFssFiles() }));
+      }
+      return true;
+    } catch (err) {
+      console.error(err);
+      setFssError(err instanceof Error ? err.message : "PDF 파일을 분석하는 중 예기치 못한 에러가 발생했습니다.");
+      return false;
+    } finally {
+      setFssAnalyzing(false);
+    }
   };
 
   const handleNPSSync = async () => {
@@ -521,8 +499,7 @@ export default function OnboardingPage() {
   // 단계를 넘어갈 때 이전 단계의 임시 동기화 상태(PDF 파싱 결과, NPS/FSS 인증 대기 등)가
   // 다음 단계(특히 배우자 단계)로 새지 않도록 초기화한다.
   const goToStep = (i: number) => {
-    setPdfParsed(false);
-    setPdfError("");
+    setFssError("");
     setNpsSynced(false);
     setVerificationPending(false);
     setJti(null);
@@ -534,7 +511,9 @@ export default function OnboardingPage() {
     setCurrentStep(i);
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
+    // 금감원 자료 업로드 탭: 등록한 PDF가 있으면 먼저 분석해 1~3층 입력결과를 채운다
+    if (step.kind === "FSS" && hasFssFiles && !(await analyzeFssFiles())) return;
     if (stepIndex < lastStepIndex) goToStep(stepIndex + 1);
   };
 
@@ -793,7 +772,7 @@ export default function OnboardingPage() {
                   👤 본인 및 가족 구성원의 정보와 노후 지출 목표를 입력하면 더욱 정확한 시뮬레이션이 가능해집니다.
                 </div>
                 
-                <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>1. 본인 및 가족 정보</h3>
+                <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>본인 및 가족 정보</h3>
 
                 <div style={styles.fieldRow}>
                   <label style={styles.label}>배우자 유무</label>
@@ -969,7 +948,13 @@ export default function OnboardingPage() {
                   )}
                 </div>
 
-                <h3 style={{ ...styles.addFormTitle, marginTop: 20 }}>2. 노후 재무지출 및 자산 목표</h3>
+              </div>
+            )}
+
+            {/* 1단계 재무목표 탭 */}
+            {step.kind === "GOAL" && (
+              <div style={styles.formGroupList} className="animate-fade-in">
+                <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>노후 재무지출 및 자산 목표</h3>
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
                     <label style={styles.label}>
@@ -1056,6 +1041,19 @@ export default function OnboardingPage() {
               </div>
             )}
 
+            {/* 1단계 금감원 자료 업로드 탭 */}
+            {step.kind === "FSS" && (
+              <FssUploadPanel
+                hasSpouse={store.simulationParams.hasSpouse}
+                files={fssFiles}
+                analyzing={fssAnalyzing}
+                error={fssError}
+                onChange={(target: Who, slot: FssSlot, files: File[]) =>
+                  setFssFiles((prev) => ({ ...prev, [target]: { ...prev[target], [slot]: files } }))
+                }
+              />
+            )}
+
             {/* STEP 1: 국민연금 */}
             {step.kind === "NATIONAL" && (
               <div style={styles.formGroupList} className="animate-fade-in">
@@ -1068,18 +1066,7 @@ export default function OnboardingPage() {
                       color: nationalInputMode === "DETAILED" ? "var(--primary)" : "var(--text-secondary)",
                     }}
                   >
-                    NPS 공단고서 상세 입력
-                  </button>
-                  <button
-                    onClick={() => setNationalInputMode("PDF")}
-                    style={{
-                      ...styles.tabButton,
-                      borderBottomColor: nationalInputMode === "PDF" ? "var(--primary)" : "transparent",
-                      color: nationalInputMode === "PDF" ? "var(--primary)" : "var(--text-secondary)",
-                    }}
-                    id="btn-tab-nps-pdf"
-                  >
-                    📄 금융감독원 통합연금 자료 등록
+                    입력결과
                   </button>
                   <button
                     onClick={() => setNationalInputMode("ADDITIONAL")}
@@ -1090,12 +1077,15 @@ export default function OnboardingPage() {
                     }}
                     id="btn-tab-nps-additional"
                   >
-                    ➕ 추가납부 대상 등록
+                    ➕ 추가납부/일시금 반납
                   </button>
                 </div>
 
                 {nationalInputMode === "DETAILED" && (
                   <>
+                    <div style={styles.infoAlert}>
+                      📄 1단계에서 금감원 자료를 등록했다면 읽어 온 값이 채워져 있습니다. 공단 자료와 다르면 직접 고치세요.
+                    </div>
                     <div style={styles.fieldGrid}>
                       <div style={styles.fieldRow}>
                         <label style={styles.label}>누적 가입 개월수</label>
@@ -1346,7 +1336,6 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {nationalInputMode === "PDF" && renderPdfUploadSection()}
 
                 {nationalInputMode === "ADDITIONAL" && <AdditionalPaymentPanel who={who} />}
               </div>
@@ -1367,18 +1356,7 @@ export default function OnboardingPage() {
                       color: fssInputMode === "MANUAL" ? "var(--primary)" : "var(--text-secondary)",
                     }}
                   >
-                    수동 입력 등록
-                  </button>
-                  <button
-                    onClick={() => setFssInputMode("PDF")}
-                    style={{
-                      ...styles.tabButton,
-                      borderBottomColor: fssInputMode === "PDF" ? "var(--primary)" : "transparent",
-                      color: fssInputMode === "PDF" ? "var(--primary)" : "var(--text-secondary)",
-                    }}
-                    id="btn-tab-fss-pdf-3"
-                  >
-                    📄 금융감독원 통합연금 자료 등록
+                    입력결과
                   </button>
                 </div>
 
@@ -1390,24 +1368,26 @@ export default function OnboardingPage() {
 
                     {/* Added Pensions List */}
                     {person.retirementPensions.length > 0 ? (
-                      <div style={styles.addedList}>
+                      <div style={{ ...styles.addedList, maxHeight: "none" }}>
                         {person.retirementPensions.map((p) => (
-                          <div key={p.id} style={styles.addedItem}>
-                            <div>
-                              <strong>{p.pensionType}형 퇴직연금</strong>
-                              {p.pensionType === "DB" ? (
-                                <span> - 근속: {p.yearsOfService}년 / 평균급여: {p.avgSalary}만원</span>
-                              ) : (
-                                <span> - 적립금: {p.totalAccumulated}만원 / 수익률: {p.expectedReturnRate}%</span>
-                              )}
+                          <div key={p.id} style={styles.editItem}>
+                            <div style={styles.editItemHead}>
+                              <strong>
+                                {p.pensionType}형 퇴직연금{contractName(p) && <span style={styles.contractName}> · {contractName(p)}</span>}
+                              </strong>
+                              <button
+                                type="button"
+                                onClick={() => store.deleteRetirementPension(p.id, who)}
+                                style={styles.deleteBtn}
+                              >
+                                삭제
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => store.deleteRetirementPension(p.id, who)}
-                              style={styles.deleteBtn}
-                            >
-                              삭제
-                            </button>
+                            <EditFields
+                              fields={RETIREMENT_EDIT_FIELDS[p.pensionType === "DB" ? "DB" : "DC"]}
+                              value={p}
+                              onChange={(patch) => store.updateRetirementPension(p.id, patch, who)}
+                            />
                           </div>
                         ))}
                       </div>
@@ -1695,7 +1675,6 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {fssInputMode === "PDF" && renderPdfUploadSection()}
               </div>
             )}
 
@@ -1711,18 +1690,7 @@ export default function OnboardingPage() {
                       color: fssInputMode === "MANUAL" ? "var(--primary)" : "var(--text-secondary)",
                     }}
                   >
-                    수동 입력 등록
-                  </button>
-                  <button
-                    onClick={() => setFssInputMode("PDF")}
-                    style={{
-                      ...styles.tabButton,
-                      borderBottomColor: fssInputMode === "PDF" ? "var(--primary)" : "transparent",
-                      color: fssInputMode === "PDF" ? "var(--primary)" : "var(--text-secondary)",
-                    }}
-                    id="btn-tab-fss-pdf-4"
-                  >
-                    📄 금융감독원 통합연금 자료 등록
+                    입력결과
                   </button>
                 </div>
 
@@ -1738,11 +1706,21 @@ export default function OnboardingPage() {
                         <h4 style={styles.addFormTitle}>연금저축 (세제혜택)</h4>
                         
                         {person.personalPensions.length > 0 && (
-                          <div style={{ ...styles.addedList, marginBottom: 12 }}>
+                          <div style={{ ...styles.addedList, maxHeight: "none", marginBottom: 12 }}>
                             {person.personalPensions.map((p) => (
-                              <div key={p.id} style={styles.addedItemCompact}>
-                                <span>{p.savingsType} - {p.totalAccumulated}만원</span>
-                                <button type="button" onClick={() => store.deletePersonalPension(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
+                              <div key={p.id} style={styles.editItem}>
+                                <div style={styles.editItemHead}>
+                                  <span>
+                                    {p.savingsType === "INSURANCE" ? "연금저축보험" : "연금저축펀드"}
+                                    {contractName(p) && <span style={styles.contractName}> · {contractName(p)}</span>}
+                                  </span>
+                                  <button type="button" onClick={() => store.deletePersonalPension(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
+                                </div>
+                                <EditFields
+                                  fields={PERSONAL_EDIT_FIELDS}
+                                  value={p}
+                                  onChange={(patch) => store.updatePersonalPension(p.id, patch, who)}
+                                />
                               </div>
                             ))}
                           </div>
@@ -1812,11 +1790,21 @@ export default function OnboardingPage() {
                         <h4 style={styles.addFormTitle}>연금보험 (비과세)</h4>
 
                         {person.pensionInsurances.length > 0 && (
-                          <div style={{ ...styles.addedList, marginBottom: 12 }}>
+                          <div style={{ ...styles.addedList, maxHeight: "none", marginBottom: 12 }}>
                             {person.pensionInsurances.map((p) => (
-                              <div key={p.id} style={styles.addedItemCompact}>
-                                <span>{p.insuranceType} - {p.totalAccumulated}만원</span>
-                                <button type="button" onClick={() => store.deletePensionInsurance(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
+                              <div key={p.id} style={styles.editItem}>
+                                <div style={styles.editItemHead}>
+                                  <span>
+                                    {p.insuranceType}
+                                    {contractName(p) && <span style={styles.contractName}> · {contractName(p)}</span>}
+                                  </span>
+                                  <button type="button" onClick={() => store.deletePensionInsurance(p.id, who)} style={styles.deleteBtnCompact}>✕</button>
+                                </div>
+                                <EditFields
+                                  fields={INSURANCE_EDIT_FIELDS}
+                                  value={p}
+                                  onChange={(patch) => store.updatePensionInsurance(p.id, patch, who)}
+                                />
                               </div>
                             ))}
                           </div>
@@ -2050,10 +2038,17 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                {fssInputMode === "PDF" && renderPdfUploadSection()}
               </div>
             )}
 
+            {/* 4단계: 3층 연금 구조 도식 */}
+            {step.kind === "SUMMARY" && (
+              <PensionStructureSummary
+                self={pensionsOf(store, "SELF")}
+                spouse={store.simulationParams.hasSpouse ? pensionsOf(store, "SPOUSE") : null}
+                basic={store.basicPension}
+              />
+            )}
           </div>
 
           <div style={styles.formFooterActions}>
@@ -2067,15 +2062,16 @@ export default function OnboardingPage() {
               이전 단계
             </button>
 
-            {/* 마지막 단계(개인연금)에서는 어느 탭에서든 바로 결과 보기, 배우자 탭이 남았으면 다음 단계도 함께 */}
+            {/* 마지막 단계(3층 연금 구조)에서 종합 분석하기 → 시뮬레이션 화면 */}
             <div style={{ display: "flex", gap: "8px" }}>
               {stepIndex < lastStepIndex && (
                 <button
                   type="button"
                   onClick={nextStep}
+                  disabled={fssAnalyzing}
                   className={step.group === visibleSteps[lastStepIndex].group ? "premium-button-secondary" : "premium-button"}
                 >
-                  다음 단계
+                  {fssAnalyzing ? "분석 중..." : step.kind === "FSS" && hasFssFiles ? "분석하고 다음 단계" : "다음 단계"}
                 </button>
               )}
               {step.group === visibleSteps[lastStepIndex].group && (
@@ -2086,7 +2082,7 @@ export default function OnboardingPage() {
                   className="premium-button"
                   style={{ background: "var(--gradient-secondary)" }}
                 >
-                  {isSubmitting ? "저장 중..." : "결과 보기 🚀"}
+                  {isSubmitting ? "저장 중..." : "종합 분석하기 🚀"}
                 </button>
               )}
             </div>
@@ -2446,6 +2442,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: "1px solid var(--border)",
     fontSize: "0.9rem",
   },
+  editItem: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    backgroundColor: "var(--surface)",
+    padding: "10px 12px",
+    borderRadius: "4px",
+    border: "1px solid var(--border)",
+    fontSize: "0.85rem",
+  },
+  editItemHead: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" },
+  contractName: { fontWeight: 500, color: "var(--text-muted)", fontSize: "0.8rem" },
+  editGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: "8px" },
+  editField: { display: "flex", flexDirection: "column", gap: "4px" },
   addedItemCompact: {
     display: "flex",
     justifyContent: "space-between",
@@ -2580,42 +2590,5 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     gap: "8px",
     lineHeight: 1.4,
-  },
-  pdfUploadBox: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    width: "100%",
-  },
-  portalGuideCard: {
-    backgroundColor: "var(--background)",
-    border: "1px solid var(--border)",
-    borderRadius: "var(--radius-sm)",
-    padding: "12px 16px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  dropZone: {
-    border: "2.5px dashed rgba(99, 102, 241, 0.3)",
-    borderRadius: "var(--radius-sm)",
-    padding: "40px 20px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    backgroundColor: "rgba(99, 102, 241, 0.02)",
-    transition: "all var(--transition-fast)",
-  },
-  errorBanner: {
-    backgroundColor: "rgba(239, 68, 68, 0.1)",
-    border: "1px solid rgba(239, 68, 68, 0.3)",
-    borderRadius: "var(--radius-sm)",
-    padding: "12px 16px",
-    color: "var(--danger)",
-    fontSize: "0.85rem",
-    display: "flex",
-    alignItems: "center",
   },
 };

@@ -42,6 +42,8 @@ export interface RetirementPensionState {
   monthlyContribution?: number; // DC/IRP
   companyMatchRate?: number; // DC/IRP
   expectedReturnRate?: number; // DC/IRP (%)
+  provider?: string; // 금융회사 (금감원 자료에서 읽음)
+  productName?: string; // 상품명
 }
 
 export interface PersonalPensionSavingsState {
@@ -51,6 +53,8 @@ export interface PersonalPensionSavingsState {
   monthlyAnnualContribution: number;
   desiredStartAge: number;
   receivingPeriod: number;
+  provider?: string; // 금융회사 (금감원 자료에서 읽음)
+  productName?: string; // 상품명
 }
 
 export interface PensionInsuranceState {
@@ -60,6 +64,8 @@ export interface PensionInsuranceState {
   monthlyPayment: number;
   paymentPeriod: number;
   expectedDeclaredRate: number; // (%)
+  provider?: string; // 금융회사 (금감원 자료에서 읽음)
+  productName?: string; // 상품명
 }
 
 export interface SimulationParamsState {

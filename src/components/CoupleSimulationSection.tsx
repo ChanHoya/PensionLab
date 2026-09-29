@@ -219,7 +219,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         )}
         {hasSpouse && (
         <div style={styles.kpi}>
-          <div style={styles.kpiLabel}>첫 사망 전 → 후 가구 월 연금</div>
+          <div style={styles.kpiLabel}>{firstDeath ? WHO_LABEL[firstDeath.who] : "본인"} 기대수명 전 → 후 가구 월 연금</div>
           <div style={styles.kpiValue}>
             {beforeDeath && afterDeath ? `${fmt(beforeDeath.household)} → ${fmt(afterDeath.household)} 만원` : "-"}
           </div>
@@ -382,7 +382,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" },
   headerActions: { display: "flex", gap: "6px", flexWrap: "wrap" },
   pdfButton: { fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 },
-  title: { fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary)", margin: 0 },
+  title: { fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }, // 인출전략 시나리오 비교 제목과 같은 크기
   tableTitle: { fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" },
   subtitle: { fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 },
   kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },

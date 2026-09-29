@@ -1,5 +1,5 @@
 import { runPensionSimulation, type CashFlowItem } from "@/services/pensionCalculator";
-import { DECREASING_ANNUAL_RATE } from "@/services/withdrawalCalculator";
+import { DECREASING_ANNUAL_RATE, privateDrawStartAgeOf } from "@/services/withdrawalCalculator";
 import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensionCalculator";
 import { NPS_RULES, SURVIVOR_OVERLAP_RATE, survivorRateForMonths, statutoryPensionStartAge } from "@/config/npsRules";
 import type {
@@ -90,11 +90,11 @@ export function planHouseholdSmoothing(
   targetToday: number,
   inflationRate: number,
   endIndex: number,
-  declineRate: number = 0
+  declineRate: number = 0,
+  drawStartIndex: number = 0 // 인출 시작 연도 (그 전에 개시되는 상품 금액은 시작 연도 가치로 모아 함께 나눈다)
 ): { override: SmoothingOverride; summary: SmoothingSummary } {
   const privOf = (p: PersonYear | null) => (p ? p.retirement + p.personal + p.insurance : 0);
-  const first = rows.findIndex((r) => privOf(r.self) + privOf(r.spouse) > 0);
-  const start = Math.max(0, first);
+  const start = Math.min(rows.length - 1, Math.max(0, drawStartIndex));
   const end = Math.min(rows.length - 1, Math.max(start, endIndex));
   const disc = (t: number) => 12 * Math.pow(1 + SMOOTHING_RATE, -(t - start)); // 월액 → 연액 현재가치 (시작 연도 기준)
 
@@ -104,7 +104,6 @@ export function planHouseholdSmoothing(
   const catPvSelf: PrivateFlow = { retirement: 0, personal: 0, insurance: 0 };
   const catPvSpouse: PrivateFlow = { retirement: 0, personal: 0, insurance: 0 };
   rows.forEach((r, t) => {
-    if (t < start) return;
     pot += (privOf(r.self) + privOf(r.spouse)) * disc(t);
     potSelf += privOf(r.self) * disc(t);
     PRIVATE_KEYS.forEach((k) => {
@@ -273,6 +272,9 @@ export function personParams(params: SimulationParamsState, who: "SELF" | "SPOUS
     nationalPensionStartAge: params.spouseNationalPensionStartAge,
     nationalPensionDeferYears: params.spouseNationalPensionDeferYears,
     privatePensionEndAge: params.spousePrivatePensionEndAge,
+    // 인출 시작은 가구 기준 같은 해: 본인 나이로 받은 값을 배우자 나이로 바꾼다
+    privateDrawStartAge:
+      params.privateDrawStartAge > 0 ? params.privateDrawStartAge - params.currentAge + (params.spouseAge ?? params.currentAge) : 0,
   };
 }
 
@@ -426,6 +428,6 @@ export function runCoupleSimulation(
   // 소진 연도: 본인 수령 종료 나이, 비우면 본인 기대수명. 인출 방식이 완만한 체감이면 총액을 매년 2%씩 줄인다
   const endAge = params.privatePensionEndAge > 0 ? params.privatePensionEndAge : st.lifeExpectancy;
   const declineRate = params.decumulationStrategy === "DECREASING" ? DECREASING_ANNUAL_RATE : 0;
-  const plan = planHouseholdSmoothing(base.rows, params.targetMonthlySpending, infl, endAge - selfAge0, declineRate);
+  const plan = planHouseholdSmoothing(base.rows, params.targetMonthlySpending, infl, endAge - selfAge0, declineRate, privateDrawStartAgeOf(params) - selfAge0);
   return { ...build(plan.override), smoothing: plan.summary };
 }

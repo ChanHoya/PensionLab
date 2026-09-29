@@ -538,11 +538,20 @@ export default function DashboardPage() {
             {/* 1. Comparison Summary */}
             <div style={styles.dashboardCard} className="premium-card">
               <div style={styles.dashboardHeader}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                  <span style={styles.reportSub}>RETIREMENT DECUMULATION REPORT</span>
-                  <div style={styles.logoText}>Pension<span className="gradient-text">Lab</span></div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", width: "100%" }}>
+                  <h3 style={{ ...styles.dashboardTitle, marginTop: 0 }}>인출전략 시나리오 비교 (세후)</h3>
+                  {/* 버튼은 PDF 캡처에서 제외 */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadPDF}
+                    disabled={pdfDownloading}
+                    data-html2canvas-ignore
+                    className="premium-button-secondary no-print"
+                    style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+                  >
+                    {pdfDownloading ? "PDF 생성 중..." : "📄 인출전략 정밀분석 보고서 PDF 다운로드"}
+                  </button>
                 </div>
-                <h3 style={styles.dashboardTitle}>인출전략 시나리오 비교 (세후)</h3>
                 <p style={styles.chartSubtitle}>
                   {hasSpouse ? "부부 가구 기준입니다. 국민연금·기초연금(연기·유족연금 포함)은 위 부부 통합 시뮬레이션 값을 그대로 쓰고," : "국민연금·기초연금(연기 포함)은 통합 시뮬레이션 값을 그대로 쓰고,"}
                   S0는 퇴직·개인연금도 통합 시뮬레이션의 인출 방식(왼쪽 입력 옵션) 그대로, 나머지는 인출 방식만 시나리오별로 달리해 세금·건보료를 {hasSpouse ? "사람별로 계산한 뒤 합산" : "계산"}합니다.
@@ -861,23 +870,6 @@ export default function DashboardPage() {
 
           </div>
 
-          {/* PDF 다운로드 버튼 — 맨 아래 배치 */}
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "16px" }} className="no-print">
-            <button
-              onClick={handleDownloadPDF}
-              disabled={pdfDownloading}
-              className="premium-button"
-              style={{
-                background: "var(--gradient-primary)",
-                padding: "14px 32px",
-                boxShadow: "var(--shadow-brand)",
-                fontWeight: 700,
-                fontSize: "1rem",
-              }}
-            >
-              {pdfDownloading ? "🔄 PDF 리포트 생성 중..." : "📥 인출전략 정밀분석 보고서 PDF 다운로드"}
-            </button>
-          </div>
         </section>
           </div>
         </div>
@@ -1027,19 +1019,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     flexDirection: "column",
     gap: "6px",
-  },
-  reportSub: {
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    color: "var(--text-accent)",
-    letterSpacing: "1px",
-    textTransform: "uppercase",
-  },
-  logoText: {
-    fontSize: "1.2rem",
-    fontWeight: 800,
-    color: "var(--text-primary)",
-    letterSpacing: "-0.5px",
   },
   dashboardTitle: {
     fontSize: "1.5rem",

@@ -41,6 +41,7 @@ const params = {
   spouseRetirementAge: 60,
   spouseLifeExpectancy: 88,
   spouseNationalPensionStartAge: 65,
+  privateDrawStartAge: 60, // 아래 기존 검사들은 올해(60세)부터 인출하는 경우 — 기본값(내년) 검사는 파일 끝에서 따로
 } as SimulationParamsState;
 const basic = {
   householdType: "COUPLE",
@@ -233,5 +234,17 @@ const sm2 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife
 near(sm2.smoothing!.requiredPot / sm2.smoothing!.pot, 1, 0.01);
 // 사적연금이 없어도 항상 평탄화 요약이 있다 (적립금 0)
 assert.equal(r.smoothing?.pot, 0);
+
+// 인출 시작 나이: 기본값은 조회 시점 익년(현재 나이 + 1 = 61세 = 2027년), 지정하면 그 나이부터
+const defStart = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, privateDrawStartAge: 0 }, { ...basic, applyToSimulation: false }, 2026);
+assert.equal(defStart.smoothing!.startYear, 2027);
+assert.equal(privAt(defStart, 2026), 0);
+assert.ok(privAt(defStart, 2027) > 0);
+const start63 = runCoupleSimulation({ ...husband, retirementPensions: bigIrp }, wife, { ...params, privateDrawStartAge: 63 }, { ...basic, applyToSimulation: false }, 2026);
+assert.equal(start63.smoothing!.startYear, 2029);
+for (let y = 2026; y <= 2028; y++) assert.equal(privAt(start63, y), 0, `${y} 인출 시작 전`);
+assert.ok(privAt(start63, 2029) > 0);
+// 늦게 시작해도 적립금을 버리지 않는다: 시작 연도 가치(연 3%)로 모은 적립금이 기본 시작보다 크다
+assert.ok(start63.smoothing!.pot > sm.smoothing!.pot);
 
 console.log("Couple simulation validation success!");

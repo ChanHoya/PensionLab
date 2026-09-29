@@ -20,8 +20,19 @@ import { downloadElementAsPdf } from "@/utils/exportPdf";
 const fmt = (v: number) => Math.round(v).toLocaleString();
 // 유족연금 층은 선을 본인국민연금과 같은 보라로 이어 그리되, 채우기·범례·툴팁 색은 톤다운된 분홍
 const SURVIVOR_FILL = "#9d5c7d";
-const LEGEND_COLORS: Record<string, string> = { 유족연금: SURVIVOR_FILL };
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
+// 쌓는 순서대로. 같은 종류는 같은 색 계열로 본인 진하게·배우자 연하게
+const SERIES = [
+  { key: "본인국민연금", color: "#6366f1" },
+  { key: "유족연금", color: "#6366f1", fill: SURVIVOR_FILL },
+  { key: "배우자국민연금", color: "#ec4899" },
+  { key: "본인 기초연금", color: "#d97706" },
+  { key: "배우자 기초연금", color: "#fbbf24" },
+  { key: "본인 퇴직연금", color: "#059669" },
+  { key: "배우자 퇴직연금", color: "#34d399" },
+  { key: "본인 개인연금", color: "#0284c7" },
+  { key: "배우자 개인연금", color: "#38bdf8" },
+];
 
 interface Props {
   result: CoupleSimulationResult;
@@ -83,16 +94,23 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
 
   const rowsByYear = new Map(rows.map((r) => [r.year, r]));
 
-  const chartData = rows.map((r) => ({
+  const chartData: Record<string, number>[] = rows.map((r) => ({
     year: r.year,
     // 사망 후 남은 배우자가 받는 유족연금은 사망자 국민연금에서 온 몫이라 따로 표시 (본인국민연금 층과 이어지게 바로 위에 쌓음)
     본인국민연금: Math.round(r.self.national - r.self.survivorPart),
     유족연금: Math.round(r.self.survivorPart + (r.spouse?.survivorPart ?? 0)),
     배우자국민연금: Math.round((r.spouse?.national ?? 0) - (r.spouse?.survivorPart ?? 0)),
-    기초연금: Math.round(r.self.basic + (r.spouse?.basic ?? 0)),
-    퇴직연금: Math.round(r.self.retirement + (r.spouse?.retirement ?? 0)),
-    개인연금보험: Math.round(r.self.personal + r.self.insurance + (r.spouse?.personal ?? 0) + (r.spouse?.insurance ?? 0)),
+    "본인 기초연금": Math.round(r.self.basic),
+    "배우자 기초연금": Math.round(r.spouse?.basic ?? 0),
+    "본인 퇴직연금": Math.round(r.self.retirement),
+    "배우자 퇴직연금": Math.round(r.spouse?.retirement ?? 0),
+    "본인 개인연금": Math.round(r.self.personal + r.self.insurance),
+    "배우자 개인연금": Math.round((r.spouse?.personal ?? 0) + (r.spouse?.insurance ?? 0)),
   }));
+  // 금액이 있는 계열만 그래프·범례에 표시. 유족연금은 받는 사람 기준 이름 (예: 배우자 유족연금)
+  const survivorName = `${survivorLabel || "배우자"} 유족연금`;
+  const visibleSeries = SERIES.filter((s) => chartData.some((d) => d[s.key] !== 0));
+  const legendColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
 
   // 표: 5년 간격 + 사망 전후 해
   const keyRows = rows.filter(
@@ -153,9 +171,9 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       </div>
 
-      {sm && (
+      {(sm || survivor?.survivorChoice) && (
         <div style={styles.infoAlert}>
-          {sm.pot > 0 ? (
+          {sm && (sm.pot > 0 ? (
             <>
               📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
               (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 총액이{" "}
@@ -176,64 +194,63 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             </>
           ) : (
             <>📏 가구 소득 평탄화: 퇴직·개인연금·연금보험 입력이 없어 채울 사적연금이 없습니다.</>
-          )}
-        </div>
-      )}
-
-      {survivor && survivor.survivorChoice && (
-        <div style={styles.infoAlert}>
-          🕊 {firstDeath && WHO_LABEL[firstDeath.who]} 사망 후 남은 배우자는{" "}
-          <strong>
-            {survivor.survivorChoice === "SURVIVOR"
-              ? "유족연금"
-              : `${firstDeath ? WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"] : ""} 노령연금 + 유족연금 30%`}
-          </strong>을 선택해
-          국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 받는 것이 유리합니다.
-          {survivor.survivorChoice === "SURVIVOR" &&
-            firstDeath &&
-            ` 유족연금을 고르면 ${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금은 지급정지되어 유족연금만 받습니다.`}{" "}
-          사망자의 퇴직·개인연금 잔액 상속은 반영하지 않았습니다.
-          {si && (
-            <details style={styles.details}>
-              <summary style={styles.summary}>유족연금 산정 기준과 계산 보기</summary>
-              <table style={{ ...styles.table, marginTop: "8px", maxWidth: "420px" }}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>사망자 가입기간</th>
-                    <th style={styles.th}>유족연금 (기본연금액 대비)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { label: "10년 미만", rate: 0.4 },
-                    { label: "10년 이상 ~ 20년 미만", rate: 0.5 },
-                    { label: "20년 이상", rate: 0.6 },
-                  ].map((row) => (
-                    <tr key={row.label} style={row.rate === si.rate ? styles.bestRow : undefined}>
-                      <td style={styles.td}>{row.label}</td>
-                      <td style={styles.td}>{row.rate * 100}%{row.rate === si.rate && " ← 적용"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p style={styles.detailText}>
-                <strong>{WHO_LABEL[si.deceased]}</strong> 가입 {si.months}개월(약 {Math.floor(si.months / 12)}년) → 지급률 {si.rate * 100}%.{" "}
-                {si.year}년 기본연금액 {fmt(si.basePension)}만원 × {si.rate * 100}% = 유족연금 <strong>{fmt(si.fullSurvivor)}만원</strong>
-              </p>
-              <p style={styles.detailText}>
-                중복급여 조정(국민연금법 제56조) — 둘 중 큰 쪽을 자동 선택:
-                <br />
-                {si.choice === "SURVIVOR" ? "✅" : "▫️"} ① 유족연금 전액 <strong>{fmt(si.fullSurvivor)}만원</strong> ({survivorLabel} 노령연금은 지급정지)
-                <br />
-                {si.choice === "OWN_PLUS_30" ? "✅" : "▫️"} ② {survivorLabel} 노령연금 {fmt(si.ownPension)}만원 + 유족연금 30% {fmt(si.fullSurvivor * 0.3)}만원 ={" "}
-                <strong>{fmt(si.ownPlus30)}만원</strong>
-              </p>
-              <p style={styles.note}>
-                ※ 기본연금액은 연기 가산(연 7.2%)·조기수령 감액 전 금액입니다. 노령연금 수급자가 사망하면 유족연금은 받던 노령연금액을 넘을 수
-                없습니다. 부양가족(19세 미만 자녀·부모 등)이 있으면 부양가족연금액이 더해지지만 여기에는 반영하지 않았습니다. 정확한 금액은
-                국민연금공단(☎1355)에서 확인하세요.
-              </p>
-            </details>
+          ))}
+          {survivor && survivor.survivorChoice && (
+            <div style={sm ? styles.alertSection : undefined}>
+              🕊 {firstDeath && WHO_LABEL[firstDeath.who]} 사망 후 남은 배우자는{" "}
+              <strong>
+                {survivor.survivorChoice === "SURVIVOR"
+                  ? "유족연금"
+                  : `${firstDeath ? WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"] : ""} 노령연금 + 유족연금 30%`}
+              </strong>을 선택해
+              국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 받는 것이 유리합니다.
+              {survivor.survivorChoice === "SURVIVOR" &&
+                firstDeath &&
+                ` 유족연금을 고르면 ${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금은 지급정지되어 유족연금만 받습니다.`}{" "}
+              사망자의 퇴직·개인연금 잔액 상속은 반영하지 않았습니다.
+              {si && (
+                <details style={styles.details}>
+                  <summary style={styles.summary}>유족연금 산정 기준과 계산 보기</summary>
+                  <table style={{ ...styles.table, marginTop: "8px", maxWidth: "420px" }}>
+                    <thead>
+                      <tr>
+                        <th style={styles.th}>사망자 가입기간</th>
+                        <th style={styles.th}>유족연금 (기본연금액 대비)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { label: "10년 미만", rate: 0.4 },
+                        { label: "10년 이상 ~ 20년 미만", rate: 0.5 },
+                        { label: "20년 이상", rate: 0.6 },
+                      ].map((row) => (
+                        <tr key={row.label} style={row.rate === si.rate ? styles.bestRow : undefined}>
+                          <td style={styles.td}>{row.label}</td>
+                          <td style={styles.td}>{row.rate * 100}%{row.rate === si.rate && " ← 적용"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p style={styles.detailText}>
+                    <strong>{WHO_LABEL[si.deceased]}</strong> 가입 {si.months}개월(약 {Math.floor(si.months / 12)}년) → 지급률 {si.rate * 100}%.{" "}
+                    {si.year}년 기본연금액 {fmt(si.basePension)}만원 × {si.rate * 100}% = 유족연금 <strong>{fmt(si.fullSurvivor)}만원</strong>
+                  </p>
+                  <p style={styles.detailText}>
+                    중복급여 조정(국민연금법 제56조) — 둘 중 큰 쪽을 자동 선택:
+                    <br />
+                    {si.choice === "SURVIVOR" ? "✅" : "▫️"} ① 유족연금 전액 <strong>{fmt(si.fullSurvivor)}만원</strong> ({survivorLabel} 노령연금은 지급정지)
+                    <br />
+                    {si.choice === "OWN_PLUS_30" ? "✅" : "▫️"} ② {survivorLabel} 노령연금 {fmt(si.ownPension)}만원 + 유족연금 30% {fmt(si.fullSurvivor * 0.3)}만원 ={" "}
+                    <strong>{fmt(si.ownPlus30)}만원</strong>
+                  </p>
+                  <p style={styles.note}>
+                    ※ 기본연금액은 연기 가산(연 7.2%)·조기수령 감액 전 금액입니다. 노령연금 수급자가 사망하면 유족연금은 받던 노령연금액을 넘을 수
+                    없습니다. 부양가족(19세 미만 자녀·부모 등)이 있으면 부양가족연금액이 더해지지만 여기에는 반영하지 않았습니다. 정확한 금액은
+                    국민연금공단(☎1355)에서 확인하세요.
+                  </p>
+                </details>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -244,21 +261,30 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero colors={LEGEND_COLORS} />} />
+            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal colors={legendColors} />} />
             <Legend
+              wrapperStyle={{ fontSize: "0.72rem" }}
+              iconSize={10}
+              itemSorter={null}
               content={(props) => (
                 <DefaultLegendContent
                   {...props}
-                  payload={props.payload?.map((item) => ({ ...item, color: LEGEND_COLORS[String(item.value)] ?? item.color }))}
+                  payload={props.payload?.map((item) => ({ ...item, color: legendColors[String(item.value)] ?? item.color }))}
                 />
               )}
             />
-            <Area type="monotone" dataKey="본인국민연금" stackId="1" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
-            <Area type="monotone" dataKey="유족연금" stackId="1" stroke="#6366f1" fill={SURVIVOR_FILL} fillOpacity={0.55} />
-            <Area type="monotone" dataKey="배우자국민연금" stackId="1" stroke="#ec4899" fill="#ec4899" fillOpacity={0.5} />
-            <Area type="monotone" dataKey="기초연금" stackId="1" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.5} />
-            <Area type="monotone" dataKey="퇴직연금" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.5} />
-            <Area type="monotone" dataKey="개인연금보험" stackId="1" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.5} />
+            {visibleSeries.map((s) => (
+              <Area
+                key={s.key}
+                type="monotone"
+                dataKey={s.key}
+                name={s.key === "유족연금" ? survivorName : s.key}
+                stackId="1"
+                stroke={s.color}
+                fill={s.fill ?? s.color}
+                fillOpacity={s.fill ? 0.55 : 0.5}
+              />
+            ))}
             {firstDeath && (
               <ReferenceLine
                 x={firstDeath.year}
@@ -343,6 +369,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "var(--text-secondary)",
     lineHeight: 1.6,
   },
+  alertSection: { marginTop: "10px", paddingTop: "10px", borderTop: "1px dashed rgba(99, 102, 241, 0.3)" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", color: "var(--text-secondary)" },
   th: { textAlign: "left", padding: "6px 8px", borderBottom: "1px solid var(--border)", color: "var(--text-primary)", fontWeight: 600, whiteSpace: "nowrap" },
   td: { padding: "6px 8px", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" },

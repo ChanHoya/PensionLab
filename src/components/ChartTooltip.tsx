@@ -15,17 +15,22 @@ interface Props {
   labelSuffix?: string; // 제목 뒤에 붙일 단위 (예: "세")
   hideZero?: boolean; // 값이 0인 항목 숨김
   colors?: Record<string, string>; // 항목 이름별 점 색 (선 색과 다르게 보일 때)
+  showTotal?: boolean; // 제목 오른쪽에 항목 합계 표시 (누적 차트용)
 }
 
 // Recharts 툴팁: 테마 색상 변수(라이트·다크 모두)와 작은 글씨, 항목별 색 점 (대시보드 인출전략 차트와 같은 모양)
-export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false, colors }: Props) {
+export default function ChartTooltip({ active, payload, label, labelSuffix = "", hideZero = false, colors, showTotal = false }: Props) {
   if (!active || !payload?.length) return null;
   const rows = hideZero ? payload.filter((e) => Number(e.value) !== 0) : payload;
   if (rows.length === 0) return null;
+  const total = rows.reduce((sum, e) => sum + (Number(e.value) || 0), 0);
 
   return (
     <div style={styles.box}>
-      <p style={styles.title}>{label}{labelSuffix}</p>
+      <p style={styles.title}>
+        <span>{label}{labelSuffix}</span>
+        {showTotal && <span>합계 {Math.round(total).toLocaleString()} 만원</span>}
+      </p>
       <div style={styles.list}>
         {rows.map((e) => (
           <div key={String(e.name)} style={styles.row}>
@@ -52,6 +57,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     WebkitBackdropFilter: "blur(8px)",
   },
   title: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "20px",
     margin: "0 0 6px 0",
     fontSize: "0.78rem",
     fontWeight: 700,

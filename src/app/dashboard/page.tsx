@@ -10,6 +10,7 @@ import { runHouseholdScenarios } from "@/services/householdScenarios";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
+import FullscreenToggle from "@/components/FullscreenToggle";
 import AiHelper from "@/components/AiHelper";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 import { paidTotalsOf } from "@/services/paidTotals";
@@ -497,6 +498,7 @@ export default function DashboardPage() {
             >
               초기화
             </button>
+            <FullscreenToggle />
             <ThemeToggle />
           </div>
         </div>

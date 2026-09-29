@@ -1,6 +1,6 @@
 import { runPensionSimulation, type CashFlowItem } from "@/services/pensionCalculator";
 import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensionCalculator";
-import { NPS_RULES, SURVIVOR_OVERLAP_RATE, survivorRateForMonths } from "@/config/npsRules";
+import { NPS_RULES, SURVIVOR_OVERLAP_RATE, survivorRateForMonths, statutoryPensionStartAge } from "@/config/npsRules";
 import type {
   BasicPensionState,
   NationalPensionState,
@@ -194,6 +194,13 @@ interface Track {
   lifeExpectancy: number;
   flows: Map<number, CashFlowItem>;
   national: NationalPensionState;
+}
+
+// 출생연도별 국민연금 법정 개시 나이 (저장된 출생연도가 없으면 기준 연도 − 나이로 추정)
+export function statutoryStartAgeOf(params: SimulationParamsState, who: "SELF" | "SPOUSE", year: number = new Date().getFullYear()): number {
+  const birth = who === "SELF" ? params.birthYear : params.spouseBirthYear;
+  const age = who === "SELF" ? params.currentAge : params.spouseAge ?? params.currentAge;
+  return statutoryPensionStartAge(birth || year - age);
 }
 
 // 국민연금 연기 연수 (0~5년)

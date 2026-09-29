@@ -375,7 +375,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <main style={styles.container}>
+    <main style={styles.container} className="dash-page">
       {/* Background decoration */}
       <div style={styles.bgGlow1} />
       <div style={styles.bgGlow2} />
@@ -413,12 +413,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div style={styles.contentBody}>
-        {/* Local Security & Caching Banner */}
-        <div style={styles.topSecurityBanner} className="premium-card animate-fade-in">
-          <span>🔒 <strong>개인정보 안심 보장</strong>: 회원님의 소중한 은퇴 설계 정보는 서버에 전송/저장되지 않으며, 오직 웹 브라우저(LocalStorage)에만 안전하게 보관되므로 유출 걱정 없이 안심하고 이용해 주세요.</span>
-        </div>
-
+      <div style={styles.contentBody} className="dash-body">
         {/* 왼쪽 입력 열(접기 가능) : 오른쪽 결과 = 1 : 4 */}
         <div className={`dash-layout${sidebarCollapsed ? " collapsed" : ""}`}>
           <DashboardSidebar
@@ -435,7 +430,13 @@ export default function DashboardPage() {
             s3Periods={s3Periods}
             setS3Periods={setS3Periods}
           />
-          <div style={styles.results}>
+          {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
+          <div style={styles.results} className="dash-results">
+        {/* Local Security & Caching Banner */}
+        <div style={styles.topSecurityBanner} className="premium-card animate-fade-in">
+          <span>🔒 <strong>개인정보 안심 보장</strong>: 회원님의 소중한 은퇴 설계 정보는 서버에 전송/저장되지 않으며, 오직 웹 브라우저(LocalStorage)에만 안전하게 보관되므로 유출 걱정 없이 안심하고 이용해 주세요.</span>
+        </div>
+
         {/* 추납 반영 배지: 추가납부 탭에서 대시보드 반영을 켠 경우에만 표시 */}
         {nationalForSim !== store.nationalPension && (
           <div style={{

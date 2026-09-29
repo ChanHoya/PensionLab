@@ -10,6 +10,7 @@ import { runHouseholdScenarios } from "@/services/householdScenarios";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
+import AiHelper from "@/components/AiHelper";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -471,7 +472,16 @@ export default function DashboardPage() {
             <Link href="/youtube" style={styles.navItem}>추천영상</Link>
           </nav>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-            <ThemeToggle />
+            <AiHelper
+              pageName="대시보드(결과 화면: 부부 통합 연금 시뮬레이션·인출전략 시나리오 비교)"
+              examples={[
+                "지금 화면의 추천 전략이 왜 가장 유리한가요?",
+                "본인 기대수명 이후 가구 월 연금이 줄어드는 이유는?",
+                "유족연금과 「본인 연금 + 유족연금 30%」 중 무엇이 유리한가요?",
+              ]}
+              buttonClassName="premium-button-secondary"
+              buttonStyle={{ padding: "8px 16px" }}
+            />
             <Link href="/onboarding" className="premium-button-secondary" style={{ padding: "8px 16px" }} id="btn-re-onboard">
               정보 재입력
             </Link>
@@ -487,6 +497,7 @@ export default function DashboardPage() {
             >
               초기화
             </button>
+            <ThemeToggle />
           </div>
         </div>
       </header>

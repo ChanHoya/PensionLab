@@ -10,6 +10,8 @@ import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
+import DashboardSidebar from "@/components/DashboardSidebar";
+import { NPS_RULES } from "@/config/npsRules";
 
 // Import Recharts components
 import {
@@ -111,6 +113,9 @@ const BarTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// 화면에 보이는 시나리오 (S2 국민연금 5년 연기는 왼쪽 입력의 연기 옵션으로 흡수)
+type ScenarioTab = Exclude<StrategySimulationResult["strategyId"], "S2">;
+
 export default function DashboardPage() {
   const router = useRouter();
   const store = usePensionStore();
@@ -123,23 +128,17 @@ export default function DashboardPage() {
   const [publicPensionTaxableRatio, setPublicPensionTaxableRatio] = useState(0.5);
 
   // Tab Selection for withdrawal simulator
-  const [activeTab, setActiveTab] = useState<"S0" | "S1" | "S2" | "S3" | "S4">("S1");
+  const [activeTab, setActiveTab] = useState<ScenarioTab>("S1");
 
   // S3 Custom sliders state
   const [s3StartAges, setS3StartAges] = useState<{ [id: string]: number }>({});
   const [s3Periods, setS3Periods] = useState<{ [id: string]: number }>({});
 
-  // Needs user input wizard state
-  const [showWizard, setShowWizard] = useState(true);
-  const [wizardStep, setWizardStep] = useState(1);
-
   // PDF download loading state
   const [pdfDownloading, setPdfDownloading] = useState(false);
 
-  // 건보료 기준 조정 팝업 state
-  const [showHIModal, setShowHIModal] = useState(false);
-  const [hiPropertyTaxBase, setHiPropertyTaxBase] = useState(store.simulationParams.propertyTaxBase || 0);
-  const [hiFinancialIncome, setHiFinancialIncome] = useState(store.simulationParams.financialIncome || 0);
+  // 왼쪽 입력 열 접기
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleExportData = () => {
     const data = {
@@ -283,14 +282,17 @@ export default function DashboardPage() {
     store.basicPension
   );
 
-  // Run advanced withdrawal simulation
+  // 인출전략 시나리오: 왼쪽 입력의 국민연금 연기(개시 나이 + 연기, 1년당 7.2% 가산)를 시뮬레이션과 같게 적용
+  const selfDefer = deferYearsOf(store.simulationParams);
+  const withdrawalNational = { ...nationalForSim, expectedMonthlyPension: nationalForSim.expectedMonthlyPension * (1 + NPS_RULES.deferralBonusPerYear * selfDefer) };
+  const withdrawalParams = { ...store.simulationParams, nationalPensionStartAge: store.simulationParams.nationalPensionStartAge + selfDefer };
   const withdrawalSimulation = runWithdrawalSimulation(
-    nationalForSim,
+    withdrawalNational,
     basicForSimulation(store.basicPension),
     store.retirementPensions,
     store.personalPensions,
     store.pensionInsurances,
-    store.simulationParams,
+    withdrawalParams,
     {
       personalTaxCreditRatio,
       retirementLumpSumTaxRate,
@@ -301,7 +303,7 @@ export default function DashboardPage() {
     }
   );
 
-  const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as "s0" | "s1" | "s2" | "s3" | "s4"];
+  const activeResult: StrategySimulationResult = withdrawalSimulation[activeTab.toLowerCase() as Lowercase<ScenarioTab>];
 
   const totalFlows = activeResult.flows.reduce((acc, flow) => {
     return {
@@ -341,11 +343,6 @@ export default function DashboardPage() {
       "세금 & 건보료": withdrawalSimulation.s1.lifetimeTotalTaxAndHI,
     },
     {
-      name: "연기형 (S2)",
-      "세후 수령액": withdrawalSimulation.s2.lifetimeTotalPostTax,
-      "세금 & 건보료": withdrawalSimulation.s2.lifetimeTotalTaxAndHI,
-    },
-    {
       name: "커스텀 (S3)",
       "세후 수령액": withdrawalSimulation.s3.lifetimeTotalPostTax,
       "세금 & 건보료": withdrawalSimulation.s3.lifetimeTotalTaxAndHI,
@@ -357,7 +354,8 @@ export default function DashboardPage() {
     }
   ];
 
-  const strategies = [withdrawalSimulation.s0, withdrawalSimulation.s1, withdrawalSimulation.s2, withdrawalSimulation.s3, withdrawalSimulation.s4];
+  // S2(국민연금 5년 연기)는 왼쪽 입력의 국민연금 연기 옵션으로 흡수
+  const strategies = [withdrawalSimulation.s0, withdrawalSimulation.s1, withdrawalSimulation.s3, withdrawalSimulation.s4];
   const bestStrategy = [...strategies].sort((a, b) => b.lifetimeTotalPostTax - a.lifetimeTotalPostTax)[0];
 
   // PDF Report Capture
@@ -375,50 +373,6 @@ export default function DashboardPage() {
       setPdfDownloading(false);
     }
   };
-
-  // Helper checking if user has any custom accounts registered
-  function accountsListIsEmpty() {
-    return (
-      store.retirementPensions.length === 0 &&
-      store.personalPensions.length === 0 &&
-      store.pensionInsurances.length === 0
-    );
-  }
-
-  // Render a slider group for S3 custom strategy (slim single-row: name | slider1 | slider2)
-  function renderCustomSliders(id: string, name: string) {
-    const startAge = s3StartAges[id] || 60;
-    const period = s3Periods[id] || 10;
-
-    return (
-      <div key={id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "4px 0", borderBottom: "1px dashed var(--border)" }}>
-        {/* 상품명 */}
-        <span style={{ width: "110px", flexShrink: 0, fontSize: "0.78rem", color: "var(--text-secondary)", fontWeight: 600 }}>{name}</span>
-
-        {/* 인출 개시 연령 */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px" }}>
-          <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>개시</label>
-          <span style={{ fontSize: "0.72rem", color: "var(--primary)", fontWeight: 700, width: "32px", textAlign: "right" }}>{startAge}세</span>
-          <input
-            type="range" min="55" max="80" value={startAge}
-            onChange={(e) => setS3StartAges({ ...s3StartAges, [id]: Number(e.target.value) })}
-            style={{ ...styles.sliderRange, flex: 1, margin: 0 }}
-          />
-        </div>
-
-        {/* 수령 기간 */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "6px" }}>
-          <label style={{ fontSize: "0.72rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>기간</label>
-          <span style={{ fontSize: "0.72rem", color: "var(--primary)", fontWeight: 700, width: "28px", textAlign: "right" }}>{period}년</span>
-          <input
-            type="range" min="5" max="30" value={period}
-            onChange={(e) => setS3Periods({ ...s3Periods, [id]: Number(e.target.value) })}
-            style={{ ...styles.sliderRange, flex: 1, margin: 0 }}
-          />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <main style={styles.container}>
@@ -465,6 +419,23 @@ export default function DashboardPage() {
           <span>🔒 <strong>개인정보 안심 보장</strong>: 회원님의 소중한 은퇴 설계 정보는 서버에 전송/저장되지 않으며, 오직 웹 브라우저(LocalStorage)에만 안전하게 보관되므로 유출 걱정 없이 안심하고 이용해 주세요.</span>
         </div>
 
+        {/* 왼쪽 입력 열(접기 가능) : 오른쪽 결과 = 1 : 4 */}
+        <div className={`dash-layout${sidebarCollapsed ? " collapsed" : ""}`}>
+          <DashboardSidebar
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+            personalTaxCreditRatio={personalTaxCreditRatio}
+            setPersonalTaxCreditRatio={setPersonalTaxCreditRatio}
+            retirementLumpSumTaxRate={retirementLumpSumTaxRate}
+            setRetirementLumpSumTaxRate={setRetirementLumpSumTaxRate}
+            otherIncomeAnnual={otherIncomeAnnual}
+            setOtherIncomeAnnual={setOtherIncomeAnnual}
+            s3StartAges={s3StartAges}
+            setS3StartAges={setS3StartAges}
+            s3Periods={s3Periods}
+            setS3Periods={setS3Periods}
+          />
+          <div style={styles.results}>
         {/* 추납 반영 배지: 추가납부 탭에서 대시보드 반영을 켠 경우에만 표시 */}
         {nationalForSim !== store.nationalPension && (
           <div style={{
@@ -482,304 +453,15 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {hasSpouse ? (
-          <CoupleSimulationSection
-            result={coupleResult}
-            selfStartAge={store.simulationParams.nationalPensionStartAge + deferYearsOf(store.simulationParams)}
-            spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
-            actions={dataActions}
-          />
-        ) : (
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>{dataActions}</div>
-        )}
+        {/* ① 연금 통합 시뮬레이션 (기본) */}
+        <CoupleSimulationSection
+          result={coupleResult}
+          selfStartAge={store.simulationParams.nationalPensionStartAge + deferYearsOf(store.simulationParams)}
+          spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
+          actions={dataActions}
+        />
 
-        {/* Row 2: Parameter Sliders (3-column layout) */}
-        <section style={styles.slidersCard} className="premium-card">
-          <h3 style={styles.chartTitle}>실시간 시뮬레이션 매개변수 조정</h3>
-          <p style={styles.chartSubtitle}>조건을 조정하여 연금 그래프의 변화를 실시간으로 확인해 보세요.</p>
-          
-          <div style={styles.slidersGrid}>
-            <div style={styles.sliderGroup}>
-              <div style={styles.sliderLabelRow}>
-                <label style={styles.sliderLabel}>현재 나이</label>
-                <span style={styles.sliderValue}>{store.simulationParams.currentAge} 세</span>
-              </div>
-              <input
-                type="range"
-                min="20"
-                max="70"
-                value={store.simulationParams.currentAge}
-                onChange={(e) => store.setSimulationParams({ currentAge: Number(e.target.value) })}
-                style={styles.sliderRange}
-              />
-            </div>
-
-            <div style={styles.sliderGroup}>
-              <div style={styles.sliderLabelRow}>
-                <label style={styles.sliderLabel}>은퇴 나이</label>
-                <span style={styles.sliderValue}>{store.simulationParams.retirementAge} 세</span>
-              </div>
-              <input
-                type="range"
-                min="50"
-                max="75"
-                value={store.simulationParams.retirementAge}
-                onChange={(e) => store.setSimulationParams({ retirementAge: Number(e.target.value) })}
-                style={styles.sliderRange}
-              />
-            </div>
-
-            <div style={styles.sliderGroup}>
-              <div style={styles.sliderLabelRow}>
-                <label style={styles.sliderLabel}>국민연금 개시 연령</label>
-                <span style={styles.sliderValue}>{store.simulationParams.nationalPensionStartAge} 세</span>
-              </div>
-              <input
-                type="range"
-                min="60"
-                max="70"
-                value={store.simulationParams.nationalPensionStartAge}
-                onChange={(e) => store.setSimulationParams({ nationalPensionStartAge: Number(e.target.value) })}
-                style={styles.sliderRange}
-              />
-            </div>
-
-            <div style={styles.sliderGroup}>
-              <div style={styles.sliderLabelRow}>
-                <label style={styles.sliderLabel}>예상 기대 수명</label>
-                <span style={styles.sliderValue}>{store.simulationParams.expectedLifeExpectancy} 세</span>
-              </div>
-              <input
-                type="range"
-                min="75"
-                max="100"
-                value={store.simulationParams.expectedLifeExpectancy}
-                onChange={(e) => store.setSimulationParams({ expectedLifeExpectancy: Number(e.target.value) })}
-                style={styles.sliderRange}
-              />
-            </div>
-
-            <div style={styles.sliderGroup}>
-              <div style={styles.sliderLabelRow}>
-                <label style={styles.sliderLabel}>물가상승률</label>
-                <span style={styles.sliderValue}>{store.simulationParams.inflationRate} %</span>
-              </div>
-              <input
-                type="range"
-                min="0.5"
-                max="5.0"
-                step="0.1"
-                value={store.simulationParams.inflationRate}
-                onChange={(e) => store.setSimulationParams({ inflationRate: Number(e.target.value) })}
-                style={styles.sliderRange}
-              />
-            </div>
-
-          </div>
-        </section>
-
-        {/* Row 3: Needs User Input Wizard */}
-        {showWizard && (
-          <section className="premium-card animate-fade-in" style={styles.wizardCard}>
-            <div style={styles.wizardHeader}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>🔍</span>
-                <span style={{ fontWeight: 700, fontSize: "1rem" }}>세부 재원 분류 진단 위저드 (사용자 확인 필요)</span>
-              </div>
-              <button onClick={() => setShowWizard(false)} style={styles.closeWizardBtn}>✕ 닫기</button>
-            </div>
-            
-            <div style={styles.wizardBody}>
-              {wizardStep === 1 && (
-                <div>
-                  <p style={styles.wizardQuestion}>1. 개인연금저축/IRP 계좌 적립금 중 <strong>세액공제를 받으신 납입원금의 비중</strong>은 대략 어떻게 되나요?</p>
-                  <p style={styles.wizardHelp}>※ 공제받지 않은 납입원금은 나중에 비과세 인출이 가능합니다. (보통 80% 내외)</p>
-                  <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
-                    {[0.5, 0.8, 1.0].map((ratio) => (
-                      <button
-                        key={ratio}
-                        onClick={() => {
-                          setPersonalTaxCreditRatio(ratio);
-                          setWizardStep(2);
-                        }}
-                        className={personalTaxCreditRatio === ratio ? "premium-button" : "premium-button-secondary"}
-                        style={{ flex: 1, padding: "7px" }}
-                      >
-                        {ratio * 100}% 정도
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", width: "80px" }}>수동 조정:</span>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={personalTaxCreditRatio}
-                      onChange={(e) => setPersonalTaxCreditRatio(parseFloat(e.target.value))}
-                      style={{ flex: 1 }}
-                    />
-                    <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>{Math.round(personalTaxCreditRatio * 100)}%</span>
-                  </div>
-                </div>
-              )}
-
-              {wizardStep === 2 && (
-                <div>
-                  <p style={styles.wizardQuestion}>2. 퇴직 시 예상되는 평균 <strong>퇴직소득세율</strong>은 대략 몇 %인가요?</p>
-                  <p style={styles.wizardHelp}>※ 은퇴 시점 일시금 기준 퇴직소득세율입니다. 잘 모르시면 기본값(8%)을 적용합니다.</p>
-                  <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
-                    {[0.05, 0.08, 0.12].map((rate) => (
-                      <button
-                        key={rate}
-                        onClick={() => {
-                          setRetirementLumpSumTaxRate(rate);
-                          setWizardStep(3);
-                        }}
-                        className={retirementLumpSumTaxRate === rate ? "premium-button" : "premium-button-secondary"}
-                        style={{ flex: 1, padding: "7px" }}
-                      >
-                        {rate * 100}%
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", width: "80px" }}>수동 조정:</span>
-                    <input
-                      type="range"
-                      min="0.01"
-                      max="0.25"
-                      step="0.01"
-                      value={retirementLumpSumTaxRate}
-                      onChange={(e) => setRetirementLumpSumTaxRate(parseFloat(e.target.value))}
-                      style={{ flex: 1 }}
-                    />
-                    <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>{Math.round(retirementLumpSumTaxRate * 100)}%</span>
-                  </div>
-                </div>
-              )}
-
-              {wizardStep === 3 && (
-                <div>
-                  <p style={styles.wizardQuestion}>3. 은퇴 후 연금 외에 <strong>기타 근로/임대/배당 소득(종합소득)</strong>이 예상되시나요?</p>
-                  <p style={styles.wizardHelp}>※ 사적연금 1,500만 원 초과 시 종합과세 비교 계산에 활용됩니다.</p>
-                  <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
-                    {[0, 1200, 3000].map((inc) => (
-                      <button
-                        key={inc}
-                        onClick={() => {
-                          setOtherIncomeAnnual(inc);
-                          setShowWizard(false);
-                          setWizardStep(1); // reset
-                        }}
-                        className={otherIncomeAnnual === inc ? "premium-button" : "premium-button-secondary"}
-                        style={{ flex: 1, padding: "7px" }}
-                      >
-                        {inc === 0 ? "없음" : `연 ${inc.toLocaleString()}만원`}
-                      </button>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: "8px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", width: "80px" }}>수동 조정:</span>
-                    <input
-                      type="number"
-                      value={otherIncomeAnnual || ""}
-                      placeholder="0"
-                      onChange={(e) => setOtherIncomeAnnual(Number(e.target.value))}
-                      style={{
-                        flex: 1,
-                        padding: "8px",
-                        backgroundColor: "var(--surface-2)",
-                        border: "1px solid var(--border)",
-                        borderRadius: "4px",
-                        color: "var(--text-primary)",
-                        outline: "none"
-                      }}
-                    />
-                    <span style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>만원/년</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div style={styles.wizardFooter}>
-              <div style={{ display: "flex", gap: "6px" }}>
-                {[1, 2, 3].map((step) => (
-                  <div
-                    key={step}
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      backgroundColor: step === wizardStep ? "var(--primary)" : "var(--border)",
-                    }}
-                  />
-                ))}
-              </div>
-              {wizardStep > 1 && (
-                <button onClick={() => setWizardStep(wizardStep - 1)} style={styles.prevBtn}>이전 단계로</button>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* Visual Settings Controls (Quick access) */}
-        {!showWizard && (
-          <section className="premium-card animate-fade-in" style={{ padding: "10px 14px", display: "flex", flexWrap: "wrap", gap: "14px" }}>
-            <div style={{ flex: "1 1 200px" }}>
-              <label style={styles.quickLabel}>세액공제 비율</label>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={personalTaxCreditRatio}
-                  onChange={(e) => setPersonalTaxCreditRatio(parseFloat(e.target.value))}
-                  style={{ flex: 1 }}
-                />
-                <span style={styles.quickVal}>{Math.round(personalTaxCreditRatio * 100)}%</span>
-              </div>
-            </div>
-
-            <div style={{ flex: "1 1 200px" }}>
-              <label style={styles.quickLabel}>퇴직소득세율</label>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
-                <input
-                  type="range"
-                  min="0.01"
-                  max="0.25"
-                  step="0.01"
-                  value={retirementLumpSumTaxRate}
-                  onChange={(e) => setRetirementLumpSumTaxRate(parseFloat(e.target.value))}
-                  style={{ flex: 1 }}
-                />
-                <span style={styles.quickVal}>{Math.round(retirementLumpSumTaxRate * 100)}%</span>
-              </div>
-            </div>
-
-            <div style={{ flex: "1 1 200px" }}>
-              <label style={styles.quickLabel}>기타 연 소득</label>
-              <input
-                type="number"
-                value={otherIncomeAnnual || ""}
-                onChange={(e) => setOtherIncomeAnnual(Number(e.target.value))}
-                style={styles.quickInput}
-                placeholder="0"
-              />
-              <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginLeft: "4px" }}>만원/년</span>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "flex-end" }}>
-              <button onClick={() => setShowWizard(true)} className="premium-button-secondary" style={{ padding: "8px 16px" }}>
-                ⚙️ 세부 위저드 열기
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* Withdrawal Simulation & Results */}
+        {/* ② 인출전략 시나리오 비교 (세후) */}
         <section style={styles.resultContainer} className="animate-fade-in">
           <div id="withdrawal-report-root" style={styles.pdfRootContainer}>
             {/* 1. Comparison Summary */}
@@ -789,7 +471,11 @@ export default function DashboardPage() {
                   <span style={styles.reportSub}>RETIREMENT DECUMULATION REPORT</span>
                   <div style={styles.logoText}>Pension<span className="gradient-text">Lab</span></div>
                 </div>
-                <h3 style={styles.dashboardTitle}>인출전략 시나리오 비교</h3>
+                <h3 style={styles.dashboardTitle}>인출전략 시나리오 비교 (세후)</h3>
+                <p style={styles.chartSubtitle}>
+                  위 시뮬레이션과 같은 입력(나이·국민연금 개시/연기·물가·기초연금)에 세금·건보료를 얹어 인출 방식별로 비교합니다.
+                  국민연금 연기는 왼쪽 입력의 「수령 시작」으로 모든 시나리오에 같이 적용됩니다.
+                </p>
               </div>
 
               <div style={styles.divider} />
@@ -804,7 +490,6 @@ export default function DashboardPage() {
                   <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px", lineHeight: 1.5 }}>
                     이 시나리오 적용 시 생애 총 세후 수령액은 약 <strong>{bestStrategy.lifetimeTotalPostTax.toLocaleString()}만원</strong>으로, 
                     기존 계획 대비 세후 소득을 극대화할 수 있습니다. 
-                    {bestStrategy.strategyId === "S2" && " 국민연금 5년 연기를 통해 수령액이 연 7.2% 복리 증액(총 +36%)되어 장수 리스크 방어력이 배가됩니다."}
                   </p>
                 </div>
               </div>
@@ -819,7 +504,7 @@ export default function DashboardPage() {
                       border: strat.strategyId === activeTab ? "2px solid var(--primary)" : "1px solid var(--border)",
                       backgroundColor: strat.strategyId === activeTab ? "rgba(99, 102, 241, 0.03)" : "var(--surface)"
                     }}
-                    onClick={() => setActiveTab(strat.strategyId)}
+                    onClick={() => setActiveTab(strat.strategyId as ScenarioTab)}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={styles.compareId}>{strat.strategyId} 전략</span>
@@ -849,84 +534,9 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* S3 Custom Interactive Sliders — 전략 카드 바로 아래 배치 */}
-              {activeTab === "S3" && (
-                <div style={{ ...styles.customParamsBox, marginTop: "12px" }} className="premium-card animate-fade-in no-print">
-                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "8px", color: "var(--text-primary)" }}>
-                    🛠️ S3 커스텀 전략 인출 변수 조절
-                  </h4>
-                  {accountsListIsEmpty() ? (
-                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", textAlign: "center", padding: "10px" }}>
-                      등록된 2/3층 사적연금 자산이 없습니다. 대시보드나 온보딩에서 연금을 추가해 주세요.
-                    </p>
-                  ) : (
-                    <div style={styles.customSlidersGrid}>
-                      {store.retirementPensions.map((p) => renderCustomSliders(p.id, `${p.pensionType} 퇴직연금`))}
-                      {store.personalPensions.map((p) => renderCustomSliders(p.id, `개인연금저축 (${p.savingsType})`))}
-                      {store.pensionInsurances.map((i) => renderCustomSliders(i.id, `연금보험 (${i.insuranceType})`))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* S4 하이브리드 전략 전용 입력 컨트롤 */}
+              {/* S4 하이브리드: 피부양자 유지 상태 (입력은 왼쪽 입력 열) */}
               {activeTab === "S4" && (
-                <div style={{ ...styles.customParamsBox, marginTop: "12px" }} className="premium-card animate-fade-in no-print">
-                  <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "12px", color: "var(--text-primary)" }}>
-                    📈 S4 하이브리드(배당+연금) 전략 변수 조절
-                  </h4>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", alignItems: "start" }}>
-                    {/* 커버드콜 투자금 슬라이더 */}
-                    <div>
-                      <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                        커버드콜/월배당 투자금: <strong>{(store.simulationParams.coveredCallAsset || 5000).toLocaleString()}만원</strong>
-                      </label>
-                      <input
-                        type="range"
-                        min={0}
-                        max={50000}
-                        step={500}
-                        value={store.simulationParams.coveredCallAsset || 5000}
-                        onChange={(e) => store.setSimulationParams({ coveredCallAsset: Number(e.target.value) })}
-                        style={{ width: "100%", accentColor: "var(--primary)" }}
-                      />
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                        <span>0원</span>
-                        <span>5억</span>
-                      </div>
-                    </div>
-                    {/* 예상 배당률 슬라이더 */}
-                    <div>
-                      <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", display: "block", marginBottom: "4px" }}>
-                        예상 연 분배율: <strong>{(store.simulationParams.coveredCallDividendRate || 9.0).toFixed(1)}%</strong>
-                      </label>
-                      <input
-                        type="range"
-                        min={2}
-                        max={15}
-                        step={0.5}
-                        value={store.simulationParams.coveredCallDividendRate || 9.0}
-                        onChange={(e) => store.setSimulationParams({ coveredCallDividendRate: Number(e.target.value) })}
-                        style={{ width: "100%", accentColor: "var(--primary)" }}
-                      />
-                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                        <span>2%</span>
-                        <span>15%</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* 부부 명의 분산 토글 */}
-                  <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "10px" }}>
-                    <label style={{ fontSize: "0.8rem", color: "var(--text-secondary)", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
-                      <input
-                        type="checkbox"
-                        checked={store.simulationParams.isCoupleDivided || false}
-                        onChange={(e) => store.setSimulationParams({ isCoupleDivided: e.target.checked })}
-                        style={{ accentColor: "var(--primary)", width: "16px", height: "16px" }}
-                      />
-                      부부 명의 분산 적용 (인당 연 1,000만원 배당소득 비과세 혁택 극대화)
-                    </label>
-                  </div>
+                <div className="animate-fade-in">
                   {/* 피부양자 유지 상태 안내 */}
                   {(() => {
                     const s4Result = withdrawalSimulation.s4;
@@ -1022,7 +632,7 @@ export default function DashboardPage() {
                   {strategies.map((s) => (
                     <button
                       key={s.strategyId}
-                      onClick={() => setActiveTab(s.strategyId)}
+                      onClick={() => setActiveTab(s.strategyId as ScenarioTab)}
                       style={{
                         ...styles.tabButton,
                         backgroundColor: activeTab === s.strategyId ? "var(--primary)" : "transparent",
@@ -1038,7 +648,6 @@ export default function DashboardPage() {
               <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: "10px" }}>
                 {activeTab === "S0" && "As-Is 전략은 세법상 사적연금 1,500만 원 한도 및 퇴직소득세 한도를 고려하지 않고 임의 수령하는 계획입니다. 특정 연도에 수령액이 과밀되어 16.5% 분리과세나 높은 종합소득세 누진세율이 적용될 수 있습니다."}
                 {activeTab === "S1" && "절세 평탄화 전략은 사적연금 수령 한도(1,500만 원) 내로 수령액을 균등 분산하여 3.3%~5.5% 수준의 저율과세 혜택을 100% 누리며, 퇴직연금 수령 기간을 11년 이상 확보하여 퇴직소득세를 최대 40% 감면받을 수 있도록 최적화했습니다."}
-                {activeTab === "S2" && "국민연금 5년 연기형은 은퇴 직후 소득 공백기 동안 IRP 퇴직소득세 감면 재원 및 개인연금저축을 집중 활용하여 생활비를 충당하고, 국민연금을 5년 연기함으로써 매년 7.2%씩(총 +36%) 연금 수령 단가를 증액하여 생애 후반의 장수 리스크와 물가 상승 위험을 강력히 방어합니다."}
                 {activeTab === "S3" && "커스텀 전략 조정을 통해 본인만의 최적의 절세 구간을 찾을 수 있습니다. 가능한 사적연금 인출액을 고르게 평탄화하고 수령 기간을 10년 이상 길게 설계하는 것이 절세의 핵심입니다."}
                 {activeTab === "S4" && "하이브리드 전략은 커버드콜 ETF 등 월 분배형 상품의 배당소득을 인당 연 1,000만원 이하로 통제하여 건보료 피부양자 자격을 방어하고, 부족한 생활비는 건보료가 비과세인 사적연금(연 1,500만원 한도)/퇴직연금에서 우선 인출하여 세금과 건강보험료를 동시에 최소화합니다."}
               </p>
@@ -1135,147 +744,10 @@ export default function DashboardPage() {
                 - 본 리포트는 투자 자문 및 세무 자문이 아니며, 인출 계획 실행 전 반드시 세무사나 재무 설계 전문가의 대면 컨설팅을 받으시길 권장합니다.
               </p>
               <p style={styles.footnoteText}>
-                - 건보료 산정 시 재산세 과세표준 기반 재산 건보료(연 1.2% 근사) 및 금융소득 1,000만원 초과분(7.09%)이 추가 반영됩니다. 기준 수치는 아래 조정 버튼에서 수정할 수 있습니다.
+                - 건보료 산정 시 재산세 과세표준 기반 재산 건보료(연 1.2% 근사) 및 금융소득 1,000만원 초과분(7.09%)이 추가 반영됩니다. 기준 수치는 왼쪽 입력 열의 「세금·건보료」에서 수정할 수 있습니다.
               </p>
             </div>
 
-            {/* 건보료 기준 조정 버튼 */}
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px" }} className="no-print">
-              <button
-                onClick={() => {
-                  setHiPropertyTaxBase(store.simulationParams.propertyTaxBase || 0);
-                  setHiFinancialIncome(store.simulationParams.financialIncome || 0);
-                  setShowHIModal(true);
-                }}
-                style={{
-                  padding: "7px 16px",
-                  fontSize: "0.8rem",
-                  fontWeight: 600,
-                  color: "var(--text-accent)",
-                  background: "transparent",
-                  border: "1px solid var(--border)",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                }}
-              >
-                ⚙️ 건보료 재산·금융소득 기준 조정
-              </button>
-            </div>
-
-            {/* 건보료 기준 조정 팝업 모달 */}
-            {showHIModal && (
-              <div
-                style={{
-                  position: "fixed",
-                  inset: 0,
-                  backgroundColor: "var(--overlay-bg)",
-                  zIndex: 1000,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "20px",
-                }}
-                onClick={() => setShowHIModal(false)}
-              >
-                <div
-                  style={{
-                    background: "var(--modal-bg)",
-                    border: "1px solid var(--border)",
-                    borderRadius: "var(--radius)",
-                    padding: "28px 32px",
-                    width: "100%",
-                    maxWidth: "460px",
-                    boxShadow: "var(--shadow-lg)",
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <h4 style={{ margin: "0 0 6px", fontSize: "1.05rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                    건보료 재산·금융소득 기준 조정
-                  </h4>
-                  <p style={{ margin: "0 0 20px", fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5 }}>
-                    재산세 과세표준과 금융소득을 입력하면 건보료 시뮬레이션 정확도가 향상됩니다.
-                  </p>
-                  <div style={{ marginBottom: "16px" }}>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                      재산세 과세표준 (만원)
-                      <span style={{ fontWeight: 400, fontSize: "0.72rem", marginLeft: "6px", color: "var(--text-muted)" }}>연 1.2% 근사 적용</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="premium-input"
-                      style={{ width: "100%", boxSizing: "border-box" }}
-                      placeholder="예: 아파트 공시가격의 약 60~70%"
-                      value={hiPropertyTaxBase || ""}
-                      onChange={(e) => setHiPropertyTaxBase(Number(e.target.value))}
-                    />
-                    {hiPropertyTaxBase > 0 && (
-                      <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--text-accent)" }}>
-                        → 연간 재산 건보료 약 {Math.round(hiPropertyTaxBase * 0.012).toLocaleString()}만원 (월 {Math.round(hiPropertyTaxBase * 0.012 / 12 * 10) / 10}만원)
-                      </p>
-                    )}
-                  </div>
-                  <div style={{ marginBottom: "24px" }}>
-                    <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "6px" }}>
-                      연간 금융소득 이자+배당 (만원/년)
-                      <span style={{ fontWeight: 400, fontSize: "0.72rem", marginLeft: "6px", color: "var(--text-muted)" }}>1,000만원 초과분 7.09% 적용</span>
-                    </label>
-                    <input
-                      type="number"
-                      className="premium-input"
-                      style={{ width: "100%", boxSizing: "border-box" }}
-                      placeholder="0 (은퇴 후 예상 이자·배당소득 합계)"
-                      value={hiFinancialIncome || ""}
-                      onChange={(e) => setHiFinancialIncome(Number(e.target.value))}
-                    />
-                    {hiFinancialIncome > 1000 && (
-                      <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--text-accent)" }}>
-                        → 초과분 {(hiFinancialIncome - 1000).toLocaleString()}만원 × 7.09% = 연간 {Math.round((hiFinancialIncome - 1000) * 0.0709).toLocaleString()}만원 추가
-                      </p>
-                    )}
-                    {hiFinancialIncome > 0 && hiFinancialIncome <= 1000 && (
-                      <p style={{ margin: "4px 0 0", fontSize: "0.72rem", color: "var(--text-muted)" }}>
-                        1,000만원 이하: 추가 건보료 없음 (단, 피부양자 유지)
-                      </p>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                    <button
-                      onClick={() => setShowHIModal(false)}
-                      style={{
-                        padding: "9px 20px",
-                        fontSize: "0.85rem",
-                        fontWeight: 600,
-                        color: "var(--text-secondary)",
-                        background: "transparent",
-                        border: "1px solid var(--border)",
-                        borderRadius: "var(--radius-sm)",
-                        cursor: "pointer",
-                      }}
-                    >
-                      취소
-                    </button>
-                    <button
-                      onClick={() => {
-                        store.setSimulationParams({
-                          propertyTaxBase: hiPropertyTaxBase,
-                          financialIncome: hiFinancialIncome,
-                        });
-                        setShowHIModal(false);
-                      }}
-                      className="premium-button"
-                      style={{
-                        padding: "9px 24px",
-                        fontSize: "0.85rem",
-                        fontWeight: 700,
-                        background: "var(--gradient-primary)",
-                      }}
-                    >
-                      저장 및 재계산
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* PDF 다운로드 버튼 — 맨 아래 배치 */}
@@ -1296,6 +768,8 @@ export default function DashboardPage() {
             </button>
           </div>
         </section>
+          </div>
+        </div>
       </div>
     </main>
   );
@@ -1388,7 +862,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   contentBody: {
     width: "100%",
-    maxWidth: "1200px",
+    maxWidth: "1680px",
     margin: "0 auto",
     padding: "16px 20px 40px 20px",
     display: "flex",
@@ -1396,6 +870,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "14px",
     zIndex: 1,
   },
+  results: { display: "flex", flexDirection: "column", gap: "14px", minWidth: 0 },
   topSecurityBanner: {
     backgroundColor: "rgba(99, 102, 241, 0.06)",
     border: "1px solid rgba(99, 102, 241, 0.15)",
@@ -1415,111 +890,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.85rem",
     color: "var(--text-muted)",
     marginBottom: "8px",
-  },
-  slidersCard: {
-    padding: "14px 18px",
-  },
-  slidersGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "10px 20px",
-    marginTop: "8px",
-  },
-  sliderGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-  },
-  sliderLabelRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  sliderLabel: {
-    fontSize: "0.95rem",
-    fontWeight: 600,
-    color: "var(--text-primary)",
-  },
-  sliderValue: {
-    fontSize: "0.95rem",
-    fontWeight: 700,
-    color: "var(--primary)",
-  },
-  sliderRange: {
-    width: "100%",
-    cursor: "pointer",
-    accentColor: "var(--primary)",
-  },
-  wizardCard: {
-    padding: "12px 16px",
-    border: "1px solid rgba(99, 102, 241, 0.25)",
-    backgroundColor: "var(--surface)",
-  },
-  wizardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "1px solid var(--border)",
-    paddingBottom: "8px",
-  },
-  closeWizardBtn: {
-    backgroundColor: "transparent",
-    border: "none",
-    color: "var(--text-muted)",
-    fontSize: "0.85rem",
-    cursor: "pointer",
-  },
-  wizardBody: {
-    padding: "10px 0",
-  },
-  wizardQuestion: {
-    fontSize: "1.05rem",
-    fontWeight: 700,
-    color: "var(--text-primary)",
-    lineHeight: 1.6,
-  },
-  wizardHelp: {
-    fontSize: "0.8rem",
-    color: "var(--text-muted)",
-    marginTop: "6px",
-  },
-  wizardFooter: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderTop: "1px solid var(--border)",
-    paddingTop: "8px",
-    marginTop: "6px",
-  },
-  prevBtn: {
-    backgroundColor: "transparent",
-    border: "none",
-    color: "var(--primary-400)",
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-  quickLabel: {
-    fontSize: "0.8rem",
-    color: "var(--text-secondary)",
-    fontWeight: 600,
-  },
-  quickVal: {
-    fontSize: "0.9rem",
-    fontWeight: 700,
-    color: "var(--text-primary)",
-    width: "45px",
-    textAlign: "right",
-  },
-  quickInput: {
-    marginTop: "6px",
-    width: "120px",
-    padding: "8px 12px",
-    backgroundColor: "var(--surface-2)",
-    border: "1px solid var(--border)",
-    borderRadius: "var(--radius-sm)",
-    color: "var(--text-primary)",
-    outline: "none",
   },
   resultContainer: {
     display: "flex",
@@ -1637,15 +1007,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 700,
     cursor: "pointer",
     transition: "all var(--transition-fast)",
-  },
-  customParamsBox: {
-    padding: "12px 14px",
-    backgroundColor: "var(--surface-2)",
-  },
-  customSlidersGrid: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "10px",
   },
   sliderGroupContainer: {
     borderBottom: "1px dashed var(--border)",

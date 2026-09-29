@@ -399,3 +399,30 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   transform: scale(1.05) !important;
 }
 
+
+/* 대시보드: 왼쪽 입력 열(접기 가능) : 오른쪽 결과 = 1 : 4, 좁은 화면에서는 위아래로 쌓음 */
+.dash-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 4fr;
+  gap: 16px;
+  align-items: start;
+}
+.dash-layout.collapsed {
+  grid-template-columns: 44px 1fr;
+}
+.dash-layout > .dash-sidebar {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+}
+@media (max-width: 900px) {
+  .dash-layout,
+  .dash-layout.collapsed {
+    grid-template-columns: 1fr;
+  }
+  .dash-layout > .dash-sidebar {
+    position: static;
+    max-height: none;
+  }
+}

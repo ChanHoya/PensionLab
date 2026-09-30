@@ -32,7 +32,7 @@ import {
   ReferenceLine,
   DefaultLegendContent,
 } from "recharts";
-import { PENSION_SERIES, SURVIVOR_FILL } from "@/components/pensionSeries";
+import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps } from "@/components/pensionSeries";
 
 // Custom Tooltip component for Recharts ComposedChart
 const CustomTooltip = ({ active, payload, label, notes, colors }: any) => {
@@ -147,6 +147,7 @@ export default function DashboardPage() {
 
   // Tab Selection for withdrawal simulator
   const [selectedTab, setActiveTab] = useState<ScenarioTab | null>(null); // 고르기 전에는 추천(Best) 전략
+  const [scenarioHighlight, setScenarioHighlight] = useState<string | null>(null); // 인출전략 그래프 범례로 고른 계열
 
   // S3 Custom sliders state
   const [s3StartAges, setS3StartAges] = useState<{ [id: string]: number }>({});
@@ -366,6 +367,9 @@ export default function DashboardPage() {
     scenarioChartData.some((d) => d[s.key] > 0)
   );
   const scenarioColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
+  // 탭을 바꿔 고른 계열이 없어지면 강조를 풀어 둔다
+  const activeHighlight =
+    scenarioHighlight && (scenarioHighlight === "totalPostTax" || scenarioSeries.some((s) => s.key === scenarioHighlight)) ? scenarioHighlight : null;
   // 툴팁의 (납부총액/지급총액): 지급은 그래프 기간 세전 수령 합계
   const scenarioPaid: Record<string, number | null> = {
     본인국민연금: selfPaid.national,
@@ -707,7 +711,7 @@ export default function DashboardPage() {
                 <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                   {strategies.find(s => s.strategyId === activeTab)?.strategyName} — 연령별 인출흐름 & 자산변화
                 </p>
-                <div style={{ height: 250, width: "100%" }}>
+                <div style={{ height: 250, width: "100%" }} onClick={() => setScenarioHighlight(null)}>
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={scenarioChartData} margin={{ top: 22, right: 10, left: 15, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(99, 102, 241, 0.1)" />
@@ -722,6 +726,11 @@ export default function DashboardPage() {
                           <DefaultLegendContent
                             {...props}
                             payload={props.payload?.map((item) => ({ ...item, color: scenarioColors[String(item.value)] ?? item.color }))}
+                            onClick={(item, _i, e) => {
+                              e.stopPropagation();
+                              const k = String(item.dataKey);
+                              setScenarioHighlight((h) => (h === k ? null : k));
+                            }}
                           />
                         )}
                       />
@@ -734,11 +743,20 @@ export default function DashboardPage() {
                           stackId="1"
                           stroke={s.color}
                           fill={s.fill ?? s.color}
-                          fillOpacity={s.fill ? 0.55 : 0.5}
+                          {...emphasisProps(activeHighlight, s.key, s.fill ? 0.55 : 0.5)}
                           isAnimationActive={false}
                         />
                       ))}
-                      <Line type="monotone" dataKey="totalPostTax" name="실질 세후 수령액" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
+                      <Line
+                        type="monotone"
+                        dataKey="totalPostTax"
+                        name="실질 세후 수령액"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        strokeOpacity={activeHighlight && activeHighlight !== "totalPostTax" ? 0.2 : 1}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
                       {firstDeath && firstDeathAge !== undefined && (
                         <ReferenceLine
                           x={firstDeathAge}

@@ -324,12 +324,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "16px",
+    padding: "8px", // 모바일에서도 화면 폭을 거의 다 쓰게
     zIndex: 1000,
   },
   panel: {
-    width: "min(620px, 100%)",
-    height: "min(720px, 90vh)",
+    width: "min(1200px, 100%)", // PC에서는 넓게, 모바일은 화면 전체 폭
+    height: "min(860px, 94vh)",
     display: "flex",
     flexDirection: "column",
     gap: "10px",

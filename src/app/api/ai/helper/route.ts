@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI, type Content, type Tool } from "@google/generative-ai";
 
-const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
-const genAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
-
 const MODEL = "gemini-3.8-flash"; // 서비스의 다른 AI 기능과 같은 모델
 const MAX_CONTEXT = 12000; // 화면 내용은 앞부분만 (토큰 절약)
 const MAX_QUESTION = 1000;
@@ -20,19 +17,36 @@ interface HelperMessage {
   text: string;
 }
 
+const KEY_ERROR = "Gemini API 키 인증에 실패했습니다. Google AI Studio에서 발급한 키가 맞는지 확인해 주세요.";
+const isKeyError = (err: unknown) => /api[_ ]?key|API_KEY_INVALID|permission|403|401/i.test(String(err));
+
 // 화면 내용과 질문을 받아 검색·추론으로 답한다. 검색 도구가 실패하면 검색 없이 한 번 더 시도
+// 사용자 본인의 Gemini API 키(x-gemini-key 헤더)로만 호출한다. 키는 저장하거나 로그에 남기지 않는다
 export async function POST(request: Request) {
-  const { question, pageName, pageContext, history } = (await request.json().catch(() => ({}))) as {
+  const userKey = request.headers.get("x-gemini-key")?.trim();
+  if (!userKey) {
+    return NextResponse.json({ error: "AI 도우미를 쓰려면 본인의 Gemini API 키를 먼저 인증해 주세요." }, { status: 401 });
+  }
+  const genAI = new GoogleGenerativeAI(userKey);
+  const { question, pageName, pageContext, history, verify } = (await request.json().catch(() => ({}))) as {
     question?: string;
     pageName?: string;
     pageContext?: string;
     history?: HelperMessage[];
+    verify?: boolean;
   };
+
+  // 키 인증: 아주 짧은 요청이 통과하면 유효한 키
+  if (verify) {
+    try {
+      await genAI.getGenerativeModel({ model: MODEL }).generateContent("ping");
+      return NextResponse.json({ ok: true });
+    } catch {
+      return NextResponse.json({ error: KEY_ERROR }, { status: 401 });
+    }
+  }
   if (!question || !question.trim()) {
     return NextResponse.json({ error: "질문을 입력해 주세요." }, { status: 400 });
-  }
-  if (!genAI) {
-    return NextResponse.json({ error: "GEMINI_API_KEY 환경변수가 설정되지 않았습니다." }, { status: 500 });
   }
 
   const contents: Content[] = [
@@ -72,11 +86,13 @@ export async function POST(request: Request) {
   try {
     return NextResponse.json(await ask(true));
   } catch (err) {
-    console.warn("AI 도우미 검색 응답 실패, 검색 없이 다시 시도:", err);
+    if (isKeyError(err)) return NextResponse.json({ error: KEY_ERROR }, { status: 401 });
+    console.warn("AI 도우미 검색 응답 실패, 검색 없이 다시 시도");
     try {
       return NextResponse.json(await ask(false));
     } catch (err2) {
-      console.error("AI 도우미 오류:", err2);
+      if (isKeyError(err2)) return NextResponse.json({ error: KEY_ERROR }, { status: 401 });
+      console.error("AI 도우미 오류");
       return NextResponse.json({ error: "답변을 만드는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
     }
   }

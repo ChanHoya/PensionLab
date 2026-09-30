@@ -17,7 +17,7 @@ import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/
 import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
 import type { PaidTotals } from "@/services/paidTotals";
-import { PENSION_SERIES, SURVIVOR_FILL } from "@/components/pensionSeries";
+import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps } from "@/components/pensionSeries";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -59,6 +59,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   const cardRef = useRef<HTMLDivElement>(null);
   const [pdfBusy, setPdfBusy] = useState(false);
   const [tableOpen, setTableOpen] = useState(true); // 연도별 요약 표 접기
+  const [highlight, setHighlight] = useState<string | null>(null); // 범례로 고른 계열 (그래프 다른 곳을 누르면 해제)
   const handlePdf = async () => {
     if (!cardRef.current) return;
     setPdfBusy(true);
@@ -271,7 +272,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       )}
 
-      <div style={{ width: "100%", height: 350 }}>
+      <div style={{ width: "100%", height: 350 }} onClick={() => setHighlight(null)}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 24, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -286,6 +287,11 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                 <DefaultLegendContent
                   {...props}
                   payload={props.payload?.map((item) => ({ ...item, color: legendColors[String(item.value)] ?? item.color }))}
+                  onClick={(item, _i, e) => {
+                    e.stopPropagation();
+                    const k = String(item.dataKey);
+                    setHighlight((h) => (h === k ? null : k));
+                  }}
                 />
               )}
             />
@@ -298,7 +304,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                 stackId="1"
                 stroke={s.color}
                 fill={s.fill ?? s.color}
-                fillOpacity={s.fill ? 0.55 : 0.5}
+                {...emphasisProps(highlight, s.key, s.fill ? 0.55 : 0.5)}
               />
             ))}
             {firstDeath && (

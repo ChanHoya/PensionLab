@@ -14,3 +14,11 @@ export const PENSION_SERIES: { key: string; color: string; fill?: string }[] = [
   { key: "본인 개인연금", color: "#0284c7" },
   { key: "배우자 개인연금", color: "#38bdf8" },
 ];
+
+// 범례 클릭 강조: 고른 계열만 깜빡이고(area-blink) 나머지는 흐리게. highlight가 없으면 원래 투명도
+export function emphasisProps(highlight: string | null, key: string, fillOpacity: number) {
+  if (!highlight) return { fillOpacity, strokeOpacity: 1 };
+  return key === highlight
+    ? { fillOpacity, strokeOpacity: 1, className: "area-blink" }
+    : { fillOpacity: 0.06, strokeOpacity: 0.2 };
+}

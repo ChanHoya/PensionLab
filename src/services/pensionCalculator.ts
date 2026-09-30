@@ -115,7 +115,10 @@ export function runPensionSimulation(
   // 3. Project Retirement Pension (2층)
   let retirementLumpSum = 0;
   retirement.forEach((r) => {
-    if (r.pensionType === "DB") {
+    if (r.pensionType === "DB" && (r.expectedLumpSum || 0) > 0) {
+      // 통합연금포털의 퇴직 시 예상 적립금을 그대로 쓴다
+      retirementLumpSum += r.expectedLumpSum || 0;
+    } else if (r.pensionType === "DB") {
       const avgSalary = r.avgSalary || 0;
       const serviceYears = (r.yearsOfService || 0) + yearsToRetire;
       const growthRate = r.salaryGrowthRate || 0;

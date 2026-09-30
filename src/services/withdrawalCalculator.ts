@@ -33,6 +33,7 @@ export interface PensionAccountModel {
   avgSalary?: number;
   yearsOfService?: number;
   salaryGrowthRate?: number;
+  expectedLumpSum?: number; // DB: 퇴직 시 예상 적립금 (만원)
   monthlyContribution?: number;
   companyMatchRate?: number;
   monthlyAnnualContribution?: number;
@@ -543,8 +544,9 @@ export function runWithdrawalSimulation(
         receivingPeriod = customInputs.s3CustomPeriods?.[p.id] || 10;
       }
 
-      // 초기 적립금 (현재 시점 금액)
-      const currentBalance = (p.totalAccumulated || 0) * 10000;
+      // 초기 적립금 (현재 시점 금액). DB형에 예상 적립금이 있으면 그 금액 (이미 은퇴했어도 잔고가 비지 않게)
+      const dbLumpSum = p.pensionType === "DB" ? (p.expectedLumpSum || 0) * 10000 : 0;
+      const currentBalance = dbLumpSum > 0 ? dbLumpSum : (p.totalAccumulated || 0) * 10000;
 
       accounts.push({
         id: p.id,
@@ -561,6 +563,7 @@ export function runWithdrawalSimulation(
         avgSalary: p.avgSalary,
         yearsOfService: p.yearsOfService,
         salaryGrowthRate: p.salaryGrowthRate,
+        expectedLumpSum: p.expectedLumpSum,
         monthlyContribution: p.monthlyContribution,
         companyMatchRate: p.companyMatchRate
       });
@@ -985,7 +988,11 @@ export function runWithdrawalSimulation(
         if (age < acc.payoutStartAge) {
           if (acc.pensionType === "DB") {
             // DB형 퇴직연금: 은퇴 전까지는 급여인상률 반영된 퇴직금 적립
-            if (age < simulationParams.retirementAge) {
+            if (age < simulationParams.retirementAge && (acc.expectedLumpSum || 0) > 0) {
+              // 통합연금포털의 퇴직 시 예상 적립금: 은퇴 전에는 그 금액을 그대로 둔다
+              acc.balance = Math.round((acc.expectedLumpSum || 0) * 10000);
+              acc.sources = [{ taxType: "DEFERRED_RETIREMENT", amount: acc.balance }];
+            } else if (age < simulationParams.retirementAge) {
               const yearsToRetireOffset = age - currentAge + 1; // 1년 경과 반영
               const avgSalary = (acc.avgSalary || 0) * 10000;
               const serviceYears = (acc.yearsOfService || 0) + yearsToRetireOffset;

@@ -59,6 +59,7 @@ const STEPS: StepDef[] = [
 const EMPTY_RETIREMENT = {
   pensionType: "DC" as "DB" | "DC" | "IRP",
   avgSalary: 0,
+  expectedLumpSum: 0,
   yearsOfService: 0,
   salaryGrowthRate: 0,
   totalAccumulated: 0,
@@ -72,6 +73,7 @@ const EMPTY_INSURANCE = { insuranceType: "일반연금보험", totalAccumulated:
 // 입력결과 목록에서 계약별로 고칠 수 있는 숫자 칸
 const RETIREMENT_EDIT_FIELDS = {
   DB: [
+    { key: "expectedLumpSum", label: "퇴직 시 예상 적립금 (만원)" },
     { key: "yearsOfService", label: "근속 (년)" },
     { key: "avgSalary", label: "평균급여 (만원)" },
     { key: "salaryGrowthRate", label: "임금상승률 (%)" },
@@ -234,6 +236,7 @@ export default function OnboardingPage() {
         store.addRetirementPension({
           pensionType: p.pensionType || "DC",
           avgSalary: p.avgSalary || 0,
+          expectedLumpSum: p.expectedLumpSum || undefined,
           yearsOfService: p.yearsOfService || 0,
           salaryGrowthRate: p.salaryGrowthRate || 3.0,
           totalAccumulated: p.totalAccumulated || 0,
@@ -1464,6 +1467,17 @@ export default function OnboardingPage() {
 
                       {tempRetirement.pensionType === "DB" ? (
                         <div style={styles.fieldGrid}>
+                          <div style={styles.fieldRow}>
+                            <label style={styles.label}>
+                              퇴직 시 예상 적립금 (만원) <span style={styles.labelHint}>통합연금포털 「예상 적립금」, 넣으면 아래 평균급여 계산 대신 사용</span>
+                            </label>
+                            <input
+                              type="number"
+                              className="premium-input"
+                              value={tempRetirement.expectedLumpSum || ""}
+                              onChange={(e) => setTempRetirement({ ...tempRetirement, expectedLumpSum: Number(e.target.value) })}
+                            />
+                          </div>
                           <div style={styles.fieldRow}>
                             <label style={styles.label}>평균월급 (만원)</label>
                             <input

@@ -49,7 +49,9 @@ function retirementCards(p: PersonData): Card[] {
     sub: nameOf(r.provider, r.productName),
     lines:
       r.pensionType === "DB"
-        ? [`근속 ${fmt(r.yearsOfService)}년`, `평균급여 ${fmt(r.avgSalary)}만원`]
+        ? (r.expectedLumpSum || 0) > 0
+          ? [`퇴직 시 예상 적립금 ${fmt(r.expectedLumpSum)}만원`]
+          : [`근속 ${fmt(r.yearsOfService)}년`, `평균급여 ${fmt(r.avgSalary)}만원`]
         : [`적립금 ${fmt(r.totalAccumulated)}만원`, `월 납입 ${fmt(r.monthlyContribution)}만원 · 수익률 ${r.expectedReturnRate ?? 0}%`],
   }));
 }

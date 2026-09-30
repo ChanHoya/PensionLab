@@ -526,7 +526,7 @@ export default function AIAdvisorPage() {
           <p style={styles.pageSubtitle}>
             자산관리 탭의 수치 시뮬레이션을 넘어, AI가 3층 연금 구조·전체 보유 자산·소득 공백기를 종합 평가하고 <strong>투자 리밸런싱·세제 최적화·인출 전략</strong>에 대한 맞춤 처방전을 제공합니다.
           </p>
-          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "-4px" }}>AI 모델: Google Gemini 3.5 Flash</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "-4px" }}>AI 모델: Google Gemini 3.8 Flash</span>
           {nationalForSim !== store.nationalPension && (
             <div style={{
               display: "inline-flex",
@@ -1009,7 +1009,7 @@ export default function AIAdvisorPage() {
                       <div>
                         <h3 style={styles.prescriptionTitle}>AI 연금 종합 진단 처방전</h3>
                         <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "4px" }}>
-                          3층 연금 구조 및 전체 보유 자산을 기초로 한 AI 모델 시뮬레이션 제안서입니다. (AI 모델: Google Gemini 3.5 Flash)
+                          3층 연금 구조 및 전체 보유 자산을 기초로 한 AI 모델 시뮬레이션 제안서입니다. (AI 모델: Google Gemini 3.8 Flash)
                         </p>
                       </div>
                     </div>

@@ -247,4 +247,10 @@ assert.ok(privAt(start63, 2029) > 0);
 // 늦게 시작해도 적립금을 버리지 않는다: 시작 연도 가치(연 3%)로 모은 적립금이 기본 시작보다 크다
 assert.ok(start63.smoothing!.pot > sm.smoothing!.pot);
 
+// DB형 퇴직 시 예상 적립금: 입력하면 평균급여 계산 대신 그 금액 (60세 은퇴라 평균급여 500 × 근속 40년 = 20,000과 같아야)
+const dbFormula = runCoupleSimulation({ ...husband, retirementPensions: [{ id: "db", pensionType: "DB", avgSalary: 500, yearsOfService: 40, salaryGrowthRate: 0 }] }, wife, params, { ...basic, applyToSimulation: false }, 2026);
+const dbLump = runCoupleSimulation({ ...husband, retirementPensions: [{ id: "db", pensionType: "DB", avgSalary: 0, yearsOfService: 0, expectedLumpSum: 20000 }] }, wife, params, { ...basic, applyToSimulation: false }, 2026);
+near(dbLump.smoothing!.pot, dbFormula.smoothing!.pot, 1);
+assert.ok(dbLump.smoothing!.pot > 0);
+
 console.log("Couple simulation validation success!");

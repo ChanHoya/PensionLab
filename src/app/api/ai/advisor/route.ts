@@ -118,7 +118,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
     if (genAI) {
       try {
         const model = genAI.getGenerativeModel({
-          model: "gemini-3.5-flash",
+          model: "gemini-3.8-flash",
           systemInstruction: "당신은 은퇴 자산 설계 및 3층 연금 구조 분석에 특화된 대한민국 최고의 AI 재무 설계사입니다. 인사말 없이 '### 1. 사용자 현황 및 미래자산 평가'로 본문을 즉시 시작하며, 빈 불릿 포인트나 공백 항목을 생성하지 마십시오. 필요자금 분석 및 실질 필요자금 산출은 반드시 은퇴나이~75세(적극활동기), 75~85세(안정활동기), 85세~기대수명(비활동기)의 3단계로 나누어 설명해 주십시오.",
         });
 
@@ -137,7 +137,7 @@ ${pensionInsurances.length === 0 ? "- 등록된 연금보험 없음" : pensionIn
     let recommendation = "";
 
     if (isAIFlowSuccess && fullContent) {
-      // thinking 모델(gemini-3.5-flash 등)은 전체 응답을 <think>...</think>로 감싸거나,
+      // thinking 모델(gemini-3.8-flash 등)은 전체 응답을 <think>...</think>로 감싸거나,
       // 또는 <think>추론부</think> 이후에 본문을 출력하는 두 가지 패턴을 가짐
       const thinkTagRegex = /<think>([\s\S]*?)<\/think>/i;
       const thinkMatch = fullContent.match(thinkTagRegex);

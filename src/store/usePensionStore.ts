@@ -38,6 +38,7 @@ export interface RetirementPensionState {
   avgSalary?: number; // DB
   yearsOfService?: number; // DB
   salaryGrowthRate?: number; // DB (%)
+  expectedLumpSum?: number; // DB: 퇴직 시 예상 적립금 (만원, 통합연금포털 값). 있으면 평균급여 계산 대신 사용
   totalAccumulated?: number; // DC/IRP
   monthlyContribution?: number; // DC/IRP
   companyMatchRate?: number; // DC/IRP

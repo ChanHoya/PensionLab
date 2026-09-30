@@ -4,7 +4,7 @@ import { GoogleGenerativeAI, type Content, type Tool } from "@google/generative-
 const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
 const genAI = geminiApiKey ? new GoogleGenerativeAI(geminiApiKey) : null;
 
-const MODEL = "gemini-3.5-flash"; // 서비스의 다른 AI 기능과 같은 모델
+const MODEL = "gemini-3.8-flash"; // 서비스의 다른 AI 기능과 같은 모델
 const MAX_CONTEXT = 12000; // 화면 내용은 앞부분만 (토큰 절약)
 const MAX_QUESTION = 1000;
 

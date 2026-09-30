@@ -11,12 +11,13 @@ export interface PaidTotals {
 
 // 국민연금: 예상 납부보험료 총액(없으면 지금까지 납부한 금액)
 // 퇴직 DC/IRP·연금저축·연금보험: 현재 적립금 + 은퇴(연금저축은 개시 나이)까지 낼 납입액 — 운용수익은 빼고 원금 기준
-// DB형: 근로자 납입이 없어 퇴직 시 예상 퇴직금(최종 평균임금 × 근속연수)을 적립액으로 본다
+// DB형: 근로자 납입이 없어 퇴직 시 예상 적립금(입력값, 없으면 최종 평균임금 × 근속연수)을 적립액으로 본다
 // params는 그 사람 기준 (배우자는 personParams(params, "SPOUSE"))
 export function paidTotalsOf(p: PersonPensions, params: SimulationParamsState): PaidTotals {
   const yearsToRetire = Math.max(0, params.retirementAge - params.currentAge);
 
   const retirement = p.retirementPensions.reduce((sum, r) => {
+    if (r.pensionType === "DB" && (r.expectedLumpSum || 0) > 0) return sum + (r.expectedLumpSum || 0);
     if (r.pensionType === "DB") {
       const finalSalary = (r.avgSalary || 0) * Math.pow(1 + (r.salaryGrowthRate || 0) / 100, yearsToRetire);
       return sum + finalSalary * ((r.yearsOfService || 0) + yearsToRetire);

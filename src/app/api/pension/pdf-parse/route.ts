@@ -56,6 +56,7 @@ ${pdfText}
       "provider": string or null, // 금융회사명 (예: ○○은행, ○○생명)
       "productName": string or null, // 상품명
       "avgSalary": number or null, // DB형일 때 평균급여 (만원 단위)
+      "expectedLumpSum": number or null, // DB형일 때 퇴직 시 예상 적립금 (만원 단위, 통합연금포털 "예상 적립금") — DB형은 DC형으로 바꾸지 말고 이 값에 담는다
       "yearsOfService": number or null, // DB형일 때 현재 근속연수 (년 단위)
       "salaryGrowthRate": number or null, // DB형일 때 임금상승률 (%, 기본값 3.0)
       "totalAccumulated": number or null, // DC/IRP형일 때 누적적립금 (만원 단위)
@@ -93,7 +94,7 @@ ${pdfText}
 `;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-3.5-flash",
+      model: "gemini-3.8-flash",
       generationConfig: {
         responseMimeType: "application/json",
       },

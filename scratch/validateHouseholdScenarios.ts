@@ -101,4 +101,11 @@ const div2 = runHouseholdScenarios(husband, wife, { ...params, isCoupleDivided: 
 near(div1.dividendPreTax, 1000);
 near(div2.dividendPreTax, 2000); // 2031: 남편 65세·아내 60세 모두 은퇴 후
 
+// DB형 예상 적립금만 입력(평균급여 없음), 이미 은퇴(60세) → S1에서 그 금액을 실제로 인출
+const dbOnly: PersonPensions = { ...husband, retirementPensions: [{ id: "db", pensionType: "DB", expectedLumpSum: 10000 }] };
+const dbSim = runCoupleSimulation(dbOnly, wife, params, basic, 2026);
+const dbHh = runHouseholdScenarios(dbOnly, wife, params, basic, dbSim, inputs, 2026);
+const dbDrawn = dbHh.s1.flows.reduce((a, f) => a + (f.parts?.self?.retirement ?? 0), 0);
+assert.ok(dbDrawn >= 10000, `S1 DB 인출 합 ${dbDrawn}`);
+
 console.log("Household scenarios validation success!");

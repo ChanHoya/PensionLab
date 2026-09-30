@@ -7,6 +7,7 @@ interface Message {
   role: "user" | "assistant";
   text: string;
   sources?: { title: string; uri: string }[];
+  model?: string;
 }
 
 interface Props {
@@ -17,72 +18,50 @@ interface Props {
   buttonStyle?: React.CSSProperties;
 }
 
-const KEY_STORAGE = "pensionlab_gemini_key"; // 사용자 본인의 Gemini API 키 (이 브라우저에만 저장)
+type Provider = "gemini" | "openai" | "anthropic";
+interface Credential {
+  provider: Provider;
+  key: string;
+}
 
-const readKey = () => {
+const PROVIDERS: Record<Provider, { label: string; model: string; keyUrl: string; placeholder: string }> = {
+  gemini: { label: "Gemini", model: "Gemini 3.8 Flash", keyUrl: "https://aistudio.google.com/apikey", placeholder: "AIza... 로 시작하는 키" },
+  openai: { label: "ChatGPT", model: "GPT-5.6", keyUrl: "https://platform.openai.com/api-keys", placeholder: "sk-... 로 시작하는 키" },
+  anthropic: { label: "Claude", model: "Claude Opus 5.5", keyUrl: "https://platform.claude.com/settings/keys", placeholder: "sk-ant-... 로 시작하는 키" },
+};
+const FREE_LABEL = "Gemini 3.5 Flash-Lite";
+
+const KEY_STORAGE = "pensionlab_ai_key"; // 본인 API 키 {provider, key} (이 브라우저에만 저장)
+const LEGACY_KEY = "pensionlab_gemini_key"; // 예전 버전의 Gemini 키
+
+const readCredential = (): Credential | null => {
   try {
-    return localStorage.getItem(KEY_STORAGE) || "";
+    const saved = localStorage.getItem(KEY_STORAGE);
+    if (saved) {
+      const c = JSON.parse(saved) as Credential;
+      if (c.key && c.provider in PROVIDERS) return c;
+    }
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    return legacy ? { provider: "gemini", key: legacy } : null;
   } catch {
-    return "";
+    return null;
   }
 };
 
 // 상단 메뉴의 AI 도우미 버튼 + 팝업. 질문 시점의 화면 글자를 함께 보내 화면 내용·검색·추론으로 답을 받는다
-// 본인의 Gemini API 키가 있어야 쓸 수 있다: 처음 열면 키를 입력·인증받아 이 브라우저에 저장하고 이후 계속 사용
+// 기본은 서비스의 무료 모델, 더 좋은 답을 원하면 본인 API 키(Gemini·ChatGPT·Claude)를 등록해 이 브라우저에 저장하고 계속 사용
 export default function AiHelper({ pageName, contextSelector = "main", examples = [], buttonClassName, buttonStyle }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState("");
+  const [cred, setCred] = useState<Credential | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [draftProvider, setDraftProvider] = useState<Provider>("gemini");
   const [keyInput, setKeyInput] = useState("");
   const [keyChecking, setKeyChecking] = useState(false);
   const [keyError, setKeyError] = useState("");
-  const [editingKey, setEditingKey] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-
-  const openHelper = () => {
-    setApiKey(readKey());
-    setOpen(true);
-  };
-
-  const verifyKey = async () => {
-    const key = keyInput.trim();
-    if (!key || keyChecking) return;
-    setKeyChecking(true);
-    setKeyError("");
-    try {
-      const res = await fetch("/api/ai/helper", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-gemini-key": key },
-        body: JSON.stringify({ verify: true }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "API 키 인증에 실패했습니다.");
-      try {
-        localStorage.setItem(KEY_STORAGE, key);
-      } catch {
-        // 저장이 막힌 브라우저(사생활 보호 모드 등)에서는 이번 창에서만 사용
-      }
-      setApiKey(key);
-      setKeyInput("");
-      setEditingKey(false);
-    } catch (err) {
-      setKeyError(err instanceof Error ? err.message : "API 키 인증에 실패했습니다.");
-    } finally {
-      setKeyChecking(false);
-    }
-  };
-
-  const removeKey = () => {
-    try {
-      localStorage.removeItem(KEY_STORAGE);
-    } catch {
-      // 무시
-    }
-    setApiKey("");
-    setEditingKey(false);
-  };
 
   useEffect(() => {
     if (!open) return;
@@ -95,9 +74,62 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages, loading]);
 
+  const openHelper = () => {
+    setCred(readCredential());
+    setOpen(true);
+  };
+
+  const startEditing = () => {
+    setDraftProvider(cred?.provider ?? "gemini");
+    setKeyInput("");
+    setKeyError("");
+    setEditing(true);
+  };
+
+  const verifyKey = async () => {
+    const key = keyInput.trim();
+    if (!key || keyChecking) return;
+    setKeyChecking(true);
+    setKeyError("");
+    try {
+      const res = await fetch("/api/ai/helper", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-ai-provider": draftProvider, "x-ai-key": key },
+        body: JSON.stringify({ verify: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "API 키 인증에 실패했습니다.");
+      const next = { provider: draftProvider, key };
+      try {
+        localStorage.setItem(KEY_STORAGE, JSON.stringify(next));
+        localStorage.removeItem(LEGACY_KEY);
+      } catch {
+        // 저장이 막힌 브라우저(사생활 보호 모드 등)에서는 이번 창에서만 사용
+      }
+      setCred(next);
+      setEditing(false);
+      setKeyInput("");
+    } catch (err) {
+      setKeyError(err instanceof Error ? err.message : "API 키 인증에 실패했습니다.");
+    } finally {
+      setKeyChecking(false);
+    }
+  };
+
+  const removeKey = () => {
+    try {
+      localStorage.removeItem(KEY_STORAGE);
+      localStorage.removeItem(LEGACY_KEY);
+    } catch {
+      // 무시
+    }
+    setCred(null);
+    setEditing(false);
+  };
+
   const send = async (text: string) => {
     const question = text.trim();
-    if (!question || loading || !apiKey) return;
+    if (!question || loading) return;
     const history = messages.map(({ role, text: t }) => ({ role, text: t }));
     setMessages((prev) => [...prev, { role: "user", text: question }]);
     setInput("");
@@ -106,12 +138,17 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
       const pageContext = (document.querySelector(contextSelector) as HTMLElement | null)?.innerText ?? "";
       const res = await fetch("/api/ai/helper", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-gemini-key": apiKey },
+        headers: {
+          "Content-Type": "application/json",
+          ...(cred ? { "x-ai-provider": cred.provider, "x-ai-key": cred.key } : {}),
+        },
         body: JSON.stringify({ question, pageName, pageContext, history }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "답변을 받지 못했습니다.");
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer, sources: data.sources }]);
+      // 마크다운 굵게(**)는 화면에서 그대로 보이므로 지운다
+      const answer = String(data.answer ?? "").replace(/\*\*/g, "");
+      setMessages((prev) => [...prev, { role: "assistant", text: answer, sources: data.sources, model: data.model }]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -122,6 +159,7 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
     }
   };
 
+  const draft = PROVIDERS[draftProvider];
   const panel = (
     <div style={styles.overlay} onClick={() => setOpen(false)}>
       <div style={styles.panel} role="dialog" aria-modal="true" aria-label="AI 도우미" onClick={(e) => e.stopPropagation()}>
@@ -131,15 +169,31 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
             ✕
           </button>
         </div>
-        {!apiKey || editingKey ? (
+
+        {editing ? (
           <div style={styles.keyBox}>
-            <strong style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>🔑 Gemini API 키 입력</strong>
+            <strong style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>🔑 내 API 키 등록 (더 좋은 답변)</strong>
+            <div style={styles.providerTabs}>
+              {(Object.keys(PROVIDERS) as Provider[]).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    setDraftProvider(p);
+                    setKeyError("");
+                  }}
+                  style={{ ...styles.providerTab, ...(p === draftProvider ? styles.providerTabActive : null) }}
+                >
+                  {PROVIDERS[p].label}
+                </button>
+              ))}
+            </div>
             <p style={styles.notice}>
-              AI 도우미는 본인의 Google Gemini API 키로 동작합니다(사용 요금은 키 주인에게 청구). Google AI Studio{" "}
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={styles.sourceLink}>
-                aistudio.google.com/apikey
+              {draft.label} 키로 {draft.model} 모델이 답합니다(사용 요금은 키 주인에게 청구).{" "}
+              <a href={draft.keyUrl} target="_blank" rel="noopener noreferrer" style={styles.sourceLink}>
+                {draft.keyUrl.replace("https://", "")}
               </a>
-              에서 발급받아 넣어 주세요. 인증되면 이 브라우저에만 저장되고, 질문할 때만 구글로 전달되며 서버에는 저장하지 않습니다.
+              에서 발급받아 넣어 주세요. 인증되면 이 브라우저에만 저장되고, 질문할 때만 해당 회사로 전달되며 서버에는 저장하지 않습니다.
             </p>
             <form
               style={styles.form}
@@ -152,7 +206,7 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
                 type="password"
                 className="premium-input"
                 style={{ flex: 1, fontSize: "0.85rem" }}
-                placeholder="AIza... 로 시작하는 API 키"
+                placeholder={draft.placeholder}
                 autoComplete="off"
                 value={keyInput}
                 onChange={(e) => setKeyInput(e.target.value)}
@@ -160,34 +214,42 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
               <button type="submit" className="premium-button" disabled={keyChecking || !keyInput.trim()} style={{ padding: "8px 16px" }}>
                 {keyChecking ? "확인 중..." : "인증"}
               </button>
-              {editingKey && (
-                <button type="button" className="premium-button-secondary" onClick={() => setEditingKey(false)} style={{ padding: "8px 12px" }}>
-                  취소
-                </button>
-              )}
+              <button type="button" className="premium-button-secondary" onClick={() => setEditing(false)} style={{ padding: "8px 12px" }}>
+                취소
+              </button>
             </form>
             {keyError && <span style={{ fontSize: "0.8rem", color: "var(--danger)" }}>⚠️ {keyError}</span>}
           </div>
         ) : (
           <div style={styles.keyLine}>
-            <span>🔑 API 키 인증됨 (이 브라우저에 저장)</span>
+            {cred ? (
+              <span>
+                🔑 내 {PROVIDERS[cred.provider].label} 키 사용 중 ({PROVIDERS[cred.provider].model})
+              </span>
+            ) : (
+              <span>🆓 무료 기본 모델 사용 중 ({FREE_LABEL})</span>
+            )}
             <span style={{ display: "flex", gap: "8px" }}>
-              <button type="button" onClick={() => setEditingKey(true)} style={styles.linkBtn}>
-                변경
+              <button type="button" onClick={startEditing} style={styles.linkBtn}>
+                {cred ? "변경" : "더 좋은 답변: 내 API 키 등록"}
               </button>
-              <button type="button" onClick={removeKey} style={styles.linkBtn}>
-                삭제
-              </button>
+              {cred && (
+                <button type="button" onClick={removeKey} style={styles.linkBtn}>
+                  삭제(무료 모델로)
+                </button>
+              )}
             </span>
           </div>
         )}
         <p style={styles.notice}>
           지금 화면의 내용을 바탕으로, 필요하면 웹 검색까지 더해 답합니다. 질문과 현재 화면 내용이 AI 답변을 위해 전송되며, 대화는 저장되지
-          않습니다. 답변은 참고용이니 중요한 결정은 국민연금공단(☎1355) 등에서 확인하세요.
+          않습니다.
+          {!cred && " 무료 기본 모델은 구글 무료 등급이라 보낸 내용이 구글 서비스 개선에 쓰일 수 있고, 사용량이 몰리면 잠시 답하지 못할 수 있습니다."}{" "}
+          답변은 참고용이니 중요한 결정은 국민연금공단(☎1355) 등에서 확인하세요.
         </p>
 
         <div ref={listRef} style={styles.list}>
-          {apiKey && messages.length === 0 && examples.length > 0 && (
+          {messages.length === 0 && examples.length > 0 && (
             <div style={styles.examples}>
               {examples.map((q) => (
                 <button key={q} type="button" onClick={() => send(q)} style={styles.example}>
@@ -209,6 +271,7 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
                   ))}
                 </div>
               )}
+              {m.model && <div style={styles.modelTag}>답변 모델: {m.model}</div>}
             </div>
           ))}
           {loading && <div style={styles.botMsg}>화면 내용을 확인하고 답변을 작성하는 중입니다...</div>}
@@ -225,8 +288,7 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
             className="premium-input"
             style={styles.input}
             rows={2}
-            placeholder={apiKey ? "궁금한 점을 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)" : "먼저 위에서 API 키를 인증해 주세요"}
-            disabled={!apiKey}
+            placeholder="궁금한 점을 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -236,7 +298,7 @@ export default function AiHelper({ pageName, contextSelector = "main", examples 
               }
             }}
           />
-          <button type="submit" className="premium-button" disabled={loading || !input.trim() || !apiKey} style={{ padding: "8px 16px" }}>
+          <button type="submit" className="premium-button" disabled={loading || !input.trim()} style={{ padding: "8px 16px" }}>
             보내기
           </button>
         </form>
@@ -289,7 +351,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: "1px solid rgba(99, 102, 241, 0.35)",
     backgroundColor: "rgba(99, 102, 241, 0.06)",
   },
-  keyLine: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.78rem", color: "var(--text-muted)" },
+  providerTabs: { display: "flex", gap: "6px" },
+  providerTab: {
+    padding: "5px 14px",
+    borderRadius: "999px",
+    border: "1px solid var(--border)",
+    backgroundColor: "transparent",
+    color: "var(--text-secondary)",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  providerTabActive: { background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#ffffff", borderColor: "transparent" },
+  keyLine: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap", fontSize: "0.78rem", color: "var(--text-muted)" },
   linkBtn: { border: "none", background: "none", padding: 0, color: "var(--primary-light)", textDecoration: "underline", fontSize: "0.78rem", cursor: "pointer" },
   list: {
     flex: 1,
@@ -342,6 +416,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "var(--text-muted)",
   },
   sourceLink: { color: "var(--primary-light)", textDecoration: "underline", wordBreak: "break-all" },
+  modelTag: { marginTop: "6px", fontSize: "0.7rem", color: "var(--text-muted)" },
   form: { display: "flex", gap: "8px", alignItems: "flex-end" },
   input: { flex: 1, resize: "none", fontSize: "0.88rem" },
 };

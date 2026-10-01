@@ -1,0 +1,360 @@
+import type { DimensionKey, HouseholdReport, ReportInput } from "@/services/householdReport";
+import type { PersonData } from "@/store/usePensionStore";
+
+// AI 진단 리포트의 서술 부분: AI 응답 형식, AI가 실패했을 때 쓰는 계산 기반 기본 진단, AI에 보내는 계산 결과 요약
+
+export type Level = "높음" | "중간" | "낮음";
+export type Timing = "즉시" | "은퇴 전" | "은퇴 시점" | "연금 개시 후";
+export const LEVELS: Level[] = ["높음", "중간", "낮음"];
+export const TIMINGS: Timing[] = ["즉시", "은퇴 전", "은퇴 시점", "연금 개시 후"];
+
+export interface ReportNarrative {
+  headline: string; // 한 줄 결론
+  summary: string; // 종합 소견
+  dimensionComments: Record<DimensionKey, string>;
+  strengths: string[];
+  risks: { title: string; detail: string; impact: Level; likelihood: Level }[];
+  actions: { title: string; detail: string; timing: Timing; priority: Level; effect: string }[];
+  withdrawalOrder: { period: string; source: string; reason: string }[];
+  taxTips: string[];
+  allocation: { safe: number; income: number; growth: number; rationale: string }; // 연금 적립금·금융자산 배분 (%)
+}
+
+const DIMENSION_KEYS: DimensionKey[] = ["sufficiency", "stability", "tax", "diversification", "longevity"];
+
+export const won = (v: number) => (Math.abs(v) >= 10000 ? `${(v / 10000).toFixed(1)}억원` : `${Math.round(v).toLocaleString()}만원`);
+const pct = (x: number) => Math.round(x * 100);
+
+const deceasedLabel = (r: HouseholdReport) => (r.firstDeath?.who === "SPOUSE" ? "배우자" : "본인");
+const publicStartAge = (r: HouseholdReport) => r.params.retirementAge + r.crevasse.years;
+
+// ── AI에 보내는 계산 결과 요약 ─────────────────────────────────────────────
+
+function productLines(label: string, d: PersonData): string[] {
+  const n = d.nationalPension;
+  const name = (x: { provider?: string; productName?: string }) => [x.provider, x.productName].filter(Boolean).join(" ");
+  return [
+    `- ${label} 국민연금: 예상 월 ${n.expectedMonthlyPension.toLocaleString()}만원 (가입 ${n.contributionMonths}개월, 예상 총 ${n.expectedTotalContributionMonths}개월)`,
+    ...d.retirementPensions.map((p) =>
+      p.pensionType === "DB"
+        ? `- ${label} 퇴직연금 DB ${name(p)}: ${p.expectedLumpSum ? `예상 적립금 ${won(p.expectedLumpSum)}` : `평균임금 ${p.avgSalary ?? 0}만원 × 근속 ${p.yearsOfService ?? 0}년`}`
+        : `- ${label} 퇴직연금 ${p.pensionType} ${name(p)}: 적립금 ${won(p.totalAccumulated ?? 0)}, 월 납입 ${p.monthlyContribution ?? 0}만원, 기대수익률 ${p.expectedReturnRate ?? 0}%`
+    ),
+    ...d.personalPensions.map(
+      (p) =>
+        `- ${label} 연금저축(${p.savingsType === "FUND" ? "펀드" : "보험"}) ${name(p)}: 적립금 ${won(p.totalAccumulated)}, 월 납입 ${p.monthlyAnnualContribution}만원, ${p.desiredStartAge}세부터 ${p.receivingPeriod}년 수령`
+    ),
+    ...d.pensionInsurances.map(
+      (p) =>
+        `- ${label} 연금보험 ${name(p) || p.insuranceType}: 적립금 ${won(p.totalAccumulated)}, 월 ${p.monthlyPayment}만원 × ${p.paymentPeriod}년, 공시이율 ${p.expectedDeclaredRate}%`
+    ),
+  ];
+}
+
+export function reportFacts(r: HouseholdReport, input: ReportInput): string {
+  const p = r.params;
+  const lines: string[] = [];
+  const add = (...xs: (string | false | null | undefined)[]) => xs.forEach((x) => typeof x === "string" && lines.push(x));
+
+  add(
+    `[진단 대상] ${r.hasSpouse ? `부부 가구 (본인 ${p.currentAge}세, 배우자 ${p.spouseAge ?? p.currentAge}세)` : `1인 가구 (본인 ${p.currentAge}세)`}, 기준 연도 ${r.baseYear}년`,
+    `- 본인: 은퇴 ${p.retirementAge}세, 국민연금 개시 ${p.nationalPensionStartAge}세${p.nationalPensionDeferYears ? ` + ${p.nationalPensionDeferYears}년 연기` : ""}, 기대수명 ${p.expectedLifeExpectancy}세`,
+    r.hasSpouse &&
+      `- 배우자: 은퇴 ${p.spouseRetirementAge}세, 국민연금 개시 ${p.spouseNationalPensionStartAge}세${p.spouseNationalPensionDeferYears ? ` + ${p.spouseNationalPensionDeferYears}년 연기` : ""}, 기대수명 ${p.spouseLifeExpectancy}세`,
+    `- 목표 생활비 월 ${r.targetToday}만원, 최소 생활비 월 ${r.minToday}만원 (현재가치), 물가상승률 연 ${p.inflationRate}%`,
+    `- 사적연금은 ${p.privateDrawStartAge || p.currentAge + 1}세(본인 나이)부터 가구 소득 평탄화 방식으로 인출${p.decumulationStrategy === "DECREASING" ? " (매년 2% 체감)" : ""}`,
+    `- 비연금 금융자산 ${won(p.nonPensionAssets || 0)}, 재산세 과세표준 ${won(p.propertyTaxBase || 0)}, 금융소득 연 ${p.financialIncome || 0}만원`,
+    "",
+    "[보유 연금]",
+    ...productLines("본인", input.self),
+    ...(r.hasSpouse ? productLines("배우자", input.spouse) : []),
+    (r.nps.selfAdded || r.nps.selfRestored || r.nps.spouseAdded || r.nps.spouseRestored) > 0 &&
+      `- 국민연금 추납·반납 반영: 본인 추납 ${r.nps.selfAdded}개월·반납 ${r.nps.selfRestored}개월${r.hasSpouse ? `, 배우자 추납 ${r.nps.spouseAdded}개월·반납 ${r.nps.spouseRestored}개월` : ""}`,
+    "",
+    "[진단 지표 — 계산 엔진 결과, 월 금액은 현재가치]",
+    `- 종합 점수 ${r.total}점 (등급 ${r.grade.letter}, ${r.grade.label})`,
+    ...r.dimensions.map((d) => `- ${d.label} ${d.score}점 (가중치 ${d.weight}%): ${d.metric}`),
+    `- 은퇴 후 평균 가구 월 연금 ${r.avgRetiredReal}만원, 목표 생활비 대비 누적 부족액 ${won(r.shortfallPV)}`,
+    r.crevasse.years > 0
+      ? `- 소득 공백기: 은퇴 후 국민연금 개시 전 ${r.crevasse.years}년, 이 기간 평균 월 ${r.crevasse.avgReal}만원`
+      : "- 소득 공백기 없음 (은퇴 시점에 공적연금 수령 중)",
+    r.belowMinSpans.length > 0 &&
+      `- 최소 생활비 미달 구간: ${r.belowMinSpans.map((s) => `${s.fromYear}~${s.toYear}년(본인 ${s.fromAge}~${s.toAge}세)`).join(", ")}`,
+    r.firstDeath &&
+      `- ${deceasedLabel(r)} 기대수명 이후(${r.firstDeath.year}년~) 가구 월 연금 ${r.firstDeath.beforeReal}만원 → ${r.firstDeath.afterReal}만원`,
+    `- 마지막 5년 평균 가구 월 연금 ${r.lateReal}만원`,
+    `- 생애 수령액(명목): 공적연금 ${won(r.layers.public.self + r.layers.public.spouse)}, 퇴직연금 ${won(r.layers.retirement.self + r.layers.retirement.spouse)}, 개인연금 ${won(r.layers.private.self + r.layers.private.spouse)}`,
+    ...r.moneyFlow.map((m) => `- ${m.label}: 낸 돈(원금) ${won(m.paid)} → 받는 돈 ${won(m.received)}`),
+    "",
+    "[인출전략 비교 — 가구 생애 합계, 명목]",
+    ...r.scenarios.map(
+      (s) =>
+        `- ${s.id} ${s.name}: 세전 ${won(s.preTax)}, 세후 ${won(s.postTax)}, 세금·건보료 ${won(s.taxHI)} (부담률 ${(s.effectiveRate * 100).toFixed(1)}%)${s.lostDependencyAge ? `, ${s.lostDependencyAge}세 건보료 피부양자 탈락` : ""}`
+    ),
+    `- 생애 세후 수령액 최대: ${r.best.id} ${r.best.name}`,
+    "",
+    "[가구 월 연금 흐름 — 5년 간격, 현재가치 만원/월]"
+  );
+  const rows = r.couple.rows;
+  rows.forEach((row, t) => {
+    if (t % 5 !== 0 && t !== rows.length - 1) return;
+    const d = Math.pow(1 + r.inflation, t);
+    const v = (x: number) => Math.round(x / d);
+    const part = (who: string, y: typeof row.self | null) =>
+      y && y.alive ? `${who}(${y.age}세) 국민 ${v(y.national)}·기초 ${v(y.basic)}·퇴직 ${v(y.retirement)}·개인 ${v(y.personal + y.insurance)}` : "";
+    add(`- ${row.year}년: 가구 ${v(row.household)} = ${[part("본인", row.self), part("배우자", row.spouse)].filter(Boolean).join(" / ")}`);
+  });
+  return lines.join("\n");
+}
+
+// ── AI 응답 정리 ─────────────────────────────────────────────────────────
+
+const str = (x: unknown) => (typeof x === "string" ? x.replace(/\*\*/g, "").trim() : "");
+const strList = (x: unknown) => (Array.isArray(x) ? x.map(str).filter(Boolean) : []);
+const level = (x: unknown): Level => (LEVELS.includes(x as Level) ? (x as Level) : "중간");
+const timing = (x: unknown): Timing => (TIMINGS.includes(x as Timing) ? (x as Timing) : "즉시");
+const objects = (x: unknown) => (Array.isArray(x) ? (x.filter((i) => i && typeof i === "object") as Record<string, unknown>[]) : []);
+
+// AI가 돌려준 JSON을 화면 형식으로 다듬는다. 핵심 항목이 비면 null (기본 진단으로 대체)
+export function normalizeNarrative(raw: unknown): ReportNarrative | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const headline = str(o.headline);
+  const summary = str(o.summary);
+  if (!headline || !summary) return null;
+
+  const dc = (o.dimensionComments ?? {}) as Record<string, unknown>;
+  const a = (o.allocation ?? {}) as Record<string, unknown>;
+  const nums = [a.safe, a.income, a.growth].map((n) => Math.max(0, Number(n) || 0));
+  const sum = nums.reduce((s, n) => s + n, 0);
+  const [safe, income] = sum > 0 ? nums.map((n) => Math.round((n / sum) * 100)) : [50, 30];
+
+  return {
+    headline,
+    summary,
+    dimensionComments: Object.fromEntries(DIMENSION_KEYS.map((k) => [k, str(dc[k])])) as Record<DimensionKey, string>,
+    strengths: strList(o.strengths).slice(0, 5),
+    risks: objects(o.risks)
+      .map((x) => ({ title: str(x.title), detail: str(x.detail), impact: level(x.impact), likelihood: level(x.likelihood) }))
+      .filter((x) => x.title)
+      .slice(0, 8),
+    actions: objects(o.actions)
+      .map((x) => ({ title: str(x.title), detail: str(x.detail), timing: timing(x.timing), priority: level(x.priority), effect: str(x.effect) }))
+      .filter((x) => x.title)
+      .slice(0, 10),
+    withdrawalOrder: objects(o.withdrawalOrder)
+      .map((x) => ({ period: str(x.period), source: str(x.source), reason: str(x.reason) }))
+      .filter((x) => x.source)
+      .slice(0, 6),
+    taxTips: strList(o.taxTips).slice(0, 6),
+    allocation: { safe, income, growth: 100 - safe - income, rationale: str(a.rationale) },
+  };
+}
+
+// ── 계산 기반 기본 진단 (AI를 쓸 수 없을 때) ─────────────────────────────────
+
+export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
+  const p = r.params;
+  const who = r.hasSpouse ? "부부 가구" : "본인";
+  const ratio = r.avgRetiredReal / r.targetToday;
+  const gap = Math.round(Math.max(0, r.targetToday - r.avgRetiredReal));
+  const s0 = r.scenarios.find((s) => s.key === "s0") ?? r.best;
+  const fd = r.firstDeath;
+  const survivorRatio = fd && fd.beforeReal > 0 ? fd.afterReal / fd.beforeReal : null;
+  const pub = r.layers.public.self + r.layers.public.spouse;
+  const ret = r.layers.retirement.self + r.layers.retirement.spouse;
+  const pri = r.layers.private.self + r.layers.private.spouse;
+  const layerTotal = pub + ret + pri || 1;
+  const topLayer = [
+    { name: "공적연금", share: pub / layerTotal },
+    { name: "퇴직연금", share: ret / layerTotal },
+    { name: "개인연금", share: pri / layerTotal },
+  ].reduce((a, b) => (b.share > a.share ? b : a));
+  const diversification = r.dimensions.find((d) => d.key === "diversification");
+
+  const headline =
+    ratio >= 1
+      ? `${who}의 연금만으로 목표 생활비를 충당할 수 있는 구조입니다`
+      : r.avgRetiredReal >= r.minToday
+        ? `최소 생활비는 충당되지만 목표 생활비까지 월 ${gap}만원이 모자랍니다`
+        : "연금만으로는 최소 생활비에도 못 미쳐 추가 준비가 시급합니다";
+
+  const summary = [
+    `${who}의 은퇴 후 평균 월 연금은 현재가치 ${r.avgRetiredReal.toLocaleString()}만원으로 목표 생활비(${r.targetToday}만원)의 ${pct(ratio)}% 수준이며, 종합 진단 점수는 ${r.total}점(${r.grade.letter} · ${r.grade.label})입니다.`,
+    r.crevasse.years > 0
+      ? `은퇴 후 국민연금이 나오기 전 ${r.crevasse.years}년의 소득 공백기에는 월 ${r.crevasse.avgReal}만원을 받습니다.`
+      : "은퇴 시점부터 공적연금이 이어져 소득 공백기는 없습니다.",
+    fd && `${deceasedLabel(r)} 기대수명 이후 가구 월 연금은 ${fd.beforeReal}만원에서 ${fd.afterReal}만원으로 바뀝니다.`,
+    `인출전략 비교에서는 ${r.best.id}(${r.best.name})의 생애 세후 수령액이 ${won(r.best.postTax)}로 가장 많습니다.`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const dimensionComments: Record<DimensionKey, string> = {
+    sufficiency:
+      ratio >= 1
+        ? `목표 생활비의 ${pct(ratio)}%를 연금으로 충당해 기본 생활비 구조가 안정적입니다.`
+        : `목표 대비 평균 월 ${gap}만원이 모자라 은퇴 기간 누적 부족액이 현재가치 ${won(r.shortfallPV)}입니다.`,
+    stability:
+      r.belowMinSpans.length > 0
+        ? `본인 나이 ${r.belowMinSpans.map((s) => `${s.fromAge}~${s.toAge}세`).join(", ")} 구간에 가구 연금이 최소 생활비(${r.minToday}만원)에 못 미칩니다.`
+        : "은퇴 기간 내내 최소 생활비 이상의 연금 소득이 유지됩니다.",
+    tax: `${r.best.id} 기준 생애 세금·건보료는 ${won(r.best.taxHI)}(부담률 ${(r.best.effectiveRate * 100).toFixed(1)}%)입니다.${r.best.lostDependencyAge ? ` ${r.best.lostDependencyAge}세에 건보료 피부양자 자격을 잃을 수 있습니다.` : ""}`,
+    diversification:
+      topLayer.share > 0.7
+        ? `생애 수령액의 ${pct(topLayer.share)}%가 ${topLayer.name}에 몰려 있어 해당 제도·상품 변화에 민감합니다.`
+        : `${diversification?.metric ?? ""}로 3층이 비교적 고르게 나뉘어 있습니다.`,
+    longevity:
+      survivorRatio !== null
+        ? `${deceasedLabel(r)} 사망 후 가구 소득이 이전의 ${pct(survivorRatio)}%로 1인 가구 필요 소득(70%)${survivorRatio >= 0.7 ? "을 지킵니다" : "보다 낮아집니다"}. 마지막 5년 평균 월 연금은 ${r.lateReal}만원입니다.`
+        : `마지막 5년 평균 월 연금은 ${r.lateReal}만원으로 최소 생활비의 ${pct(r.lateReal / r.minToday)}%입니다.`,
+  };
+
+  const strengths = r.dimensions.filter((d) => d.score >= 80).map((d) => `${d.label}: ${d.metric}`);
+  if (strengths.length === 0) {
+    const top = r.dimensions.reduce((a, b) => (b.score > a.score ? b : a));
+    strengths.push(`${top.label}: ${top.metric}`);
+  }
+
+  const risks: ReportNarrative["risks"] = [];
+  if (ratio < 1)
+    risks.push({
+      title: "목표 생활비 부족",
+      detail: `은퇴 후 평균 월 ${gap}만원, 누적 ${won(r.shortfallPV)}(현재가치)이 모자랍니다.`,
+      impact: ratio < 0.7 ? "높음" : "중간",
+      likelihood: "높음",
+    });
+  if (r.crevasse.years > 0 && r.crevasse.avgReal < r.minToday)
+    risks.push({
+      title: "소득 공백기(크레바스)",
+      detail: `국민연금 개시 전 ${r.crevasse.years}년 동안 월 ${r.crevasse.avgReal}만원으로 최소 생활비에 못 미칩니다.`,
+      impact: "높음",
+      likelihood: "높음",
+    });
+  if (fd && survivorRatio !== null && survivorRatio < 0.7)
+    risks.push({
+      title: "사망 후 유족 소득 급감",
+      detail: `${deceasedLabel(r)} 사망 후 가구 월 연금이 ${fd.beforeReal}만원에서 ${fd.afterReal}만원으로 줄어듭니다.`,
+      impact: "높음",
+      likelihood: "중간",
+    });
+  if (r.best.lostDependencyAge)
+    risks.push({ title: "건보료 피부양자 탈락", detail: `${r.best.lostDependencyAge}세부터 지역가입자 건보료가 부과될 수 있습니다.`, impact: "중간", likelihood: "높음" });
+  if (topLayer.share > 0.7)
+    risks.push({ title: `${topLayer.name} 쏠림`, detail: `생애 수령액의 ${pct(topLayer.share)}%가 한 층에 몰려 있습니다.`, impact: "중간", likelihood: "중간" });
+  if (r.lateReal < r.minToday)
+    risks.push({
+      title: "장수 리스크",
+      detail: `말년(마지막 5년) 월 연금 ${r.lateReal}만원이 최소 생활비보다 적어 의료·간병비 대비가 부족합니다.`,
+      impact: "높음",
+      likelihood: "중간",
+    });
+  risks.push({
+    title: "물가·수익률 변동",
+    detail: `물가가 가정(연 ${p.inflationRate}%)보다 높거나 운용수익률이 낮으면 사적연금의 실질 가치가 줄어듭니다.`,
+    impact: "중간",
+    likelihood: "중간",
+  });
+
+  const actions: ReportNarrative["actions"] = [];
+  if (ratio < 1)
+    actions.push({
+      title: "연금저축·IRP 추가 납입",
+      detail: "연금저축 연 600만원을 포함해 IRP 합산 연 900만원까지 세액공제를 받으며 은퇴 전까지 사적연금 적립금을 늘립니다.",
+      timing: "즉시",
+      priority: "높음",
+      effect: `목표 대비 부족액 월 ${gap}만원 축소`,
+    });
+  if (!r.nps.selfAdded && !r.nps.selfRestored)
+    actions.push({
+      title: "국민연금 추납·반납 검토",
+      detail: "납부예외·반환일시금 기간이 있으면 추납·반납으로 가입기간을 늘려 종신 연금액을 높일 수 있습니다 (국민연금공단 ☎1355).",
+      timing: "즉시",
+      priority: "중간",
+      effect: "물가연동 종신 연금 증액",
+    });
+  if (r.crevasse.years > 0)
+    actions.push({
+      title: "공백기 생활비 재원 확보",
+      detail: `국민연금 개시 전 ${r.crevasse.years}년은 퇴직연금(IRP)을 먼저 연금으로 받고, 2~3년치 생활비는 예금·단기채로 따로 둡니다.`,
+      timing: "은퇴 시점",
+      priority: "높음",
+      effect: "공백기 소득 안정",
+    });
+  actions.push(
+    r.best.key === "s0"
+      ? { title: "현재 인출 계획 유지", detail: "통합 시뮬레이션 기준(S0) 인출의 생애 세후 수령액이 가장 많습니다.", timing: "은퇴 시점", priority: "중간", effect: `생애 세후 ${won(r.best.postTax)}` }
+      : {
+          title: `${r.best.id} 인출전략 적용`,
+          detail: `${r.best.name} 방식으로 인출하면 기준(S0)보다 생애 세후 수령액이 ${won(r.best.postTax - s0.postTax)} 늘어납니다.`,
+          timing: "은퇴 시점",
+          priority: "높음",
+          effect: `생애 세후 +${won(r.best.postTax - s0.postTax)}`,
+        }
+  );
+  if (survivorRatio !== null && survivorRatio < 0.7)
+    actions.push({
+      title: "유족 소득 대비",
+      detail: "종신형 연금 수령, 유족연금과 「본인 연금 + 유족연금 30%」 비교, 종신보험·주택연금을 검토해 혼자 남은 배우자의 소득을 지킵니다.",
+      timing: "은퇴 전",
+      priority: "높음",
+      effect: "사망 후 가구 소득 하락 완화",
+    });
+  if (r.best.lostDependencyAge)
+    actions.push({
+      title: "건보료 피부양자 유지",
+      detail: "연 소득(공적연금 포함) 2,000만원 이하 기준을 넘지 않도록 사적연금 인출액과 금융소득을 조절합니다.",
+      timing: "연금 개시 후",
+      priority: "중간",
+      effect: "건보료 부담 감소",
+    });
+  actions.push({
+    title: "매년 연금 정보 갱신",
+    detail: "금감원 통합연금포털에서 연 1회 적립금·예상 연금을 내려받아 이 진단을 다시 받아 봅니다.",
+    timing: "연금 개시 후",
+    priority: "낮음",
+    effect: "계획과 실제의 차이 조기 발견",
+  });
+
+  const withdrawalOrder: ReportNarrative["withdrawalOrder"] = [];
+  if (r.crevasse.years > 0)
+    withdrawalOrder.push({
+      period: `${p.retirementAge}~${publicStartAge(r) - 1}세 (공백기)`,
+      source: "퇴직연금(IRP) 연금 수령 + 비상 현금",
+      reason: "퇴직금을 연금으로 받으면 퇴직소득세가 30% 줄고, 국민연금 개시 전 소득을 메웁니다.",
+    });
+  withdrawalOrder.push(
+    {
+      period: `${publicStartAge(r)}~79세`,
+      source: "국민연금 + 연금저축·IRP(세액공제분)",
+      reason: "사적연금 수령액을 연 1,500만원 이하로 나누면 3.3~5.5% 저율 분리과세로 끝납니다.",
+    },
+    { period: "80세 이후", source: "국민연금·종신형 연금 중심", reason: "연금소득세율이 3.3%로 낮아지고, 남은 적립금은 의료·간병 예비비로 둡니다." }
+  );
+
+  const taxTips = [
+    "사적연금(세액공제분·운용수익) 수령액이 연 1,500만원 이하면 나이에 따라 3.3~5.5% 분리과세로 끝납니다.",
+    "퇴직금은 IRP로 받아 연금으로 나눠 받으면 퇴직소득세가 30%(11년차부터 40%) 줄어듭니다.",
+    "공적연금 소득은 건보료 피부양자 소득 기준(연 2,000만원)에 포함되므로 사적연금 인출액과 함께 관리합니다.",
+  ];
+  if (r.hasSpouse) taxTips.push("부부가 각자 명의로 연금을 받으면 사람마다 분리과세 한도와 세율 구간을 따로 써서 세금을 줄일 수 있습니다.");
+
+  const safe = Math.max(30, Math.min(70, Math.round(p.currentAge / 10) * 10));
+  const income = Math.round(((100 - safe) * 0.6) / 5) * 5;
+  return {
+    headline,
+    summary,
+    dimensionComments,
+    strengths,
+    risks,
+    actions,
+    withdrawalOrder,
+    taxTips,
+    allocation: {
+      safe,
+      income,
+      growth: 100 - safe - income,
+      rationale: `나이(${p.currentAge}세)를 고려해 원금 보전 자산을 ${safe}%로 두고, 물가 방어를 위해 배당·인컴 ${income}%, 성장 ${100 - safe - income}%를 섞는 기본 배분입니다. 공백기 생활비 2~3년치는 안전자산에 먼저 확보합니다.`,
+    },
+  };
+}

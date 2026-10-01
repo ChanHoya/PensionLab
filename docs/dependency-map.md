@@ -35,11 +35,18 @@ graph TD
   OnboardingUI --> PDFParseAPI[src/app/api/pension/pdf-parse/route.ts]
   PDFParseAPI --> GeminiAPI[Google Gemini API]
 
-  %% MiniMax AI Advisor (Sprint 12 / MiniMax Integration)
+  %% AI Advisor (Sprint 27 / Household Report & Consulting Narrative)
   Dashboard --> AIAdvisor[src/app/dashboard/ai-advisor/page.tsx]
   AIAdvisor --> Store
-  AIAdvisor --> Calculator
+  AIAdvisor --> DiagnosisReport[src/components/DiagnosisReport.tsx]
+  AIAdvisor --> HouseholdReport[src/services/householdReport.ts]
+  HouseholdReport --> CoupleSim[src/services/coupleSimulation.ts]
+  HouseholdReport --> Scenarios[src/services/householdScenarios.ts]
   AIAdvisor --> AIAdvisorAPI[src/app/api/ai/advisor/route.ts]
+  AIAdvisorAPI --> HouseholdReport
+  AIAdvisorAPI --> ReportNarrative[src/services/reportNarrative.ts]
+  AIAdvisorAPI --> GeminiAPI[Google Gemini 3.8 Flash]
+
 
   %% Simulator & News Routes (404 Bug Fixes)
   Dashboard --> Simulator[src/app/simulator/page.tsx]

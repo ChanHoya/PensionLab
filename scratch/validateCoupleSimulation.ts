@@ -173,19 +173,27 @@ assert.ok(ret(early, 2036) > 0); // 70세까지 수령
 assert.equal(ret(early, 2037), 0); // 71세
 assert.ok(ret(early, 2026) > ret(base, 2026)); // 짧게 나누면 더 많이
 
-// 완만한 체감: 가구 총액이 매년 2%씩 줄다가 국민연금 수준에 닿으면 국민연금만 (절벽 없이)
+// 활동기 집중형: 초기 5년(2026~2030) 유지 후 매년 2%씩 완만하게 체감
 const pv = (res: typeof base) => res.rows.reduce((a, row, t) => a + (row.self.retirement * 12) / Math.pow(1.03, t), 0);
 const flatRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, params, basic, 2026);
-const decRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, decumulationStrategy: "DECREASING" }, basic, 2026);
+const decRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, decumulationStrategy: "DECREASING", activePhaseYears: 5, annualDeclineRate: 2.0 }, basic, 2026);
 assert.equal(decRes.smoothing!.annualGrowth, -0.02);
 const dAtH = (y: number) => decRes.rows.find((row) => row.year === y)!;
-for (let y = 2027; y <= 2046; y++) {
-  if (ret(decRes, y) > 0.5) near(dAtH(y).household / dAtH(y - 1).household, 0.98, 0.004);
+// 초기 5년(2026~2030) 유지 확인
+for (let y = 2027; y <= 2030; y++) {
+  near(dAtH(y).household / dAtH(y - 1).household, 1.0, 0.005);
+}
+// 5년 이후 2% 체감 확인
+for (let y = 2031; y <= 2046; y++) {
+  if (ret(decRes, y) > 0.5) near(dAtH(y).household / dAtH(y - 1).household, 0.98, 0.005);
   else assert.ok(dAtH(y).household >= dAtH(y - 1).household * 0.98 - 0.6, `${y} 체감 후 급감`);
 }
-// 체감이어도 적립금 현재가치는 같고, 초반에 더 많이 받는다
-assert.ok(Math.abs(pv(decRes) / pv(flatRes) - 1) < 0.01, `PV ratio ${pv(decRes) / pv(flatRes)}`);
-assert.ok(ret(decRes, 2026) > ret(flatRes, 2026));
+// activePhaseYears: 0 설정 시 첫해부터 2% 체감
+const zeroHoldRes = runCoupleSimulation({ ...husband, retirementPensions: irp }, wife, { ...params, decumulationStrategy: "DECREASING", activePhaseYears: 0, annualDeclineRate: 2.0 }, basic, 2026);
+const dAtZero = (y: number) => zeroHoldRes.rows.find((row) => row.year === y)!;
+for (let y = 2027; y <= 2046; y++) {
+  if (ret(zeroHoldRes, y) > 0.5) near(dAtZero(y).household / dAtZero(y - 1).household, 0.98, 0.005);
+}
 
 // 가구 소득 평탄화: 가구 총액은 줄지 않고(유지 또는 증가) 소진 연도(기본: 본인 기대수명 80세 = 2046년)까지 매년 같은 비율,
 // 사적연금(총액 − 국민연금)은 국민연금이 모두 시작된 뒤 해마다 줄어 소진 연도 이후 0

@@ -84,14 +84,18 @@ const PRIVATE_KEYS = ["retirement", "personal", "insurance"] as const;
 // 증가율(≥ 0)이라, 국민연금이 시작·증가하는 만큼 사적연금 지급액이 줄고 총액은 튀지 않는다. 소진 연도 이후에는 국민연금만.
 // (총액을 물가만큼 늘리면 물가연동인 국민연금과 같은 속도라 사적연금 몫이 줄지 않으므로, g는 적립금 크기로 정해진다)
 // 사적연금 인출액의 현재가치가 기존 사적연금 흐름의 현재가치(적립금)와 같아지도록 L을 찾는다.
-// declineRate > 0(완만한 체감)이면 g = -declineRate로 고정해 총액이 매년 그만큼 줄어드는 경로로 나눈다.
+// 지출 패턴(활동기 집중형 등)이 적용되면 초기 activePhaseYears 동안 L을 유지하고 이후 declineRate씩 체감하는 경로로 분배한다.
 export function planHouseholdSmoothing(
   rows: CoupleYear[],
   targetToday: number,
   inflationRate: number,
   endIndex: number,
   declineRate: number = 0,
-  drawStartIndex: number = 0 // 인출 시작 연도 (그 전에 개시되는 상품 금액은 시작 연도 가치로 모아 함께 나눈다)
+  drawStartIndex: number = 0, // 인출 시작 연도 (그 전에 개시되는 상품 금액은 시작 연도 가치로 모아 함께 나눈다)
+  patternOptions?: {
+    spendingPattern?: "ACTIVE_FOCUSED" | "SMILING_3STAGE" | "FLAT";
+    activePhaseYears?: number;
+  }
 ): { override: SmoothingOverride; summary: SmoothingSummary } {
   const privOf = (p: PersonYear | null) => (p ? p.retirement + p.personal + p.insurance : 0);
   const start = Math.min(rows.length - 1, Math.max(0, drawStartIndex));
@@ -113,11 +117,36 @@ export function planHouseholdSmoothing(
     });
   });
 
+  const pattern = patternOptions?.spendingPattern ?? (declineRate > 0 ? "ACTIVE_FOCUSED" : "FLAT");
+  const activeYears = patternOptions?.activePhaseYears ?? 5;
+
+  const weightAt = (t: number) => {
+    const relT = t - start;
+    if (relT < 0) return 0;
+    if (pattern === "FLAT" || declineRate <= 0) return 1.0;
+    if (pattern === "SMILING_3STAGE") {
+      if (relT <= 7) return 1.0;
+      if (relT <= 17) return 0.75;
+      return 0.55;
+    }
+    // ACTIVE_FOCUSED: 초기 activeYears년 동안은 1.0 유지, 그 이후부터 연간 declineRate 체감
+    if (relT < activeYears) return 1.0;
+    return Math.pow(1 - declineRate, relT - activeYears + 1);
+  };
+
+  const isPattern = pattern !== "FLAT" && declineRate > 0;
+
   const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0);
-  const pathAt = (L: number, g: number, t: number) => L * Math.pow(1 + g, t - start);
-  const drawAt = (L: number, g: number, t: number) => (t < start || t > end ? 0 : Math.max(0, pathAt(L, g, t) - publicOf(rows[t])));
-  const need = (L: number, g: number) => rows.reduce((a, _r, t) => a + drawAt(L, g, t) * disc(t), 0);
-  // 증가율 g일 때 적립금을 모두 쓰는 시작 수준 L (need는 L에 대해 증가)
+  const pathAt = (L: number, g: number, t: number) => {
+    if (isPattern) return L * weightAt(t);
+    return L * Math.pow(1 + g, t - start);
+  };
+  const drawAt = (L: number, g: number, t: number) =>
+    t < start || t > end ? 0 : Math.max(0, pathAt(L, g, t) - publicOf(rows[t]));
+  const need = (L: number, g: number) =>
+    rows.reduce((a, _r, t) => a + drawAt(L, g, t) * disc(t), 0);
+
+  // 주어진 증가율/지출곡선에서 적립금을 모두 쓰는 시작 수준 L (need는 L에 대해 단조 증가)
   const solveL = (g: number, amount: number) => {
     let lo = 0;
     let hi = 1;
@@ -129,16 +158,15 @@ export function planHouseholdSmoothing(
     }
     return (lo + hi) / 2;
   };
-  // 총액이 국민연금보다 낮아지는 해의 최대 부족분 (0이면 국민연금 개시로 총액이 튀지 않음)
+
   const maxJump = (L: number, g: number) => {
     let worst = 0;
     for (let t = start; t <= end; t++) worst = Math.max(worst, publicOf(rows[t]) - pathAt(L, g, t));
     return worst;
   };
-  // 총액을 줄이지 않고(g ≥ 0) 어느 해에도 국민연금 아래로 내려가지 않는 가장 완만한 증가율을 고른다.
-  // 적립금이 너무 작아 불가능하면 국민연금 개시 때 튀는 폭이 가장 작은 증가율.
+
   let best = { g: 0, L: 0, jump: Infinity };
-  if (pot > 0 && declineRate > 0) {
+  if (pot > 0 && isPattern) {
     best = { g: -declineRate, L: solveL(-declineRate, pot), jump: 0 };
   } else if (pot > 0) {
     for (let step = 0; step <= 300; step++) {
@@ -425,9 +453,23 @@ export function runCoupleSimulation(
   };
 
   const base = build();
-  // 소진 연도: 본인 수령 종료 나이, 비우면 본인 기대수명. 인출 방식이 완만한 체감이면 총액을 매년 2%씩 줄인다
+  // 소진 연도: 본인 수령 종료 나이, 비우면 본인 기대수명. 인출 방식이 체감/지출곡선이면 해당 패턴 가중치 적용
   const endAge = params.privatePensionEndAge > 0 ? params.privatePensionEndAge : st.lifeExpectancy;
-  const declineRate = params.decumulationStrategy === "DECREASING" ? DECREASING_ANNUAL_RATE : 0;
-  const plan = planHouseholdSmoothing(base.rows, params.targetMonthlySpending, infl, endAge - selfAge0, declineRate, privateDrawStartAgeOf(params) - selfAge0);
+  const declineRate =
+    params.spendingPattern === "FLAT" || params.decumulationStrategy === "FLAT"
+      ? 0
+      : (params.annualDeclineRate ?? 2.0) / 100;
+  const plan = planHouseholdSmoothing(
+    base.rows,
+    params.targetMonthlySpending,
+    infl,
+    endAge - selfAge0,
+    declineRate,
+    privateDrawStartAgeOf(params) - selfAge0,
+    {
+      spendingPattern: params.spendingPattern,
+      activePhaseYears: params.activePhaseYears,
+    }
+  );
   return { ...build(plan.override), smoothing: plan.summary };
 }

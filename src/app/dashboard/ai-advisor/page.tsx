@@ -267,11 +267,33 @@ export default function AiAdvisorPage() {
           )}
         </section>
 
-        {/* Diagnostic Report Root (Capturable by html2canvas for PDF) */}
+        {/* Diagnostic Report: Screen View (1680px 와이드 최대 활용) & PDF Export (1040px 가독성 최적화) */}
         {report && narrative ? (
-          <div id="ai-prescription-pdf-root" style={styles.reportContainer} className="animate-fade-in">
-            <DiagnosisReport report={report} narrative={narrative} source={source} model={model} />
-          </div>
+          <>
+            {/* 화면 표시용 와이드 뷰 */}
+            <div id="ai-advisor-screen-view" style={styles.reportContainer} className="animate-fade-in">
+              <DiagnosisReport report={report} narrative={narrative} source={source} model={model} isPrintMode={false} />
+            </div>
+
+            {/* PDF 전용 오프스크린 컨테이너 (A4 최적 가독성 1040px 고정 렌더링) */}
+            <div
+              id="ai-prescription-pdf-root"
+              aria-hidden="true"
+              style={{
+                position: "fixed",
+                left: "-9999px",
+                top: 0,
+                width: "1040px",
+                backgroundColor: "var(--background)",
+                color: "var(--text-primary)",
+                zIndex: -100,
+                opacity: 0,
+                pointerEvents: "none",
+              }}
+            >
+              <DiagnosisReport report={report} narrative={narrative} source={source} model={model} isPrintMode={true} />
+            </div>
+          </>
         ) : (
           <div style={styles.emptyCard} className="premium-card">
             <h3>진단할 연금 데이터가 없습니다</h3>
@@ -327,9 +349,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     WebkitBackdropFilter: "blur(12px)",
   },
   headerContent: {
-    maxWidth: "1280px",
+    width: "100%",
+    maxWidth: "1680px",
     margin: "0 auto",
-    padding: "16px 24px",
+    padding: "16px 20px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -353,14 +376,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: "color var(--transition-fast)",
   },
   contentBody: {
-    maxWidth: "1160px",
+    width: "100%",
+    maxWidth: "1680px",
     margin: "0 auto",
-    padding: "32px 20px 80px",
+    padding: "20px 20px 80px",
     position: "relative",
     zIndex: 1,
     display: "flex",
     flexDirection: "column",
-    gap: "24px",
+    gap: "20px",
   },
   titleSection: {
     display: "flex",

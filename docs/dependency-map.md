@@ -35,13 +35,16 @@ graph TD
   OnboardingUI --> PDFParseAPI[src/app/api/pension/pdf-parse/route.ts]
   PDFParseAPI --> GeminiAPI[Google Gemini API]
 
-  %% AI Advisor (Sprint 27 / Household Report & Consulting Narrative)
+  %% AI Advisor & Spending Curve (Sprint 28)
   Dashboard --> AIAdvisor[src/app/dashboard/ai-advisor/page.tsx]
   AIAdvisor --> Store
   AIAdvisor --> DiagnosisReport[src/components/DiagnosisReport.tsx]
   AIAdvisor --> HouseholdReport[src/services/householdReport.ts]
+  HouseholdReport --> SpendingCurve[src/services/spendingCurve.ts]
   HouseholdReport --> CoupleSim[src/services/coupleSimulation.ts]
   HouseholdReport --> Scenarios[src/services/householdScenarios.ts]
+  CoupleSim --> SpendingCurve
+  CoupleSim --> WithdrawalCalc[src/services/withdrawalCalculator.ts]
   AIAdvisor --> AIAdvisorAPI[src/app/api/ai/advisor/route.ts]
   AIAdvisorAPI --> HouseholdReport
   AIAdvisorAPI --> ReportNarrative[src/services/reportNarrative.ts]

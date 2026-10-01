@@ -449,13 +449,42 @@ export function resolveDrawComposition(
 // 체감형 인출: 매년 2%씩 완만하게 줄인다 (예전 5년 단위 계단식 120→40%는 해마다 급감해 비현실적)
 export const DECREASING_ANNUAL_RATE = 0.02;
 
+export interface DecumulationOptions {
+  spendingPattern?: "ACTIVE_FOCUSED" | "SMILING_3STAGE" | "FLAT";
+  activePhaseYears?: number;
+  annualDeclineRate?: number;
+}
+
 /**
  * Calculates the decumulation multiplier for a given year index k (k = 1이 첫해)
  * 절대 수준은 가중 PMT·보정 계수가 총액에 맞춰 정하므로 여기서는 해마다의 상대 비율만 정한다
+ * - ACTIVE_FOCUSED: 초기 activePhaseYears 동안 1.0 유지 후 매년 annualDeclineRate 완만 체감
+ * - SMILING_3STAGE: 70세 이하 1.0, 71~80세 0.75, 81세 이후 0.55
+ * - FLAT: 1.0
  */
-export function getDecumulationMultiplier(k: number, strategy: string): number {
-  if (strategy !== "DECREASING") return 1.0;
-  return Math.pow(1 - DECREASING_ANNUAL_RATE, k - 1);
+export function getDecumulationMultiplier(
+  k: number,
+  strategy: string,
+  options?: DecumulationOptions
+): number {
+  if (strategy !== "DECREASING" && options?.spendingPattern === "FLAT") return 1.0;
+  if (strategy !== "DECREASING" && !options?.spendingPattern) return 1.0;
+
+  const pattern = options?.spendingPattern ?? (strategy === "DECREASING" ? "ACTIVE_FOCUSED" : "FLAT");
+  if (pattern === "FLAT") return 1.0;
+
+  const activeYears = options?.activePhaseYears ?? 5;
+  const declineRate = (options?.annualDeclineRate ?? 2.0) / 100;
+
+  if (pattern === "SMILING_3STAGE") {
+    if (k <= 7) return 1.0;
+    if (k <= 17) return 0.75;
+    return 0.55;
+  }
+
+  // ACTIVE_FOCUSED: 초기 activeYears년 동안은 1.0 유지
+  if (k <= activeYears) return 1.0;
+  return Math.pow(1 - declineRate, k - activeYears);
 }
 
 /**
@@ -467,14 +496,15 @@ export function calculateWeightedPMT(
   initialBalance: number,
   receivingPeriod: number,
   interestRatePercent: number,
-  strategy: string
+  strategy: string,
+  options?: DecumulationOptions
 ): number {
   if (receivingPeriod <= 0) return 0;
   const r = interestRatePercent / 100;
   
   let denominator = 0;
   for (let t = 1; t <= receivingPeriod; t++) {
-    const multiplier = getDecumulationMultiplier(t, strategy);
+    const multiplier = getDecumulationMultiplier(t, strategy, options);
     denominator += multiplier * Math.pow(1 + r, -(t - 1));
   }
   
@@ -721,13 +751,19 @@ export function runWithdrawalSimulation(
       ? accounts.reduce((s, a) => s + a.balance * (a.expectedReturnRate / 100), 0) / totalInitialBalance
       : 0.04;
 
+    const decumOpt: DecumulationOptions = {
+      spendingPattern: simulationParams.spendingPattern,
+      activePhaseYears: simulationParams.activePhaseYears,
+      annualDeclineRate: simulationParams.annualDeclineRate,
+    };
+
     // 인출 시작~종료 전 구간에 대해 PV 가중 분모 및 미래 공적연금 유입 PV 합산
     let pvPublicPension = 0;
     let portfolioDenominator = 0;
     for (let portAge = decumStartAge; portAge <= horizonEndAge; portAge++) {
       const t = portAge - decumStartAge;
       const df = Math.pow(1 + weightedR, -t);
-      const mult = getDecumulationMultiplier(t + 1, simulationParams.decumulationStrategy);
+      const mult = getDecumulationMultiplier(t + 1, simulationParams.decumulationStrategy, decumOpt);
       let natP = 0, basP = 0;
       if (publicByAge) {
         natP = (publicByAge[portAge]?.national ?? 0) * 12 * 10000;
@@ -925,7 +961,7 @@ export function runWithdrawalSimulation(
       // 계좌/공적연금 개시 시점과 무관하게 총 수령액이 매년 단조감소하도록 보장.
       else if (age >= decumStartAge) {
         const portT = age - decumStartAge;
-        const multiplier = getDecumulationMultiplier(portT + 1, simulationParams.decumulationStrategy);
+        const multiplier = getDecumulationMultiplier(portT + 1, simulationParams.decumulationStrategy, decumOpt);
         const targetTotal = portfolioBaseDraw * multiplier;
         const remaining = Math.max(0, targetTotal - nationalPreTax - basicPreTax);
 

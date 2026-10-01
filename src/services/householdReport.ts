@@ -2,6 +2,7 @@ import { personParams, runCoupleSimulation, type CoupleSimulationResult, type Co
 import { runHouseholdScenarios, type ScenarioKey } from "@/services/householdScenarios";
 import { paidTotalsOf } from "@/services/paidTotals";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
+import { buildSpendingCurve, type SpendingPoint, type SpendingPattern } from "@/services/spendingCurve";
 import type { BasicPensionState, NationalPensionState, PersonData, SimulationParamsState } from "@/store/usePensionStore";
 
 // AI 포트폴리오 진단 리포트의 계산부. 대시보드와 같은 경로(추납·반납 반영 → 부부 통합 시뮬레이션 → 가구 인출전략)로
@@ -61,12 +62,17 @@ export interface HouseholdReport {
   couple: CoupleSimulationResult;
   inflation: number; // 연 물가상승률 (소수)
   retireYear: number; // 은퇴 연도 (본인 기준)
-  targetToday: number; // 목표 생활비 (현재가치, 만원/월)
-  minToday: number; // 최소 생활비
+  targetToday: number; // 시작 목표 생활비 (현재가치, 만원/월)
+  minToday: number; // 시작 최소 생활비
+  spendingPattern: SpendingPattern; // 지출 곡선 패턴
+  activePhaseYears: number; // 초기 활동기 유지 기간 (년)
+  annualDeclineRate: number; // 연간 체감률 (%)
+  spendingCurve: Map<number, SpendingPoint>; // 연차별 지출 곡선 포인트
+  avgTargetReal: number; // 지출 곡선 반영 은퇴 기간 평균 목표 생활비
   realHousehold: number[]; // couple.rows와 같은 순서의 가구 월 연금 (현재가치)
   avgRetiredReal: number; // 은퇴 후 평균 가구 월 연금 (현재가치)
-  shortfallPV: number; // 은퇴 후 목표 생활비 대비 누적 부족액 (현재가치, 만원)
-  belowMinSpans: Span[]; // 최소 생활비에 못 미치는 구간
+  shortfallPV: number; // 은퇴 후 목표 생활비 곡선 대비 누적 부족액 (현재가치, 만원)
+  belowMinSpans: Span[]; // 최소 생활비 곡선에 못 미치는 구간
   crevasse: { years: number; avgReal: number }; // 은퇴 후 부부 누구의 국민연금도 나오기 전 (소득 공백기)
   firstDeath: { who: "SELF" | "SPOUSE"; year: number; beforeReal: number; afterReal: number } | null;
   lateReal: number; // 마지막 5년 평균 가구 월 연금 (현재가치)
@@ -114,15 +120,38 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
   const realHousehold = rows.map((r, t) => r.household / Math.pow(1 + inflation, t));
   const avg = (ts: number[]) => (ts.length ? ts.reduce((a, t) => a + realHousehold[t], 0) / ts.length : 0);
 
+  const spendingCurve = buildSpendingCurve(params, baseYear);
+  const spendingPattern: SpendingPattern = params.spendingPattern || (params.decumulationStrategy === "FLAT" ? "FLAT" : "ACTIVE_FOCUSED");
+  const activePhaseYears = params.activePhaseYears ?? 5;
+  const annualDeclineRate = params.annualDeclineRate ?? 2.0;
+
   const retireT = Math.max(0, params.retirementAge - params.currentAge);
   const retired = rows.map((_, t) => t).filter((t) => t >= retireT);
   const avgRetiredReal = avg(retired);
-  const shortfallPV = retired.reduce((a, t) => a + Math.max(0, targetToday - realHousehold[t]) * 12, 0);
-  const coveredYears = retired.filter((t) => realHousehold[t] >= minToday).length;
+
+  // 연차별 지출 곡선(활동기 집중형 등)과 대비하여 누적 부족액 및 최소 생활비 미달 여부 산출
+  const shortfallPV = retired.reduce((a, t) => {
+    const y = rows[t].year;
+    const pt = spendingCurve.get(y);
+    const targetAt = pt?.targetReal ?? targetToday;
+    return a + Math.max(0, targetAt - realHousehold[t]) * 12;
+  }, 0);
+
+  const coveredYears = retired.filter((t) => {
+    const y = rows[t].year;
+    const pt = spendingCurve.get(y);
+    const minAt = pt?.minReal ?? minToday;
+    return realHousehold[t] >= minAt;
+  }).length;
 
   const belowMinSpans: Span[] = [];
   retired
-    .filter((t) => realHousehold[t] < minToday)
+    .filter((t) => {
+      const y = rows[t].year;
+      const pt = spendingCurve.get(y);
+      const minAt = pt?.minReal ?? minToday;
+      return realHousehold[t] < minAt;
+    })
     .forEach((t) => {
       const { year, self: s } = rows[t];
       const last = belowMinSpans[belowMinSpans.length - 1];
@@ -131,6 +160,11 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
         last.toAge = s.age;
       } else belowMinSpans.push({ fromYear: year, toYear: year, fromAge: s.age, toAge: s.age });
     });
+
+  const avgTargetReal = retired.length
+    ? retired.reduce((a, t) => a + (spendingCurve.get(rows[t].year)?.targetReal ?? targetToday), 0) / retired.length
+    : targetToday;
+  const coverageRatio = avgTargetReal > 0 ? avgRetiredReal / avgTargetReal : 1;
 
   const publicStartT = rows.findIndex((r) => r.self.national + (r.spouse?.national ?? 0) > 0);
   const crevasseTs = publicStartT < 0 ? [] : retired.filter((t) => t < publicStartT);
@@ -201,17 +235,17 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
       key: "sufficiency",
       label: "소득 충분성",
       weight: 30,
-      score: Math.round(100 * clamp01(avgRetiredReal / targetToday)),
-      metric: `은퇴 후 평균 월 ${Math.round(avgRetiredReal).toLocaleString()}만원 / 목표 ${targetToday.toLocaleString()}만원 (${pct(avgRetiredReal / targetToday)}%)`,
-      basis: "은퇴 후 가구 월 연금 평균(현재가치) ÷ 목표 생활비",
+      score: Math.round(100 * clamp01(coverageRatio)),
+      metric: `은퇴 후 평균 월 ${Math.round(avgRetiredReal).toLocaleString()}만원 / 지출곡선 평균 ${Math.round(avgTargetReal).toLocaleString()}만원 (${pct(coverageRatio)}%)`,
+      basis: "은퇴 후 가구 월 연금 평균(현재가치) ÷ 지출 곡선 목표 생활비 평균 (초기 고지출 유지 후 완만 체감)",
     },
     {
       key: "stability",
       label: "소득 안정성",
       weight: 25,
       score: retired.length ? Math.round((100 * coveredYears) / retired.length) : 0,
-      metric: `은퇴 후 ${retired.length}년 중 ${coveredYears}년 최소 생활비(${minToday.toLocaleString()}만원) 이상`,
-      basis: "은퇴 후 가구 월 연금(현재가치)이 최소 생활비 이상인 해의 비율",
+      metric: `은퇴 후 ${retired.length}년 중 ${coveredYears}년 최저 생활비 이상 (${Math.round((100 * coveredYears) / (retired.length || 1))}% 충족)`,
+      basis: "은퇴 후 가구 월 연금(현재가치)이 연차별 최저 생활비 이상인 해의 비율",
     },
     {
       key: "tax",
@@ -256,6 +290,11 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
     retireYear: baseYear + retireT,
     targetToday,
     minToday,
+    spendingPattern,
+    activePhaseYears,
+    annualDeclineRate,
+    spendingCurve,
+    avgTargetReal: Math.round(avgTargetReal),
     realHousehold,
     avgRetiredReal: Math.round(avgRetiredReal),
     shortfallPV: Math.round(shortfallPV),

@@ -89,6 +89,10 @@ export interface SimulationParamsState {
   propertyTaxBase: number;  // 재산세 과세표준 (만원)
   financialIncome: number;  // 금융소득 이자+배당 (만원/년)
   decumulationStrategy: "DECREASING" | "FLAT";
+  // 시기별 지출 곡선(연금 규모 설계) 매개변수
+  spendingPattern: "ACTIVE_FOCUSED" | "SMILING_3STAGE" | "FLAT"; // 지출 패턴 (활동기 집중형 / 3단계 생애주기 / 균등형)
+  activePhaseYears: number; // 초기 활동기 소비 유지 기간 (년, 기본 5)
+  annualDeclineRate: number; // 활동기 이후 연간 체감률 (%, 기본 2.0)
   // S4 하이브리드(배당+연금) 전략 매개변수
   coveredCallAsset: number;        // 커버드콜/월배당 투자금 (만원, 기본 5000)
   coveredCallDividendRate: number;  // 예상 연 분배율 (%, 기본 9.0)
@@ -233,6 +237,9 @@ const initialSimulationParams: SimulationParamsState = {
   propertyTaxBase: 0,
   financialIncome: 0,
   decumulationStrategy: "DECREASING",
+  spendingPattern: "ACTIVE_FOCUSED",
+  activePhaseYears: 5,
+  annualDeclineRate: 2.0,
   coveredCallAsset: 5000,
   coveredCallDividendRate: 9.0,
   isCoupleDivided: false,

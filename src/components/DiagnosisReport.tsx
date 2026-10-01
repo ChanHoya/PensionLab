@@ -5,6 +5,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  ComposedChart,
+  Line,
   BarChart,
   Bar,
   Cell,
@@ -35,6 +37,7 @@ interface Props {
   narrative: ReportNarrative;
   source: "base" | "ai" | "fallback"; // 기본 진단 / AI 진단 / AI 실패로 기본 진단
   model?: string;
+  isPrintMode?: boolean; // PDF 인쇄/출력 전용 최적화 뷰 플래그
 }
 
 const LEVEL_COLOR: Record<Level, string> = { 높음: "#ef4444", 중간: "#f59e0b", 낮음: "#10b981" };
@@ -112,7 +115,7 @@ function ScoreGauge({ score, grade }: { score: number; grade: HouseholdReport["g
   );
 }
 
-export default function DiagnosisReport({ report: r, narrative: n, source, model }: Props) {
+export default function DiagnosisReport({ report: r, narrative: n, source, model, isPrintMode }: Props) {
   const p = r.params;
   const rows = r.couple.rows;
   const who = r.hasSpouse ? "부부 가구" : "본인";
@@ -121,11 +124,25 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
   const dateText = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
   const sourceLabel = source === "ai" ? `AI 맞춤 진단 · ${model ?? "Gemini"}` : source === "fallback" ? "기본 진단 (AI 응답 실패)" : "기본 진단 (계산 기반)";
 
-  // 03 가구 현금흐름 (현재가치)
-  const flowData: Record<string, number>[] = rows.map((row, t) => ({ year: row.year, ...pensionSeriesValues(row, Math.pow(1 + r.inflation, t)) }));
+  // 03 가구 현금흐름 (현재가치) 및 연차별 지출 곡선(목표선/최소선)
+  const flowData: Record<string, number>[] = rows.map((row, t) => {
+    const pt = r.spendingCurve?.get(row.year);
+    const targetSpending = pt ? pt.targetReal : r.targetToday;
+    const minSpending = pt ? pt.minReal : r.minToday;
+    return {
+      year: row.year,
+      targetSpending,
+      minSpending,
+      ...pensionSeriesValues(row, Math.pow(1 + r.inflation, t)),
+    };
+  });
   const visibleSeries = PENSION_SERIES.filter((s) => flowData.some((d) => d[s.key] !== 0));
   const survivorName = `${r.firstDeath?.who === "SPOUSE" ? "본인" : "배우자"} 유족연금`;
-  const legendColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
+  const legendColors: Record<string, string> = {
+    [survivorName]: SURVIVOR_FILL,
+    맞춤지출목표선: "#e11d48",
+    최저생활비선: "#d97706",
+  };
 
   // 04 연금 구조
   const layerTotals = LAYER.map((l) => ({ ...l, value: r.layers[l.key].self + r.layers[l.key].spouse })).filter((l) => l.value > 0);
@@ -145,7 +162,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
 
   const allocationData = ALLOCATION.map((a) => ({ ...a, value: n.allocation[a.key] })).filter((a) => a.value > 0);
   const survivorChange = r.firstDeath && r.firstDeath.beforeReal > 0 ? Math.round((r.firstDeath.afterReal / r.firstDeath.beforeReal - 1) * 100) : null;
-  const ratio = r.avgRetiredReal / r.targetToday;
+  const ratio = r.avgRetiredReal / (r.avgTargetReal || r.targetToday);
 
   return (
     <div style={S.root}>
@@ -160,7 +177,13 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
           {r.hasSpouse
             ? `본인 ${p.currentAge}세(은퇴 ${p.retirementAge}세·기대수명 ${p.expectedLifeExpectancy}세) · 배우자 ${p.spouseAge ?? p.currentAge}세(은퇴 ${p.spouseRetirementAge}세·기대수명 ${p.spouseLifeExpectancy}세)`
             : `본인 ${p.currentAge}세 · 은퇴 ${p.retirementAge}세 · 기대수명 ${p.expectedLifeExpectancy}세`}
-          {" · "}목표 생활비 월 {r.targetToday}만원 · 최소 {r.minToday}만원 · 금액은 현재가치(연 물가 {p.inflationRate}%)
+          {" · "}
+          {r.spendingPattern === "ACTIVE_FOCUSED"
+            ? `지출 설계: 활동기 집중형 (초기 ${r.activePhaseYears}년 월 ${r.targetToday}만원 유지 후 연 ${r.annualDeclineRate}% 완만 체감)`
+            : r.spendingPattern === "SMILING_3STAGE"
+            ? `지출 설계: 3단계 생애주기형 (활동기 100% → 안정기 75% → 간병기 55%)`
+            : `지출 설계: 균등 정액형 (월 ${r.targetToday}만원 유지)`}
+          {" · "}금액은 현재가치(연 물가 {p.inflationRate}%)
         </p>
 
         <div className="rpt-cover" style={{ marginTop: 20 }}>
@@ -178,7 +201,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
           <Kpi
             label="은퇴 후 평균 가구 월 연금"
             value={`${r.avgRetiredReal.toLocaleString()}만원`}
-            sub={`목표 ${r.targetToday}만원의 ${Math.round(ratio * 100)}%`}
+            sub={`지출곡선 평균 ${r.avgTargetReal.toLocaleString()}만원의 ${Math.round(ratio * 100)}%`}
             tone={scoreColor(Math.min(100, ratio * 100))}
           />
           <Kpi
@@ -275,12 +298,12 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
       {/* 03 현금흐름 */}
       <Section
         no="03"
-        title={`${r.hasSpouse ? "가구 " : ""}연금 현금흐름`}
-        sub={`연도별 월 연금 (현재가치, 만원/월)${r.hasSpouse ? " · 사람별·연금별로 쌓아 표시" : ""} · 빨간 점선 목표 생활비, 주황 점선 최소 생활비`}
+        title={`${r.hasSpouse ? "가구 " : ""}연금 현금흐름 & 맞춤 지출 곡선`}
+        sub={`연도별 월 연금 (현재가치, 만원/월)${r.hasSpouse ? " · 사람별·연금별로 쌓아 표시" : ""} · 붉은 실선 맞춤 지출 목표선(초기 유지 후 체감), 황색 점선 최소 생활비선`}
       >
-        <div style={{ height: 340 }}>
+        <div style={{ height: isPrintMode ? 320 : 380 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={flowData} margin={{ top: 24, right: 16, left: 0, bottom: 0 }}>
+            <ComposedChart data={flowData} margin={{ top: 24, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="year" stroke="var(--text-muted)" fontSize={11} />
               <YAxis stroke="var(--text-muted)" fontSize={11} />
@@ -305,8 +328,25 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                   isAnimationActive={false}
                 />
               ))}
-              <ReferenceLine y={r.targetToday} stroke="#ef4444" strokeDasharray="6 4" label={{ value: `목표 ${r.targetToday}`, position: "insideTopRight", fill: "#ef4444", fontSize: 11 }} />
-              <ReferenceLine y={r.minToday} stroke="#f59e0b" strokeDasharray="3 3" label={{ value: `최소 ${r.minToday}`, position: "insideBottomRight", fill: "#f59e0b", fontSize: 11 }} />
+              <Line
+                type="monotone"
+                dataKey="targetSpending"
+                name="맞춤 지출 목표선"
+                stroke="#e11d48"
+                strokeWidth={2.5}
+                dot={false}
+                isAnimationActive={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="minSpending"
+                name="최저 생활비선"
+                stroke="#d97706"
+                strokeWidth={1.8}
+                strokeDasharray="4 4"
+                dot={false}
+                isAnimationActive={false}
+              />
               <ReferenceLine x={r.retireYear} stroke="var(--text-muted)" strokeDasharray="4 4" label={{ value: "은퇴", position: "top", fill: "var(--text-muted)", fontSize: 11 }} />
               {r.firstDeath && (
                 <ReferenceLine
@@ -316,7 +356,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                   label={{ value: `${deceased} 기대수명`, position: "top", fill: "var(--text-muted)", fontSize: 11 }}
                 />
               )}
-            </AreaChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
         <div className="rpt-grid-3" style={{ marginTop: 12 }}>

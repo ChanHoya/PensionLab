@@ -62,7 +62,14 @@ export function reportFacts(r: HouseholdReport, input: ReportInput): string {
     r.hasSpouse &&
       `- 배우자: 은퇴 ${p.spouseRetirementAge}세, 국민연금 개시 ${p.spouseNationalPensionStartAge}세${p.spouseNationalPensionDeferYears ? ` + ${p.spouseNationalPensionDeferYears}년 연기` : ""}, 기대수명 ${p.spouseLifeExpectancy}세`,
     `- 목표 생활비 월 ${r.targetToday}만원, 최소 생활비 월 ${r.minToday}만원 (현재가치), 물가상승률 연 ${p.inflationRate}%`,
-    `- 사적연금은 ${p.privateDrawStartAge || p.currentAge + 1}세(본인 나이)부터 가구 소득 평탄화 방식으로 인출${p.decumulationStrategy === "DECREASING" ? " (매년 2% 체감)" : ""}`,
+    `- 노후 지출 곡선 패턴: ${
+      r.spendingPattern === "ACTIVE_FOCUSED"
+        ? `활동기 집중형 (은퇴 초기 ${r.activePhaseYears}년간 목표 생활비 ${r.targetToday}만원 100% 유지 후 연 ${r.annualDeclineRate}% 완만 체감)`
+        : r.spendingPattern === "SMILING_3STAGE"
+        ? `3단계 생애주기형 (활동기 100% → 안정기 75% → 간병기 55%)`
+        : `고정 균등형 (생애 전 기간 동일 수준 유지)`
+    }`,
+    `- 사적연금은 ${p.privateDrawStartAge || p.currentAge + 1}세(본인 나이)부터 가구 소득 평탄화(지출 곡선 연계) 방식으로 인출`,
     `- 비연금 금융자산 ${won(p.nonPensionAssets || 0)}, 재산세 과세표준 ${won(p.propertyTaxBase || 0)}, 금융소득 연 ${p.financialIncome || 0}만원`,
     "",
     "[보유 연금]",
@@ -74,7 +81,7 @@ export function reportFacts(r: HouseholdReport, input: ReportInput): string {
     "[진단 지표 — 계산 엔진 결과, 월 금액은 현재가치]",
     `- 종합 점수 ${r.total}점 (등급 ${r.grade.letter}, ${r.grade.label})`,
     ...r.dimensions.map((d) => `- ${d.label} ${d.score}점 (가중치 ${d.weight}%): ${d.metric}`),
-    `- 은퇴 후 평균 가구 월 연금 ${r.avgRetiredReal}만원, 목표 생활비 대비 누적 부족액 ${won(r.shortfallPV)}`,
+    `- 은퇴 후 평균 가구 월 연금 ${r.avgRetiredReal}만원 / 지출곡선 평균 목표 ${r.avgTargetReal}만원, 목표 곡선 대비 누적 부족액 ${won(r.shortfallPV)}`,
     r.crevasse.years > 0
       ? `- 소득 공백기: 은퇴 후 국민연금 개시 전 ${r.crevasse.years}년, 이 기간 평균 월 ${r.crevasse.avgReal}만원`
       : "- 소득 공백기 없음 (은퇴 시점에 공적연금 수령 중)",
@@ -156,8 +163,9 @@ export function normalizeNarrative(raw: unknown): ReportNarrative | null {
 export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
   const p = r.params;
   const who = r.hasSpouse ? "부부 가구" : "본인";
-  const ratio = r.avgRetiredReal / r.targetToday;
-  const gap = Math.round(Math.max(0, r.targetToday - r.avgRetiredReal));
+  const targetBench = r.avgTargetReal || r.targetToday;
+  const ratio = r.avgRetiredReal / targetBench;
+  const gap = Math.round(Math.max(0, targetBench - r.avgRetiredReal));
   const s0 = r.scenarios.find((s) => s.key === "s0") ?? r.best;
   const fd = r.firstDeath;
   const survivorRatio = fd && fd.beforeReal > 0 ? fd.afterReal / fd.beforeReal : null;
@@ -174,13 +182,13 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
 
   const headline =
     ratio >= 1
-      ? `${who}의 연금만으로 목표 생활비를 충당할 수 있는 구조입니다`
+      ? `${who}의 연금만으로 노후 지출 곡선 목표를 충당할 수 있는 구조입니다`
       : r.avgRetiredReal >= r.minToday
-        ? `최소 생활비는 충당되지만 목표 생활비까지 월 ${gap}만원이 모자랍니다`
+        ? `최소 생활비는 충당되지만 지출 목표까지 월 ${gap}만원이 모자랍니다`
         : "연금만으로는 최소 생활비에도 못 미쳐 추가 준비가 시급합니다";
 
   const summary = [
-    `${who}의 은퇴 후 평균 월 연금은 현재가치 ${r.avgRetiredReal.toLocaleString()}만원으로 목표 생활비(${r.targetToday}만원)의 ${pct(ratio)}% 수준이며, 종합 진단 점수는 ${r.total}점(${r.grade.letter} · ${r.grade.label})입니다.`,
+    `${who}의 은퇴 후 평균 월 연금은 현재가치 ${r.avgRetiredReal.toLocaleString()}만원으로 지출 곡선 목표(평균 ${targetBench.toLocaleString()}만원)의 ${pct(ratio)}% 수준이며, 종합 진단 점수는 ${r.total}점(${r.grade.letter} · ${r.grade.label})입니다.`,
     r.crevasse.years > 0
       ? `은퇴 후 국민연금이 나오기 전 ${r.crevasse.years}년의 소득 공백기에는 월 ${r.crevasse.avgReal}만원을 받습니다.`
       : "은퇴 시점부터 공적연금이 이어져 소득 공백기는 없습니다.",
@@ -193,8 +201,8 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
   const dimensionComments: Record<DimensionKey, string> = {
     sufficiency:
       ratio >= 1
-        ? `목표 생활비의 ${pct(ratio)}%를 연금으로 충당해 기본 생활비 구조가 안정적입니다.`
-        : `목표 대비 평균 월 ${gap}만원이 모자라 은퇴 기간 누적 부족액이 현재가치 ${won(r.shortfallPV)}입니다.`,
+        ? `지출 곡선 목표 생활비의 ${pct(ratio)}%를 연금으로 충당해 기본 생활비 구조가 안정적입니다.`
+        : `지출 곡선 목표 대비 평균 월 ${gap}만원이 모자라 은퇴 기간 누적 부족액이 현재가치 ${won(r.shortfallPV)}입니다.`,
     stability:
       r.belowMinSpans.length > 0
         ? `본인 나이 ${r.belowMinSpans.map((s) => `${s.fromAge}~${s.toAge}세`).join(", ")} 구간에 가구 연금이 최소 생활비(${r.minToday}만원)에 못 미칩니다.`

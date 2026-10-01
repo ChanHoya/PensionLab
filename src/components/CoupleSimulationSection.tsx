@@ -228,14 +228,14 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         <div style={styles.infoAlert}>
           {sm.pot > 0 ? (
             <>
-              📏 <strong>가구 소득 평탄화</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
+              📏 <strong>가구 소득 평탄화 & 지출 곡선 인출</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
               (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 총액이{" "}
               {sm.annualGrowth > 0 ? (
                 <>매년 <strong>{(sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 늘어납니다.</>
               ) : sm.annualGrowth < 0 ? (
-                <>매년 <strong>{(-sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 줄어듭니다(완만한 체감).</>
+                <>초기 활동기(소비 유지) 이후 매년 <strong>{(-sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 체감합니다(활동기 집중형).</>
               ) : (
-                <>같은 수준으로 유지됩니다.</>
+                <>균등 정액 수준으로 유지됩니다.</>
               )}{" "}
               국민연금이 시작·증가하는 만큼 퇴직·개인연금을 해마다 줄여 {sm.endYear}년까지 나눠 쓰므로 국민연금 개시 때 총액이 튀지 않고
               상품 만기 때 끊기지 않습니다.

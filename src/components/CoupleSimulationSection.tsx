@@ -17,7 +17,7 @@ import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/
 import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
 import type { PaidTotals } from "@/services/paidTotals";
-import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps } from "@/components/pensionSeries";
+import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps, pensionSeriesValues } from "@/components/pensionSeries";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -85,19 +85,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
 
   const rowsByYear = new Map(rows.map((r) => [r.year, r]));
 
-  const chartData: Record<string, number>[] = rows.map((r) => ({
-    year: r.year,
-    // 사망 후 남은 배우자가 받는 유족연금은 사망자 국민연금에서 온 몫이라 따로 표시 (본인국민연금 층과 이어지게 바로 위에 쌓음)
-    본인국민연금: Math.round(r.self.national - r.self.survivorPart),
-    유족연금: Math.round(r.self.survivorPart + (r.spouse?.survivorPart ?? 0)),
-    배우자국민연금: Math.round((r.spouse?.national ?? 0) - (r.spouse?.survivorPart ?? 0)),
-    "본인 기초연금": Math.round(r.self.basic),
-    "배우자 기초연금": Math.round(r.spouse?.basic ?? 0),
-    "본인 퇴직연금": Math.round(r.self.retirement),
-    "배우자 퇴직연금": Math.round(r.spouse?.retirement ?? 0),
-    "본인 개인연금": Math.round(r.self.personal + r.self.insurance),
-    "배우자 개인연금": Math.round((r.spouse?.personal ?? 0) + (r.spouse?.insurance ?? 0)),
-  }));
+  const chartData: Record<string, number>[] = rows.map((r) => ({ year: r.year, ...pensionSeriesValues(r) }));
   // 금액이 있는 계열만 그래프·범례에 표시. 유족연금은 받는 사람 기준 이름 (예: 배우자 유족연금)
   const survivorName = `${survivorLabel || "배우자"} 유족연금`;
   const visibleSeries = PENSION_SERIES.filter((s) => chartData.some((d) => d[s.key] !== 0));

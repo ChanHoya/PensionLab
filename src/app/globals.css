@@ -448,3 +448,41 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
     overflow: visible;
   }
 }
+
+/* AI 연금 종합 진단 리포트 (DiagnosisReport) 반응형 그리드 */
+.rpt-cover {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.rpt-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.rpt-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.rpt-roadmap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+@media (max-width: 900px) {
+  .rpt-cover {
+    grid-template-columns: 1fr;
+  }
+  .rpt-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .rpt-grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .rpt-roadmap {
+    grid-template-columns: 1fr;
+  }
+}
+

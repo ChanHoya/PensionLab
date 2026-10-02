@@ -292,30 +292,36 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
       {/* 02 스코어카드 */}
       <Section no="02" title="진단 스코어카드" sub={`5개 영역 가중 평균 = 종합 ${r.total}점 · 점선은 양호 기준(70점)`}>
         <div className="rpt-grid-2" style={{ alignItems: "center" }}>
-          <div style={{ height: 300 }}>
+          <div style={{ height: isPrintMode ? 300 : 340, width: "100%" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={r.dimensions.map((d) => ({ dim: d.label, score: d.score, bench: 70 }))} outerRadius="70%">
+              <RadarChart
+                data={r.dimensions.map((d) => ({ dim: d.label, score: d.score, bench: 70 }))}
+                outerRadius={isPrintMode ? "75%" : "84%"}
+                margin={{ top: 10, right: 24, bottom: 10, left: 24 }}
+              >
                 <PolarGrid stroke="var(--border)" />
-                <PolarAngleAxis dataKey="dim" tick={{ fontSize: 12, fill: "var(--text-secondary)" }} />
+                <PolarAngleAxis dataKey="dim" tick={{ fontSize: 12, fill: "var(--text-secondary)", fontWeight: 600 }} />
                 <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
                 <Radar dataKey="bench" stroke="#94a3b8" strokeDasharray="4 4" fill="none" isAnimationActive={false} />
-                <Radar dataKey="score" stroke={r.grade.color} fill={r.grade.color} fillOpacity={0.3} isAnimationActive={false} />
+                <Radar dataKey="score" stroke={r.grade.color} fill={r.grade.color} fillOpacity={0.32} isAnimationActive={false} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             {r.dimensions.map((d) => (
               <div key={d.key}>
                 <div style={S.dimHead}>
-                  <span style={S.dimLabel}>
-                    {d.label} <span style={S.dimWeight}>가중치 {d.weight}%</span>
-                  </span>
+                  <div style={S.dimTitleGroup}>
+                    <span style={S.dimLabel}>{d.label}</span>
+                    <span style={S.dimWeight}>가중치 {d.weight}%</span>
+                    <span style={S.dimColon}>:</span>
+                    <span style={S.dimMetricInline}>{d.metric}</span>
+                  </div>
                   <span style={{ ...S.dimScore, color: scoreColor(d.score) }}>{d.score}</span>
                 </div>
                 <div style={S.bar}>
                   <div style={{ ...S.barFill, width: `${d.score}%`, background: scoreColor(d.score) }} />
                 </div>
-                <div style={S.dimMetric}>{d.metric}</div>
                 {n.dimensionComments[d.key] && <div style={S.dimComment}>{n.dimensionComments[d.key]}</div>}
               </div>
             ))}
@@ -430,10 +436,10 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
       </Section>
 
       {/* 04 연금 구조 */}
-      <Section no="04" title="연금 구조 분석" sub="생애 수령액 기준 3층 구성 · 사람별 비중 · 낸 돈 대비 받는 돈 (명목, 세전)">
+      <Section no="04" title="연금 구조 분석" sub="생애 수령액 기준 연금 구성 · 개인별 비중 · 낸 돈 대비 받는 돈 (명목, 세전)">
         <div className="rpt-grid-3">
           <div style={S.panel}>
-            <div style={S.panelTitle}>3층 비중 ({r.hasSpouse ? "가구" : "본인"})</div>
+            <div style={S.panelTitle}>연금 비중 ({r.hasSpouse ? "가구" : "본인"})</div>
             <div style={{ position: "relative", height: 200 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -461,7 +467,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
           </div>
 
           <div style={S.panel}>
-            <div style={S.panelTitle}>{r.hasSpouse ? "사람별 3층 수령액" : "3층별 수령액"}</div>
+            <div style={S.panelTitle}>{r.hasSpouse ? "개인별 연금 수령액 비중" : "연금별 수령액 비중"}</div>
             <div style={{ height: 230 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={personLayers} layout="vertical" margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
@@ -797,14 +803,17 @@ const S: Record<string, React.CSSProperties> = {
     marginLeft: 4,
     whiteSpace: "nowrap",
   },
-  dimHead: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 },
-  dimLabel: { fontSize: "0.86rem", fontWeight: 700, color: "var(--text-primary)", display: "inline-flex", alignItems: "center" },
-  dimWeight: { fontSize: "0.68rem", fontWeight: 500, color: "var(--text-muted)", marginLeft: 6 },
-  dimScore: { fontSize: "1.05rem", fontWeight: 800 },
-  bar: { height: 8, background: "rgba(148,163,184,0.2)", borderRadius: 4, overflow: "hidden" },
-  barFill: { height: "100%", borderRadius: 4 },
-  dimMetric: { fontSize: "0.74rem", color: "var(--text-muted)", marginTop: 4 },
-  dimComment: { fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: 4 },
+  dimHead: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, marginBottom: 2 },
+  dimTitleGroup: { display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "2px 6px", flex: 1, minWidth: 0 },
+  dimLabel: { fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" },
+  dimWeight: { fontSize: "0.68rem", fontWeight: 500, color: "var(--text-muted)" },
+  dimColon: { fontSize: "0.72rem", color: "var(--text-muted)", margin: "0 1px" },
+  dimMetricInline: { fontSize: "0.74rem", color: "var(--text-secondary)", fontWeight: 500 },
+  dimScore: { fontSize: "1.05rem", fontWeight: 800, flexShrink: 0 },
+  bar: { height: 6, background: "rgba(148,163,184,0.18)", borderRadius: 3, overflow: "hidden", margin: "2px 0 3px" },
+  barFill: { height: "100%", borderRadius: 3 },
+  dimMetric: { fontSize: "0.74rem", color: "var(--text-muted)", marginTop: 2 },
+  dimComment: { fontSize: "0.74rem", color: "var(--text-secondary)", lineHeight: 1.45, marginTop: 1 },
   note: { fontSize: "0.78rem", color: "var(--text-secondary)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 12px" },
   noteTitle: { fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4 },
   donutCenter: { position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", pointerEvents: "none" },

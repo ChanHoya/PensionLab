@@ -645,9 +645,9 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* S4 하이브리드: 피부양자 유지 상태 (입력은 왼쪽 입력 열) */}
+              {/* S4 하이브리드: 피부양자 유지 상태 및 배당 운용 현황 */}
               {activeTab === "S4" && (
-                <div className="animate-fade-in">
+                <div className="animate-fade-in" style={{ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
                   {/* 피부양자 유지 상태 안내 */}
                   {(() => {
                     const s4Result = withdrawalSimulation.s4;
@@ -655,33 +655,81 @@ export default function DashboardPage() {
                       ? ((store.simulationParams.coveredCallAsset || 5000) * 10000 * (store.simulationParams.coveredCallDividendRate || 9) / 100) / 2
                       : (store.simulationParams.coveredCallAsset || 5000) * 10000 * (store.simulationParams.coveredCallDividendRate || 9) / 100;
                     const isWithinCap = perPersonDividend <= 10000000;
+                    const policy = store.simulationParams.dividendPolicy || "REINVEST";
+                    const policyLabel =
+                      policy === "REINVEST" ? "🔄 잉여 배당 재투자 (스노우볼형)"
+                      : policy === "BUFFER" ? "🛡️ 배당 비상자금 풀 (안전적립형)"
+                      : "💸 전액 현금화 소비 (소진형)";
+
                     return (
-                      <div style={{
-                        marginTop: "12px",
-                        padding: "10px 14px",
-                        borderRadius: "var(--radius-sm)",
-                        backgroundColor: isWithinCap ? "rgba(16, 185, 129, 0.08)" : "rgba(244, 63, 94, 0.08)",
-                        border: `1px solid ${isWithinCap ? "rgba(16, 185, 129, 0.3)" : "rgba(244, 63, 94, 0.3)"}`,
-                        fontSize: "0.8rem",
-                        lineHeight: 1.6,
-                      }}>
-                        <strong style={{ color: isWithinCap ? "#10b981" : "#f43f5e" }}>
-                          {isWithinCap ? "✅ 피부양자 유지 가능" : "⚠️ 피부양자 탈락 위험"}
-                        </strong>
-                        <span style={{ color: "var(--text-secondary)", marginLeft: "8px" }}>
-                          1인당 예상 연 배당소득: {Math.round(perPersonDividend / 10000).toLocaleString()}만원
-                          {isWithinCap ? " (한도 1,000만원 이하)" : ` (한도 1,000만원 초과 → 건보료 부과)`}
-                        </span>
-                        {s4Result.lostDependencyAge && (
-                          <span style={{ display: "block", marginTop: "4px", color: "var(--warning)" }}>
-                            피부양자 탈락 예상 시점: {s4Result.lostDependencyAge}세 | 생애 건보료 총액: {s4Result.lifetimeTotalHI.toLocaleString()}만원
+                      <>
+                        <div style={{
+                          padding: "10px 14px",
+                          borderRadius: "var(--radius-sm)",
+                          backgroundColor: isWithinCap ? "rgba(16, 185, 129, 0.08)" : "rgba(244, 63, 94, 0.08)",
+                          border: `1px solid ${isWithinCap ? "rgba(16, 185, 129, 0.3)" : "rgba(244, 63, 94, 0.3)"}`,
+                          fontSize: "0.8rem",
+                          lineHeight: 1.6,
+                        }}>
+                          <strong style={{ color: isWithinCap ? "#10b981" : "#f43f5e" }}>
+                            {isWithinCap ? "✅ 피부양자 유지 가능" : "⚠️ 피부양자 탈락 위험"}
+                          </strong>
+                          <span style={{ color: "var(--text-secondary)", marginLeft: "8px" }}>
+                            1인당 예상 연 배당소득: {Math.round(perPersonDividend / 10000).toLocaleString()}만원
+                            {isWithinCap ? " (한도 1,000만원 이하)" : ` (한도 1,000만원 초과 → 건보료 부과)`}
                           </span>
-                        )}
-                      </div>
+                          {s4Result.lostDependencyAge && (
+                            <span style={{ display: "block", marginTop: "4px", color: "var(--warning)" }}>
+                              피부양자 탈락 예상 시점: {s4Result.lostDependencyAge}세 | 생애 건보료 총액: {s4Result.lifetimeTotalHI.toLocaleString()}만원
+                            </span>
+                          )}
+                        </div>
+
+                        {/* 배당금 운용 및 누적 자산 현황 카드 */}
+                        <div style={{
+                          padding: "10px 14px",
+                          borderRadius: "var(--radius-sm)",
+                          backgroundColor: "rgba(99, 102, 241, 0.06)",
+                          border: "1px solid rgba(99, 102, 241, 0.25)",
+                          fontSize: "0.8rem",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "8px",
+                        }}>
+                          <div>
+                            <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>적용된 배당 정책: </span>
+                            <strong style={{ color: "var(--primary)" }}>{policyLabel}</strong>
+                            <div style={{ color: "var(--text-secondary)", fontSize: "0.74rem", marginTop: "2px" }}>
+                              {policy === "REINVEST" && "생활비 부족분만 인출하고 남는 배당금은 원금에 재투자하여 배당 원금을 복리 증식합니다."}
+                              {policy === "BUFFER" && "생활비 부족분 충당 후 남는 배당금을 안전자산(연 2.5%)에 차곡차곡 쌓아 초고령기 비상자금으로 보관합니다."}
+                              {policy === "PAYOUT" && "매년 발생하는 배당금을 전액 생활비로 소비(현금화)합니다."}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: "16px" }}>
+                            <div>
+                              <div style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>최종 커버드콜 원금</div>
+                              <div style={{ fontWeight: 800, color: "var(--text-primary)", fontSize: "0.95rem" }}>
+                                {s4Result.finalCoveredCallAsset ? `${s4Result.finalCoveredCallAsset.toLocaleString()}만원` : `${(store.simulationParams.coveredCallAsset || 5000).toLocaleString()}만원`}
+                              </div>
+                            </div>
+                            {policy === "BUFFER" && (
+                              <div>
+                                <div style={{ color: "var(--text-muted)", fontSize: "0.7rem" }}>누적 비상자금 잔고</div>
+                                <div style={{ fontWeight: 800, color: "var(--success)", fontSize: "0.95rem" }}>
+                                  {s4Result.finalDividendBuffer ? `${s4Result.finalDividendBuffer.toLocaleString()}만원` : "0만원"}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
                     );
                   })()}
                 </div>
               )}
+
 
               {/* 그래프 ① 세금 & 건보료 비교 Bar Chart */}
               <div style={{ marginTop: "14px" }}>

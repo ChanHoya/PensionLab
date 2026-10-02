@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -57,15 +57,30 @@ const scoreColor = (s: number) => (s >= 80 ? "#10b981" : s >= 60 ? "#0ea5e9" : s
 const eok = (v: number) => `${(Number(v) / 10000).toFixed(1)}억`;
 const signed = (x: number) => `${x >= 0 ? "+" : ""}${x}`;
 
-function Section({ no, title, sub, children }: { no: string; title: string; sub?: string; children: React.ReactNode }) {
+function Section({
+  no,
+  title,
+  sub,
+  action,
+  children,
+}: {
+  no: string;
+  title: string;
+  sub?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <section style={S.section}>
-      <header style={S.sectionHead}>
-        <span style={S.sectionNo}>{no}</span>
-        <div>
-          <h3 style={S.sectionTitle}>{title}</h3>
-          {sub && <p style={S.sectionSub}>{sub}</p>}
+      <header style={{ ...S.sectionHead, justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+          <span style={S.sectionNo}>{no}</span>
+          <div>
+            <h3 style={S.sectionTitle}>{title}</h3>
+            {sub && <p style={S.sectionSub}>{sub}</p>}
+          </div>
         </div>
+        {action && <div>{action}</div>}
       </header>
       {children}
     </section>
@@ -124,22 +139,29 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
   const dateText = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
   const sourceLabel = source === "ai" ? `AI 맞춤 진단 · ${model ?? "Gemini"}` : source === "fallback" ? "기본 진단 (AI 응답 실패)" : "기본 진단 (계산 기반)";
 
-  // 03 가구 현금흐름 (현재가치) 및 연차별 지출 곡선(목표선/최소선)
+  const [isRealValue, setIsRealValue] = useState(true); // 기본값: 현재가치 (실질 구매력)
+
+  // 03 가구 현금흐름 (현재가치 vs 명목가치 토글) 및 연차별 지출 곡선(목표선/최소선)
   let lastTarget = r.targetToday;
   let lastMin = r.minToday;
+  const infl = r.inflation ?? (p.inflationRate ? p.inflationRate / 100 : 0.03);
+
   const flowData: Record<string, number>[] = rows.map((row, t) => {
     const pt = r.spendingCurve?.get(row.year);
     if (pt) {
       lastTarget = pt.targetReal;
       lastMin = pt.minReal;
     }
-    const targetSpending = pt ? pt.targetReal : lastTarget;
-    const minSpending = pt ? pt.minReal : lastMin;
+    const targetReal = pt ? pt.targetReal : lastTarget;
+    const minReal = pt ? pt.minReal : lastMin;
+    const divisor = isRealValue ? Math.pow(1 + infl, t) : 1;
+    const targetSpending = isRealValue ? targetReal : Math.round(targetReal * Math.pow(1 + infl, t));
+    const minSpending = isRealValue ? minReal : Math.round(minReal * Math.pow(1 + infl, t));
     return {
       year: row.year,
       targetSpending,
       minSpending,
-      ...pensionSeriesValues(row, Math.pow(1 + r.inflation, t)),
+      ...pensionSeriesValues(row, divisor),
     };
   });
   const visibleSeries = PENSION_SERIES.filter((s) => flowData.some((d) => d[s.key] !== 0));
@@ -305,7 +327,27 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
       <Section
         no="03"
         title={`${r.hasSpouse ? "가구 " : ""}연금 현금흐름 & 맞춤 지출 곡선`}
-        sub={`연도별 월 연금 (현재가치, 만원/월)${r.hasSpouse ? " · 사람별·연금별로 쌓아 표시" : ""} · 붉은 실선 맞춤 지출 목표선(초기 유지 후 체감), 황색 점선 최소 생활비선`}
+        sub={`연도별 월 연금 (${isRealValue ? "현재가치, 실질 구매력" : "명목 금액, 물가상승률 반영"}, 만원/월)${r.hasSpouse ? " · 사람별·연금별로 쌓아 표시" : ""} · 붉은 실선 맞춤 지출 목표선, 황색 점선 최소 생활비선`}
+        action={
+          !isPrintMode ? (
+            <div style={S.toggleGroup}>
+              <button
+                type="button"
+                style={isRealValue ? S.toggleBtnActive : S.toggleBtn}
+                onClick={() => setIsRealValue(true)}
+              >
+                현재가치(실질)
+              </button>
+              <button
+                type="button"
+                style={!isRealValue ? S.toggleBtnActive : S.toggleBtn}
+                onClick={() => setIsRealValue(false)}
+              >
+                명목 금액
+              </button>
+            </div>
+          ) : undefined
+        }
       >
         <div style={{ height: isPrintMode ? 320 : 380 }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -844,4 +886,34 @@ const S: Record<string, React.CSSProperties> = {
   stepReason: { fontSize: "0.78rem", color: "var(--text-secondary)", lineHeight: 1.55, marginTop: 2 },
   appendixTitle: { fontSize: "0.9rem", fontWeight: 800, color: "var(--text-primary)", marginBottom: 10 },
   assumptions: { fontSize: "0.74rem", color: "var(--text-muted)", lineHeight: 1.7, paddingLeft: 18, display: "flex", flexDirection: "column", gap: 4 },
+  toggleGroup: {
+    display: "inline-flex",
+    backgroundColor: "var(--background)",
+    border: "1px solid var(--border)",
+    borderRadius: "6px",
+    padding: "2px",
+    gap: "2px",
+  },
+  toggleBtn: {
+    padding: "4px 10px",
+    fontSize: "0.72rem",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    backgroundColor: "transparent",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+  },
+  toggleBtnActive: {
+    padding: "4px 10px",
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#ffffff",
+    backgroundColor: "var(--primary, #6366f1)",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+  },
 };

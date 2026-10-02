@@ -81,6 +81,11 @@ export interface SimulationYearFlow {
   // 배당소득 (S4 하이브리드 전략)
   dividendPreTax: number;
   taxOnDividend: number;
+  dividendSpent?: number;             // 생활비로 소비된 세후 배당금 (원)
+  dividendReinvested?: number;        // 커버드콜 원금에 재투자된 배당금 (원)
+  dividendBuffered?: number;          // 비상자금 풀에 적립된 배당금 (원)
+  coveredCallAssetBalance?: number;   // 당해 기말 커버드콜 원금 잔액 (원)
+  accumulatedDividendBuffer?: number; // 당해 기말 누적 배당 비상자금 잔고 (원)
 
   // 세금 및 건보료
   taxOnNational: number;
@@ -113,6 +118,8 @@ export interface StrategySimulationResult {
   hasCrevasse: boolean;
   hasDeficit: boolean;
   lostDependencyAge?: number; // 피부양자 탈락 나이
+  finalCoveredCallAsset?: number;     // 최종 커버드콜 원금 잔액 (원)
+  finalDividendBuffer?: number;       // 최종 누적 비상자금 잔고 (원)
   flows: SimulationYearFlow[];
 }
 
@@ -816,6 +823,10 @@ export function runWithdrawalSimulation(
     let hasDeficit = false;
     let lostDependencyAge: number | undefined;
 
+    // S4 커버드콜 원금 및 배당 안전 비상자금 잔고 (원 단위)
+    let currentCoveredCallAssetWon = (simulationParams.coveredCallAsset || 0) * 10000;
+    let accumulatedDividendBufferWon = 0;
+
     // 기대수명까지 연도별 계산
     for (let age = currentAge; age <= expectedLife; age++) {
       const yearOffset = age - currentAge;
@@ -1180,11 +1191,14 @@ export function runWithdrawalSimulation(
       // === S4 하이브리드 전략: 커버드콜 배당소득 계산 ===
       let dividendPreTax = 0;
       let taxOnDividend = 0;
+      let dividendSpent = 0;
+      let dividendReinvested = 0;
+      let dividendBuffered = 0;
+
       if (strategyId === "S4" && age >= simulationParams.retirementAge) {
-        // 커버드콜 자산에서 발생하는 연 배당소득 (만원 -> 원)
-        const coveredCallAssetWon = (simulationParams.coveredCallAsset || 0) * 10000;
+        // 커버드콜 자산에서 발생하는 연 배당소득 (현재 누적 원금 기준, 원 단위)
         const dividendRate = (simulationParams.coveredCallDividendRate || 9.0) / 100;
-        const rawDividend = coveredCallAssetWon * dividendRate;
+        const rawDividend = currentCoveredCallAssetWon * dividendRate;
 
         // 부부 분산 시 1인당 한도: 연 1,000만 원 × 2인 = 2,000만 원
         // 미분산 시 1인당 한도: 연 1,000만 원
@@ -1255,6 +1269,47 @@ export function runWithdrawalSimulation(
         lostDependencyAge = age;
       }
 
+      // S4 배당 운용 정책(재투자/버퍼/소비) 평가
+      const netDividend = Math.max(0, dividendPreTax - taxOnDividend);
+      const policy = simulationParams.dividendPolicy || "REINVEST";
+
+      if (strategyId === "S4" && age >= simulationParams.retirementAge) {
+        // 연금(공적+사적)만으로 충당되는 세후 연금 수령액
+        const pensionPreTax = nationalPreTax + basicPreTax + retirementPreTax + personalPreTax + insurancePreTax;
+        const pensionTax = taxOnRetirement + taxOnPersonalYear + taxOnNationalYear;
+        const pensionPostTax = Math.max(0, pensionPreTax - (pensionTax + adjustedPremium));
+
+        // 목표 생활비 (연 단위)
+        const targetAnnualSpending = (simulationParams.targetMonthlySpending || 300) * 12 * 10000;
+        const shortfall = Math.max(0, targetAnnualSpending - pensionPostTax);
+
+        if (policy === "PAYOUT") {
+          // 전액 인출 소비 (현행 방식)
+          dividendSpent = netDividend;
+          dividendReinvested = 0;
+          dividendBuffered = 0;
+        } else if (policy === "REINVEST") {
+          // 스노우볼 재투자: 부족분만 소비하고 잉여는 커버드콜 원금에 재투자
+          dividendSpent = Math.min(netDividend, shortfall);
+          dividendReinvested = netDividend - dividendSpent;
+          dividendBuffered = 0;
+          currentCoveredCallAssetWon += dividendReinvested; // 다음 해 배당 산정 베이스 증액!
+        } else if (policy === "BUFFER") {
+          // 비상자금 안전버퍼: 부족분만 소비하고 잉여는 안전 비상풀에 적립
+          dividendSpent = Math.min(netDividend, shortfall);
+          dividendBuffered = netDividend - dividendSpent;
+          dividendReinvested = 0;
+          accumulatedDividendBufferWon += dividendBuffered;
+        }
+
+        // 비상자금 풀은 연 2.5% MMF/단기채 복리 증식
+        if (accumulatedDividendBufferWon > 0) {
+          accumulatedDividendBufferWon = Math.round(accumulatedDividendBufferWon * 1.025);
+        }
+      } else {
+        dividendSpent = netDividend;
+      }
+
       const totalPreTax =
         nationalPreTax +
         basicPreTax +
@@ -1265,7 +1320,14 @@ export function runWithdrawalSimulation(
 
       const totalTax = taxOnRetirement + taxOnPersonalYear + taxOnNationalYear + taxOnDividend;
       const totalTaxAndHI = totalTax + adjustedPremium;
-      const totalPostTax = Math.max(0, totalPreTax - totalTaxAndHI);
+
+      // 최종 세후 가용 수령액 (S4는 재투자/유보된 잉여 배당을 제외하고 실제 소비 가용된 금액)
+      const pensionPreTax = nationalPreTax + basicPreTax + retirementPreTax + personalPreTax + insurancePreTax;
+      const pensionTax = taxOnRetirement + taxOnPersonalYear + taxOnNationalYear;
+      const pensionPostTax = Math.max(0, pensionPreTax - (pensionTax + adjustedPremium));
+      const totalPostTax = strategyId === "S4"
+        ? pensionPostTax + dividendSpent
+        : Math.max(0, totalPreTax - totalTaxAndHI);
 
       const endingBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
 
@@ -1297,6 +1359,11 @@ export function runWithdrawalSimulation(
         drawNonQualified: Math.round(drawNonQualified / 10000),
         dividendPreTax: Math.round(dividendPreTax / 10000),
         taxOnDividend: Math.round(taxOnDividend / 10000),
+        dividendSpent: Math.round(dividendSpent / 10000),
+        dividendReinvested: Math.round(dividendReinvested / 10000),
+        dividendBuffered: Math.round(dividendBuffered / 10000),
+        coveredCallAssetBalance: Math.round(currentCoveredCallAssetWon / 10000),
+        accumulatedDividendBuffer: Math.round(accumulatedDividendBufferWon / 10000),
         taxOnNational: Math.round(taxOnNationalYear / 10000),
         taxOnRetirement: Math.round(taxOnRetirement / 10000),
         taxOnPersonal: Math.round(taxOnPersonalYear / 10000),
@@ -1319,6 +1386,8 @@ export function runWithdrawalSimulation(
       hasCrevasse,
       hasDeficit,
       lostDependencyAge,
+      finalCoveredCallAsset: Math.round(currentCoveredCallAssetWon / 10000),
+      finalDividendBuffer: Math.round(accumulatedDividendBufferWon / 10000),
       flows,
     };
   };

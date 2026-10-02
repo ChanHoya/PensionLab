@@ -343,6 +343,40 @@ export default function DashboardSidebar(props: Props) {
           <input type="checkbox" checked={params.isCoupleDivided || false} onChange={(e) => setParam({ isCoupleDivided: e.target.checked })} />
           부부 명의 분산 (인당 배당 1,000만원 한도)
         </label>
+        <div style={{ marginTop: "8px" }}>
+          <label style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>
+            배당금 운용 정책
+          </label>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            {[
+              { id: "REINVEST", label: "🔄 잉여 배당 재투자 (스노우볼)", desc: "생활비 부족분만 인출하고 잉여는 원금 재투자" },
+              { id: "BUFFER", label: "🛡️ 배당 비상자금 풀 (안전적립)", desc: "잉여 배당금을 안전자산(연 2.5%)에 누적" },
+              { id: "PAYOUT", label: "💸 전액 현금화 소비 (소진형)", desc: "매년 발생하는 배당금을 전액 생활비로 소비" },
+            ].map((opt) => {
+              const isSelected = (params.dividendPolicy || "REINVEST") === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => setParam({ dividendPolicy: opt.id as any })}
+                  style={{
+                    textAlign: "left",
+                    padding: "6px 8px",
+                    borderRadius: "4px",
+                    border: `1px solid ${isSelected ? "var(--primary)" : "var(--border)"}`,
+                    backgroundColor: isSelected ? "rgba(99, 102, 241, 0.12)" : "transparent",
+                    color: isSelected ? "var(--text-primary)" : "var(--text-secondary)",
+                    cursor: "pointer",
+                    fontSize: "0.72rem",
+                  }}
+                >
+                  <div style={{ fontWeight: isSelected ? 700 : 500 }}>{opt.label}</div>
+                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "2px" }}>{opt.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </details>
     </aside>
   );

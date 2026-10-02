@@ -106,7 +106,7 @@ export interface SimulationParamsState {
   // 부부 통합 시뮬레이션 옵션
   nationalPensionDeferYears: number; // 본인 국민연금 연기 (0~5년, 1년당 7.2% 가산)
   spouseNationalPensionDeferYears: number; // 배우자 국민연금 연기
-  privateDrawStartAge: number; // 퇴직·개인연금 인출 시작 나이 (본인 나이 기준, 0 = 조회 시점 익년 = 현재 나이 + 1)
+  privateDrawStartAge: number; // 퇴직·개인연금 인출 시작 나이 (소득세법상 최소 만 55세, 0 = 기본값: Math.max(55, 현재 나이 + 1))
   privatePensionEndAge: number; // 가구 사적연금 소진 나이 (본인 나이 기준, 0 = 본인 기대수명)
   spousePrivatePensionEndAge: number; // 배우자 사적연금 수령 종료 나이 (가구 평탄화에서는 쓰지 않음, S1~S4 인출 엔진용)
 }

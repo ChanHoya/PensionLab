@@ -139,9 +139,24 @@ export default function DashboardSidebar(props: Props) {
         <summary style={styles.summary}>연금 규모 & 지출 패턴 설계</summary>
         <div style={styles.field}>
           <label style={styles.label}>{hasSpouse ? "인출 시작 나이 (본인 나이 기준)" : "인출 시작 나이"}</label>
-          <input type="number" min={0} className="premium-input" style={styles.input} value={params.privateDrawStartAge || ""}
-            placeholder={`비우면 ${params.currentAge + 1}세(내년)`}
-            onChange={(e) => setParam({ privateDrawStartAge: Number(e.target.value) })} />
+          <input
+            type="number"
+            min={55}
+            className="premium-input"
+            style={styles.input}
+            value={params.privateDrawStartAge || ""}
+            placeholder={params.currentAge < 55 ? "비우면 55세 (법정 최소 55세)" : `비우면 ${params.currentAge + 1}세(내년)`}
+            onChange={(e) => setParam({ privateDrawStartAge: Number(e.target.value) })}
+            onBlur={(e) => {
+              const val = Number(e.target.value);
+              if (val > 0 && val < 55) {
+                setParam({ privateDrawStartAge: 55 });
+              }
+            }}
+          />
+          <p style={{ ...styles.note, marginTop: 4 }}>
+            * 퇴직·개인연금은 소득세법상 만 55세부터 인출(수령) 가능합니다. (최소 만 55세)
+          </p>
         </div>
         <div style={styles.field}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>

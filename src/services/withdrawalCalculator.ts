@@ -54,9 +54,16 @@ export interface PersonFlowParts {
   dividend: number;
 }
 
-// 퇴직·개인연금 인출 시작 나이 (입력 없으면 조회 시점 익년 = 현재 나이 + 1)
+// 법정 사적연금(퇴직·개인연금) 수령 최소 연령 (소득세법 제20조의3, 제129조의2)
+export const MIN_PENSION_WITHDRAWAL_AGE = 55;
+
+// 퇴직·개인연금 인출 시작 나이 (소득세법상 최소 만 55세부터 수령 가능, 0 = 기본값: Math.max(55, 현재 나이 + 1))
 export function privateDrawStartAgeOf(params: SimulationParamsState): number {
-  return params.privateDrawStartAge > 0 ? params.privateDrawStartAge : (params.currentAge || 35) + 1;
+  const defaultAge = Math.max(MIN_PENSION_WITHDRAWAL_AGE, (params.currentAge || 35) + 1);
+  if (params.privateDrawStartAge > 0) {
+    return Math.max(MIN_PENSION_WITHDRAWAL_AGE, params.privateDrawStartAge);
+  }
+  return defaultAge;
 }
 
 export interface SimulationYearFlow {
@@ -585,16 +592,16 @@ export function runWithdrawalSimulation(
 
     // 퇴직연금 (2층)
     retirementPensions.forEach((p, idx) => {
-      // 전략별 인출 개시 나이 및 기간 결정
-      let payoutStartAge = simulationParams.retirementAge;
-      let receivingPeriod = Math.max(10, expectedLife - simulationParams.retirementAge);
+      // 전략별 인출 개시 나이 및 기간 결정 (소득세법상 만 55세 이상부터 수령 가능)
+      let payoutStartAge = Math.max(MIN_PENSION_WITHDRAWAL_AGE, simulationParams.retirementAge);
+      let receivingPeriod = Math.max(10, expectedLife - payoutStartAge);
 
       if (strategyId === "S1" || strategyId === "S2" || strategyId === "S4") {
         // 절세 평탄화 전략: 퇴직연금은 인출 시작 나이부터 소득공백기(크레바스) 브릿지 자금으로 쓰되 감면 극대화를 위해 수령기간 11년 이상 유지
         payoutStartAge = drawStartAge;
         receivingPeriod = Math.max(11, Math.min(20, expectedLife - payoutStartAge));
       } else if (strategyId === "S3" && customInputs.s3CustomStartAges?.[p.id]) {
-        payoutStartAge = customInputs.s3CustomStartAges[p.id];
+        payoutStartAge = Math.max(MIN_PENSION_WITHDRAWAL_AGE, customInputs.s3CustomStartAges[p.id]);
         receivingPeriod = customInputs.s3CustomPeriods?.[p.id] || 10;
       }
 
@@ -625,8 +632,8 @@ export function runWithdrawalSimulation(
 
     // 개인연금저축 (3층)
     personalPensions.forEach((p) => {
-      // 전략별 수령 개시 연령 설정
-      let payoutStartAge = p.desiredStartAge;
+      // 전략별 수령 개시 연령 설정 (소득세법상 만 55세 이상부터 수령 가능)
+      let payoutStartAge = Math.max(MIN_PENSION_WITHDRAWAL_AGE, p.desiredStartAge || MIN_PENSION_WITHDRAWAL_AGE);
       let receivingPeriod = p.receivingPeriod || 10;
 
       // S1/S2/S4의 경우 인출 시작 연령 및 평탄화 기간 동적 설정
@@ -645,10 +652,10 @@ export function runWithdrawalSimulation(
 
           if (estRetirementAnnual >= targetAnnualSpending) {
             // 퇴직연금만으로 목표 생활비 충당 가능 -> 개인연금은 조기 인출하지 않고 원래 희망수급연령(desiredStartAge)부터 개시하여 거치 증식 극대화
-            payoutStartAge = p.desiredStartAge;
+            payoutStartAge = Math.max(MIN_PENSION_WITHDRAWAL_AGE, p.desiredStartAge || MIN_PENSION_WITHDRAWAL_AGE);
           } else {
             // 퇴직연금만으로 부족한 경우 -> 소득 공백기(크레바스)를 메우기 위해 개인연금을 은퇴 연령부터 조기 인출하여 브릿지 재원으로 활용
-            payoutStartAge = Math.max(55, drawStartAge);
+            payoutStartAge = Math.max(MIN_PENSION_WITHDRAWAL_AGE, drawStartAge);
           }
         }
         
@@ -700,13 +707,15 @@ export function runWithdrawalSimulation(
       });
     });
 
-    // 세제비적격 연금보험 (3층)
+    // 세제비적격 연금보험 (3층 - 만 55세 이상 수령)
     pensionInsurances.forEach((i) => {
-      let payoutStartAge = strategyId === "S1" || strategyId === "S2" || strategyId === "S4" ? drawStartAge : simulationParams.retirementAge;
+      let payoutStartAge = strategyId === "S1" || strategyId === "S2" || strategyId === "S4"
+        ? drawStartAge
+        : Math.max(MIN_PENSION_WITHDRAWAL_AGE, simulationParams.retirementAge);
       let receivingPeriod = Math.max(20, expectedLife - payoutStartAge);
 
       if (strategyId === "S3" && customInputs.s3CustomStartAges?.[i.id]) {
-        payoutStartAge = customInputs.s3CustomStartAges[i.id];
+        payoutStartAge = Math.max(MIN_PENSION_WITHDRAWAL_AGE, customInputs.s3CustomStartAges[i.id]);
         receivingPeriod = customInputs.s3CustomPeriods?.[i.id] || 20;
       }
 
@@ -761,10 +770,10 @@ export function runWithdrawalSimulation(
     const minPayoutAge = accounts.length > 0
       ? Math.min(...accounts.map(a => a.payoutStartAge))
       : simulationParams.retirementAge;
-    // S1/S2/S4는 인출 시작 나이부터, S0·S3는 계좌 개시 나이(또는 은퇴 나이) 중 이른 때부터
+    // S1/S2/S4는 인출 시작 나이부터, S0·S3는 계좌 개시 나이(또는 은퇴 나이) 중 이른 때부터 (법적 최소 55세 보장)
     const decumStartAge = strategyId === "S1" || strategyId === "S2" || strategyId === "S4"
       ? drawStartAge
-      : Math.min(simulationParams.retirementAge, minPayoutAge);
+      : Math.max(MIN_PENSION_WITHDRAWAL_AGE, Math.min(simulationParams.retirementAge, minPayoutAge));
     // 자산 소진 목표 종료 연령: 가장 늦게 끝나는 계좌의 수령 종료 시점
     const horizonEndAge = accounts.length > 0
       ? Math.max(...accounts.map(a => a.payoutStartAge + a.receivingPeriod - 1))

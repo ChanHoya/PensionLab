@@ -1,5 +1,6 @@
 import type { DimensionKey, HouseholdReport, ReportInput } from "@/services/householdReport";
 import type { PersonData } from "@/store/usePensionStore";
+import { privateDrawStartAgeOf } from "@/services/withdrawalCalculator";
 
 // AI 진단 리포트의 서술 부분: AI 응답 형식, AI가 실패했을 때 쓰는 계산 기반 기본 진단, AI에 보내는 계산 결과 요약
 
@@ -69,7 +70,7 @@ export function reportFacts(r: HouseholdReport, input: ReportInput): string {
         ? `3단계 생애주기형 (활동기 100% → 안정기 75% → 간병기 55%)`
         : `고정 균등형 (생애 전 기간 동일 수준 유지)`
     }`,
-    `- 사적연금은 ${p.privateDrawStartAge || p.currentAge + 1}세(본인 나이)부터 가구 소득 평탄화(지출 곡선 연계) 방식으로 인출`,
+    `- 사적연금은 ${privateDrawStartAgeOf(p)}세(본인 나이)부터 가구 소득 평탄화(지출 곡선 연계) 방식으로 인출`,
     `- 비연금 금융자산 ${won(p.nonPensionAssets || 0)}, 재산세 과세표준 ${won(p.propertyTaxBase || 0)}, 금융소득 연 ${p.financialIncome || 0}만원`,
     "",
     "[보유 연금]",

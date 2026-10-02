@@ -142,7 +142,9 @@ export function runPensionSimulation(
   });
 
   // Convert retirement lump sum to a monthly annuity (assume received for 20 years or until expectancy)
-  const retirementAnnuityYears = capYears(Math.max(10, expectedLife - params.retirementAge), params.retirementAge);
+  // 소득세법상 만 55세부터 연금 수령 가능 (은퇴나이가 55세 미만인 경우 55세부터 개시)
+  const retirementPayoutStartAge = Math.max(55, params.retirementAge);
+  const retirementAnnuityYears = capYears(Math.max(10, expectedLife - retirementPayoutStartAge), retirementPayoutStartAge);
   const retirementPayoutRate = Math.max(0.5, 3.0);
   const monthlyRetirementPayout = calculateAnnuityPayout(retirementLumpSum, retirementAnnuityYears, retirementPayoutRate);
   // 체감형 인출이면 배율 합이 기간과 달라 총액이 어긋나므로 보정 (수령 종료 나이를 정하면 균등 분할이라 보정 불필요)
@@ -152,7 +154,9 @@ export function runPensionSimulation(
   // 4. Project Personal Pension Savings (3층 - 연금저축)
   let personalLumpSum = 0;
   personal.forEach((p) => {
-    const yearsToStart = Math.max(0, p.desiredStartAge - currentAge);
+    // 소득세법상 연금저축 수령 최소 나이는 만 55세
+    const pStartAge = Math.max(55, p.desiredStartAge || 55);
+    const yearsToStart = Math.max(0, pStartAge - currentAge);
     const monthsToPay = Math.max(0, Math.min(yearsToStart, params.retirementAge - currentAge) * 12);
 
     // 명목 기준: 명목 수익률 사용
@@ -161,7 +165,7 @@ export function runPensionSimulation(
 
     const fvCurrent = calculateFV(p.totalAccumulated, returnRate, yearsToStart);
     const fvDeposits = calculateFVAnnuity(p.monthlyAnnualContribution, returnRate, monthsToPay);
-    const deferredYears = Math.max(0, p.desiredStartAge - params.retirementAge);
+    const deferredYears = Math.max(0, pStartAge - params.retirementAge);
     const fvDepositsCompounded = calculateFV(fvDeposits, returnRate, deferredYears);
 
     personalLumpSum += (fvCurrent + fvDepositsCompounded);
@@ -169,9 +173,11 @@ export function runPensionSimulation(
 
   // 5. Project Pension Insurance (3층 - 연금보험)
   let insuranceLumpSum = 0;
+  const insuranceStartAge = Math.max(55, params.retirementAge);
+  const insuranceYearsToStart = Math.max(0, insuranceStartAge - currentAge);
   insurance.forEach((i) => {
     const paymentYears = Math.min(i.paymentPeriod, yearsToRetire);
-    const yearsToStart = yearsToRetire;
+    const yearsToStart = insuranceYearsToStart;
 
     // 명목 기준: 공시이율(명목) 사용
     const realRate = Math.max(0.5, i.expectedDeclaredRate);
@@ -237,37 +243,38 @@ export function runPensionSimulation(
     const yearsSinceRetirement = Math.max(0, age - params.retirementAge);
     const decumulationMultiplier = getDecumulationMultiplier(yearsSinceRetirement + 1, strategyForScale);
 
-    // Retirement Pension Payout
-    if (age >= params.retirementAge && age < params.retirementAge + retirementAnnuityYears) {
+    // Retirement Pension Payout (최소 만 55세부터)
+    if (age >= retirementPayoutStartAge && age < retirementPayoutStartAge + retirementAnnuityYears) {
       retirementPayout = monthlyRetirementPayout * decumulationMultiplier * retirementScale;
     }
 
-    // Personal Pension Savings Payout
+    // Personal Pension Savings Payout (최소 만 55세부터)
     personal.forEach((p) => {
-      const receivingPeriod = capYears(p.receivingPeriod, p.desiredStartAge);
-      if (age >= p.desiredStartAge && age < p.desiredStartAge + receivingPeriod) {
+      const pStartAge = Math.max(55, p.desiredStartAge || 55);
+      const receivingPeriod = capYears(p.receivingPeriod, pStartAge);
+      if (age >= pStartAge && age < pStartAge + receivingPeriod) {
         const pNominalRate = p.savingsType === "FUND" ? 4.5 : 2.5;
         const pRealRate = Math.max(0.5, pNominalRate);
-        const pLump = calculateFV(p.totalAccumulated, pRealRate, Math.max(0, p.desiredStartAge - currentAge)) +
-          calculateFV(calculateFVAnnuity(p.monthlyAnnualContribution, pRealRate, Math.max(0, Math.min(p.desiredStartAge - currentAge, params.retirementAge - currentAge)) * 12), pRealRate, Math.max(0, p.desiredStartAge - params.retirementAge));
+        const pLump = calculateFV(p.totalAccumulated, pRealRate, Math.max(0, pStartAge - currentAge)) +
+          calculateFV(calculateFVAnnuity(p.monthlyAnnualContribution, pRealRate, Math.max(0, Math.min(pStartAge - currentAge, params.retirementAge - currentAge)) * 12), pRealRate, Math.max(0, pStartAge - params.retirementAge));
 
         const payout = calculateAnnuityPayout(pLump, receivingPeriod, pRealRate);
         
         // 개인연금 수령 시작 후 경과 연수에 맞춰 체감률 적용
-        const yearsSinceStart = Math.max(0, age - p.desiredStartAge);
+        const yearsSinceStart = Math.max(0, age - pStartAge);
         const personalMultiplier = getDecumulationMultiplier(yearsSinceStart + 1, strategyForScale);
 
         personalPayout += payout * personalMultiplier * decumulationScale(receivingPeriod, pRealRate, strategyForScale);
       }
     });
 
-    // Pension Insurance Payout
+    // Pension Insurance Payout (최소 만 55세부터)
     insurance.forEach((i) => {
-      const payoutYears = capYears(Math.max(20, expectedLife - params.retirementAge), params.retirementAge);
-      if (age >= params.retirementAge && age < params.retirementAge + payoutYears) {
+      const payoutYears = capYears(Math.max(20, expectedLife - insuranceStartAge), insuranceStartAge);
+      if (age >= insuranceStartAge && age < insuranceStartAge + payoutYears) {
         const iRealRate = Math.max(0.5, i.expectedDeclaredRate);
-        const iLump = calculateFV(i.totalAccumulated, iRealRate, yearsToRetire) +
-          calculateFV(calculateFVAnnuity(i.monthlyPayment, iRealRate, Math.min(i.paymentPeriod, yearsToRetire) * 12), iRealRate, Math.max(0, yearsToRetire - Math.min(i.paymentPeriod, yearsToRetire)));
+        const iLump = calculateFV(i.totalAccumulated, iRealRate, insuranceYearsToStart) +
+          calculateFV(calculateFVAnnuity(i.monthlyPayment, iRealRate, Math.min(i.paymentPeriod, yearsToRetire) * 12), iRealRate, Math.max(0, insuranceYearsToStart - Math.min(i.paymentPeriod, yearsToRetire)));
 
         const payout = calculateAnnuityPayout(iLump, payoutYears, iRealRate);
         insurancePayout += payout * decumulationMultiplier * decumulationScale(payoutYears, iRealRate, strategyForScale);

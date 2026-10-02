@@ -218,9 +218,27 @@ export function planHouseholdSmoothing(
     const d = pot > 0 ? drawAt(L, g, t) : 0;
     const both = r.self.alive && !!r.spouse?.alive;
     const selfShare = both ? wSelf : r.self.alive ? 1 : 0;
+
+    // 소득세법상 사적연금(퇴직·개인연금)은 만 55세 이상부터만 연금 수령 가능
+    const selfEligible = r.self.alive && r.self.age >= 55;
+    const spouseEligible = !!r.spouse?.alive && r.spouse.age >= 55;
+
+    let sAmt = 0;
+    let pAmt = 0;
+    if (selfEligible && spouseEligible) {
+      sAmt = d * selfShare;
+      pAmt = d * (1 - selfShare);
+    } else if (selfEligible) {
+      sAmt = d;
+      pAmt = 0;
+    } else if (spouseEligible) {
+      sAmt = 0;
+      pAmt = d;
+    }
+
     return {
-      self: split(d * selfShare, both ? catPvSelf : catPv),
-      spouse: split(d * (1 - selfShare), both ? catPvSpouse : catPv),
+      self: split(sAmt, both ? catPvSelf : catPv),
+      spouse: split(pAmt, both ? catPvSpouse : catPv),
     };
   });
 
@@ -324,9 +342,11 @@ export function personParams(params: SimulationParamsState, who: "SELF" | "SPOUS
     nationalPensionStartAge: params.spouseNationalPensionStartAge,
     nationalPensionDeferYears: params.spouseNationalPensionDeferYears,
     privatePensionEndAge: params.spousePrivatePensionEndAge,
-    // 인출 시작은 가구 기준 같은 해: 본인 나이로 받은 값을 배우자 나이로 바꾼다
+    // 인출 시작은 가구 기준 같은 해: 본인 나이로 받은 값을 배우자 나이로 바꾼다 (최소 55세 보장)
     privateDrawStartAge:
-      params.privateDrawStartAge > 0 ? params.privateDrawStartAge - params.currentAge + (params.spouseAge ?? params.currentAge) : 0,
+      params.privateDrawStartAge > 0
+        ? Math.max(55, params.privateDrawStartAge - params.currentAge + (params.spouseAge ?? params.currentAge))
+        : 0,
   };
 }
 
@@ -489,7 +509,7 @@ export function runCoupleSimulation(
     infl,
     endAge - selfAge0,
     declineRate,
-    privateDrawStartAgeOf(params) - selfAge0,
+    Math.max(0, privateDrawStartAgeOf(params) - selfAge0),
     {
       spendingPattern: params.spendingPattern,
       activePhaseYears: params.activePhaseYears,

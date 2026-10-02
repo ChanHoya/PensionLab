@@ -6,7 +6,6 @@ import { runCoupleSimulation } from "@/services/coupleSimulation";
 import {
   analyzePrivatePensionTax,
   PRIVATE_PENSION_TAX_LIMIT,
-  PRIVATE_PENSION_MONTHLY_LIMIT,
 } from "@/services/privatePensionTaxOptimizer";
 
 interface PrivatePensionTaxModalProps {

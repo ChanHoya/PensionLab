@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { usePensionStore, type SimulationParamsState, type AgeBandsConfig, DEFAULT_AGE_BANDS } from "@/store/usePensionStore";
+import { usePensionStore, type SimulationParamsState, DEFAULT_AGE_BANDS } from "@/store/usePensionStore";
 import { NPS_RULES } from "@/config/npsRules";
 import { statutoryStartAgeOf } from "@/services/coupleSimulation";
 

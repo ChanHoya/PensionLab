@@ -20,7 +20,7 @@ export function HealthInsuranceBillModal({ isOpen, onClose }: HealthInsuranceBil
 
   const [propertyTaxBaseManwon, setPropertyTaxBaseManwon] = useState<number>(initialPropertyManwon);
   const [financialIncomeManwon, setFinancialIncomeManwon] = useState<number>(initialFinancialManwon);
-  const [publicPensionManwon, setPublicPensionManwon] = useState<number>(initialPublicPensionManwon);
+  const [publicPensionManwon] = useState<number>(initialPublicPensionManwon);
   const [lastSalaryManwon, setLastSalaryManwon] = useState<number>(initialSalaryManwon);
 
   const bill = useMemo(() => {

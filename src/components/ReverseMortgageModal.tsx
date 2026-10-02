@@ -4,7 +4,6 @@ import React, { useState, useMemo } from "react";
 import { usePensionStore } from "@/store/usePensionStore";
 import {
   calculateReverseMortgage,
-  HF_MAX_PROPERTY_PRICE_WON,
 } from "@/services/reverseMortgageCalculator";
 
 interface ReverseMortgageModalProps {

@@ -25,6 +25,11 @@ graph TD
   Dashboard[src/app/dashboard/page.tsx] --> Store
   Dashboard --> Calculator
   Calculator --> Store
+  PersonaModal[src/components/PersonaPresetModal.tsx] --> Personas[src/config/personas.ts]
+  PersonaModal --> Store
+  Dashboard --> PersonaModal
+  OnboardingUI --> PersonaModal
+  AIAdvisor --> PersonaModal
 
   %% Sprint 2 Additions
   Dashboard --> Report[src/app/dashboard/report/page.tsx]

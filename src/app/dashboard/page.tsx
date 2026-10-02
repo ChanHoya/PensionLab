@@ -15,6 +15,7 @@ import AiHelper from "@/components/AiHelper";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
+import PersonaPresetModal from "@/components/PersonaPresetModal";
 
 // Import Recharts components
 import {
@@ -160,6 +161,9 @@ export default function DashboardPage() {
   // 왼쪽 입력 열 접기
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // 대표 가구 페르소나 모달 열림 상태
+  const [personaModalOpen, setPersonaModalOpen] = useState(false);
+
   const handleExportData = () => {
     const data = {
       nationalPension: store.nationalPension,
@@ -263,9 +267,25 @@ export default function DashboardPage() {
     );
   }
 
-  // 백업·복원 버튼: 부부 시뮬레이션 제목 오른쪽 (배우자 없음이면 같은 자리 오른쪽 정렬)
+  // 백업·복원·페르소나 버튼: 부부 시뮬레이션 제목 오른쪽 (배우자 없음이면 같은 자리 오른쪽 정렬)
   const dataActions = (
-    <div style={{ display: "flex", gap: "6px" }}>
+    <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+      <button
+        id="btn-persona-preset"
+        onClick={() => setPersonaModalOpen(true)}
+        className="premium-button"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+          color: "#ffffff",
+          border: "none",
+        }}
+        title="대한민국 대표 가구 페르소나 데이터 1초 만에 불러오기"
+      >
+        👫 대표 페르소나 체험
+      </button>
       <button
         id="btn-export-data"
         onClick={handleExportData}
@@ -487,6 +507,24 @@ export default function DashboardPage() {
               buttonClassName="premium-button-secondary"
               buttonStyle={{ padding: "8px 16px" }}
             />
+            <button
+              onClick={() => setPersonaModalOpen(true)}
+              className="premium-button"
+              style={{
+                padding: "8px 16px",
+                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 700,
+                border: "none",
+              }}
+              id="btn-header-persona"
+              title="대표 가구 페르소나 데이터 불러오기"
+            >
+              <span>👫</span>
+              <span>페르소나 체험</span>
+            </button>
             <Link href="/onboarding" className="premium-button-secondary" style={{ padding: "8px 16px" }} id="btn-re-onboard">
               정보 재입력
             </Link>
@@ -966,6 +1004,10 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      <PersonaPresetModal
+        isOpen={personaModalOpen}
+        onClose={() => setPersonaModalOpen(false)}
+      />
     </main>
   );
 }

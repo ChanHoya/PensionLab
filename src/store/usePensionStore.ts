@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { getPersonaById } from "@/config/personas";
 
 export interface NationalPensionState {
   contributionMonths: number;
@@ -174,7 +175,7 @@ export interface SpouseState {
 
 export type PersonData = SpouseState;
 
-interface StoreData {
+export interface StoreData {
   nationalPension: NationalPensionState;
   basicPension: BasicPensionState;
   retirementPensions: RetirementPensionState[];
@@ -206,6 +207,7 @@ interface PensionStore extends StoreData {
   setAdditionalPayment: (data: Partial<AdditionalPaymentState>, who?: Who) => void;
   setReturnRepayment: (data: Partial<ReturnRepaymentState>, who?: Who) => void;
   importStoreData: (data: Partial<StoreData>) => void;
+  loadPersonaPreset: (presetId: string) => boolean;
   resetStore: () => void;
 }
 
@@ -313,7 +315,7 @@ const initialSpouse: SpouseState = {
   pensionInsurances: [],
 };
 
-const initialData: StoreData = {
+export const initialData: StoreData = {
   nationalPension: initialNationalPension,
   basicPension: initialBasicPension,
   retirementPensions: [],
@@ -460,6 +462,13 @@ export const usePensionStore = create<PensionStore>()(
 
       // 백업 파일은 이전 버전일 수 있으므로 빠진 필드를 초기값으로 채운다
       importStoreData: (data) => set(mergeWithDefaults(data, initialData)),
+
+      loadPersonaPreset: (presetId) => {
+        const preset = getPersonaById(presetId);
+        if (!preset) return false;
+        set(mergeWithDefaults(preset.data, initialData));
+        return true;
+      },
 
       resetStore: () => set(initialData),
     }),

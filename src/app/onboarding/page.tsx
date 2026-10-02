@@ -14,6 +14,7 @@ import BasicPensionForm from "@/components/BasicPensionForm";
 import { extractPdfText } from "@/utils/pdfText";
 import FssUploadPanel, { FSS_SLOTS, emptyFssFiles, type FssFiles, type FssSlot } from "@/components/FssUploadPanel";
 import PensionStructureSummary from "@/components/PensionStructureSummary";
+import PersonaPresetModal from "@/components/PersonaPresetModal";
 
 type StepKind = "INFO" | "GOAL" | "FSS" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SUMMARY";
 
@@ -142,6 +143,7 @@ export default function OnboardingPage() {
   const [nationalInputMode, setNationalInputMode] = useState<"DETAILED" | "SYNC" | "ADDITIONAL">("DETAILED");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [personaModalOpen, setPersonaModalOpen] = useState(false);
 
   // PDF 파싱 관련 상태 변수들
   // 금감원 통합연금 PDF (사람별·항목별). 「다음 단계」에서 한 번에 분석
@@ -680,6 +682,20 @@ export default function OnboardingPage() {
               ]}
               buttonStyle={styles.saveBtn}
             />
+            <button
+              type="button"
+              onClick={() => setPersonaModalOpen(true)}
+              style={{
+                ...styles.saveBtn,
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%)",
+                borderColor: "rgba(99, 102, 241, 0.4)",
+                color: "var(--text-primary)",
+                fontWeight: 700,
+              }}
+              title="대한민국 대표 가구 페르소나 데이터 1초 만에 불러오기"
+            >
+              👫 페르소나 샘플
+            </button>
             <button onClick={handleSaveData} style={styles.saveBtn} title="현재 입력 데이터를 JSON으로 저장">
               💾 저장
             </button>
@@ -788,6 +804,48 @@ export default function OnboardingPage() {
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div style={styles.infoAlert}>
                   👤 본인 및 가족 구성원의 정보와 노후 지출 목표를 입력하면 더욱 정확한 시뮬레이션이 가능해집니다.
+                </div>
+
+                {/* 페르소나 원클릭 퀵스타트 배너 */}
+                <div
+                  style={{
+                    backgroundColor: "rgba(99, 102, 241, 0.08)",
+                    border: "1px solid rgba(99, 102, 241, 0.25)",
+                    borderRadius: "12px",
+                    padding: "16px 20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "16px",
+                    flexWrap: "wrap",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                    <span style={{ fontSize: "1.8rem" }}>⚡</span>
+                    <div>
+                      <strong style={{ fontSize: "0.98rem", color: "var(--text-primary)", display: "block", marginBottom: "3px" }}>
+                        빠른 시작: 대한민국 대표 가구 페르소나 3종 원클릭 체험
+                      </strong>
+                      <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                        직접 수치를 입력하기 전, 40대 맞벌이·50대 퇴직준비·자영업/배당집중형 샘플로 시뮬레이션 및 AI 진단을 즉시 확인해보세요.
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPersonaModalOpen(true)}
+                    className="premium-button"
+                    style={{
+                      fontSize: "0.84rem",
+                      padding: "10px 18px",
+                      fontWeight: 700,
+                      background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    👫 대표 페르소나 둘러보기
+                  </button>
                 </div>
                 
                 <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>본인 및 가족 정보</h3>
@@ -2188,6 +2246,14 @@ export default function OnboardingPage() {
           </div>
         </section>
       </div>
+      <PersonaPresetModal
+        isOpen={personaModalOpen}
+        onClose={() => setPersonaModalOpen(false)}
+        onSelectSuccess={(preset) => {
+          localStorage.setItem("pensionlab_user_id", `persona_${preset.id}`);
+          router.push("/dashboard");
+        }}
+      />
     </main>
   );
 }

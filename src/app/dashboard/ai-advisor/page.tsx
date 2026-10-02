@@ -9,6 +9,7 @@ import DiagnosisReport from "@/components/DiagnosisReport";
 import { buildHouseholdReport, type HouseholdReport, type ReportInput } from "@/services/householdReport";
 import { fallbackNarrative, type ReportNarrative } from "@/services/reportNarrative";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
+import PersonaPresetModal from "@/components/PersonaPresetModal";
 
 const emptySubscribe = () => () => {};
 
@@ -28,6 +29,7 @@ export default function AiAdvisorPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [pdfDownloading, setPdfDownloading] = useState(false);
+  const [personaModalOpen, setPersonaModalOpen] = useState(false);
 
   useEffect(() => {
     const savedUserId = typeof window !== "undefined" ? localStorage.getItem("pensionlab_user_id") : null;
@@ -175,6 +177,24 @@ export default function AiAdvisorPage() {
             </Link>
           </nav>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+            <button
+              onClick={() => setPersonaModalOpen(true)}
+              className="premium-button"
+              style={{
+                padding: "8px 16px",
+                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 700,
+                border: "none",
+              }}
+              id="btn-header-persona"
+              title="대표 가구 페르소나 데이터 불러오기"
+            >
+              <span>👫</span>
+              <span>페르소나 체험</span>
+            </button>
             <ThemeToggle />
             <Link
               href="/onboarding"
@@ -306,6 +326,10 @@ export default function AiAdvisorPage() {
           </div>
         )}
       </div>
+      <PersonaPresetModal
+        isOpen={personaModalOpen}
+        onClose={() => setPersonaModalOpen(false)}
+      />
     </main>
   );
 }

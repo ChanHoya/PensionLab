@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
@@ -136,6 +136,8 @@ const BarTooltip = ({ active, payload, label }: any) => {
 
 // 화면에 보이는 시나리오 (S2 국민연금 5년 연기는 왼쪽 입력의 연기 옵션으로 흡수)
 type ScenarioTab = Exclude<StrategySimulationResult["strategyId"], "S2">;
+// S31-4: 인출전략 연도별 상세 표 보기 옵션 필터
+type FlowFilterMode = "ALL" | "5YEARS" | "EVENTS";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -159,6 +161,7 @@ export default function DashboardPage() {
   // PDF download loading state
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [detailTableOpen, setDetailTableOpen] = useState(true); // 연도별 상세 표 접기
+  const [flowFilter, setFlowFilter] = useState<FlowFilterMode>("ALL"); // S31-4: 인출전략 연도별 표 필터
 
   // 왼쪽 입력 열 접기
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -456,11 +459,8 @@ export default function DashboardPage() {
     deficit: 0,
   });
 
-  // S31-4: 인출전략 연도별 상세 표 보기 옵션 필터
-  type FlowFilterMode = "ALL" | "5YEARS" | "EVENTS";
-  const [flowFilter, setFlowFilter] = useState<FlowFilterMode>("ALL");
-
-  const filteredFlows = useMemo(() => {
+  // S31-4: 인출전략 연도별 상세 표 필터링 계산
+  const filteredFlows = (() => {
     const flows = activeResult.flows;
     if (flowFilter === "ALL") return flows;
     if (flowFilter === "5YEARS") {
@@ -478,7 +478,7 @@ export default function DashboardPage() {
       if (firstDeathAge && f.age === firstDeathAge) return true;
       return false;
     });
-  }, [activeResult, flowFilter, firstDeathAge]);
+  })();
 
   const handleExportFlowsCsv = () => {
     exportWithdrawalFlowsCsv(activeResult.flows, {

@@ -31,12 +31,14 @@ graph TD
   OnboardingUI --> PersonaModal
   AIAdvisor --> PersonaModal
 
-  %% Sprint 31 Additions (BEP Modal & Engine)
+  %% Sprint 31 Additions (BEP Modal, Engine & CSV Export)
   Dashboard --> CoupleSimSec[src/components/CoupleSimulationSection.tsx]
   Dashboard --> NpsBepModal[src/components/NpsEarlyDeferralModal.tsx]
   CoupleSimSec --> NpsBepModal
   NpsBepModal --> NpsBepCalc[src/services/npsEarlyDeferralBep.ts]
   NpsBepCalc --> NpsRules[src/config/npsRules.ts]
+  CoupleSimSec --> ExportCsv[src/utils/exportCsv.ts]
+  Dashboard --> ExportCsv
 
 
   %% Sprint 2 Additions

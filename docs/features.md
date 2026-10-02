@@ -37,5 +37,10 @@
   2) 골든 크로스오버 나이(조기 vs 정상 크로스오버 약 76.7세, 정상 vs 연기 크로스오버 약 83.9세, 조기 vs 연기 크로스오버 약 80.6세) 및 사용자 기대수명 기준 맞춤 추천 전략 자동 도출
   3) 인터랙티브 Recharts 누적 수령액 곡선 차트(ReferenceLine 크로스오버/기대수명 마커 및 커스텀 툴팁), 3대 전략 상세 비교 카드(개시 나이·월 수령액·80/85/90세 누적액·건보료 피부양자 자격 판정·장단점·권장 대상) 및 CFP 의사결정 가이드 탑재
   4) 대시보드 상단 헤더(`btn-header-nps-bep`), `dataActions` 바(`btn-nps-bep-actions`), `CoupleSimulationSection` 탭 바 및 `국민연금 적립·인상 기준` 상세 드롭다운 내 손익분기 비교기 모달(`src/components/NpsEarlyDeferralModal.tsx`) 연동 (Sprint 31, Story S31-3)
+- **[FEAT-024] 시뮬레이션 연도별 상세 테이블 필터링 및 엑셀(CSV) 내보내기**:
+  1) UTF-8 BOM(\uFEFF) 지원 한국어 엑셀 호환 CSV 다운로드 유틸리티(`src/utils/exportCsv.ts`) 구현 (쉼표/따옴표/줄바꿈 완벽 이스케이프 및 즉시 브라우저 다운로드)
+  2) 부부 연금 시뮬레이션 요약 표(`CoupleSimulationSection.tsx`): 5년 간격 요약(`5YEARS`) vs 주요 마일스톤(`EVENTS`: 은퇴, 국민연금개시, 기초연금, 70/80세, 유족연금전환 등) vs 전체 연도(`ALL`: 1년 단위) 세그먼트 필터 및 비고 이벤트 태그, `📥 엑셀(CSV) 다운로드` 기능 추가
+  3) 인출전략 연도별 상세 현금흐름 및 세후 시뮬레이션 표(`page.tsx`): 전체 연도(`ALL`) vs 5년 간격(`5YEARS`) vs 주요 마일스톤(`EVENTS`: 소득공백, 연금개시, 세제감면종료, 적자발생, 피부양자탈락 등) 필터 및 전략별 세전/세후/공제액 정리 `📥 엑셀(CSV) 다운로드` 기능 연동 (Sprint 31, Story S31-4)
+
 
 

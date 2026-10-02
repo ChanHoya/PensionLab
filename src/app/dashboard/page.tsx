@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { usePensionStore } from "@/store/usePensionStore";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
+import { exportWithdrawalFlowsCsv } from "@/utils/exportCsv";
 import type { StrategySimulationResult } from "@/services/withdrawalCalculator";
 import { runHouseholdScenarios } from "@/services/householdScenarios";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
@@ -454,6 +455,38 @@ export default function DashboardPage() {
     totalPostTax: 0,
     deficit: 0,
   });
+
+  // S31-4: 인출전략 연도별 상세 표 보기 옵션 필터
+  type FlowFilterMode = "ALL" | "5YEARS" | "EVENTS";
+  const [flowFilter, setFlowFilter] = useState<FlowFilterMode>("ALL");
+
+  const filteredFlows = useMemo(() => {
+    const flows = activeResult.flows;
+    if (flowFilter === "ALL") return flows;
+    if (flowFilter === "5YEARS") {
+      return flows.filter((f, i) => i % 5 === 0 || i === flows.length - 1);
+    }
+    // EVENTS: 주요 이벤트 마일스톤
+    return flows.filter((f, i) => {
+      if (i === 0 || i === flows.length - 1) return true;
+      if (f.nationalPreTax > 0 && (i === 0 || flows[i - 1].nationalPreTax === 0)) return true;
+      if (f.age === 65 || f.age === 70 || f.age === 80) return true;
+      if (i > 0 && flows[i - 1].retirementPreTax > 0 && f.retirementPreTax === 0) return true;
+      if (i > 0 && flows[i - 1].personalPreTax > 0 && f.personalPreTax === 0) return true;
+      if (f.deficit > 0 && (i === 0 || flows[i - 1].deficit === 0)) return true;
+      if (activeResult.lostDependencyAge && f.age === activeResult.lostDependencyAge) return true;
+      if (firstDeathAge && f.age === firstDeathAge) return true;
+      return false;
+    });
+  }, [activeResult, flowFilter, firstDeathAge]);
+
+  const handleExportFlowsCsv = () => {
+    exportWithdrawalFlowsCsv(activeResult.flows, {
+      strategyId: activeResult.strategyId,
+      strategyName: activeResult.strategyName,
+      hasSpouse,
+    });
+  };
 
   const barChartData = [
     {
@@ -929,19 +962,61 @@ export default function DashboardPage() {
 
             {/* 3. Detailed Year-by-Year Table */}
             <div style={styles.dashboardCard} className="premium-card">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-                <h3 style={styles.chartTitle}>연도별 상세 현금흐름 및 세후 시뮬레이션 표</h3>
-                <button
-                  type="button"
-                  data-html2canvas-ignore
-                  onClick={() => setDetailTableOpen((v) => !v)}
-                  className="premium-button-secondary"
-                  style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700, whiteSpace: "nowrap" }}
-                >
-                  {detailTableOpen ? "▲ 접기" : "▼ 펼치기"}
-                </button>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                  <h3 style={styles.chartTitle}>연도별 상세 현금흐름 및 세후 시뮬레이션 표</h3>
+                  {/* S31-4: 보기 옵션 필터 세그먼트 */}
+                  <div style={styles.toggleGroup} data-html2canvas-ignore>
+                    <button
+                      type="button"
+                      onClick={() => setFlowFilter("ALL")}
+                      style={flowFilter === "ALL" ? styles.toggleBtnActive : styles.toggleBtn}
+                    >
+                      전체 (1년 단위)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFlowFilter("5YEARS")}
+                      style={flowFilter === "5YEARS" ? styles.toggleBtnActive : styles.toggleBtn}
+                    >
+                      5년 간격 요약
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFlowFilter("EVENTS")}
+                      style={flowFilter === "EVENTS" ? styles.toggleBtnActive : styles.toggleBtn}
+                    >
+                      주요 마일스톤
+                    </button>
+                  </div>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                    ({filteredFlows.length}개 연도)
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }} data-html2canvas-ignore>
+                  <button
+                    type="button"
+                    onClick={handleExportFlowsCsv}
+                    className="premium-button-secondary"
+                    style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700, whiteSpace: "nowrap" }}
+                    title="선택된 인출전략의 연도별 세전/세후 현금흐름을 엑셀(CSV) 파일로 저장합니다"
+                  >
+                    📥 엑셀(CSV) 다운로드
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDetailTableOpen((v) => !v)}
+                    className="premium-button-secondary"
+                    style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700, whiteSpace: "nowrap" }}
+                  >
+                    {detailTableOpen ? "▲ 접기" : "▼ 펼치기"}
+                  </button>
+                </div>
               </div>
-              <p style={styles.chartSubtitle}>원 단위 계산식을 만 원 단위로 절사한 상세 연도별 테이블</p>
+              <p style={styles.chartSubtitle}>
+                {activeResult.strategyName} 기준 · 원 단위 계산식을 만 원 단위로 절사한 상세 연도별 테이블
+              </p>
 
               {detailTableOpen && (
               <div style={styles.tableWrapper}>
@@ -965,7 +1040,7 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {activeResult.flows.map((flow) => (
+                    {filteredFlows.map((flow) => (
                       <tr key={flow.age} style={styles.tr}>
                         <td style={styles.td}>{flow.age}세</td>
                         {hasSpouse && <td style={styles.td}>{flow.spouseAge ? `${flow.spouseAge}세` : "-"}</td>}
@@ -1338,5 +1413,35 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "var(--text-muted)",
     lineHeight: "1.6",
     marginBottom: "8px",
+  },
+  toggleGroup: {
+    display: "inline-flex",
+    backgroundColor: "var(--background)",
+    border: "1px solid var(--border)",
+    borderRadius: "6px",
+    padding: "2px",
+    gap: "2px",
+  },
+  toggleBtn: {
+    padding: "4px 10px",
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    backgroundColor: "transparent",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+  },
+  toggleBtnActive: {
+    padding: "4px 10px",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: "#ffffff",
+    backgroundColor: "var(--primary, #6366f1)",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
   },
 };

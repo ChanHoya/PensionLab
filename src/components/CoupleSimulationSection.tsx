@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -17,6 +17,7 @@ import {
 import type { CoupleSimulationResult, CoupleYear, PersonYear } from "@/services/coupleSimulation";
 import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
+import { exportCoupleSimulationCsv } from "@/utils/exportCsv";
 import type { PaidTotals } from "@/services/paidTotals";
 import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps, pensionSeriesValues } from "@/components/pensionSeries";
 import { buildSpendingCurve } from "@/services/spendingCurve";
@@ -146,18 +147,54 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   type CriteriaTab = "SURVIVOR" | "NATIONAL" | "RETIREMENT_PRIVATE" | "SMOOTHING";
   const [activeCriteriaTab, setActiveCriteriaTab] = useState<CriteriaTab | null>(null);
 
-  // 표: 5년 간격 + 사망 전후 해
-  const keyRows = rows.filter(
-    (r, i) => i % 5 === 0 || i === deathIndex || i === deathIndex - 1 || i === rows.length - 1
-  );
-  const remark = (r: CoupleYear) => {
+  // 표 보기 옵션 필터 (S31-4)
+  type TableFilterMode = "5YEARS" | "EVENTS" | "ALL";
+  const [tableFilter, setTableFilter] = useState<TableFilterMode>("5YEARS");
+
+  // 주요 이벤트 마일스톤 판별
+  const isKeyMilestone = (r: CoupleYear, i: number) => {
+    if (i === 0 || i === rows.length - 1) return true;
+    if (r.self.age === (simulationParams.retirementAge || 60)) return true;
+    if (r.self.age === selfStartAge) return true;
+    if (r.spouse && r.spouse.age === spouseStartAge) return true;
+    if (r.self.age === 65 || (r.spouse && r.spouse.age === 65)) return true;
+    if (r.self.age === 70 || r.self.age === 80) return true;
+    if (i === deathIndex || i === deathIndex - 1) return true;
+    return false;
+  };
+
+  const filteredRows = useMemo(() => {
+    if (tableFilter === "ALL") return rows;
+    if (tableFilter === "EVENTS") return rows.filter(isKeyMilestone);
+    // 5YEARS: 5년 간격 + 사망 전후 해 + 마지막 해
+    return rows.filter(
+      (r, i) => i % 5 === 0 || i === deathIndex || i === deathIndex - 1 || i === rows.length - 1
+    );
+  }, [rows, tableFilter, deathIndex, simulationParams, selfStartAge, spouseStartAge]);
+
+  const remark = (r: CoupleYear, i: number) => {
     const notes: string[] = [];
+    if (i === 0) notes.push("현재");
+    if (r.self.age === (simulationParams.retirementAge || 60)) notes.push("은퇴");
+    if (r.self.age === selfStartAge) notes.push("국민연금개시");
+    if (r.spouse && r.spouse.age === spouseStartAge) notes.push("배우자국민개시");
+    if (r.self.age === 65) notes.push("기초연금개시");
+    if (r.self.age === 70) notes.push("70세");
     if (!r.self.alive) notes.push("본인 사망");
     if (r.spouse && !r.spouse.alive) notes.push("배우자 사망");
     const choice = r.self.survivorChoice ?? r.spouse?.survivorChoice;
     if (choice === "SURVIVOR") notes.push("유족연금 선택");
     if (choice === "OWN_PLUS_30") notes.push("본인연금+유족 30%");
     return notes.join(", ");
+  };
+
+  const handleExportCsv = () => {
+    exportCoupleSimulationCsv(rows, {
+      isRealValue,
+      inflationRate: infl,
+      hasSpouse,
+      remarksMap: (r) => remark(r, rows.indexOf(r)),
+    });
   };
 
   // 은퇴 후 평균 월 수령액 및 생애 총 수령액 지표 계산 (현재가치/명목 토글 실시간 반영)
@@ -609,16 +646,58 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
       </div>
 
       <div style={styles.header}>
-        <span style={styles.tableTitle}>연도별 요약 (5년 간격 + 사망 전후)</span>
-        <button
-          type="button"
-          data-html2canvas-ignore
-          onClick={() => setTableOpen((v) => !v)}
-          className="premium-button-secondary"
-          style={styles.pdfButton}
-        >
-          {tableOpen ? "▲ 접기" : "▼ 펼치기"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+          <span style={styles.tableTitle}>
+            연도별 연금 요약 표 ({isRealValue ? "현재가치 실질" : "명목금액"})
+          </span>
+          {/* S31-4: 보기 옵션 필터 세그먼트 */}
+          <div style={styles.toggleGroup} data-html2canvas-ignore>
+            <button
+              type="button"
+              onClick={() => setTableFilter("5YEARS")}
+              style={tableFilter === "5YEARS" ? styles.toggleBtnActive : styles.toggleBtn}
+            >
+              5년 간격 요약
+            </button>
+            <button
+              type="button"
+              onClick={() => setTableFilter("EVENTS")}
+              style={tableFilter === "EVENTS" ? styles.toggleBtnActive : styles.toggleBtn}
+            >
+              주요 마일스톤
+            </button>
+            <button
+              type="button"
+              onClick={() => setTableFilter("ALL")}
+              style={tableFilter === "ALL" ? styles.toggleBtnActive : styles.toggleBtn}
+            >
+              전체 (1년 단위)
+            </button>
+          </div>
+          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+            ({filteredRows.length}개 연도)
+          </span>
+        </div>
+
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }} data-html2canvas-ignore>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="premium-button-secondary"
+            style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+            title="엑셀(Excel)에서 바로 열 수 있는 한글 CSV 파일로 다운로드합니다"
+          >
+            📥 엑셀(CSV) 다운로드
+          </button>
+          <button
+            type="button"
+            onClick={() => setTableOpen((v) => !v)}
+            className="premium-button-secondary"
+            style={styles.pdfButton}
+          >
+            {tableOpen ? "▲ 접기" : "▼ 펼치기"}
+          </button>
+        </div>
       </div>
       {tableOpen && (
       <div style={{ overflowX: "auto" }}>
@@ -635,17 +714,48 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             </tr>
           </thead>
           <tbody>
-            {keyRows.map((r) => (
-              <tr key={r.year}>
-                <td style={styles.td}>{r.year}</td>
-                <td style={styles.td}>{r.self.age}세</td>
-                <td style={styles.td}>{r.spouse ? `${r.spouse.age}세` : "-"}</td>
-                <td style={styles.td}>{fmt(r.self.total)}</td>
-                <td style={styles.td}>{r.spouse ? fmt(r.spouse.total) : "-"}</td>
-                <td style={styles.td}><strong>{fmt(r.household)}</strong></td>
-                <td style={styles.td}>{remark(r)}</td>
-              </tr>
-            ))}
+            {filteredRows.map((r) => {
+              const i = rows.indexOf(r);
+              const noteText = remark(r, i);
+              const isEventRow = isKeyMilestone(r, i);
+
+              return (
+                <tr
+                  key={r.year}
+                  style={
+                    isEventRow && tableFilter === "ALL"
+                      ? { backgroundColor: "rgba(99, 102, 241, 0.04)" }
+                      : undefined
+                  }
+                >
+                  <td style={styles.td}>{r.year}</td>
+                  <td style={styles.td}>{r.self.age}세</td>
+                  <td style={styles.td}>{r.spouse ? `${r.spouse.age}세` : "-"}</td>
+                  <td style={styles.td}>{fmt(r.self.total)}</td>
+                  <td style={styles.td}>{r.spouse ? fmt(r.spouse.total) : "-"}</td>
+                  <td style={styles.td}><strong>{fmt(r.household)}</strong></td>
+                  <td style={styles.td}>
+                    {noteText ? (
+                      <span
+                        style={{
+                          fontSize: "0.72rem",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(99, 102, 241, 0.15)",
+                          color: "var(--text-accent)",
+                          fontWeight: 600,
+                          display: "inline-block",
+                        }}
+                      >
+                        {noteText}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

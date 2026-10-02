@@ -44,6 +44,16 @@
 
 ## Active Sprint / Story
 - **Sprint 28**: 완료 (지출 패턴 맞춤형 연금 인출 설계 & AI 진단 와이드 뷰/PDF 가독성 분리)
+- **Next Sprint**: 대기 중 (다음 세션 시작 시 `sprint-manager` 호출하여 새로운 기능 기획 또는 추가 개선 착수)
+
+## Session Handoff (Sprint 28 완료)
+- **주요 산출물**:
+  1. `SpendingCurve` 서비스 (`buildSpendingCurve`, `getSpendingMultiplier`, 3대 지출 패턴 지원)
+  2. 부부 평탄화 및 인출 엔진 연동 (`planHouseholdSmoothing`, `calculateWeightedPMT`, S1~S4 통합 인출 패스)
+  3. AI 포트폴리오 진단 리포트 현실화 (지출 곡선 대비 충족률 및 소득 충분성 재산정, 현금흐름 차트 지출 목표선 오버레이)
+  4. 진단 화면 1680px 와이드 레이아웃 확장 및 A4 PDF 전용 1040px 듀얼 렌더링 컨테이너 격리
+- **검증 상태**: `npx tsc --noEmit` 무결점(0 에러), 단위/검증 테스트 스위트 통과, 브라우저 서브에이전트 UI 및 PDF 다운로드 기능 검증 완료.
+- **Git 상태**: PR #44 머지 완료(`main` 브랜치 최신화).
 
 
 

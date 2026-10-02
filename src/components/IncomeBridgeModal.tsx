@@ -5,7 +5,6 @@ import { usePensionStore } from "@/store/usePensionStore";
 import { statutoryStartAgeOf } from "@/services/coupleSimulation";
 import {
   calculateIncomeBridge,
-  UNEMPLOYMENT_MONTHLY_MAX_WON,
 } from "@/services/incomeBridgeCalculator";
 
 interface IncomeBridgeModalProps {

@@ -44,7 +44,7 @@
 
 ## Active Sprint / Story
 - **Sprint 29**: 완료 (현재가치 기준 일원화 및 연령대별 생활비 정교한 옵션 설계)
-- **Next Sprint**: 대기 중
+- **Next Sprint**: Sprint 30 예정 (S4 커버드콜 배당 누적·재투자 스노우볼 및 안전 버퍼 모델링)
 
 ## Session Handoff (Sprint 29 완료)
 - **주요 산출물**:

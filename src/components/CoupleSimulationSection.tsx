@@ -31,7 +31,8 @@ interface Props {
   result: CoupleSimulationResult;
   selfStartAge: number; // 본인 국민연금 개시 나이
   spouseStartAge: number; // 배우자 국민연금 개시 나이 (연기 반영)
-  actions?: React.ReactNode; // 제목 오른쪽 버튼 (백업·복원)
+  actions?: React.ReactNode; // 툴바 기능 버튼들 (페르소나, BEP, 절세, 건보, 주택, 공백, 유족, ISA)
+  backupActions?: React.ReactNode; // 창 제목과 같은 줄 제일 오른쪽 버튼 (백업·복원)
   paid: { self: PaidTotals; spouse: PaidTotals | null }; // 그래프 안 (납부총액/지급총액) 표기용
   onOpenBepModal?: () => void; // 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 모달 열기 핸들러
 }
@@ -58,7 +59,7 @@ function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: num
   );
 }
 
-export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions, paid, onOpenBepModal }: Props) {
+export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions, backupActions, paid, onOpenBepModal }: Props) {
   const simulationParams = usePensionStore((s) => s.simulationParams);
   const [isRealValue, setIsRealValue] = useState(true); // 기본값: 현재가치 (실질 구매력)
   const [localBepOpen, setLocalBepOpen] = useState(false);
@@ -274,19 +275,28 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             </button>
           </div>
         </div>
-        {/* 버튼은 PDF 캡처에서 제외 */}
+        {/* 창 제목과 같은 줄 제일 오른쪽에 배치되는 PDF 다운로드, 백업, 복원 버튼 */}
         <div data-html2canvas-ignore style={styles.headerActions}>
           <button type="button" onClick={handlePdf} disabled={pdfBusy} className="premium-button-secondary" style={styles.pdfButton}>
             {pdfBusy ? "PDF 생성 중..." : "📄 PDF 다운로드"}
           </button>
-          {actions}
+          {backupActions}
         </div>
       </div>
+
+      {/* 대시보드 퀵 기능 액션 툴바 (페르소나, BEP, 절세, 건보료, 주택연금, 공백기, 유족, ISA) */}
+      {actions && (
+        <div data-html2canvas-ignore style={{ marginTop: "-2px", marginBottom: "2px" }}>
+          {actions}
+        </div>
+      )}
+
+      {/* 간결한 부제목 (현재 해상도에서 줄바꿈 없이 한 줄로 유지) */}
       <div style={styles.subtitle}>
         {hasSpouse
-          ? "본인·배우자의 공적·사적연금을 연도별로 통합 합산하여 생애 현금흐름을 시뮬레이션합니다."
-          : "공적·사적연금을 연도별로 통합 합산하여 생애 현금흐름을 시뮬레이션합니다."}{" "}
-        ({isRealValue ? "현재가치 실질 구매력 기준 · 국민연금 물가연동 수평선 유지" : "명목 금액 기준 · 물가상승률 반영"} · 붉은 실선 맞춤 지출 목표선, 황색 점선 최저 생활비선)
+          ? "부부의 공적·사적연금을 통합 합산한 생애 현금흐름입니다."
+          : "공적·사적연금을 통합 합산한 생애 현금흐름입니다."}{" "}
+        ({isRealValue ? "실질 구매력 기준" : "명목 금액 기준"} · 🔴 목표 지출선, 🟡 최저 생활비선)
       </div>
 
       {/* 01 시뮬레이션 핵심 지표 KPI 카드 */}

@@ -299,9 +299,34 @@ export default function DashboardPage() {
     );
   }
 
-  // 백업·복원·페르소나 버튼: 부부 시뮬레이션 제목 오른쪽 (배우자 없음이면 같은 자리 오른쪽 정렬)
+  // 백업·복원 버튼 (창 제목과 같은 줄 제일 오른쪽 배치)
+  const backupActions = (
+    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+      <button
+        id="btn-export-data"
+        onClick={handleExportData}
+        className="premium-button"
+        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+        title="은퇴 설계 데이터 JSON 파일로 내보내기"
+      >
+        📤 백업 (JSON)
+      </button>
+      <button
+        id="btn-import-data"
+        onClick={() => document.getElementById("input-file-import")?.click()}
+        className="premium-button-secondary"
+        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+        title="저장된 JSON 백업 파일 불러오기"
+      >
+        📥 복원 (JSON)
+      </button>
+      <input type="file" id="input-file-import" accept=".json" onChange={handleImportData} style={{ display: "none" }} />
+    </div>
+  );
+
+  // 대시보드 퀵 기능 액션 툴바 (페르소나, BEP, 절세, 건보료, 주택연금, 공백기, 유족, ISA)
   const dataActions = (
-    <div className="data-actions-bar" style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+    <div className="data-actions-bar" style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", width: "100%" }}>
       <button
         id="btn-persona-preset"
         onClick={() => setPersonaModalOpen(true)}
@@ -430,23 +455,6 @@ export default function DashboardPage() {
       >
         💎 ISA전환
       </button>
-      <button
-        id="btn-export-data"
-        onClick={handleExportData}
-        className="premium-button"
-        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
-      >
-        📤 백업 (JSON 다운)
-      </button>
-      <button
-        id="btn-import-data"
-        onClick={() => document.getElementById("input-file-import")?.click()}
-        className="premium-button-secondary"
-        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
-      >
-        📥 복원 (JSON 업)
-      </button>
-      <input type="file" id="input-file-import" accept=".json" onChange={handleImportData} style={{ display: "none" }} />
     </div>
   );
 
@@ -792,11 +800,15 @@ export default function DashboardPage() {
             selfStartAge={store.simulationParams.nationalPensionStartAge + deferYearsOf(store.simulationParams)}
             spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
             actions={dataActions}
+            backupActions={backupActions}
             paid={{ self: selfPaid, spouse: spousePaid }}
             onOpenBepModal={() => setBepModalOpen(true)}
           />
         ) : (
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>{dataActions}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>{backupActions}</div>
+            <div>{dataActions}</div>
+          </div>
         )}
 
         {/* ② 인출전략 시나리오 비교 (세후) */}

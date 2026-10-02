@@ -5,7 +5,9 @@ import {
   PersonalPensionSavingsState,
   PensionInsuranceState,
   SimulationParamsState,
+  AgeBandsConfig,
 } from "@/store/usePensionStore";
+import { SpendingPattern, getSpendingMultiplier } from "@/services/spendingCurve";
 
 export type SourceTaxType =
   | "PUBLIC_PENSION"        // 국민연금 등 공적연금
@@ -450,14 +452,18 @@ export function resolveDrawComposition(
 export const DECREASING_ANNUAL_RATE = 0.02;
 
 export interface DecumulationOptions {
-  spendingPattern?: "ACTIVE_FOCUSED" | "SMILING_3STAGE" | "FLAT";
+  spendingPattern?: SpendingPattern;
   activePhaseYears?: number;
   annualDeclineRate?: number;
+  ageBands?: AgeBandsConfig;
+  currentAge?: number;
+  retirementAge?: number;
 }
 
 /**
  * Calculates the decumulation multiplier for a given year index k (k = 1이 첫해)
  * 절대 수준은 가중 PMT·보정 계수가 총액에 맞춰 정하므로 여기서는 해마다의 상대 비율만 정한다
+ * - AGE_BANDS: 연령대별(60/70/80/90세+) 설정 비례
  * - ACTIVE_FOCUSED: 초기 activePhaseYears 동안 1.0 유지 후 매년 annualDeclineRate 완만 체감
  * - SMILING_3STAGE: 70세 이하 1.0, 71~80세 0.75, 81세 이후 0.55
  * - FLAT: 1.0
@@ -470,8 +476,19 @@ export function getDecumulationMultiplier(
   if (strategy !== "DECREASING" && options?.spendingPattern === "FLAT") return 1.0;
   if (strategy !== "DECREASING" && !options?.spendingPattern) return 1.0;
 
-  const pattern = options?.spendingPattern ?? (strategy === "DECREASING" ? "ACTIVE_FOCUSED" : "FLAT");
+  const pattern: SpendingPattern =
+    options?.spendingPattern ?? (strategy === "DECREASING" ? "AGE_BANDS" : "FLAT");
   if (pattern === "FLAT") return 1.0;
+
+  if (pattern === "AGE_BANDS") {
+    const retiredT = Math.max(0, k - 1);
+    return getSpendingMultiplier(retiredT, {
+      currentAge: options?.currentAge ?? 60,
+      retirementAge: options?.retirementAge ?? 60,
+      ageBands: options?.ageBands,
+      spendingPattern: "AGE_BANDS",
+    } as SimulationParamsState);
+  }
 
   const activeYears = options?.activePhaseYears ?? 5;
   const declineRate = (options?.annualDeclineRate ?? 2.0) / 100;
@@ -755,6 +772,9 @@ export function runWithdrawalSimulation(
       spendingPattern: simulationParams.spendingPattern,
       activePhaseYears: simulationParams.activePhaseYears,
       annualDeclineRate: simulationParams.annualDeclineRate,
+      ageBands: simulationParams.ageBands,
+      currentAge: simulationParams.currentAge,
+      retirementAge: simulationParams.retirementAge,
     };
 
     // 인출 시작~종료 전 구간에 대해 PV 가중 분모 및 미래 공적연금 유입 PV 합산

@@ -2,7 +2,9 @@ import { runPensionSimulation, type CashFlowItem } from "@/services/pensionCalcu
 import { DECREASING_ANNUAL_RATE, privateDrawStartAgeOf } from "@/services/withdrawalCalculator";
 import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensionCalculator";
 import { NPS_RULES, SURVIVOR_OVERLAP_RATE, survivorRateForMonths, statutoryPensionStartAge } from "@/config/npsRules";
+import { SpendingPattern, getSpendingMultiplier } from "@/services/spendingCurve";
 import type {
+  AgeBandsConfig,
   BasicPensionState,
   NationalPensionState,
   PensionInsuranceState,
@@ -93,8 +95,10 @@ export function planHouseholdSmoothing(
   declineRate: number = 0,
   drawStartIndex: number = 0, // 인출 시작 연도 (그 전에 개시되는 상품 금액은 시작 연도 가치로 모아 함께 나눈다)
   patternOptions?: {
-    spendingPattern?: "ACTIVE_FOCUSED" | "SMILING_3STAGE" | "FLAT";
+    spendingPattern?: SpendingPattern;
     activePhaseYears?: number;
+    ageBands?: AgeBandsConfig;
+    params?: SimulationParamsState;
   }
 ): { override: SmoothingOverride; summary: SmoothingSummary } {
   const privOf = (p: PersonYear | null) => (p ? p.retirement + p.personal + p.insurance : 0);
@@ -117,13 +121,32 @@ export function planHouseholdSmoothing(
     });
   });
 
-  const pattern = patternOptions?.spendingPattern ?? (declineRate > 0 ? "ACTIVE_FOCUSED" : "FLAT");
+  const pattern: SpendingPattern =
+    patternOptions?.spendingPattern ??
+    patternOptions?.params?.spendingPattern ??
+    (patternOptions?.ageBands || patternOptions?.params?.ageBands
+      ? "AGE_BANDS"
+      : declineRate > 0
+      ? "ACTIVE_FOCUSED"
+      : "FLAT");
   const activeYears = patternOptions?.activePhaseYears ?? 5;
 
   const weightAt = (t: number) => {
     const relT = t - start;
     if (relT < 0) return 0;
-    if (pattern === "FLAT" || declineRate <= 0) return 1.0;
+    if (pattern === "FLAT") return 1.0;
+    if (patternOptions?.params) {
+      return getSpendingMultiplier(relT, patternOptions.params);
+    }
+    if (pattern === "AGE_BANDS") {
+      const fallbackAge = 60 + relT;
+      return getSpendingMultiplier(relT, {
+        currentAge: 60,
+        retirementAge: 60,
+        ageBands: patternOptions?.ageBands,
+        spendingPattern: "AGE_BANDS",
+      } as SimulationParamsState);
+    }
     if (pattern === "SMILING_3STAGE") {
       if (relT <= 7) return 1.0;
       if (relT <= 17) return 0.75;
@@ -131,10 +154,11 @@ export function planHouseholdSmoothing(
     }
     // ACTIVE_FOCUSED: 초기 activeYears년 동안은 1.0 유지, 그 이후부터 연간 declineRate 체감
     if (relT < activeYears) return 1.0;
-    return Math.pow(1 - declineRate, relT - activeYears + 1);
+    const decayYears = activeYears > 0 ? (relT - activeYears + 1) : relT;
+    return Math.pow(1 - declineRate, decayYears);
   };
 
-  const isPattern = pattern !== "FLAT" && declineRate > 0;
+  const isPattern = pattern !== "FLAT";
 
   const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0);
   const pathAt = (L: number, g: number, t: number) => {
@@ -469,6 +493,8 @@ export function runCoupleSimulation(
     {
       spendingPattern: params.spendingPattern,
       activePhaseYears: params.activePhaseYears,
+      ageBands: params.ageBands,
+      params,
     }
   );
   return { ...build(plan.override), smoothing: plan.summary };

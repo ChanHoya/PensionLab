@@ -90,9 +90,10 @@ export interface SimulationParamsState {
   financialIncome: number;  // 금융소득 이자+배당 (만원/년)
   decumulationStrategy: "DECREASING" | "FLAT";
   // 시기별 지출 곡선(연금 규모 설계) 매개변수
-  spendingPattern: "ACTIVE_FOCUSED" | "SMILING_3STAGE" | "FLAT"; // 지출 패턴 (활동기 집중형 / 3단계 생애주기 / 균등형)
+  spendingPattern: "AGE_BANDS" | "ACTIVE_FOCUSED" | "SMILING_3STAGE" | "FLAT"; // 지출 패턴 (연령대별 맞춤 / 활동기 집중형 / 3단계 생애주기 / 균등형)
   activePhaseYears: number; // 초기 활동기 소비 유지 기간 (년, 기본 5)
   annualDeclineRate: number; // 활동기 이후 연간 체감률 (%, 기본 2.0)
+  ageBands: AgeBandsConfig; // 60대, 70대, 80대, 90대+ 연령대별 정교한 목표/최소 생활비 (현재가치)
   // S4 하이브리드(배당+연금) 전략 매개변수
   coveredCallAsset: number;        // 커버드콜/월배당 투자금 (만원, 기본 5000)
   coveredCallDividendRate: number;  // 예상 연 분배율 (%, 기본 9.0)
@@ -107,6 +108,25 @@ export interface SimulationParamsState {
   privatePensionEndAge: number; // 가구 사적연금 소진 나이 (본인 나이 기준, 0 = 본인 기대수명)
   spousePrivatePensionEndAge: number; // 배우자 사적연금 수령 종료 나이 (가구 평탄화에서는 쓰지 않음, S1~S4 인출 엔진용)
 }
+
+export interface AgeBandSpending {
+  target: number; // 목표 생활비 (현재가치, 만원/월)
+  min: number;    // 최소 생활비 (현재가치, 만원/월)
+}
+
+export interface AgeBandsConfig {
+  age60s: AgeBandSpending; // 60~69세 (초기 활동기)
+  age70s: AgeBandSpending; // 70~79세 (소비 안정기)
+  age80s: AgeBandSpending; // 80~89세 (활동 감소기)
+  age90s: AgeBandSpending; // 90세 이상 (간병/노년기)
+}
+
+export const DEFAULT_AGE_BANDS: AgeBandsConfig = {
+  age60s: { target: 450, min: 300 },
+  age70s: { target: 320, min: 220 },
+  age80s: { target: 230, min: 170 },
+  age90s: { target: 180, min: 150 },
+};
 
 export type GapReason = "EXEMPT" | "EXCLUDED" | "MILITARY" | "ARREARS";
 export type EnrollStatus = "WORKPLACE" | "REGIONAL" | "VOLUNTARY" | "VOLUNTARY_CONT" | "NONE";
@@ -237,9 +257,10 @@ const initialSimulationParams: SimulationParamsState = {
   propertyTaxBase: 0,
   financialIncome: 0,
   decumulationStrategy: "DECREASING",
-  spendingPattern: "ACTIVE_FOCUSED",
+  spendingPattern: "AGE_BANDS",
   activePhaseYears: 5,
   annualDeclineRate: 2.0,
+  ageBands: DEFAULT_AGE_BANDS,
   coveredCallAsset: 5000,
   coveredCallDividendRate: 9.0,
   isCoupleDivided: false,

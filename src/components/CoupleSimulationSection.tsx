@@ -3,8 +3,9 @@
 import React, { useRef, useState } from "react";
 import {
   ResponsiveContainer,
-  AreaChart,
+  ComposedChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -18,6 +19,8 @@ import ChartTooltip from "@/components/ChartTooltip";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
 import type { PaidTotals } from "@/services/paidTotals";
 import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps, pensionSeriesValues } from "@/components/pensionSeries";
+import { buildSpendingCurve } from "@/services/spendingCurve";
+import { usePensionStore } from "@/store/usePensionStore";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -54,6 +57,8 @@ function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: num
 
 // 부부 통합 연금 시뮬레이션: 본인·배우자 × 국민·기초·퇴직·개인연금 가구 합산 (명목, 만원/월)
 export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions, paid }: Props) {
+  const simulationParams = usePensionStore((s) => s.simulationParams);
+  const [isRealValue, setIsRealValue] = useState(true); // 기본값: 현재가치 (실질 구매력)
   const { rows, firstDeath, lifetime, survivorInfo: si } = result;
   const survivorLabel = si ? WHO_LABEL[si.deceased === "SELF" ? "SPOUSE" : "SELF"] : "";
   const cardRef = useRef<HTMLDivElement>(null);
@@ -85,11 +90,32 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
 
   const rowsByYear = new Map(rows.map((r) => [r.year, r]));
 
-  const chartData: Record<string, number>[] = rows.map((r) => ({ year: r.year, ...pensionSeriesValues(r) }));
+  const infl = simulationParams.inflationRate || 3;
+  const curve = buildSpendingCurve(simulationParams, rows[0]?.year, rows.length);
+
+  const chartData: Record<string, number>[] = rows.map((r, t) => {
+    const divisor = isRealValue ? Math.pow(1 + infl / 100, t) : 1;
+    const pt = curve.get(r.year);
+    const targetReal = pt ? pt.targetReal : (simulationParams.targetMonthlySpending || 300);
+    const minReal = pt ? pt.minReal : (simulationParams.minMonthlySpending || 200);
+    const targetSpending = isRealValue ? targetReal : Math.round(targetReal * Math.pow(1 + infl / 100, t));
+    const minSpending = isRealValue ? minReal : Math.round(minReal * Math.pow(1 + infl / 100, t));
+    return {
+      year: r.year,
+      targetSpending,
+      minSpending,
+      ...pensionSeriesValues(r, divisor),
+    };
+  });
+
   // 금액이 있는 계열만 그래프·범례에 표시. 유족연금은 받는 사람 기준 이름 (예: 배우자 유족연금)
   const survivorName = `${survivorLabel || "배우자"} 유족연금`;
   const visibleSeries = PENSION_SERIES.filter((s) => chartData.some((d) => d[s.key] !== 0));
-  const legendColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
+  const legendColors: Record<string, string> = {
+    [survivorName]: SURVIVOR_FILL,
+    맞춤지출목표선: "#e11d48",
+    최저생활비선: "#d97706",
+  };
   // 툴팁의 (납부총액/지급총액): 납부가 없는 유족·기초연금은 「-」, 지급은 그래프 기간 명목 수령 합계
   const paidOf: Record<string, number | null> = {
     본인국민연금: paid.self.national,
@@ -128,7 +154,26 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
   return (
     <div ref={cardRef} style={styles.card}>
       <div style={styles.header}>
-        <h3 style={styles.title}>{hasSpouse ? "👫 부부 통합 연금 시뮬레이션" : "📈 연금 통합 시뮬레이션"}</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <h3 style={styles.title}>{hasSpouse ? "👫 부부 통합 연금 시뮬레이션" : "📈 연금 통합 시뮬레이션"}</h3>
+          {/* 현재가치(실질) vs 명목금액 기준 토글 */}
+          <div data-html2canvas-ignore style={styles.toggleGroup}>
+            <button
+              type="button"
+              onClick={() => setIsRealValue(true)}
+              style={isRealValue ? styles.toggleBtnActive : styles.toggleBtn}
+            >
+              현재가치(실질 구매력)
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsRealValue(false)}
+              style={!isRealValue ? styles.toggleBtnActive : styles.toggleBtn}
+            >
+              명목 금액
+            </button>
+          </div>
+        </div>
         {/* 버튼은 PDF 캡처에서 제외 */}
         <div data-html2canvas-ignore style={styles.headerActions}>
           <button type="button" onClick={handlePdf} disabled={pdfBusy} className="premium-button-secondary" style={styles.pdfButton}>
@@ -141,7 +186,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         {hasSpouse
           ? "본인·배우자의 국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다. 먼저 사망한 쪽이 생기면 남은 배우자는 국민연금법 제56조에 따라 유족연금(사망자 연금의 가입기간별 40~60%)과 「본인 연금 + 유족연금 30%」 중 큰 쪽을 받습니다."
           : "국민연금·기초연금·퇴직연금·개인연금을 연도별로 합산합니다."}{" "}
-        (명목 금액, 만원/월 · 입력은 왼쪽 「입력 옵션」에서 바꿉니다)
+        ({isRealValue ? "현재가치(실질 구매력 기준), 만원/월 · 국민연금은 물가연동으로 수평선 유지" : "명목 금액, 만원/월 · 물가상승률 반영"} · 붉은 실선 맞춤 지출 목표선, 황색 점선 최저 생활비선)
         {survivor && survivor.survivorChoice && firstDeath && (
           <>
             {" "}이 입력에서는 {WHO_LABEL[firstDeath.who]} 사망 후 남은 배우자가{" "}
@@ -260,9 +305,9 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       )}
 
-      <div style={{ width: "100%", height: 350 }} onClick={() => setHighlight(null)}>
+      <div style={{ width: "100%", height: 360 }} onClick={() => setHighlight(null)}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 24, right: 20, left: 0, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 24, right: 20, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
@@ -295,6 +340,25 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                 {...emphasisProps(highlight, s.key, s.fill ? 0.55 : 0.5)}
               />
             ))}
+            <Line
+              type="monotone"
+              dataKey="targetSpending"
+              name="맞춤 지출 목표선"
+              stroke="#e11d48"
+              strokeWidth={2.5}
+              dot={false}
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="minSpending"
+              name="최저 생활비선"
+              stroke="#d97706"
+              strokeWidth={1.8}
+              strokeDasharray="4 4"
+              dot={false}
+              isAnimationActive={false}
+            />
             {firstDeath && (
               <ReferenceLine
                 x={firstDeath.year}
@@ -303,7 +367,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                 label={{ value: `${WHO_LABEL[firstDeath.who]} 기대수명`, position: "top", fill: "var(--text-muted)", fontSize: 12 }}
               />
             )}
-          </AreaChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 
@@ -375,6 +439,36 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" },
   headerActions: { display: "flex", gap: "6px", flexWrap: "wrap" },
+  toggleGroup: {
+    display: "inline-flex",
+    backgroundColor: "var(--background)",
+    border: "1px solid var(--border)",
+    borderRadius: "6px",
+    padding: "2px",
+    gap: "2px",
+  },
+  toggleBtn: {
+    padding: "4px 10px",
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    color: "var(--text-secondary)",
+    backgroundColor: "transparent",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+  },
+  toggleBtnActive: {
+    padding: "4px 10px",
+    fontSize: "0.75rem",
+    fontWeight: 700,
+    color: "#ffffff",
+    backgroundColor: "var(--primary, #6366f1)",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+  },
   pdfButton: { fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 },
   title: { fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }, // 인출전략 시나리오 비교 제목과 같은 크기
   tableTitle: { fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" },

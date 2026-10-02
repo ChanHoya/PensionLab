@@ -120,8 +120,8 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
   const realHousehold = rows.map((r, t) => r.household / Math.pow(1 + inflation, t));
   const avg = (ts: number[]) => (ts.length ? ts.reduce((a, t) => a + realHousehold[t], 0) / ts.length : 0);
 
-  const spendingCurve = buildSpendingCurve(params, baseYear);
-  const spendingPattern: SpendingPattern = params.spendingPattern || (params.decumulationStrategy === "FLAT" ? "FLAT" : "ACTIVE_FOCUSED");
+  const spendingCurve = buildSpendingCurve(params, baseYear, rows.length);
+  const spendingPattern: SpendingPattern = params.spendingPattern || (params.decumulationStrategy === "FLAT" ? "FLAT" : "AGE_BANDS");
   const activePhaseYears = params.activePhaseYears ?? 5;
   const annualDeclineRate = params.annualDeclineRate ?? 2.0;
 

@@ -137,6 +137,9 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
     })
   );
 
+  type CriteriaTab = "SURVIVOR" | "NATIONAL" | "RETIREMENT_PRIVATE" | "SMOOTHING";
+  const [activeCriteriaTab, setActiveCriteriaTab] = useState<CriteriaTab | null>(null);
+
   // 표: 5년 간격 + 사망 전후 해
   const keyRows = rows.filter(
     (r, i) => i % 5 === 0 || i === deathIndex || i === deathIndex - 1 || i === rows.length - 1
@@ -150,6 +153,60 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
     if (choice === "OWN_PLUS_30") notes.push("본인연금+유족 30%");
     return notes.join(", ");
   };
+
+  // 은퇴 후 평균 월 수령액 및 생애 총 수령액 지표 계산 (현재가치/명목 토글 실시간 반영)
+  const retiredRows = rows.filter((r) => r.self.age >= (simulationParams.retirementAge || 60));
+  const targetRows = retiredRows.length > 0 ? retiredRows : rows;
+
+  const avgMonthlyPension = Math.round(
+    targetRows.reduce((sum, r) => {
+      const t = rows.indexOf(r);
+      const div = isRealValue ? Math.pow(1 + infl / 100, t) : 1;
+      return sum + r.household / div;
+    }, 0) / (targetRows.length || 1)
+  );
+
+  const totalLifetimePension = Math.round(
+    rows.reduce((sum, r, t) => {
+      const div = isRealValue ? Math.pow(1 + infl / 100, t) : 1;
+      return sum + (r.household / div) * 12;
+    }, 0)
+  );
+
+  const lifetimeSelf = Math.round(
+    rows.reduce((sum, r, t) => {
+      const div = isRealValue ? Math.pow(1 + infl / 100, t) : 1;
+      return sum + (r.self.total / div) * 12;
+    }, 0)
+  );
+
+  const lifetimeSpouse = Math.round(
+    rows.reduce((sum, r, t) => {
+      const div = isRealValue ? Math.pow(1 + infl / 100, t) : 1;
+      return sum + ((r.spouse?.total ?? 0) / div) * 12;
+    }, 0)
+  );
+
+  const bothReceivingMonthly = bothReceiving
+    ? Math.round(bothReceiving.household / (isRealValue ? Math.pow(1 + infl / 100, rows.indexOf(bothReceiving)) : 1))
+    : 0;
+
+  const beforeDeathHousehold = beforeDeath
+    ? Math.round(beforeDeath.household / (isRealValue ? Math.pow(1 + infl / 100, rows.indexOf(beforeDeath)) : 1))
+    : 0;
+
+  const afterDeathHousehold = afterDeath
+    ? Math.round(afterDeath.household / (isRealValue ? Math.pow(1 + infl / 100, rows.indexOf(afterDeath)) : 1))
+    : 0;
+
+  const lateRows = rows.slice(-5);
+  const lateMonthlyPension = Math.round(
+    lateRows.reduce((sum, r) => {
+      const t = rows.indexOf(r);
+      const div = isRealValue ? Math.pow(1 + infl / 100, t) : 1;
+      return sum + r.household / div;
+    }, 0) / (lateRows.length || 1)
+  );
 
   return (
     <div ref={cardRef} style={styles.card}>
@@ -189,134 +246,250 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         ({isRealValue ? "현재가치 실질 구매력 기준 · 국민연금 물가연동 수평선 유지" : "명목 금액 기준 · 물가상승률 반영"} · 붉은 실선 맞춤 지출 목표선, 황색 점선 최저 생활비선)
       </div>
 
-      {/* 부가 설명 접이식 탭 버튼 그룹 */}
-      <div style={styles.tabButtonGroup}>
-        {hasSpouse && si && (
-          <details style={styles.accordionDetails}>
-            <summary style={styles.accordionSummary}>▶ 유족연금 산정 기준과 계산 보기</summary>
-            <div style={styles.accordionBody}>
-              {survivor && survivor.survivorChoice && firstDeath && (
-                <p style={styles.detailHighlight}>
-                  💡 이 시뮬레이션에서는 <strong>{WHO_LABEL[firstDeath.who]}</strong> 사망 후 남은 배우자가{" "}
-                  <strong>
-                    {survivor.survivorChoice === "SURVIVOR"
-                      ? `유족연금(${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금은 지급정지)`
-                      : `${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금 + 유족연금 30%`}
-                  </strong>
-                  을 선택해 국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 수령하는 것이 유리합니다. (사망자의 퇴직·개인연금 잔액 상속은 미반영)
-                </p>
-              )}
-              <table style={{ ...styles.table, marginTop: "8px", maxWidth: "420px" }}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>사망자 가입기간</th>
-                    <th style={styles.th}>유족연금 (기본연금액 대비)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { label: "10년 미만", rate: 0.4 },
-                    { label: "10년 이상 ~ 20년 미만", rate: 0.5 },
-                    { label: "20년 이상", rate: 0.6 },
-                  ].map((row) => (
-                    <tr key={row.label} style={row.rate === si.rate ? styles.bestRow : undefined}>
-                      <td style={styles.td}>{row.label}</td>
-                      <td style={styles.td}>{row.rate * 100}%{row.rate === si.rate && " ← 적용"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p style={styles.detailText}>
-                <strong>{WHO_LABEL[si.deceased]}</strong> 가입 {si.months}개월(약 {Math.floor(si.months / 12)}년) → 지급률 {si.rate * 100}%.{" "}
-                {si.year}년 기본연금액 {fmt(si.basePension)}만원 × {si.rate * 100}% = 유족연금 <strong>{fmt(si.fullSurvivor)}만원</strong>
-              </p>
-              <p style={styles.detailText}>
-                중복급여 조정(국민연금법 제56조) — 둘 중 큰 쪽을 자동 선택:
-                <br />
-                {si.choice === "SURVIVOR" ? "✅" : "▫️"} ① 유족연금 전액 <strong>{fmt(si.fullSurvivor)}만원</strong> ({survivorLabel} 노령연금은 지급정지)
-                <br />
-                {si.choice === "OWN_PLUS_30" ? "✅" : "▫️"} ② {survivorLabel} 노령연금 {fmt(si.ownPension)}만원 + 유족연금 30% {fmt(si.fullSurvivor * 0.3)}만원 ={" "}
-                <strong>{fmt(si.ownPlus30)}만원</strong>
-              </p>
-              <p style={styles.note}>
-                ※ 기본연금액은 연기 가산(연 7.2%)·조기수령 감액 전 금액입니다. 노령연금 수급자가 사망하면 유족연금은 받던 노령연금액을 넘을 수
-                없습니다. 부양가족연금액은 제외된 추정치이며, 정확한 금액은 국민연금공단(☎1355)에서 확인하세요.
-              </p>
+      {/* 01 시뮬레이션 핵심 지표 KPI 카드 */}
+      <div style={styles.kpiGrid}>
+        <div style={styles.kpi}>
+          <div style={styles.kpiLabel}>은퇴 후 가구 평균 월 연금액</div>
+          <div style={styles.kpiValue}>월 {fmt(avgMonthlyPension)}만원</div>
+          <div style={styles.kpiHint}>
+            {simulationParams.retirementAge || 60}세 은퇴 후 {isRealValue ? "실질 구매력 평균" : "명목 수령 평균"}
+          </div>
+        </div>
+
+        <div style={styles.kpi}>
+          <div style={styles.kpiLabel}>생애 총 수령 연금액 (가구)</div>
+          <div style={styles.kpiValue}>
+            {fmt(totalLifetimePension)}만원
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)", marginLeft: 6 }}>
+              (약 {(totalLifetimePension / 10000).toFixed(1)}억원)
+            </span>
+          </div>
+          <div style={styles.kpiHint}>
+            본인 {fmt(lifetimeSelf)}만원{hasSpouse ? ` · 배우자 ${fmt(lifetimeSpouse)}만원` : ""}
+          </div>
+        </div>
+
+        {hasSpouse && beforeDeath && afterDeath ? (
+          <div style={styles.kpi}>
+            <div style={styles.kpiLabel}>첫 사망 전 → 후 가구 월 연금</div>
+            <div style={styles.kpiValue}>
+              {fmt(beforeDeathHousehold)} → {fmt(afterDeathHousehold)}만원
             </div>
-          </details>
+            <div style={styles.kpiHint}>
+              {firstDeath ? `${WHO_LABEL[firstDeath.who]} 기대수명 이후 (${firstDeath.year}년)` : "유족연금 전환"}
+            </div>
+          </div>
+        ) : (
+          <div style={styles.kpi}>
+            <div style={styles.kpiLabel}>말년 5년 평균 월 연금액</div>
+            <div style={styles.kpiValue}>월 {fmt(lateMonthlyPension)}만원</div>
+            <div style={styles.kpiHint}>생애 마지막 5년 평균 수령액</div>
+          </div>
         )}
 
-        <details style={styles.accordionDetails}>
-          <summary style={styles.accordionSummary}>▶ 국민연금 적립·인상 산정 기준</summary>
-          <div style={styles.accordionBody}>
-            <p style={styles.detailText}>
-              <strong>📜 법적 근거 (국민연금법 제51조)</strong>: 국민연금은 수급권을 취득한 이후 매년 전년도 전국소비자물가변동률(CPI)에 맞추어 연금액을 인상·조정하도록 법률로 의무화되어 있습니다.
-            </p>
-            <p style={styles.detailText}>
-              <strong>📈 연복리 3% 물가 연동 인상</strong>: 최근 30년 대한민국 소비자물가 평균 상승률(약 2.7%)을 감안해 기본 가정치인 연 <strong>{infl}%</strong>를 적용하며, 수령 시작 연령부터 매년 <code>(1 + 물가상승률)^t</code>로 연복리 증액됩니다.
-            </p>
-            <p style={styles.detailText}>
-              <strong>⚖️ 현재가치(실질) vs 명목금액 비교 원리</strong>:
-              <br />
-              • <strong>명목 금액</strong>: 매년 3% 복리로 증액되어 통장에 찍히는 명목 수령액이 점점 늘어납니다.
-              <br />
-              • <strong>현재가치 (실질 구매력)</strong>: 물가상승률로 매년 역으로 할인(<code>÷ (1 + 물가상승률)^t</code>)하므로, 미래에도 <strong>현재 시점과 동일한 구매력(수평선)</strong>으로 표시되어 생활비선과 왜곡 없이 직관적으로 비교할 수 있습니다.
-            </p>
-          </div>
-        </details>
-
-        <details style={styles.accordionDetails}>
-          <summary style={styles.accordionSummary}>▶ 퇴직·개인연금 적립금 산정 기준</summary>
-          <div style={styles.accordionBody}>
-            <p style={styles.detailText}>
-              <strong>💰 인출 후 잔여 적립금의 연복리 운용수익 반영</strong>: 은퇴 후 시기별로 생활비를 인출하고 남은 잔여 적립금(잔액)에 대해 매년 연도 말마다 자산별 기대수익률이 <strong>연복리로 가산 증식</strong>됩니다.
-              <br />
-              • <strong>퇴직연금 (DC/IRP)</strong>: 입력된 기대수익률 (기본 연 3.0%)
-              <br />
-              • <strong>개인연금저축 (펀드)</strong>: 기본 연 4.5% / <strong>신탁·보험</strong>: 기본 연 2.5~3.0%
-            </p>
-            <p style={styles.detailText}>
-              <strong>📑 세제 재원 동기화 및 절세 혜택</strong>: 잔여 적립금에 가산되는 운용수익은 퇴직연금의 경우 <strong>이연퇴직소득</strong>(10년 초과 수령 시 40% 감면), 개인연금은 <strong>과세대상 연금소득원</strong>(3.3~5.5% 저율과세)으로 자동 분류되어 절세 효과와 건보료 산정이 정밀 연동됩니다.
-            </p>
-            <p style={styles.detailText}>
-              <strong>🎯 수령 기간 최적 분할 역산</strong>: 부부 가구 평탄화 알고리즘은 실질 할인율 3.0%를 전제하여 잔여 자산이 이자로 불어나는 효과를 반영하고, 90~100세까지 완만하게 소진되도록 최적 인출 경로를 산출합니다.
-            </p>
-          </div>
-        </details>
-
-        {sm && (
-          <details style={styles.accordionDetails}>
-            <summary style={styles.accordionSummary}>▶ 소득 평탄화 & 지출 곡선 인출 상세</summary>
-            <div style={styles.accordionBody}>
-              {sm.pot > 0 ? (
-                <>
-                  <p style={styles.detailText}>
-                    📏 <strong>가구 소득 평탄화 경로</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
-                    (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 총액이{" "}
-                    {sm.annualGrowth > 0 ? (
-                      <>매년 <strong>{(sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 늘어납니다.</>
-                    ) : sm.annualGrowth < 0 ? (
-                      <>초기 활동기(소비 유지) 이후 매년 <strong>{(-sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 체감합니다(활동기 집중형).</>
-                    ) : (
-                      <>균등 정액 수준으로 유지됩니다.</>
-                    )}
-                  </p>
-                  <p style={styles.detailText}>
-                    국민연금이 시작·증가하는 만큼 퇴직·개인연금을 해마다 줄여 {sm.endYear}년까지 나눠 쓰므로 국민연금 개시 때 총액이 튀지 않고 상품 만기 때 끊기지 않습니다.
-                  </p>
-                  <p style={styles.detailText}>
-                    💰 <strong>사적연금 적립금({sm.startYear}년 가치)</strong>: 보유 <strong>{fmt(sm.pot)}만원</strong> · 희망 월 생활비{" "}
-                    {fmt(sm.targetToday)}만원(현재가치)으로 시작하는 데 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}
-                    <strong style={{ color: potGap >= 0 ? "var(--success)" : "var(--danger)" }}>
-                      {potGap >= 0 ? `여유 ${fmt(potGap)}만원` : `부족 ${fmt(-potGap)}만원`}
-                    </strong>
-                  </p>
-                </>
-              ) : (
-                <p style={styles.detailText}>퇴직·개인연금·연금보험 입력이 없어 채울 사적연금이 없습니다.</p>
-              )}
+        {hasSpouse && bothReceiving ? (
+          <div style={styles.kpi}>
+            <div style={styles.kpiLabel}>부부 모두 수령 시 가구 월 연금</div>
+            <div style={styles.kpiValue}>월 {fmt(bothReceivingMonthly)}만원</div>
+            <div style={styles.kpiHint}>
+              {bothReceiving.year}년 (본인 {bothReceiving.self.age}세 / 배우자 {bothReceiving.spouse!.age}세)
             </div>
-          </details>
+          </div>
+        ) : (
+          <div style={styles.kpi}>
+            <div style={styles.kpiLabel}>국민연금 개시 시 월 연금</div>
+            <div style={styles.kpiValue}>
+              월 {fmt(rows.find((r) => r.self.national > 0)?.self.national ?? 0)}만원
+            </div>
+            <div style={styles.kpiHint}>{selfStartAge}세 국민연금 최초 개시</div>
+          </div>
+        )}
+      </div>
+
+      {/* 02 산정기준 4개 가로 배치 탭 바 & 드롭다운 */}
+      <div style={styles.criteriaContainer}>
+        <div style={styles.criteriaBar}>
+          {hasSpouse && si && (
+            <button
+              type="button"
+              onClick={() => setActiveCriteriaTab((cur) => (cur === "SURVIVOR" ? null : "SURVIVOR"))}
+              style={activeCriteriaTab === "SURVIVOR" ? styles.criteriaTabBtnActive : styles.criteriaTabBtn}
+            >
+              <span>유족연금 산정 기준</span>
+              <span style={styles.criteriaArrow}>{activeCriteriaTab === "SURVIVOR" ? "▲" : "▼"}</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setActiveCriteriaTab((cur) => (cur === "NATIONAL" ? null : "NATIONAL"))}
+            style={activeCriteriaTab === "NATIONAL" ? styles.criteriaTabBtnActive : styles.criteriaTabBtn}
+          >
+            <span>국민연금 적립·인상 기준</span>
+            <span style={styles.criteriaArrow}>{activeCriteriaTab === "NATIONAL" ? "▲" : "▼"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveCriteriaTab((cur) => (cur === "RETIREMENT_PRIVATE" ? null : "RETIREMENT_PRIVATE"))}
+            style={activeCriteriaTab === "RETIREMENT_PRIVATE" ? styles.criteriaTabBtnActive : styles.criteriaTabBtn}
+          >
+            <span>퇴직·개인연금 적립 기준</span>
+            <span style={styles.criteriaArrow}>{activeCriteriaTab === "RETIREMENT_PRIVATE" ? "▲" : "▼"}</span>
+          </button>
+
+          {sm && (
+            <button
+              type="button"
+              onClick={() => setActiveCriteriaTab((cur) => (cur === "SMOOTHING" ? null : "SMOOTHING"))}
+              style={activeCriteriaTab === "SMOOTHING" ? styles.criteriaTabBtnActive : styles.criteriaTabBtn}
+            >
+              <span>소득 평탄화 & 인출 상세</span>
+              <span style={styles.criteriaArrow}>{activeCriteriaTab === "SMOOTHING" ? "▲" : "▼"}</span>
+            </button>
+          )}
+        </div>
+
+        {/* 선택된 기준의 드롭다운 상세 내용 */}
+        {activeCriteriaTab && (
+          <div style={styles.criteriaDropdownContent}>
+            <div style={styles.criteriaDropdownHeader}>
+              <span style={styles.criteriaDropdownTitle}>
+                {activeCriteriaTab === "SURVIVOR" && "📋 유족연금 산정 기준과 계산"}
+                {activeCriteriaTab === "NATIONAL" && "📜 국민연금 적립·인상 산정 기준 (물가연동)"}
+                {activeCriteriaTab === "RETIREMENT_PRIVATE" && "💰 퇴직·개인연금 적립금 산정 기준 (운용수익 복리)"}
+                {activeCriteriaTab === "SMOOTHING" && "📏 가구 소득 평탄화 & 지출 곡선 인출 상세"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveCriteriaTab(null)}
+                style={styles.criteriaDropdownClose}
+                title="접기"
+              >
+                ✕ 닫기
+              </button>
+            </div>
+
+            {activeCriteriaTab === "SURVIVOR" && hasSpouse && si && (
+              <div>
+                {survivor && survivor.survivorChoice && firstDeath && (
+                  <p style={styles.detailHighlight}>
+                    💡 이 시뮬레이션에서는 <strong>{WHO_LABEL[firstDeath.who]}</strong> 사망 후 남은 배우자가{" "}
+                    <strong>
+                      {survivor.survivorChoice === "SURVIVOR"
+                        ? `유족연금(${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금은 지급정지)`
+                        : `${WHO_LABEL[firstDeath.who === "SELF" ? "SPOUSE" : "SELF"]} 노령연금 + 유족연금 30%`}
+                    </strong>
+                    을 선택해 국민연금 월 <strong>{fmt(survivor.national)}만원</strong>을 수령하는 것이 유리합니다. (사망자의 퇴직·개인연금 잔액 상속은 미반영)
+                  </p>
+                )}
+                <table style={{ ...styles.table, marginTop: "8px", maxWidth: "420px" }}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>사망자 가입기간</th>
+                      <th style={styles.th}>유족연금 (기본연금액 대비)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { label: "10년 미만", rate: 0.4 },
+                      { label: "10년 이상 ~ 20년 미만", rate: 0.5 },
+                      { label: "20년 이상", rate: 0.6 },
+                    ].map((row) => (
+                      <tr key={row.label} style={row.rate === si.rate ? styles.bestRow : undefined}>
+                        <td style={styles.td}>{row.label}</td>
+                        <td style={styles.td}>{row.rate * 100}%{row.rate === si.rate && " ← 적용"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={styles.detailText}>
+                  <strong>{WHO_LABEL[si.deceased]}</strong> 가입 {si.months}개월(약 {Math.floor(si.months / 12)}년) → 지급률 {si.rate * 100}%.{" "}
+                  {si.year}년 기본연금액 {fmt(si.basePension)}만원 × {si.rate * 100}% = 유족연금 <strong>{fmt(si.fullSurvivor)}만원</strong>
+                </p>
+                <p style={styles.detailText}>
+                  중복급여 조정(국민연금법 제56조) — 둘 중 큰 쪽을 자동 선택:
+                  <br />
+                  {si.choice === "SURVIVOR" ? "✅" : "▫️"} ① 유족연금 전액 <strong>{fmt(si.fullSurvivor)}만원</strong> ({survivorLabel} 노령연금은 지급정지)
+                  <br />
+                  {si.choice === "OWN_PLUS_30" ? "✅" : "▫️"} ② {survivorLabel} 노령연금 {fmt(si.ownPension)}만원 + 유족연금 30% {fmt(si.fullSurvivor * 0.3)}만원 ={" "}
+                  <strong>{fmt(si.ownPlus30)}만원</strong>
+                </p>
+                <p style={styles.note}>
+                  ※ 기본연금액은 연기 가산(연 7.2%)·조기수령 감액 전 금액입니다. 노령연금 수급자가 사망하면 유족연금은 받던 노령연금액을 넘을 수
+                  없습니다. 부양가족연금액은 제외된 추정치이며, 정확한 금액은 국민연금공단(☎1355)에서 확인하세요.
+                </p>
+              </div>
+            )}
+
+            {activeCriteriaTab === "NATIONAL" && (
+              <div>
+                <p style={styles.detailText}>
+                  <strong>📜 법적 근거 (국민연금법 제51조)</strong>: 국민연금은 수급권을 취득한 이후 매년 전년도 전국소비자물가변동률(CPI)에 맞추어 연금액을 인상·조정하도록 법률로 의무화되어 있습니다.
+                </p>
+                <p style={styles.detailText}>
+                  <strong>📈 연복리 3% 물가 연동 인상</strong>: 최근 30년 대한민국 소비자물가 평균 상승률(약 2.7%)을 감안해 기본 가정치인 연 <strong>{infl}%</strong>를 적용하며, 수령 시작 연령부터 매년 <code>(1 + 물가상승률)^t</code>로 연복리 증액됩니다.
+                </p>
+                <p style={styles.detailText}>
+                  <strong>⚖️ 현재가치(실질) vs 명목금액 비교 원리</strong>:
+                  <br />
+                  • <strong>명목 금액</strong>: 매년 3% 복리로 증액되어 통장에 찍히는 명목 수령액이 점점 늘어납니다.
+                  <br />
+                  • <strong>현재가치 (실질 구매력)</strong>: 물가상승률로 매년 역으로 할인(<code>÷ (1 + 물가상승률)^t</code>)하므로, 미래에도 <strong>현재 시점과 동일한 구매력(수평선)</strong>으로 표시되어 생활비선과 왜곡 없이 직관적으로 비교할 수 있습니다.
+                </p>
+              </div>
+            )}
+
+            {activeCriteriaTab === "RETIREMENT_PRIVATE" && (
+              <div>
+                <p style={styles.detailText}>
+                  <strong>💰 인출 후 잔여 적립금의 연복리 운용수익 반영</strong>: 은퇴 후 시기별로 생활비를 인출하고 남은 잔여 적립금(잔액)에 대해 매년 연도 말마다 자산별 기대수익률이 <strong>연복리로 가산 증식</strong>됩니다.
+                  <br />
+                  • <strong>퇴직연금 (DC/IRP)</strong>: 입력된 기대수익률 (기본 연 3.0%)
+                  <br />
+                  • <strong>개인연금저축 (펀드)</strong>: 기본 연 4.5% / <strong>신탁·보험</strong>: 기본 연 2.5~3.0%
+                </p>
+                <p style={styles.detailText}>
+                  <strong>📑 세제 재원 동기화 및 절세 혜택</strong>: 잔여 적립금에 가산되는 운용수익은 퇴직연금의 경우 <strong>이연퇴직소득</strong>(10년 초과 수령 시 40% 감면), 개인연금은 <strong>과세대상 연금소득원</strong>(3.3~5.5% 저율과세)으로 자동 분류되어 절세 효과와 건보료 산정이 정밀 연동됩니다.
+                </p>
+                <p style={styles.detailText}>
+                  <strong>🎯 수령 기간 최적 분할 역산</strong>: 부부 가구 평탄화 알고리즘은 실질 할인율 3.0%를 전제하여 잔여 자산이 이자로 불어나는 효과를 반영하고, 90~100세까지 완만하게 소진되도록 최적 인출 경로를 산출합니다.
+                </p>
+              </div>
+            )}
+
+            {activeCriteriaTab === "SMOOTHING" && sm && (
+              <div>
+                {sm.pot > 0 ? (
+                  <>
+                    <p style={styles.detailText}>
+                      📏 <strong>가구 소득 평탄화 경로</strong>: {sm.startYear}년 가구 월 <strong>{fmt(sm.levelMonthly)}만원</strong>
+                      (현재가치 {fmt(sm.levelToday)}만원)에서 시작해 {sm.endYear}년까지 총액이{" "}
+                      {sm.annualGrowth > 0 ? (
+                        <>매년 <strong>{(sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 늘어납니다.</>
+                      ) : sm.annualGrowth < 0 ? (
+                        <>초기 활동기(소비 유지) 이후 매년 <strong>{(-sm.annualGrowth * 100).toFixed(1)}%</strong>씩 완만하게 체감합니다(활동기 집중형).</>
+                      ) : (
+                        <>균등 정액 수준으로 유지됩니다.</>
+                      )}
+                    </p>
+                    <p style={styles.detailText}>
+                      국민연금이 시작·증가하는 만큼 퇴직·개인연금을 해마다 줄여 {sm.endYear}년까지 나눠 쓰므로 국민연금 개시 때 총액이 튀지 않고 상품 만기 때 끊기지 않습니다.
+                    </p>
+                    <p style={styles.detailText}>
+                      💰 <strong>사적연금 적립금({sm.startYear}년 가치)</strong>: 보유 <strong>{fmt(sm.pot)}만원</strong> · 희망 월 생활비{" "}
+                      {fmt(sm.targetToday)}만원(현재가치)으로 시작하는 데 필요 <strong>{fmt(sm.requiredPot)}만원</strong> →{" "}
+                      <strong style={{ color: potGap >= 0 ? "var(--success)" : "var(--danger)" }}>
+                        {potGap >= 0 ? `여유 ${fmt(potGap)}만원` : `부족 ${fmt(-potGap)}만원`}
+                      </strong>
+                    </p>
+                  </>
+                ) : (
+                  <p style={styles.detailText}>퇴직·개인연금·연금보험 입력이 없어 채울 사적연금이 없습니다.</p>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -488,35 +661,83 @@ const styles: { [key: string]: React.CSSProperties } = {
   title: { fontSize: "1.5rem", fontWeight: 800, color: "var(--text-primary)", margin: 0 }, // 인출전략 시나리오 비교 제목과 같은 크기
   tableTitle: { fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" },
   subtitle: { fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, margin: 0 },
-  kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px" },
-  kpi: { border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "12px 14px", backgroundColor: "var(--background)" },
-  kpiLabel: { fontSize: "0.78rem", color: "var(--text-muted)" },
-  kpiValue: { fontSize: "1.15rem", fontWeight: 700, color: "var(--text-accent)", marginTop: "4px" },
-  kpiHint: { fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "4px" },
-  tabButtonGroup: {
+  kpiGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "10px", marginTop: "4px" },
+  kpi: { border: "1px solid var(--border)", borderRadius: "var(--radius-sm, 6px)", padding: "12px 14px", backgroundColor: "var(--background, rgba(255,255,255,0.02))" },
+  kpiLabel: { fontSize: "0.76rem", color: "var(--text-muted)", fontWeight: 500 },
+  kpiValue: { fontSize: "1.2rem", fontWeight: 800, color: "var(--text-accent, #6366f1)", marginTop: "4px" },
+  kpiHint: { fontSize: "0.74rem", color: "var(--text-muted)", marginTop: "3px" },
+  criteriaContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
-    marginTop: "6px",
+    gap: "6px",
+    marginTop: "4px",
+    marginBottom: "4px",
   },
-  accordionDetails: {
-    backgroundColor: "rgba(255, 255, 255, 0.03)",
+  criteriaBar: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+    gap: "8px",
+  },
+  criteriaTabBtn: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    borderRadius: "var(--radius-sm, 6px)",
+    border: "1px solid var(--border)",
+    background: "rgba(255, 255, 255, 0.02)",
+    color: "var(--text-secondary)",
+    fontSize: "0.78rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+  },
+  criteriaTabBtnActive: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "8px 12px",
+    borderRadius: "var(--radius-sm, 6px)",
+    border: "1px solid var(--primary, #6366f1)",
+    background: "rgba(99, 102, 241, 0.12)",
+    color: "var(--text-primary)",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "all 0.15s ease",
+    boxShadow: "0 0 0 1px rgba(99, 102, 241, 0.3)",
+  },
+  criteriaArrow: {
+    fontSize: "0.7rem",
+    color: "var(--text-muted)",
+    marginLeft: "4px",
+  },
+  criteriaDropdownContent: {
+    padding: "14px 16px",
+    backgroundColor: "rgba(99, 102, 241, 0.03)",
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-sm, 6px)",
-    padding: "8px 12px",
-    transition: "all 0.2s ease",
   },
-  accordionSummary: {
+  criteriaDropdownHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "8px",
+    paddingBottom: "6px",
+    borderBottom: "1px solid var(--border)",
+  },
+  criteriaDropdownTitle: {
+    fontSize: "0.85rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+  },
+  criteriaDropdownClose: {
+    background: "none",
+    border: "none",
+    color: "var(--text-muted)",
+    fontSize: "0.78rem",
     cursor: "pointer",
-    fontWeight: 600,
-    color: "var(--text-accent, #6366f1)",
-    fontSize: "0.82rem",
-    userSelect: "none",
-  },
-  accordionBody: {
-    marginTop: "8px",
-    paddingTop: "8px",
-    borderTop: "1px dashed var(--border)",
+    padding: "2px 6px",
   },
   detailHighlight: {
     fontSize: "0.82rem",

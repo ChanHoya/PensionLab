@@ -15,6 +15,7 @@ export const PENSION_SERIES: { key: string; color: string; fill?: string }[] = [
   { key: "배우자 퇴직연금", color: "#34d399" },
   { key: "본인 개인연금", color: "#0284c7" },
   { key: "배우자 개인연금", color: "#38bdf8" },
+  { key: "주택연금", color: "#f59e0b", fill: "#d97706" },
 ];
 
 // 통합 시뮬레이션 한 해의 계열별 월 금액. 사망 후 남은 배우자가 받는 유족연금은 사망자 국민연금에서 온 몫이라 따로 표시
@@ -31,6 +32,7 @@ export function pensionSeriesValues(r: CoupleYear, divisor: number = 1): Record<
     "배우자 퇴직연금": v(r.spouse?.retirement ?? 0),
     "본인 개인연금": v(r.self.personal + r.self.insurance),
     "배우자 개인연금": v((r.spouse?.personal ?? 0) + (r.spouse?.insurance ?? 0)),
+    주택연금: v(r.self.housing || 0),
   };
 }
 

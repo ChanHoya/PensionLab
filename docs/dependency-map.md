@@ -40,6 +40,15 @@ graph TD
   CoupleSimSec --> ExportCsv[src/utils/exportCsv.ts]
   Dashboard --> ExportCsv
 
+  %% Sprint 32 Additions (Defense & Tax Tools)
+  Dashboard --> Tax15Modal[src/components/PrivatePensionTaxModal.tsx]
+  Tax15Modal --> Tax15Calc[src/services/privatePensionTaxOptimizer.ts]
+  Dashboard --> HealthBillModal[src/components/HealthInsuranceBillModal.tsx]
+  HealthBillModal --> HealthBillCalc[src/services/localHealthInsuranceCalculator.ts]
+  Dashboard --> ReverseMortgageModal[src/components/ReverseMortgageModal.tsx]
+  ReverseMortgageModal --> ReverseMortgageCalc[src/services/reverseMortgageCalculator.ts]
+  CoupleSim --> ReverseMortgageCalc
+
 
   %% Sprint 2 Additions
   Dashboard --> Report[src/app/dashboard/report/page.tsx]

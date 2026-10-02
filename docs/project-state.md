@@ -48,30 +48,32 @@
 - **[Completed]** Story S31-4: 시뮬레이션 연도별 상세 테이블 필터링(1년 단위·5년 간격·주요 마일스톤) 및 UTF-8 BOM 엑셀(CSV) 내보내기 연동 & [Hotfix] React Hook 호출 순서 규칙(Rules of Hooks) 준수 완료.
 - **[Completed]** UI/UX 개선: 온보딩 Step 0 탭 바 내 '페르소나 체험하기' 버튼 재배치 및 금융감독원 자료 업로드 안내 문구 추가 완료.
 - **[Completed]** 소득세법 정합성: 사적연금(퇴직·개인연금) 인출 시작 최소 연령(만 55세) 전 계산 엔진 및 사이드바 UI 강제화 완료.
+- **[Completed]** Story S32-1: 사적연금 연 1,500만원 절세 한도 최적화기(연간 1,500만원 초과 연도 감지, 16.5% 분리과세 vs 종합과세 비교 판정, 수령기간 연장 분산 절세액 제시 모달 연동) 완료.
+- **[Completed]** Story S32-2: 은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 절감 계산기(재산 과표 1억 공제 후 등급제, 공적연금 50% 인정, 금융소득 1,000만원 초과 전액 부과, 영수증 고지서 모달 연동) 완료.
+- **[Completed]** Story S32-3: 한국주택금융공사(HF) 주택연금(역모기지) 결합 시뮬레이션(공시가격 12억 한도 및 가입나이별 선형 보간 계수, 부부 시뮬레이션 및 차트·CSV 연동 On/Off 모달) 완료.
+- **[Completed]** Story S32-4: 대시보드 퀵 수비 지표 도구(dataActions 및 사이드바 내 접이식 그룹) & AI 진단 리포트 세제·인출 최적화 팁 연동 완료.
 
 ## Active Sprint / Story
-- **Sprint 31**: 전체 완료 (Sprint 31 로드맵 4대 과제 개발 및 핫픽스/법적 정합성 패치 완수)
-  - **Story S31-1**: 대표 가구 페르소나 3종 원클릭 샘플 로더 및 대시보드/온보딩 연동 (완료)
-  - **Story S31-2**: AI 종합 진단 리포트와 S4 배당 운용 정책 정밀 연동 및 처방 고도화 (완료)
-  - **Story S31-3**: 국민연금 조기노령연금 vs 정상 vs 연기연금 손익분기점(BEP) 인터랙티브 비교기 (완료)
-  - **Story S31-4**: 시뮬레이션 연도별 상세 테이블 필터링 및 엑셀(CSV) 내보내기 & 훅 순서 핫픽스 (완료)
-  - **후속 보완 1**: 온보딩 페르소나 버튼 Step 0 탭 바 재배치 & 금감원 안내 문구 추가 (완료)
-  - **후속 보완 2**: 소득세법 제20조의3/제129조의2 기준 사적연금 최소 인출 시작 나이 만 55세 전 계산 엔진/UI 반영 (완료)
+- **Sprint 32**: 전체 완료 (Sprint 32 로드맵 4대 과제 개발 및 통합 검증 완수)
+  - **Story S32-1**: 사적연금 연 1,500만원 절세 한도 최적화기 (`PrivatePensionTaxModal.tsx`, `privatePensionTaxOptimizer.ts`) (완료)
+  - **Story S32-2**: 은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 절감 계산기 (`HealthInsuranceBillModal.tsx`, `localHealthInsuranceCalculator.ts`) (완료)
+  - **Story S32-3**: 한국주택금융공사 주택연금(역모기지) 결합 시뮬레이션 (`ReverseMortgageModal.tsx`, `reverseMortgageCalculator.ts`, `coupleSimulation.ts`, `pensionSeries.ts`, `exportCsv.ts`) (완료)
+  - **Story S32-4**: 대시보드 퀵 수비 지표 탭 바 & AI 진단 리포트 연동 (`page.tsx`, `DashboardSidebar.tsx`, `reportNarrative.ts`) (완료)
 
-## Session Handoff (Sprint 31 및 법적 정합성 패치 완료)
+## Session Handoff (Sprint 32 완료)
 - **주요 산출물**:
-  1. 대한민국 대표 가구 페르소나 3종 원클릭 프리셋 로더 (`PersonaPresetModal.tsx`, `usePensionStore.ts`, `onboarding`, `dashboard`):
-     - 페르소나 3종: 40대 중반 맞벌이 부부, 50대 초반 퇴직 임박 직장인, 40대 초반 자영업/커버드콜 배당 집중 가구
-     - 대시보드 및 AI 진단 헤더 우측 '대표 페르소나 로드' 버튼, 온보딩 Step 0 탭 바 우측 '페르소나 체험하기' 버튼 연동
-  2. 제4섹션 AI 어드바이저 액션 플랜 고도화 및 S4 배당 정책 연동 (`DiagnosisReport.tsx`):
-     - S4 커버드콜 배당 운용 3대 정책(스노우볼형 재투자, 비상자금 안전버퍼, 전액소비형)별 세후 배당금 자산 증식 지표와 3색 상태 뱃지, 전용 인포그래픽 카드 표시
-  3. 국민연금 조기노령연금 vs 정상 vs 연기연금 손익분기점(BEP) 인터랙티브 모달 (`NpsBepModal.tsx`):
-     - 법정 개시연령 기준 조기연금 vs 정상 vs 연기연금 누적 수령액 교차 곡선 차트 및 1차·2차 손익분기점 나이 가이드 제공
-  4. 시뮬레이션 연도별 상세 테이블 3단 필터링 및 UTF-8 BOM 엑셀 CSV 내보내기 (`exportCsv.ts`, `CoupleSimulationSection.tsx`, `page.tsx`):
-     - `전체(1년)`, `5년 간격`, `주요 마일스톤` 필터 뷰 및 한국어 MS Excel 완벽 호환(한글 깨짐 방지) CSV 다운로드 지원
-  5. 사적연금 법정 최소 인출 연령(만 55세) 강제화 (`withdrawalCalculator.ts`, `coupleSimulation.ts`, `pensionCalculator.ts`, `DashboardSidebar.tsx`):
-     - 소득세법 제20조의3/제129조의2에 의거 사적연금(퇴직·개인연금)은 만 55세 미만 인출 불가 룰 적용
-     - 계산 엔진 클램핑, 부부 가구 평탄화 시 55세 미만 인출 차단(0원), 사이드바 min=55/placeholder/onBlur 가이드 적용
+  1. 사적연금 연 1,500만원 절세 한도 최적화기 (`PrivatePensionTaxModal.tsx`, `privatePensionTaxOptimizer.ts`):
+     - 소득세법 제20조의3/제129조의2 기준 사적연금(연금저축/IRP) 연 1,500만원 초과 연도 및 초과액 실시간 산출
+     - 16.5% 분리과세 vs 종합과세 유불리 자동 비교 판정 및 수령기간 연장(스프레드) 시 저율과세(3.3~5.5%) 혜택 복원에 따른 절세액 제시
+  2. 은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 계산기 (`HealthInsuranceBillModal.tsx`, `localHealthInsuranceCalculator.ts`):
+     - 2024~2026년 건보료 기준(자동차 폐지, 재산 과표 1억원 기본공제 후 60등급 점수제, 공적연금 50% 인정, 사적연금 0원 비과세, 금융소득 1,000만원 허들) 정밀 모의 고지서
+     - 퇴직 후 36개월간 종전 직장보험료 납부 시 3년간 총 절감액 및 공단 신청 기한 가이드
+  3. 한국주택금융공사(HF) 주택연금(역모기지) 결합 시뮬레이터 (`ReverseMortgageModal.tsx`, `reverseMortgageCalculator.ts`):
+     - HF 공시 기준 연령별 주택가격 1억원당 월지급금 계수(종신지급방식 정액형) 선형 보간 연산
+     - 부부 시뮬레이션 및 현금흐름 차트(`pensionSeries.ts`), 연도별 테이블 및 엑셀 다운로드(`exportCsv.ts`)에 주택연금 고정 레이어 On/Off 결합 지원
+  4. 대시보드 퀵 수비 지표 3종 도구 및 AI 진단 리포트 연동:
+     - 대시보드 `dataActions` 바 및 사이드바 내 「은퇴 자산 수비 & 절세 도구」 그룹에 3대 모달 직결 버튼 제공
+     - AI 종합 진단 리포트 세제 최적화 섹션에 임의계속가입 및 주택연금 연동 처방 팁 탑재
 - **검증 상태**: `npx tsc --noEmit` 0 에러 통과, Next.js 개발 서버 정상 동작, git commit & push 완료.
 
 

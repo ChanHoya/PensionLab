@@ -3,6 +3,7 @@ import { DECREASING_ANNUAL_RATE, privateDrawStartAgeOf } from "@/services/withdr
 import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensionCalculator";
 import { NPS_RULES, SURVIVOR_OVERLAP_RATE, survivorRateForMonths, statutoryPensionStartAge } from "@/config/npsRules";
 import { SpendingPattern, getSpendingMultiplier } from "@/services/spendingCurve";
+import { calculateReverseMortgage } from "@/services/reverseMortgageCalculator";
 import type {
   AgeBandsConfig,
   BasicPensionState,
@@ -30,6 +31,7 @@ export interface PersonYear {
   retirement: number;
   personal: number;
   insurance: number;
+  housing: number; // 주택연금 (역모기지) — 만원/월
   total: number;
   survivorChoice: SurvivorChoice | null; // 배우자 사망 후 중복급여 조정 선택
   // national 중 유족연금 몫. 유족연금 선택 시 전부(본인 노령연금은 지급정지), 본인 연금 + 30% 선택 시 30% 부분
@@ -160,7 +162,7 @@ export function planHouseholdSmoothing(
 
   const isPattern = pattern !== "FLAT";
 
-  const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0);
+  const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0) + (r.self.housing || 0);
   const pathAt = (L: number, g: number, t: number) => {
     if (isPattern) return L * weightAt(t);
     return L * Math.pow(1 + g, t - start);
@@ -481,12 +483,20 @@ export function runCoupleSimulation(
         index
       );
 
-      const mk = (alive: boolean, age: number, national: number, o: ReturnType<typeof own>, basicAmt: number, choice: SurvivorChoice | null, part: number): PersonYear => {
-        const total = alive ? national + basicAmt + o.retirement + o.personal + o.insurance : 0;
-        return { alive, age, national: alive ? national : 0, basic: alive ? basicAmt : 0, retirement: o.retirement, personal: o.personal, insurance: o.insurance, total, survivorChoice: choice, survivorPart: alive ? part : 0 };
+      // 주택연금(역모기지) 결합 산출
+      let housingPayout = 0;
+      if (params.useReverseMortgage && sAlive && sAge >= (params.reverseMortgageStartAge || 65)) {
+        const houseValueWon = (params.reverseMortgageHouseValue || 50000) * 10000;
+        const entryAge = params.reverseMortgageStartAge || 65;
+        housingPayout = calculateReverseMortgage(houseValueWon, entryAge).monthlyPayoutManwon;
+      }
+
+      const mk = (alive: boolean, age: number, national: number, o: ReturnType<typeof own>, basicAmt: number, choice: SurvivorChoice | null, part: number, housingAmt = 0): PersonYear => {
+        const total = alive ? national + basicAmt + o.retirement + o.personal + o.insurance + housingAmt : 0;
+        return { alive, age, national: alive ? national : 0, basic: alive ? basicAmt : 0, retirement: o.retirement, personal: o.personal, insurance: o.insurance, housing: alive ? housingAmt : 0, total, survivorChoice: choice, survivorPart: alive ? part : 0 };
       };
-      const selfYear = mk(sAlive, sAge, sNational, so, b.self, sChoice, sPart);
-      const spouseYear = sp ? mk(pAlive, pAge, pNational, po!, b.spouse, pChoice, pPart) : null;
+      const selfYear = mk(sAlive, sAge, sNational, so, b.self, sChoice, sPart, housingPayout);
+      const spouseYear = sp ? mk(pAlive, pAge, pNational, po!, b.spouse, pChoice, pPart, 0) : null;
       const household = selfYear.total + (spouseYear?.total ?? 0);
       lifetime.self += selfYear.total * 12;
       lifetime.spouse += (spouseYear?.total ?? 0) * 12;

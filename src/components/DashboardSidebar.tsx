@@ -19,6 +19,9 @@ interface Props {
   setS3StartAges: (v: Record<string, number>) => void;
   s3Periods: Record<string, number>;
   setS3Periods: (v: Record<string, number>) => void;
+  onOpenTax15Modal?: () => void;
+  onOpenHealthBillModal?: () => void;
+  onOpenReverseMortgageModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -391,6 +394,83 @@ export default function DashboardSidebar(props: Props) {
               );
             })}
           </div>
+        </div>
+      </details>
+
+      <details open style={styles.group}>
+        <summary style={styles.summary}>은퇴 자산 수비 & 절세 도구</summary>
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" }}>
+          {props.onOpenTax15Modal && (
+            <button
+              type="button"
+              onClick={props.onOpenTax15Modal}
+              className="premium-button-secondary"
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                borderColor: "rgba(56, 189, 248, 0.4)",
+                color: "#38bdf8",
+                background: "rgba(56, 189, 248, 0.06)",
+              }}
+            >
+              <span>⚖️</span>
+              <span>사적연금 1,500만 절세 한도</span>
+            </button>
+          )}
+
+          {props.onOpenHealthBillModal && (
+            <button
+              type="button"
+              onClick={props.onOpenHealthBillModal}
+              className="premium-button-secondary"
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                borderColor: "rgba(16, 185, 129, 0.4)",
+                color: "#34d399",
+                background: "rgba(16, 185, 129, 0.06)",
+              }}
+            >
+              <span>🏥</span>
+              <span>지역건보료 모의 고지서</span>
+            </button>
+          )}
+
+          {props.onOpenReverseMortgageModal && (
+            <button
+              type="button"
+              onClick={props.onOpenReverseMortgageModal}
+              className="premium-button-secondary"
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                borderColor: "rgba(251, 191, 36, 0.4)",
+                color: "#fbbf24",
+                background: "rgba(251, 191, 36, 0.06)",
+              }}
+            >
+              <span>🏠</span>
+              <span>주택연금(역모기지) 결합</span>
+            </button>
+          )}
         </div>
       </details>
     </aside>

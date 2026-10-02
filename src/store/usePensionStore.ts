@@ -109,6 +109,10 @@ export interface SimulationParamsState {
   privateDrawStartAge: number; // 퇴직·개인연금 인출 시작 나이 (소득세법상 최소 만 55세, 0 = 기본값: Math.max(55, 현재 나이 + 1))
   privatePensionEndAge: number; // 가구 사적연금 소진 나이 (본인 나이 기준, 0 = 본인 기대수명)
   spousePrivatePensionEndAge: number; // 배우자 사적연금 수령 종료 나이 (가구 평탄화에서는 쓰지 않음, S1~S4 인출 엔진용)
+  // 주택연금(역모기지) 결합 매개변수
+  useReverseMortgage: boolean; // 주택연금 결합 여부 (기본 false)
+  reverseMortgageStartAge: number; // 주택연금 개시 나이 (만 55세 이상, 기본 65)
+  reverseMortgageHouseValue: number; // 주택 공시가격/시세 (만원 단위, 기본 50000 = 5억원)
 }
 
 export interface AgeBandSpending {
@@ -276,6 +280,9 @@ const initialSimulationParams: SimulationParamsState = {
   privateDrawStartAge: 0,
   privatePensionEndAge: 0,
   spousePrivatePensionEndAge: 0,
+  useReverseMortgage: false,
+  reverseMortgageStartAge: 65,
+  reverseMortgageHouseValue: 50000,
 };
 
 const initialAdditionalPayment: AdditionalPaymentState = {

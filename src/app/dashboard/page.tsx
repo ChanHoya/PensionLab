@@ -18,6 +18,9 @@ import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import PersonaPresetModal from "@/components/PersonaPresetModal";
 import NpsEarlyDeferralModal from "@/components/NpsEarlyDeferralModal";
+import { PrivatePensionTaxModal } from "@/components/PrivatePensionTaxModal";
+import { HealthInsuranceBillModal } from "@/components/HealthInsuranceBillModal";
+import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
 
 // Import Recharts components
 import {
@@ -172,6 +175,15 @@ export default function DashboardPage() {
   // 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 모달 열림 상태
   const [bepModalOpen, setBepModalOpen] = useState(false);
 
+  // 사적연금 1,500만원 절세 한도 최적화 모달 열림 상태
+  const [tax15ModalOpen, setTax15ModalOpen] = useState(false);
+
+  // 은퇴 후 지역건강보험료 모의 고지서 모달 열림 상태
+  const [healthBillModalOpen, setHealthBillModalOpen] = useState(false);
+
+  // 주택연금(역모기지) 결합 모달 열림 상태
+  const [reverseMortgageModalOpen, setReverseMortgageModalOpen] = useState(false);
+
   const handleExportData = () => {
     const data = {
       nationalPension: store.nationalPension,
@@ -309,6 +321,54 @@ export default function DashboardPage() {
         title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기"
       >
         ⚖️ 손익분기(BEP)
+      </button>
+      <button
+        id="btn-tax15-actions"
+        onClick={() => setTax15ModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(56, 189, 248, 0.4)",
+          color: "#38bdf8",
+          background: "rgba(56, 189, 248, 0.08)",
+        }}
+        title="사적연금 1,500만원 절세 한도 최적화기"
+      >
+        ⚖️ 절세(1,500만)
+      </button>
+      <button
+        id="btn-health-bill-actions"
+        onClick={() => setHealthBillModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(16, 185, 129, 0.4)",
+          color: "#34d399",
+          background: "rgba(16, 185, 129, 0.08)",
+        }}
+        title="은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 계산기"
+      >
+        🏥 지역건보료
+      </button>
+      <button
+        id="btn-reverse-mortgage-actions"
+        onClick={() => setReverseMortgageModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(251, 191, 36, 0.4)",
+          color: "#fbbf24",
+          background: "rgba(251, 191, 36, 0.08)",
+        }}
+        title="한국주택금융공사 주택연금(역모기지) 결합 시뮬레이터"
+      >
+        🏠 주택연금
       </button>
       <button
         id="btn-export-data"
@@ -634,6 +694,9 @@ export default function DashboardPage() {
             setS3StartAges={setS3StartAges}
             s3Periods={s3Periods}
             setS3Periods={setS3Periods}
+            onOpenTax15Modal={() => setTax15ModalOpen(true)}
+            onOpenHealthBillModal={() => setHealthBillModalOpen(true)}
+            onOpenReverseMortgageModal={() => setReverseMortgageModalOpen(true)}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
@@ -1126,6 +1189,18 @@ export default function DashboardPage() {
       <NpsEarlyDeferralModal
         isOpen={bepModalOpen}
         onClose={() => setBepModalOpen(false)}
+      />
+      <PrivatePensionTaxModal
+        isOpen={tax15ModalOpen}
+        onClose={() => setTax15ModalOpen(false)}
+      />
+      <HealthInsuranceBillModal
+        isOpen={healthBillModalOpen}
+        onClose={() => setHealthBillModalOpen(false)}
+      />
+      <ReverseMortgageModal
+        isOpen={reverseMortgageModalOpen}
+        onClose={() => setReverseMortgageModalOpen(false)}
       />
     </main>
   );

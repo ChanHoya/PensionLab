@@ -61,6 +61,7 @@ export function exportCoupleSimulationCsv(
     "본인 기초연금(월)",
     "본인 퇴직연금(월)",
     "본인 개인연금(월)",
+    "주택연금(월)",
     "본인 총합(월)",
     ...(hasSpouse
       ? [
@@ -91,6 +92,7 @@ export function exportCoupleSimulationCsv(
       Math.round(r.self.basic / div),
       Math.round(r.self.retirement / div),
       Math.round((r.self.personal + r.self.insurance) / div),
+      Math.round((r.self.housing || 0) / div),
       Math.round(r.self.total / div),
       ...(hasSpouse
         ? [

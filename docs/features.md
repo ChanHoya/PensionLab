@@ -45,6 +45,21 @@
   1) 소득세법 제20조의3, 제129조의2 및 근로자퇴직급여 보장법에 의거, 사적연금(퇴직연금 DB/DC/IRP, 개인연금저축, 연금보험)의 최소 수령 가능 연령을 `MIN_PENSION_WITHDRAWAL_AGE = 55`로 계산 엔진(`withdrawalCalculator.ts`, `coupleSimulation.ts`, `pensionCalculator.ts`) 전반에 강제 클램핑
   2) 부부 가구 지출 평탄화 분배(`planHouseholdSmoothing`) 시 본인 및 배우자가 만 55세 미만인 연도에는 사적연금 수령 자격을 차단(0원 처리)하고 각자 55세에 도달한 시점부터만 인출 배분되도록 분리
   3) 대시보드 사이드바 인출 시작 나이 인풋에 `min={55}`, 55세 미만 시 `비우면 55세 (법정 최소 55세)` 플레이스홀더, 포커스 아웃 시 55세 자동 보정(`onBlur`), 및 소득세법 법정 최소 연령 안내 캡션 추가
+- **[FEAT-026] 사적연금 연 1,500만원 절세 한도 최적화기**:
+  1) 소득세법 제20조의3/제129조의2 기준 연 1,500만원(월 125만원) 초과 연도 실시간 감지 및 경고 배지 산출 엔진(`src/services/privatePensionTaxOptimizer.ts`) 구현
+  2) 16.5% 분리과세 vs 종합소득세율 유불리 자동 판정 및 초과 페널티 세액 산출
+  3) 수령 기간 연장(스프레드) 시 전액 저율과세(3.3~5.5%) 혜택 복원에 따른 생애 절세액 및 권장 수령 기간 제시 모달(`src/components/PrivatePensionTaxModal.tsx`) 연동 (Sprint 32, Story S32-1)
+- **[FEAT-027] 은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 절감 계산기**:
+  1) 2024~2026년 국민건강보험법 기준 재산세 과세표준(1억원 기본공제 후 등급제, 점수당 208.4원), 공적연금(50% 인정, 7.09%), 금융소득(1,000만원 초과 시 전액 7.09%), 장기요양보험료(12.95%) 합산 지역보험료 정밀 모의 고지서 연산 엔진(`src/services/localHealthInsuranceCalculator.ts`) 구현
+  2) 퇴직 후 36개월간 종전 직장보험료 수준 납부가 가능한 임의계속가입 제도 비교 및 36개월간 총 절감액 산출
+  3) 영수증 고지서 스타일 모달 UI 및 실시간 자산·소득 조정 슬라이더(`src/components/HealthInsuranceBillModal.tsx`) 연동 (Sprint 32, Story S32-2)
+- **[FEAT-028] 한국주택금융공사(HF) 주택연금(역모기지) 결합 시뮬레이션**:
+  1) 한국주택금융공사 공시 기준 연령별 주택가격 1억원당 월지급금 계수(만 55세 16만원 ~ 만 90세 89만원 선형 보간) 기반 정밀 역모기지 연산 엔진(`src/services/reverseMortgageCalculator.ts`) 구현
+  2) 부부 시뮬레이션 엔진(`coupleSimulation.ts`) 및 현금흐름 차트 계열(`pensionSeries.ts`), 엑셀 내보내기(`exportCsv.ts`)에 주택연금 고정 월지급금 레이어 추가
+  3) 주택 공시가(1억~12억 상한) 및 개시 나이(55~85세) 슬라이더, 4대 안심 보장 안내 및 시뮬레이션 On/Off 결합 모달(`src/components/ReverseMortgageModal.tsx`) 연동 (Sprint 32, Story S32-3)
+- **[FEAT-029] 대시보드 은퇴 자산 수비 3종 도구 및 AI 진단 리포트 연동**:
+  1) 대시보드 `dataActions` 바 및 `DashboardSidebar` 내 전용 접이식 그룹(은퇴 자산 수비 & 절세 도구)에 절세 1,500만 한도·지역건보료 모의·주택연금 결합 3대 퀵 모달 연동
+  2) AI 종합 진단 리포트(`reportNarrative.ts`, `DiagnosisReport.tsx`) 세제 및 인출 최적화 섹션에 임의계속가입 활용법 및 주택연금 결합 처방 팁 자동 생성 (Sprint 32, Story S32-4)
 
 
 

@@ -16,6 +16,7 @@ import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import PersonaPresetModal from "@/components/PersonaPresetModal";
+import NpsEarlyDeferralModal from "@/components/NpsEarlyDeferralModal";
 
 // Import Recharts components
 import {
@@ -164,6 +165,9 @@ export default function DashboardPage() {
   // 대표 가구 페르소나 모달 열림 상태
   const [personaModalOpen, setPersonaModalOpen] = useState(false);
 
+  // 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 모달 열림 상태
+  const [bepModalOpen, setBepModalOpen] = useState(false);
+
   const handleExportData = () => {
     const data = {
       nationalPension: store.nationalPension,
@@ -285,6 +289,22 @@ export default function DashboardPage() {
         title="대한민국 대표 가구 페르소나 데이터 1초 만에 불러오기"
       >
         👫 대표 페르소나 체험
+      </button>
+      <button
+        id="btn-nps-bep-actions"
+        onClick={() => setBepModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(249, 115, 22, 0.4)",
+          color: "#f97316",
+          background: "rgba(249, 115, 22, 0.08)",
+        }}
+        title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기"
+      >
+        ⚖️ 손익분기(BEP)
       </button>
       <button
         id="btn-export-data"
@@ -525,6 +545,25 @@ export default function DashboardPage() {
               <span>👫</span>
               <span>페르소나 체험</span>
             </button>
+            <button
+              onClick={() => setBepModalOpen(true)}
+              className="premium-button-secondary"
+              style={{
+                padding: "8px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 700,
+                borderColor: "rgba(249, 115, 22, 0.4)",
+                color: "#f97316",
+                background: "rgba(249, 115, 22, 0.08)",
+              }}
+              id="btn-header-nps-bep"
+              title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기"
+            >
+              <span>⚖️</span>
+              <span>손익분기(BEP)</span>
+            </button>
             <Link href="/onboarding" className="premium-button-secondary" style={{ padding: "8px 16px" }} id="btn-re-onboard">
               정보 재입력
             </Link>
@@ -595,6 +634,7 @@ export default function DashboardPage() {
             spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
             actions={dataActions}
             paid={{ self: selfPaid, spouse: spousePaid }}
+            onOpenBepModal={() => setBepModalOpen(true)}
           />
         ) : (
           <div style={{ display: "flex", justifyContent: "flex-end" }}>{dataActions}</div>
@@ -1007,6 +1047,10 @@ export default function DashboardPage() {
       <PersonaPresetModal
         isOpen={personaModalOpen}
         onClose={() => setPersonaModalOpen(false)}
+      />
+      <NpsEarlyDeferralModal
+        isOpen={bepModalOpen}
+        onClose={() => setBepModalOpen(false)}
       />
     </main>
   );

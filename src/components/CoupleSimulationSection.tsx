@@ -21,6 +21,7 @@ import type { PaidTotals } from "@/services/paidTotals";
 import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps, pensionSeriesValues } from "@/components/pensionSeries";
 import { buildSpendingCurve } from "@/services/spendingCurve";
 import { usePensionStore } from "@/store/usePensionStore";
+import NpsEarlyDeferralModal from "@/components/NpsEarlyDeferralModal";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -31,6 +32,7 @@ interface Props {
   spouseStartAge: number; // 배우자 국민연금 개시 나이 (연기 반영)
   actions?: React.ReactNode; // 제목 오른쪽 버튼 (백업·복원)
   paid: { self: PaidTotals; spouse: PaidTotals | null }; // 그래프 안 (납부총액/지급총액) 표기용
+  onOpenBepModal?: () => void; // 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 모달 열기 핸들러
 }
 
 // x축 눈금: 연도 아래에 본인·배우자 나이 (사망 후에는 -)
@@ -55,10 +57,14 @@ function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: num
   );
 }
 
-// 부부 통합 연금 시뮬레이션: 본인·배우자 × 국민·기초·퇴직·개인연금 가구 합산 (명목, 만원/월)
-export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions, paid }: Props) {
+export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions, paid, onOpenBepModal }: Props) {
   const simulationParams = usePensionStore((s) => s.simulationParams);
   const [isRealValue, setIsRealValue] = useState(true); // 기본값: 현재가치 (실질 구매력)
+  const [localBepOpen, setLocalBepOpen] = useState(false);
+  const handleOpenBep = () => {
+    if (onOpenBepModal) onOpenBepModal();
+    else setLocalBepOpen(true);
+  };
   const { rows, firstDeath, lifetime, survivorInfo: si } = result;
   const survivorLabel = si ? WHO_LABEL[si.deceased === "SELF" ? "SPOUSE" : "SELF"] : "";
   const cardRef = useRef<HTMLDivElement>(null);
@@ -348,6 +354,24 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
               <span style={styles.criteriaArrow}>{activeCriteriaTab === "SMOOTHING" ? "▲" : "▼"}</span>
             </button>
           )}
+
+          {/* S31-3: 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기 열기 버튼 */}
+          <button
+            type="button"
+            onClick={handleOpenBep}
+            style={{
+              ...styles.criteriaTabBtn,
+              borderColor: "rgba(249, 115, 22, 0.4)",
+              color: "#f97316",
+              backgroundColor: "rgba(249, 115, 22, 0.08)",
+              fontWeight: 700,
+              marginLeft: "auto",
+            }}
+            title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기 열기"
+          >
+            <span>⚖️ 조기 vs 정상 vs 연기 손익분기(BEP)</span>
+            <span style={{ fontSize: "0.8rem", color: "#f97316" }}>⚡</span>
+          </button>
         </div>
 
         {/* 선택된 기준의 드롭다운 상세 내용 */}
@@ -437,6 +461,31 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
                   <br />
                   • <strong>현재가치 (실질 구매력)</strong>: 물가상승률로 매년 역으로 할인(<code>÷ (1 + 물가상승률)^t</code>)하므로, 미래에도 <strong>현재 시점과 동일한 구매력(수평선)</strong>으로 표시되어 생활비선과 왜곡 없이 직관적으로 비교할 수 있습니다.
                 </p>
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={handleOpenBep}
+                    className="premium-button"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      fontSize: "0.82rem",
+                      padding: "8px 16px",
+                      fontWeight: 700,
+                      background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                      border: "none",
+                      color: "#ffffff",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span>⚖️ 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기 열기</span>
+                    <span style={{ fontSize: "0.75rem", opacity: 0.9 }}>→ 골든 크로스오버 나이 분석</span>
+                  </button>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                    * 조기(-30%) vs 정상(100%) vs 연기(+36%)의 생애 누적액 역전 시점을 인터랙티브하게 비교합니다.
+                  </span>
+                </div>
               </div>
             )}
 
@@ -611,6 +660,9 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         퇴직금)이고, 지급은 그래프 기간의 명목 수령액 합계입니다. 유족·기초연금은 납부가 없어 「-」로 표시합니다.
       </p>
       <p style={styles.note}>※ 추정치입니다. 정확한 금액은 국민연금공단(☎1355)·복지로에서 확인하세요.</p>
+
+      {/* S31-3: 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교 모달 */}
+      <NpsEarlyDeferralModal isOpen={localBepOpen} onClose={() => setLocalBepOpen(false)} />
     </div>
   );
 }

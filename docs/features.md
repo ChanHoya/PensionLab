@@ -32,3 +32,10 @@
   2) 가구 종합 진단 계산기(`householdReport.ts`)에 `S4DividendAnalysis` 인터페이스 신설: 초기 투자원금, 1인당 배당금, 건보료 피부양자 안전 여부, 누적 생활비 충당액/재투자액/버퍼적립액, 최종 잔고 및 정책별 핵심 이점/리스크/전략 처방 자동 산출, 장수·유족 대비 평가에 비상버퍼 안전성 실시간 반영
   3) AI 진단 프롬프트 및 리포트 팩트(`reportNarrative.ts`, `api/ai/advisor/route.ts`): S4 배당 정책 지표 블록 주입 및 Gemini 시스템 프롬프트에 CFP 전문가 심층 처방 지침 강화, fallbackNarrative 정책별 맞춤 처방(강점·리스크·실행로드맵·절세팁) 탑재
   4) AI 종합 진단 리포트(`DiagnosisReport.tsx`): 섹션 05 인출전략 비교 내 S4 배당 운용 정책 전용 인포그래픽 패널 신설(정책 배지, 4대 핵심 지표 카드, 전문 처방 및 건보료 가이드 콜아웃) (Sprint 31, Story S31-2)
+- **[FEAT-023] 국민연금 조기노령 vs 정상 vs 연기연금 손익분기점(BEP) 인터랙티브 비교기**:
+  1) 국민연금법(제61조·제61조의2·제62조)에 따른 출생연도별 법정 개시 나이(60~65세), 조기 감액률(연 6%, 최대 -30%), 연기 가산율(연 7.2%, 최대 +36%) 기반 정밀 BEP 연산 엔진(`src/services/npsEarlyDeferralBep.ts`) 구축
+  2) 골든 크로스오버 나이(조기 vs 정상 크로스오버 약 76.7세, 정상 vs 연기 크로스오버 약 83.9세, 조기 vs 연기 크로스오버 약 80.6세) 및 사용자 기대수명 기준 맞춤 추천 전략 자동 도출
+  3) 인터랙티브 Recharts 누적 수령액 곡선 차트(ReferenceLine 크로스오버/기대수명 마커 및 커스텀 툴팁), 3대 전략 상세 비교 카드(개시 나이·월 수령액·80/85/90세 누적액·건보료 피부양자 자격 판정·장단점·권장 대상) 및 CFP 의사결정 가이드 탑재
+  4) 대시보드 상단 헤더(`btn-header-nps-bep`), `dataActions` 바(`btn-nps-bep-actions`), `CoupleSimulationSection` 탭 바 및 `국민연금 적립·인상 기준` 상세 드롭다운 내 손익분기 비교기 모달(`src/components/NpsEarlyDeferralModal.tsx`) 연동 (Sprint 31, Story S31-3)
+
+

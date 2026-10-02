@@ -31,6 +31,14 @@ graph TD
   OnboardingUI --> PersonaModal
   AIAdvisor --> PersonaModal
 
+  %% Sprint 31 Additions (BEP Modal & Engine)
+  Dashboard --> CoupleSimSec[src/components/CoupleSimulationSection.tsx]
+  Dashboard --> NpsBepModal[src/components/NpsEarlyDeferralModal.tsx]
+  CoupleSimSec --> NpsBepModal
+  NpsBepModal --> NpsBepCalc[src/services/npsEarlyDeferralBep.ts]
+  NpsBepCalc --> NpsRules[src/config/npsRules.ts]
+
+
   %% Sprint 2 Additions
   Dashboard --> Report[src/app/dashboard/report/page.tsx]
   Report --> Store

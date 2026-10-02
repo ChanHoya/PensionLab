@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { usePensionStore, type SimulationParamsState } from "@/store/usePensionStore";
+import { usePensionStore, type SimulationParamsState, type AgeBandsConfig, DEFAULT_AGE_BANDS } from "@/store/usePensionStore";
 import { NPS_RULES } from "@/config/npsRules";
 import { statutoryStartAgeOf } from "@/services/coupleSimulation";
 
@@ -144,11 +144,52 @@ export default function DashboardSidebar(props: Props) {
             onChange={(e) => setParam({ privateDrawStartAge: Number(e.target.value) })} />
         </div>
         <div style={styles.field}>
-          <label style={styles.label}>지출 패턴 (인출 설계)</label>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <label style={styles.label}>지출 패턴 (인출 설계)</label>
+            <div style={{ display: "flex", gap: 4 }}>
+              <button
+                type="button"
+                className="premium-button-secondary"
+                style={{ fontSize: "0.7rem", padding: "2px 6px" }}
+                onClick={() => {
+                  setParam({
+                    spendingPattern: "AGE_BANDS",
+                    decumulationStrategy: "DECREASING",
+                    ageBands: DEFAULT_AGE_BANDS,
+                    targetMonthlySpending: DEFAULT_AGE_BANDS.age60s.target,
+                    minMonthlySpending: DEFAULT_AGE_BANDS.age60s.min,
+                  });
+                }}
+              >
+                권장 체감형
+              </button>
+              <button
+                type="button"
+                className="premium-button-secondary"
+                style={{ fontSize: "0.7rem", padding: "2px 6px" }}
+                onClick={() => {
+                  const cur = params.targetMonthlySpending || 300;
+                  const curMin = params.minMonthlySpending || 200;
+                  setParam({
+                    spendingPattern: "FLAT",
+                    decumulationStrategy: "FLAT",
+                    ageBands: {
+                      age60s: { target: cur, min: curMin },
+                      age70s: { target: cur, min: curMin },
+                      age80s: { target: cur, min: curMin },
+                      age90s: { target: cur, min: curMin },
+                    },
+                  });
+                }}
+              >
+                균등형
+              </button>
+            </div>
+          </div>
           <select
             className="premium-input"
             style={styles.input}
-            value={params.spendingPattern || (params.decumulationStrategy === "FLAT" ? "FLAT" : "ACTIVE_FOCUSED")}
+            value={params.spendingPattern || "AGE_BANDS"}
             onChange={(e) => {
               const pattern = e.target.value as SimulationParamsState["spendingPattern"];
               setParam({
@@ -157,13 +198,95 @@ export default function DashboardSidebar(props: Props) {
               });
             }}
           >
-            <option value="ACTIVE_FOCUSED">활동기 집중형 (초기 유지 후 체감)</option>
+            <option value="AGE_BANDS">연령대별 맞춤형 (60대/70대/80대/90대+)</option>
+            <option value="ACTIVE_FOCUSED">활동기 집중형 (초기 유지 후 연 2% 체감)</option>
             <option value="SMILING_3STAGE">3단계 생애주기형 (100%→75%→55%)</option>
             <option value="FLAT">고정 균등형 (생애 전 기간 동일)</option>
           </select>
         </div>
 
-        {params.spendingPattern !== "FLAT" && params.spendingPattern !== "SMILING_3STAGE" && (
+        {/* 연령대별 맞춤형 (AGE_BANDS) 상세 설정 */}
+        {params.spendingPattern === "AGE_BANDS" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "6px 0 10px" }}>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-accent)", fontWeight: 700 }}>
+              📅 연령대별 월 생활비 (현재가치 기준, 만원/월)
+            </span>
+            {[
+              { key: "age60s" as const, label: "60대 (활동기)" },
+              { key: "age70s" as const, label: "70대 (안정기)" },
+              { key: "age80s" as const, label: "80대 (감소기)" },
+              { key: "age90s" as const, label: "90대+ (간병기)" },
+            ].map(({ key, label }) => {
+              const curBand = params.ageBands?.[key] || DEFAULT_AGE_BANDS[key];
+              return (
+                <div
+                  key={key}
+                  style={{
+                    backgroundColor: "rgba(99, 102, 241, 0.04)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "6px",
+                    padding: "8px 10px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-primary)" }}>{label}</span>
+                    <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>
+                      목표 <strong>{curBand.target}</strong>만 / 최소 <strong>{curBand.min}</strong>만
+                    </span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <div>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>목표 생활비</span>
+                      <input
+                        type="number"
+                        min={50}
+                        step={10}
+                        className="premium-input"
+                        style={{ ...styles.input, padding: "4px 8px", fontSize: "0.8rem", marginTop: 2 }}
+                        value={curBand.target}
+                        onChange={(e) => {
+                          const val = Number(e.target.value) || 0;
+                          const updated = {
+                            ...(params.ageBands || DEFAULT_AGE_BANDS),
+                            [key]: { ...curBand, target: val },
+                          };
+                          setParam({
+                            ageBands: updated,
+                            ...(key === "age60s" ? { targetMonthlySpending: val } : {}),
+                          });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>최소 생활비</span>
+                      <input
+                        type="number"
+                        min={50}
+                        step={10}
+                        className="premium-input"
+                        style={{ ...styles.input, padding: "4px 8px", fontSize: "0.8rem", marginTop: 2 }}
+                        value={curBand.min}
+                        onChange={(e) => {
+                          const val = Number(e.target.value) || 0;
+                          const updated = {
+                            ...(params.ageBands || DEFAULT_AGE_BANDS),
+                            [key]: { ...curBand, min: val },
+                          };
+                          setParam({
+                            ageBands: updated,
+                            ...(key === "age60s" ? { minMonthlySpending: val } : {}),
+                          });
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {params.spendingPattern === "ACTIVE_FOCUSED" && (
           <>
             {slider("초기 활동기 유지 기간", params.activePhaseYears ?? 5, "년", 1, 10, 1, (v) => setParam({ activePhaseYears: v }))}
             {slider("활동기 이후 연간 체감률", params.annualDeclineRate ?? 2.0, "%", 0.5, 5.0, 0.5, (v) => setParam({ annualDeclineRate: v }))}
@@ -178,8 +301,8 @@ export default function DashboardSidebar(props: Props) {
             onChange={(e) => setParam({ privatePensionEndAge: Number(e.target.value) })} />
         </div>
         <p style={styles.note}>
-          은퇴 초기 여행·여가 등 활동적인 소비가 필요한 기간(기본 {params.activePhaseYears ?? 5}년)은 기존 소비 수준을 100% 유지하고,
-          이후 연차별로 완만하게 줄여나가는 맞춤 지출 곡선으로 연금을 인출합니다. 부부 통합 시뮬레이션 및 전체 인출전략에 적용됩니다.
+          현재 비용 수준(현재가치) 기준으로 60대 활동기에서 70·80·90대로 갈수록 노후 생활비가 자연스럽게 체감하는 맞춤 지출 곡선으로 설계됩니다.
+          부부 통합 시뮬레이션 및 AI 진단 리포트에 일원화되어 적용됩니다.
         </p>
       </details>
 

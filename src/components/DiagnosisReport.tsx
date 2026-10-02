@@ -125,10 +125,16 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
   const sourceLabel = source === "ai" ? `AI 맞춤 진단 · ${model ?? "Gemini"}` : source === "fallback" ? "기본 진단 (AI 응답 실패)" : "기본 진단 (계산 기반)";
 
   // 03 가구 현금흐름 (현재가치) 및 연차별 지출 곡선(목표선/최소선)
+  let lastTarget = r.targetToday;
+  let lastMin = r.minToday;
   const flowData: Record<string, number>[] = rows.map((row, t) => {
     const pt = r.spendingCurve?.get(row.year);
-    const targetSpending = pt ? pt.targetReal : r.targetToday;
-    const minSpending = pt ? pt.minReal : r.minToday;
+    if (pt) {
+      lastTarget = pt.targetReal;
+      lastMin = pt.minReal;
+    }
+    const targetSpending = pt ? pt.targetReal : lastTarget;
+    const minSpending = pt ? pt.minReal : lastMin;
     return {
       year: row.year,
       targetSpending,

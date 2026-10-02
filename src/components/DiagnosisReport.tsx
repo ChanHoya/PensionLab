@@ -561,6 +561,120 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
             </tbody>
           </table>
         </div>
+
+        {/* S4 하이브리드 배당 운용 정책 정밀 진단 패널 */}
+        {r.s4Analysis && r.s4Analysis.coveredCallAssetInitial > 0 && (
+          <div
+            style={{
+              marginTop: "18px",
+              backgroundColor: "rgba(99, 102, 241, 0.04)",
+              border: "1px solid rgba(99, 102, 241, 0.2)",
+              borderRadius: "var(--radius-md)",
+              padding: "16px 20px",
+            }}
+          >
+            {/* 상단 헤더 & 배지 */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ fontSize: "1.4rem" }}>
+                  {r.s4Analysis.policy === "REINVEST" ? "🔄" : r.s4Analysis.policy === "BUFFER" ? "🛡️" : "💵"}
+                </span>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <strong style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
+                      S4 하이브리드(배당+연금) 배당 운용 정책 정밀 진단
+                    </strong>
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        padding: "2px 8px",
+                        borderRadius: "12px",
+                        backgroundColor:
+                          r.s4Analysis.policy === "BUFFER"
+                            ? "rgba(16, 185, 129, 0.15)"
+                            : r.s4Analysis.policy === "REINVEST"
+                            ? "rgba(99, 102, 241, 0.15)"
+                            : "rgba(245, 158, 11, 0.15)",
+                        color:
+                          r.s4Analysis.policy === "BUFFER"
+                            ? "#10b981"
+                            : r.s4Analysis.policy === "REINVEST"
+                            ? "#818cf8"
+                            : "#f59e0b",
+                        border: "1px solid",
+                        borderColor:
+                          r.s4Analysis.policy === "BUFFER"
+                            ? "rgba(16, 185, 129, 0.3)"
+                            : r.s4Analysis.policy === "REINVEST"
+                            ? "rgba(99, 102, 241, 0.3)"
+                            : "rgba(245, 158, 11, 0.3)",
+                      }}
+                    >
+                      {r.s4Analysis.policyLabel}
+                    </span>
+                  </div>
+                  <p style={{ margin: "3px 0 0", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                    {r.s4Analysis.policyDescription}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 핵심 지표 4개 행 */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "10px",
+                marginBottom: "14px",
+              }}
+            >
+              <div style={{ backgroundColor: "var(--surface)", padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "block" }}>커버드콜/배당 자산</span>
+                <strong style={{ fontSize: "0.88rem", color: "var(--text-primary)" }}>{won(r.s4Analysis.coveredCallAssetInitial)}</strong>
+                <span style={{ fontSize: "0.72rem", color: "var(--accent-purple)", marginLeft: 6 }}>연 {r.s4Analysis.dividendRate}%</span>
+              </div>
+              <div style={{ backgroundColor: "var(--surface)", padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "block" }}>건보료 피부양자 허들 (1인당)</span>
+                <strong style={{ fontSize: "0.88rem", color: r.s4Analysis.healthInsuranceProtected ? "#10b981" : "#ef4444" }}>
+                  {won(r.s4Analysis.annualDividendPerPerson)}/년
+                </strong>
+                <span style={{ fontSize: "0.72rem", color: r.s4Analysis.healthInsuranceProtected ? "#10b981" : "#ef4444", marginLeft: 6 }}>
+                  {r.s4Analysis.healthInsuranceProtected ? "안전 방어" : "초과 주의"}
+                </span>
+              </div>
+              <div style={{ backgroundColor: "var(--surface)", padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "block" }}>
+                  {r.s4Analysis.policy === "REINVEST" ? "누적 스노우볼 재투자" : r.s4Analysis.policy === "BUFFER" ? "누적 안전 비상버퍼 적립" : "누적 배당 생활비 충당"}
+                </span>
+                <strong style={{ fontSize: "0.88rem", color: "var(--text-primary)" }}>
+                  {won(r.s4Analysis.policy === "REINVEST" ? r.s4Analysis.accumulatedReinvested : r.s4Analysis.policy === "BUFFER" ? r.s4Analysis.accumulatedBuffered : r.s4Analysis.accumulatedSpent)}
+                </strong>
+              </div>
+              <div style={{ backgroundColor: "var(--surface)", padding: "10px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)" }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", display: "block" }}>
+                  {r.s4Analysis.policy === "REINVEST" ? "최종 커버드콜 잔액" : r.s4Analysis.policy === "BUFFER" ? "최종 비상버퍼 잔고" : "연간 총 가구 배당소득"}
+                </span>
+                <strong style={{ fontSize: "0.88rem", color: "var(--primary)" }}>
+                  {won(r.s4Analysis.policy === "REINVEST" ? r.s4Analysis.finalCoveredCallAsset : r.s4Analysis.policy === "BUFFER" ? r.s4Analysis.finalEmergencyBuffer : r.s4Analysis.annualDividendGross)}
+                </strong>
+              </div>
+            </div>
+
+            {/* 강점 & 처방 코멘트 */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "10px", fontSize: "0.78rem" }}>
+              <div style={{ backgroundColor: "rgba(16, 185, 129, 0.06)", border: "1px solid rgba(16, 185, 129, 0.2)", borderRadius: "var(--radius-sm)", padding: "10px 12px" }}>
+                <strong style={{ color: "#10b981", display: "block", marginBottom: "3px" }}>✨ 핵심 기대 효과</strong>
+                <span style={{ color: "var(--text-secondary)", lineHeight: 1.45 }}>{r.s4Analysis.policyEvaluation.coreBenefit}</span>
+              </div>
+              <div style={{ backgroundColor: "rgba(99, 102, 241, 0.06)", border: "1px solid rgba(99, 102, 241, 0.2)", borderRadius: "var(--radius-sm)", padding: "10px 12px" }}>
+                <strong style={{ color: "#818cf8", display: "block", marginBottom: "3px" }}>🧭 전문가 운용 처방</strong>
+                <span style={{ color: "var(--text-secondary)", lineHeight: 1.45 }}>{r.s4Analysis.policyEvaluation.strategicPrescription}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </Section>
 
       {/* 06 리스크 매트릭스 */}

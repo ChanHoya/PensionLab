@@ -27,4 +27,8 @@
   1) 40대 맞벌이 직장인(표준 3층 연금/스노우볼형), 50대 외벌이 대기업·공기업 퇴직 준비(고액 DB/IRP/추납/안전버퍼형), 40대 자영업·전문직 프리랜서(IRP/노란우산/월배당 전액소비형) 등 3대 가구 페르소나 데이터셋(`src/config/personas.ts`) 구축
   2) 원클릭 프리셋 로더 모달(`src/components/PersonaPresetModal.tsx`) 제작: 카드별 핵심 지표 4종, 태그 배지, 타겟 설명, 전략 팁을 시각화하고 즉시 로컬 메모리에 동기화 적용
   3) 온보딩 첫 화면 퀵스타트 배너 & 헤더 버튼, 자산관리 대시보드 상단 헤더 & `dataActions` 바, AI 포트폴리오 진단 헤더 전반에 원클릭 연동 지원 (Sprint 31, Story S31-1)
-
+- **[FEAT-022] S4 배당 운용 정책(스노우볼/안전버퍼/소비형) 정밀 연동 및 AI 종합 진단 리포트 고도화**:
+  1) 가구 인출 시나리오(`householdScenarios.ts`)에서 S4의 `finalCoveredCallAsset`(최종 커버드콜 잔고) 및 `finalDividendBuffer`(최종 비상자금 버퍼 잔고)를 병합 집계하도록 확장
+  2) 가구 종합 진단 계산기(`householdReport.ts`)에 `S4DividendAnalysis` 인터페이스 신설: 초기 투자원금, 1인당 배당금, 건보료 피부양자 안전 여부, 누적 생활비 충당액/재투자액/버퍼적립액, 최종 잔고 및 정책별 핵심 이점/리스크/전략 처방 자동 산출, 장수·유족 대비 평가에 비상버퍼 안전성 실시간 반영
+  3) AI 진단 프롬프트 및 리포트 팩트(`reportNarrative.ts`, `api/ai/advisor/route.ts`): S4 배당 정책 지표 블록 주입 및 Gemini 시스템 프롬프트에 CFP 전문가 심층 처방 지침 강화, fallbackNarrative 정책별 맞춤 처방(강점·리스크·실행로드맵·절세팁) 탑재
+  4) AI 종합 진단 리포트(`DiagnosisReport.tsx`): 섹션 05 인출전략 비교 내 S4 배당 운용 정책 전용 인포그래픽 패널 신설(정책 배지, 4대 핵심 지표 카드, 전문 처방 및 건보료 가이드 콜아웃) (Sprint 31, Story S31-2)

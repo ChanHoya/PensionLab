@@ -41,6 +41,30 @@ export interface ScenarioSummary {
   taxHI: number; // 생애 세금 + 건보료
   effectiveRate: number; // taxHI / preTax
   lostDependencyAge?: number;
+  finalCoveredCallAsset?: number; // S4 최종 커버드콜 잔액 (만원)
+  finalDividendBuffer?: number;   // S4 최종 누적 비상자금 잔고 (만원)
+}
+
+export interface S4DividendAnalysis {
+  policy: "REINVEST" | "BUFFER" | "PAYOUT";
+  policyLabel: string;
+  policyDescription: string;
+  coveredCallAssetInitial: number; // 초기 투자금 (만원)
+  dividendRate: number; // 연 분배율 (%)
+  isCoupleDivided: boolean; // 부부 명의 분산
+  annualDividendGross: number; // 연간 가구 총 배당금 세전 (만원)
+  annualDividendPerPerson: number; // 1인당 배당금 세전 (만원)
+  healthInsuranceProtected: boolean; // 건보료 피부양자 안전 (1인당 1,000만원 이하)
+  finalCoveredCallAsset: number; // 최종 커버드콜 잔액 (만원)
+  finalEmergencyBuffer: number; // 최종 안전 비상자금 잔고 (만원)
+  accumulatedReinvested: number; // 누적 재투자 총액 (만원)
+  accumulatedBuffered: number; // 누적 안전버퍼 적립 총액 (만원)
+  accumulatedSpent: number; // 생활비 충당 총액 (만원)
+  policyEvaluation: {
+    coreBenefit: string;
+    keyRisk: string;
+    strategicPrescription: string;
+  };
 }
 
 export interface Span {
@@ -84,6 +108,7 @@ export interface HouseholdReport {
   total: number; // 종합 점수 0~100
   grade: { letter: string; label: string; color: string };
   nps: { selfAdded: number; selfRestored: number; spouseAdded: number; spouseRestored: number }; // 추납·반납 반영 개월
+  s4Analysis: S4DividendAnalysis; // S4 하이브리드 배당 운용 정책 정밀 분석
 }
 
 const GRADES = [
@@ -203,6 +228,74 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
     },
   ].filter((m) => m.paid > 0 || m.received > 0);
 
+  const s4Run = runs.s4;
+  const s4Policy = params.dividendPolicy || "REINVEST";
+  const s4AssetInitial = params.coveredCallAsset || 0;
+  const s4DivRate = params.coveredCallDividendRate ?? 9.0;
+  const annualDividendGross = Math.round(s4AssetInitial * (s4DivRate / 100));
+  const isDivided = hasSpouse && params.isCoupleDivided;
+  const annualDividendPerPerson = isDivided ? Math.round(annualDividendGross / 2) : annualDividendGross;
+  const healthInsuranceProtected = annualDividendPerPerson <= 1000;
+
+  let accumulatedSpent = 0;
+  let accumulatedReinvested = 0;
+  let accumulatedBuffered = 0;
+  s4Run.flows.forEach((f) => {
+    if (f.dividendSpent) accumulatedSpent += f.dividendSpent / 10000;
+    if (f.dividendReinvested) accumulatedReinvested += f.dividendReinvested / 10000;
+    if (f.dividendBuffered) accumulatedBuffered += f.dividendBuffered / 10000;
+  });
+
+  const finalCoveredCallAsset = Math.round((s4Run.finalCoveredCallAsset ?? 0) / 10000);
+  const finalEmergencyBuffer = Math.round((s4Run.finalDividendBuffer ?? 0) / 10000);
+
+  const policyLabels: Record<string, { label: string; desc: string; benefit: string; risk: string; prescription: string }> = {
+    REINVEST: {
+      label: "스노우볼 복리 재투자형",
+      desc: "생활비 부족분 충당 후 잉여 배당금을 전액 커버드콜 원금에 재투자하여 은퇴 자산을 복리로 증식합니다.",
+      benefit: `잉여 배당금 누적 ${Math.round(accumulatedReinvested).toLocaleString()}만원 재투자로 최종 커버드콜 자산이 ${finalCoveredCallAsset.toLocaleString()}만원으로 증대됩니다.`,
+      risk: "고배당 커버드콜 ETF 원금(기초자산) 변동성에 지속 노출되므로 시장 급락기 평가손실 위험에 유의해야 합니다.",
+      prescription: "은퇴 초기 활동기(60대)에는 스노우볼 재투자로 자산을 키우고, 70대 진입 시 안전버퍼(BUFFER) 적립으로 전환하여 원금을 보호하세요.",
+    },
+    BUFFER: {
+      label: "비상자금 안전버퍼 적립형",
+      desc: "잉여 배당금을 안전자산(연 2.5% MMF/단기채 복리)에 분리 적립하여 초고령기 긴급 의료·간병비 버퍼를 확보합니다.",
+      benefit: `별도 안전 풀에 최종 ${finalEmergencyBuffer.toLocaleString()}만원의 비상자금이 적립되어 80대 이후 간병·의료비 리스크를 철저히 방어합니다.`,
+      risk: "초기 원금 증식 속도는 재투자형 대비 완만하나, 원금 보존성과 심리적 안전판 효과가 가장 우수합니다.",
+      prescription: "적립된 비상자금 풀은 주식 시장과 상관관계가 없는 파킹형/단기국채로 엄격히 분리 관리하여 초고령기 긴급 의료비 전용 통장으로 유지하세요.",
+    },
+    PAYOUT: {
+      label: "배당금 전액 소비형",
+      desc: "매월 발생하는 배당금을 즉시 인출하여 생활비로 전액 활용함으로써 공적연금 수령 전 소득 공백기를 방어합니다.",
+      benefit: `연간 ${annualDividendGross.toLocaleString()}만원(월 약 ${Math.round(annualDividendGross / 12).toLocaleString()}만원)의 즉시 가용 현금흐름으로 생활비를 강력히 보당합니다.`,
+      risk: "배당금 전액 소비 시 원금 재투자나 안전버퍼가 남지 않으므로, 향후 물가 상승에 따른 실질 구매력 저하를 사적연금과 병행 방어해야 합니다.",
+      prescription: `1인당 연 배당소득 ${annualDividendPerPerson.toLocaleString()}만원을 1,000만원 이하로 유지${healthInsuranceProtected ? "(현재 안전)" : "(현재 초과 주의)"}하여 건보료 피부양자 자격을 방어하세요.`,
+    },
+  };
+
+  const policyMeta = policyLabels[s4Policy] || policyLabels.REINVEST;
+  const s4Analysis: S4DividendAnalysis = {
+    policy: s4Policy,
+    policyLabel: policyMeta.label,
+    policyDescription: policyMeta.desc,
+    coveredCallAssetInitial: s4AssetInitial,
+    dividendRate: s4DivRate,
+    isCoupleDivided: isDivided,
+    annualDividendGross,
+    annualDividendPerPerson,
+    healthInsuranceProtected,
+    finalCoveredCallAsset,
+    finalEmergencyBuffer,
+    accumulatedReinvested: Math.round(accumulatedReinvested),
+    accumulatedBuffered: Math.round(accumulatedBuffered),
+    accumulatedSpent: Math.round(accumulatedSpent),
+    policyEvaluation: {
+      coreBenefit: policyMeta.benefit,
+      keyRisk: policyMeta.risk,
+      strategicPrescription: policyMeta.prescription,
+    },
+  };
+
   const scenarios: ScenarioSummary[] = (Object.keys(runs) as ScenarioKey[]).map((key) => {
     const r = runs[key];
     return {
@@ -214,6 +307,8 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
       taxHI: r.lifetimeTotalTaxAndHI,
       effectiveRate: r.lifetimeTotalPreTax > 0 ? r.lifetimeTotalTaxAndHI / r.lifetimeTotalPreTax : 0,
       lostDependencyAge: r.lostDependencyAge,
+      finalCoveredCallAsset: r.finalCoveredCallAsset !== undefined ? Math.round(r.finalCoveredCallAsset / 10000) : undefined,
+      finalDividendBuffer: r.finalDividendBuffer !== undefined ? Math.round(r.finalDividendBuffer / 10000) : undefined,
     };
   });
   const best = scenarios.reduce((b, s) => (s.postTax > b.postTax ? s : b));
@@ -270,12 +365,12 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
       score: Math.round(longevityScore),
       metric:
         survivorRatio !== null
-          ? `첫 사망 후 가구 소득 ${pct(survivorRatio)}% 유지 · 말년 최소 생활비 충족 ${pct(Math.min(1, lateCoverage))}%`
-          : `말년(마지막 ${LATE_YEARS}년) 최소 생활비 충족 ${pct(Math.min(1, lateCoverage))}%`,
+          ? `첫 사망 후 가구 소득 ${pct(survivorRatio)}% 유지 · 말년 최소 생활비 충족 ${pct(Math.min(1, lateCoverage))}%${finalEmergencyBuffer > 0 ? ` (비상버퍼 ${finalEmergencyBuffer.toLocaleString()}만원)` : ""}`
+          : `말년(마지막 ${LATE_YEARS}년) 최소 생활비 충족 ${pct(Math.min(1, lateCoverage))}%${finalEmergencyBuffer > 0 ? ` (비상버퍼 ${finalEmergencyBuffer.toLocaleString()}만원)` : ""}`,
       basis:
         survivorRatio !== null
-          ? "첫 사망 후 3년 가구 소득이 이전의 70% 이상(50점) + 마지막 5년 최소 생활비 충족(50점)"
-          : "마지막 5년 평균 월 연금(현재가치)의 최소 생활비 충족 정도",
+          ? `첫 사망 후 3년 가구 소득이 이전의 70% 이상(50점) + 마지막 5년 최소 생활비 충족(50점)${finalEmergencyBuffer > 0 ? " (S4 비상 안전버퍼 추가 방어)" : ""}`
+          : `마지막 5년 평균 월 연금(현재가치)의 최소 생활비 충족 정도${finalEmergencyBuffer > 0 ? " (S4 비상 안전버퍼 추가 방어)" : ""}`,
     },
   ];
   const total = Math.round(dimensions.reduce((a, d) => a + d.score * d.weight, 0) / 100);
@@ -315,5 +410,6 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
       spouseAdded: spouse ? spouseNps.addedMonths : 0,
       spouseRestored: spouse ? spouseNps.restoredMonths : 0,
     },
+    s4Analysis,
   };
 }

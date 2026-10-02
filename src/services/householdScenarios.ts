@@ -125,6 +125,8 @@ export function runHouseholdScenarios(
       hasCrevasse: a.hasCrevasse || !!b?.hasCrevasse,
       hasDeficit: flows.some((f) => f.age - selfAge0 >= retireT && f.deficit > 0),
       lostDependencyAge: a.lostDependencyAge ?? lostSpouse,
+      finalCoveredCallAsset: (a.finalCoveredCallAsset ?? 0) + (b?.finalCoveredCallAsset ?? 0),
+      finalDividendBuffer: (a.finalDividendBuffer ?? 0) + (b?.finalDividendBuffer ?? 0),
       flows,
     };
   };

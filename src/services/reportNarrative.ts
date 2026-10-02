@@ -98,7 +98,20 @@ export function reportFacts(r: HouseholdReport, input: ReportInput): string {
       (s) =>
         `- ${s.id} ${s.name}: 세전 ${won(s.preTax)}, 세후 ${won(s.postTax)}, 세금·건보료 ${won(s.taxHI)} (부담률 ${(s.effectiveRate * 100).toFixed(1)}%)${s.lostDependencyAge ? `, ${s.lostDependencyAge}세 건보료 피부양자 탈락` : ""}`
     ),
-    `- 생애 세후 수령액 최대: ${r.best.id} ${r.best.name}`,
+    "- 생애 세후 수령액 최대: " + r.best.id + " " + r.best.name,
+    "",
+    "[S4 하이브리드(배당+연금) 배당 운용 정책 분석]",
+    `- 배당 운용 정책: ${r.s4Analysis.policyLabel} (${r.s4Analysis.policy})`,
+    `- 정책 설명: ${r.s4Analysis.policyDescription}`,
+    `- 커버드콜/월배당 투자금: ${won(r.s4Analysis.coveredCallAssetInitial)} (연 분배율 ${r.s4Analysis.dividendRate}%)`,
+    `- 부부 명의 분산: ${r.s4Analysis.isCoupleDivided ? "적용 (부부 50% 분산)" : "미적용 (본인 단독)"}`,
+    `- 연간 배당금: 가구 총 ${won(r.s4Analysis.annualDividendGross)} / 1인당 ${won(r.s4Analysis.annualDividendPerPerson)} (${r.s4Analysis.healthInsuranceProtected ? "건보료 피부양자 안전 1,000만원 이하 방어" : "1,000만원 초과 피부양자 탈락 위험"})`,
+    r.s4Analysis.policy === "REINVEST"
+      ? `- 스노우볼 재투자 누적: ${won(r.s4Analysis.accumulatedReinvested)}, 최종 커버드콜 잔액: ${won(r.s4Analysis.finalCoveredCallAsset)}`
+      : r.s4Analysis.policy === "BUFFER"
+      ? `- 비상자금 안전버퍼 누적: ${won(r.s4Analysis.accumulatedBuffered)}, 최종 비상 풀 잔고: ${won(r.s4Analysis.finalEmergencyBuffer)} (연 2.5% MMF 복리 적립)`
+      : `- 생활비 직접 충당 배당금 누적: ${won(r.s4Analysis.accumulatedSpent)}`,
+    `- 핵심 처방: ${r.s4Analysis.policyEvaluation.strategicPrescription}`,
     "",
     "[가구 월 연금 흐름 — 5년 간격, 현재가치 만원/월]"
   );
@@ -219,12 +232,31 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
   };
 
   const strengths = r.dimensions.filter((d) => d.score >= 80).map((d) => `${d.label}: ${d.metric}`);
+  if (r.s4Analysis.coveredCallAssetInitial > 0) {
+    strengths.push(`S4 배당 정책(${r.s4Analysis.policyLabel}): ${r.s4Analysis.policyEvaluation.coreBenefit}`);
+  }
   if (strengths.length === 0) {
     const top = r.dimensions.reduce((a, b) => (b.score > a.score ? b : a));
     strengths.push(`${top.label}: ${top.metric}`);
   }
 
   const risks: ReportNarrative["risks"] = [];
+  if (r.s4Analysis.coveredCallAssetInitial > 0) {
+    if (!r.s4Analysis.healthInsuranceProtected) {
+      risks.push({
+        title: "배당소득 건보료 위험",
+        detail: `1인당 연 배당소득이 ${won(r.s4Analysis.annualDividendPerPerson)}으로 1,000만원을 초과해 건보료 피부양자 자격을 잃을 수 있습니다. 부부 명의 분산 또는 투자금 조절이 필요합니다.`,
+        impact: "높음",
+        likelihood: "높음",
+      });
+    }
+    risks.push({
+      title: "커버드콜 원금 변동성",
+      detail: r.s4Analysis.policyEvaluation.keyRisk,
+      impact: "중간",
+      likelihood: "중간",
+    });
+  }
   if (ratio < 1)
     risks.push({
       title: "목표 생활비 부족",
@@ -316,6 +348,34 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
       priority: "중간",
       effect: "건보료 부담 감소",
     });
+  if (r.s4Analysis.coveredCallAssetInitial > 0) {
+    if (r.s4Analysis.policy === "BUFFER") {
+      actions.push({
+        title: "비상 안전버퍼 계좌 분리 관리",
+        detail: `잉여 배당금으로 적립 중인 안전버퍼(최종 예상 ${won(r.s4Analysis.finalEmergencyBuffer)})를 파킹형/단기채로 엄격히 분리 운용하여 초고령기 긴급 의료비 전용으로 유지합니다.`,
+        timing: "은퇴 시점",
+        priority: "높음",
+        effect: "초고령기 간병·의료비 안심 자금 확보",
+      });
+    } else if (r.s4Analysis.policy === "REINVEST") {
+      actions.push({
+        title: "스노우볼 재투자 성과 점검",
+        detail: `60대 전반에는 잉여 배당금을 커버드콜에 재투자해 자산을 증식(최종 예상 ${won(r.s4Analysis.finalCoveredCallAsset)})하고, 70대 진입 시 안전버퍼형 전환을 검토합니다.`,
+        timing: "연금 개시 후",
+        priority: "중간",
+        effect: "자산 복리 성장 및 원금 리스크 통제",
+      });
+    } else {
+      actions.push({
+        title: "배당 현금흐름과 건보료 모니터링",
+        detail: `매월 배당금으로 생활비를 보당하되, 1인당 연 1,000만원 한도를 넘지 않도록 부부 명의 분산 및 배당 재조정을 관리합니다.`,
+        timing: "즉시",
+        priority: "중간",
+        effect: "공백기 소득 보당 및 피부양자 방어",
+      });
+    }
+  }
+
   actions.push({
     title: "매년 연금 정보 갱신",
     detail: "금감원 통합연금포털에서 연 1회 적립금·예상 연금을 내려받아 이 진단을 다시 받아 봅니다.",
@@ -346,6 +406,16 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
     "공적연금 소득은 건보료 피부양자 소득 기준(연 2,000만원)에 포함되므로 사적연금 인출액과 함께 관리합니다.",
   ];
   if (r.hasSpouse) taxTips.push("부부가 각자 명의로 연금을 받으면 사람마다 분리과세 한도와 세율 구간을 따로 써서 세금을 줄일 수 있습니다.");
+  if (r.s4Analysis.coveredCallAssetInitial > 0) {
+    taxTips.push(
+      "커버드콜 월배당금은 1인당 연 1,000만원 이하로 통제하면 건보료 피부양자 자격(금융소득 1,000만원 허들)을 안전하게 방어할 수 있습니다."
+    );
+    if (r.s4Analysis.isCoupleDivided) {
+      taxTips.push(
+        `부부 명의로 커버드콜 자산을 분산하여 1인당 배당소득을 1,000만원 이하(${won(r.s4Analysis.annualDividendPerPerson)})로 낮추는 절세 전략이 적용되어 있습니다.`
+      );
+    }
+  }
 
   const safe = Math.max(30, Math.min(70, Math.round(p.currentAge / 10) * 10));
   const income = Math.round(((100 - safe) * 0.6) / 5) * 5;

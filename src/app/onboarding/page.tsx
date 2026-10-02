@@ -791,6 +791,36 @@ export default function OnboardingPage() {
                       {s.tab}
                     </button>
                   ))}
+                  {group.key === "info" && (
+                    <button
+                      type="button"
+                      id="btn-onboarding-persona-preset"
+                      onClick={() => setPersonaModalOpen(true)}
+                      style={{
+                        ...styles.personTab,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.22) 100%)",
+                        borderColor: "rgba(139, 92, 246, 0.5)",
+                        color: "#c4b5fd",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "#8b5cf6";
+                        e.currentTarget.style.color = "#ffffff";
+                        e.currentTarget.style.background = "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.5)";
+                        e.currentTarget.style.color = "#c4b5fd";
+                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.22) 100%)";
+                      }}
+                    >
+                      <span>👫</span> 페르소나 체험하기
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -802,53 +832,7 @@ export default function OnboardingPage() {
             {/* STEP 0: 기본 정보 및 노후 재무 목표 */}
             {step.kind === "INFO" && (
               <div style={styles.formGroupList} className="animate-fade-in">
-                <div style={styles.infoAlert}>
-                  👤 본인 및 가족 구성원의 정보와 노후 지출 목표를 입력하면 더욱 정확한 시뮬레이션이 가능해집니다.
-                </div>
-
-                {/* 페르소나 원클릭 퀵스타트 배너 */}
-                <div
-                  style={{
-                    backgroundColor: "rgba(99, 102, 241, 0.08)",
-                    border: "1px solid rgba(99, 102, 241, 0.25)",
-                    borderRadius: "12px",
-                    padding: "16px 20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "16px",
-                    flexWrap: "wrap",
-                    marginBottom: "8px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                    <span style={{ fontSize: "1.8rem" }}>⚡</span>
-                    <div>
-                      <strong style={{ fontSize: "0.98rem", color: "var(--text-primary)", display: "block", marginBottom: "3px" }}>
-                        빠른 시작: 대한민국 대표 가구 페르소나 3종 원클릭 체험
-                      </strong>
-                      <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-                        직접 수치를 입력하기 전, 40대 맞벌이·50대 퇴직준비·자영업/배당집중형 샘플로 시뮬레이션 및 AI 진단을 즉시 확인해보세요.
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setPersonaModalOpen(true)}
-                    className="premium-button"
-                    style={{
-                      fontSize: "0.84rem",
-                      padding: "10px 18px",
-                      fontWeight: 700,
-                      background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    👫 대표 페르소나 둘러보기
-                  </button>
-                </div>
-                
-                <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>본인 및 가족 정보</h3>
+                <h3 style={{ ...styles.addFormTitle, marginTop: 4 }}>본인 및 가족 정보</h3>
 
                 <div style={styles.fieldRow}>
                   <label style={styles.label}>배우자 유무</label>
@@ -1127,6 +1111,7 @@ export default function OnboardingPage() {
                 onChange={(target: Who, slot: FssSlot, files: File[]) =>
                   setFssFiles((prev) => ({ ...prev, [target]: { ...prev[target], [slot]: files } }))
                 }
+                onOpenPersonaModal={() => setPersonaModalOpen(true)}
               />
             )}
 

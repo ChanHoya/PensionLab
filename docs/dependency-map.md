@@ -49,6 +49,14 @@ graph TD
   ReverseMortgageModal --> ReverseMortgageCalc[src/services/reverseMortgageCalculator.ts]
   CoupleSim --> ReverseMortgageCalc
 
+  %% Sprint 33 Additions (Income Bridge, Survivor Care, ISA Transfer)
+  Dashboard --> IncomeBridgeModal[src/components/IncomeBridgeModal.tsx]
+  IncomeBridgeModal --> IncomeBridgeCalc[src/services/incomeBridgeCalculator.ts]
+  Dashboard --> SurvivorCareModal[src/components/SurvivorCareModal.tsx]
+  SurvivorCareModal --> SurvivorCareCalc[src/services/survivorCareCalculator.ts]
+  Dashboard --> IsaTransferModal[src/components/IsaPensionTransferModal.tsx]
+  IsaTransferModal --> IsaTransferCalc[src/services/isaPensionTransferCalculator.ts]
+
 
   %% Sprint 2 Additions
   Dashboard --> Report[src/app/dashboard/report/page.tsx]

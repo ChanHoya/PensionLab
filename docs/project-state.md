@@ -52,28 +52,35 @@
 - **[Completed]** Story S32-2: 은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 절감 계산기(재산 과표 1억 공제 후 등급제, 공적연금 50% 인정, 금융소득 1,000만원 초과 전액 부과, 영수증 고지서 모달 연동) 완료.
 - **[Completed]** Story S32-3: 한국주택금융공사(HF) 주택연금(역모기지) 결합 시뮬레이션(공시가격 12억 한도 및 가입나이별 선형 보간 계수, 부부 시뮬레이션 및 차트·CSV 연동 On/Off 모달) 완료.
 - **[Completed]** Story S32-4: 대시보드 퀵 수비 지표 도구(dataActions 및 사이드바 내 접이식 그룹) & AI 진단 리포트 세제·인출 최적화 팁 연동 완료.
+- **[Completed]** Story S33-1: 은퇴 소득 공백기(소득 크레바스) 브릿지 집중 플래너 (실업급여 최대 9개월, 사적연금 분할 인출, 건보료 임의계속가입 36개월, 주택연금 조기 브릿지 4대 수단 모델링 및 수지 균형 타임라인 모달 연동) 완료.
+- **[Completed]** Story S33-2: 부부 기대수명 차이에 따른 '홀로 남은 배우자(1인 가구)' 생애 케어 고도화 (1인 생활비 70% 감소율, 국민연금법 제56조 중복급여 조정 유리 대안 자동 판정, 주택연금 100% 종신 승계 및 85세+ 집중 간병비 시뮬레이션 모달 연동) 완료.
+- **[Completed]** Story S33-3: ISA 만기 자금 연금계좌 전환 & 절세 3총사(연금저축/IRP/ISA) 통합 플래너 (조특법 제91조의18 만기 전환금 10% 추가 세액공제, 연 최대 1,200만원 한도 환급, 3년 풍차돌리기 누적 절세 및 계좌 3총사 비교 모달 연동) 완료.
+- **[Completed]** Story S33-4: 대시보드 툴바 연동 및 스마트폰 모바일 뷰포트 반응형 최적화 (dataActions 3버튼 및 사이드바 3버튼 배치, 모바일 터치 가로스크롤 및 팝업 여백 CSS 최적화, AI 진단 리포트 처방 팁 연동) 완료.
 
 ## Active Sprint / Story
-- **Sprint 32**: 전체 완료 (Sprint 32 로드맵 4대 과제 개발 및 통합 검증 완수)
-  - **Story S32-1**: 사적연금 연 1,500만원 절세 한도 최적화기 (`PrivatePensionTaxModal.tsx`, `privatePensionTaxOptimizer.ts`) (완료)
-  - **Story S32-2**: 은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 절감 계산기 (`HealthInsuranceBillModal.tsx`, `localHealthInsuranceCalculator.ts`) (완료)
-  - **Story S32-3**: 한국주택금융공사 주택연금(역모기지) 결합 시뮬레이션 (`ReverseMortgageModal.tsx`, `reverseMortgageCalculator.ts`, `coupleSimulation.ts`, `pensionSeries.ts`, `exportCsv.ts`) (완료)
-  - **Story S32-4**: 대시보드 퀵 수비 지표 탭 바 & AI 진단 리포트 연동 (`page.tsx`, `DashboardSidebar.tsx`, `reportNarrative.ts`) (완료)
+- **Sprint 33**: 전체 완료 (Sprint 33 로드맵 4대 과제 개발, 단위 검증 및 통합 완수)
+  - **Story S33-1**: 은퇴 소득 공백기(소득 크레바스) 브릿지 집중 플래너 (`IncomeBridgeModal.tsx`, `incomeBridgeCalculator.ts`) (완료)
+  - **Story S33-2**: 부부 기대수명 차이에 따른 '홀로 남은 배우자(1인 가구)' 생애 케어 고도화 (`SurvivorCareModal.tsx`, `survivorCareCalculator.ts`) (완료)
+  - **Story S33-3**: ISA 만기 자금 연금계좌 전환 & 절세 3총사(연금저축/IRP/ISA) 통합 플래너 (`IsaPensionTransferModal.tsx`, `isaPensionTransferCalculator.ts`) (완료)
+  - **Story S33-4**: 대시보드 툴바 연동 및 스마트폰 모바일 뷰포트 반응형 최적화 (`page.tsx`, `DashboardSidebar.tsx`, `globals.css`, `reportNarrative.ts`) (완료)
 
-## Session Handoff (Sprint 32 완료)
+## Session Handoff (Sprint 33 완료)
 - **주요 산출물**:
-  1. 사적연금 연 1,500만원 절세 한도 최적화기 (`PrivatePensionTaxModal.tsx`, `privatePensionTaxOptimizer.ts`):
-     - 소득세법 제20조의3/제129조의2 기준 사적연금(연금저축/IRP) 연 1,500만원 초과 연도 및 초과액 실시간 산출
-     - 16.5% 분리과세 vs 종합과세 유불리 자동 비교 판정 및 수령기간 연장(스프레드) 시 저율과세(3.3~5.5%) 혜택 복원에 따른 절세액 제시
-  2. 은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 계산기 (`HealthInsuranceBillModal.tsx`, `localHealthInsuranceCalculator.ts`):
-     - 2024~2026년 건보료 기준(자동차 폐지, 재산 과표 1억원 기본공제 후 60등급 점수제, 공적연금 50% 인정, 사적연금 0원 비과세, 금융소득 1,000만원 허들) 정밀 모의 고지서
-     - 퇴직 후 36개월간 종전 직장보험료 납부 시 3년간 총 절감액 및 공단 신청 기한 가이드
-  3. 한국주택금융공사(HF) 주택연금(역모기지) 결합 시뮬레이터 (`ReverseMortgageModal.tsx`, `reverseMortgageCalculator.ts`):
-     - HF 공시 기준 연령별 주택가격 1억원당 월지급금 계수(종신지급방식 정액형) 선형 보간 연산
-     - 부부 시뮬레이션 및 현금흐름 차트(`pensionSeries.ts`), 연도별 테이블 및 엑셀 다운로드(`exportCsv.ts`)에 주택연금 고정 레이어 On/Off 결합 지원
-  4. 대시보드 퀵 수비 지표 3종 도구 및 AI 진단 리포트 연동:
-     - 대시보드 `dataActions` 바 및 사이드바 내 「은퇴 자산 수비 & 절세 도구」 그룹에 3대 모달 직결 버튼 제공
-     - AI 종합 진단 리포트 세제 최적화 섹션에 임의계속가입 및 주택연금 연동 처방 팁 탑재
+  1. 은퇴 소득 공백기(소득 크레바스) 브릿지 플래너 (`IncomeBridgeModal.tsx`, `incomeBridgeCalculator.ts`):
+     - 주직장 퇴직부터 국민연금 법정 개시 사이 소득 절벽 구간(개월수/총필요자금) 자동 감지
+     - 실업급여(최대 9개월, 1일 6.6만원, 월 198만원) + 사적연금 적정 인출 + 건보료 임의계속가입(36개월) + 주택연금 조기 결합 4대 브릿지 수단 모델링
+     - 연도별 수지 균형 타임라인 및 준비율(%), 안전도 등급 카드, CFP 3대 조언 제공
+  2. 홀로 남은 배우자(1인 가구) 생애 케어 시뮬레이터 (`SurvivorCareModal.tsx`, `survivorCareCalculator.ts`):
+     - 부부 기대수명 차이에 따른 1차 사망 후 홀로 생존 기간(년) 및 1인 생활비(부부의 70%) 산출
+     - 국민연금법 제56조(중복급여 조정: 본인연금+유족30% vs 유족100%) 자동 유리 대안 도출
+     - 주택연금 100% 감액 없는 배우자 종신 승계 및 85세 이상 초고령기 집중 간병비(월 100만원) 리스크 분석
+  3. ISA 만기 자금 연금계좌 전환 및 3년 풍차돌리기 플래너 (`IsaPensionTransferModal.tsx`, `isaPensionTransferCalculator.ts`):
+     - 3년 만기 ISA 전환금액의 10%(최대 300만원) 추가 세액공제(연 최대 1,200만원 한도) 및 환급액 산출
+     - 3년 풍차돌리기 N회 반복 누적 절세액 및 일반계좌 vs ISA vs 연금계좌 3총사 핵심 세제 비교표
+  4. 대시보드 연동 및 모바일 반응형 UX 최적화:
+     - 대시보드 `dataActions` 바 및 `DashboardSidebar` 내 3대 도구(소득공백기, 유족케어, ISA전환) 퀵 버튼 연동
+     - 스마트폰(768px 이하) 터치 가로스크롤(`.data-actions-bar`, 테이블), 모바일 모달 팝업 여백 CSS 최적화
+     - AI 종합 진단 리포트 세제 팁 영역에 ISA 전환, 소득 공백기 방어, 홀로 남은 배우자 보호 처방 문구 연동
 - **검증 상태**: `npx tsc --noEmit` 0 에러 통과, Next.js 개발 서버 정상 동작, git commit & push 완료.
 
 

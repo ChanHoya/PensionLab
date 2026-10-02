@@ -60,6 +60,22 @@
 - **[FEAT-029] 대시보드 은퇴 자산 수비 3종 도구 및 AI 진단 리포트 연동**:
   1) 대시보드 `dataActions` 바 및 `DashboardSidebar` 내 전용 접이식 그룹(은퇴 자산 수비 & 절세 도구)에 절세 1,500만 한도·지역건보료 모의·주택연금 결합 3대 퀵 모달 연동
   2) AI 종합 진단 리포트(`reportNarrative.ts`, `DiagnosisReport.tsx`) 세제 및 인출 최적화 섹션에 임의계속가입 활용법 및 주택연금 결합 처방 팁 자동 생성 (Sprint 32, Story S32-4)
+- **[FEAT-030] 은퇴 소득 공백기(소득 크레바스) 브릿지 집중 플래너**:
+  1) 주직장 퇴직(55~60세)부터 국민연금 법정 개시(63~65세) 사이 소득 공백 구간 및 결손 총액 자동 산정 엔진(`src/services/incomeBridgeCalculator.ts`) 구현
+  2) 실업급여(구직급여: 최대 9개월, 1일 상한 6.6만원, 월 198만원), 사적연금(퇴직/개인연금) 분할 인출, 건보료 임의계속가입(36개월) 절감 및 주택연금 조기 브릿지 4대 방어 수단 모델링
+  3) 소득 공백기 월간 수지 타임라인 테이블, 자금 충족률 및 안전도 등급 카드, CFP 3대 조언 모달(`src/components/IncomeBridgeModal.tsx`) 연동 (Sprint 33, Story S33-1)
+- **[FEAT-031] 부부 기대수명 차이에 따른 '홀로 남은 배우자(1인 가구)' 생애 케어 고도화**:
+  1) 부부 중 1인 먼저 사망 시 OECD 기준 1인 가구 생활비(부부 생활비의 70%) 감소 계수 반영
+  2) 국민연금법 제56조(중복급여 조정: 본인 노령연금 + 유족연금 30% vs 유족연금 100%) 자동 유리 대안 판정 엔진(`src/services/survivorCareCalculator.ts`) 구현
+  3) 주택연금(역모기지) 100% 종신 승계 보장 및 만 85세 이후 초고령기 집중 간병비(월 100만원) 리스크 시뮬레이터 모달(`src/components/SurvivorCareModal.tsx`) 연동 (Sprint 33, Story S33-2)
+- **[FEAT-032] ISA 만기 자금 연금계좌 전환 & 절세 3총사(연금저축/IRP/ISA) 통합 플래너**:
+  1) 조세특례제한법 제91조의18 기준 3년 만기 ISA 전환금액의 10%(최대 300만원) 추가 세액공제(연간 최대 1,200만원 한도) 및 연말정산 환급액(13.2~16.5%) 산출 엔진(`src/services/isaPensionTransferCalculator.ts`) 구현
+  2) 3년 주기 풍차돌리기 반복 회차별 누적 절세액 및 일반계좌 vs ISA vs 연금계좌 5대 핵심 세제 비교표
+  3) 인터랙티브 자금/총급여 슬라이더 및 전문가 운용 팁 모달(`src/components/IsaPensionTransferModal.tsx`) 연동 (Sprint 33, Story S33-3)
+- **[FEAT-033] 대시보드 툴바 연동 및 스마트폰 모바일 뷰포트 반응형 최적화**:
+  1) 대시보드 `dataActions` 바(소득공백기·유족케어·ISA전환) 및 `DashboardSidebar` 내 전용 퀵 버튼 3종 추가 배치
+  2) 모바일 스마트폰(화면 폭 768px 이하) 환경 터치 가로 스크롤(`.data-actions-bar`, 터치 테이블) 및 팝업 모달 여백/반응형 높이 CSS 최적화
+  3) AI 종합 진단 리포트(`reportNarrative.ts`) 세제 팁 영역에 ISA 만기 전환, 소득 공백기 방어, 홀로 남은 배우자 보호 처방 조언 연동 (Sprint 33, Story S33-4)
 
 
 

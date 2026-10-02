@@ -486,3 +486,38 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   }
 }
 
+/* 모바일 스마트폰(화면 폭 768px 이하) 최적화 */
+@media (max-width: 768px) {
+  /* 상단 액션바 및 툴바 가로 스크롤 터치 친화적 지원 */
+  .data-actions-bar {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    padding-bottom: 6px !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none; /* Firefox */
+  }
+  .data-actions-bar::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  /* 모바일 모달 팝업 패딩 및 높이 최적화 */
+  div[role="dialog"] > .glass-card {
+    padding: 16px !important;
+    border-radius: 12px !important;
+    max-height: 94vh !important;
+    gap: 14px !important;
+  }
+
+  /* 테이블 가로 스크롤 터치 지원 */
+  div[style*="overflowX: auto"],
+  div[style*="overflow-x: auto"] {
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* 헤더 버튼 및 액션 버튼 터치 영역 보장 */
+  button.premium-button-secondary,
+  button.premium-button {
+    min-height: 34px !important;
+  }
+}
+

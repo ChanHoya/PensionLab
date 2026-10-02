@@ -21,6 +21,9 @@ import NpsEarlyDeferralModal from "@/components/NpsEarlyDeferralModal";
 import { PrivatePensionTaxModal } from "@/components/PrivatePensionTaxModal";
 import { HealthInsuranceBillModal } from "@/components/HealthInsuranceBillModal";
 import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
+import { IncomeBridgeModal } from "@/components/IncomeBridgeModal";
+import { SurvivorCareModal } from "@/components/SurvivorCareModal";
+import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 
 // Import Recharts components
 import {
@@ -184,6 +187,15 @@ export default function DashboardPage() {
   // 주택연금(역모기지) 결합 모달 열림 상태
   const [reverseMortgageModalOpen, setReverseMortgageModalOpen] = useState(false);
 
+  // 소득 공백기(크레바스) 브릿지 플래너 모달 열림 상태
+  const [incomeBridgeModalOpen, setIncomeBridgeModalOpen] = useState(false);
+
+  // 홀로 남은 배우자(1인 가구) 생애 케어 모달 열림 상태
+  const [survivorCareModalOpen, setSurvivorCareModalOpen] = useState(false);
+
+  // ISA 만기 자금 연금계좌 전환 모달 열림 상태
+  const [isaTransferModalOpen, setIsaTransferModalOpen] = useState(false);
+
   const handleExportData = () => {
     const data = {
       nationalPension: store.nationalPension,
@@ -289,7 +301,7 @@ export default function DashboardPage() {
 
   // 백업·복원·페르소나 버튼: 부부 시뮬레이션 제목 오른쪽 (배우자 없음이면 같은 자리 오른쪽 정렬)
   const dataActions = (
-    <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+    <div className="data-actions-bar" style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
       <button
         id="btn-persona-preset"
         onClick={() => setPersonaModalOpen(true)}
@@ -369,6 +381,54 @@ export default function DashboardPage() {
         title="한국주택금융공사 주택연금(역모기지) 결합 시뮬레이터"
       >
         🏠 주택연금
+      </button>
+      <button
+        id="btn-income-bridge-actions"
+        onClick={() => setIncomeBridgeModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(56, 189, 248, 0.4)",
+          color: "#38bdf8",
+          background: "rgba(56, 189, 248, 0.08)",
+        }}
+        title="은퇴 소득 공백기(소득 크레바스) 브릿지 집중 플래너"
+      >
+        🌉 소득공백기
+      </button>
+      <button
+        id="btn-survivor-care-actions"
+        onClick={() => setSurvivorCareModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(244, 63, 94, 0.4)",
+          color: "#fb7185",
+          background: "rgba(244, 63, 94, 0.08)",
+        }}
+        title="홀로 남은 배우자(1인 가구) 생애 케어 시뮬레이터"
+      >
+        🕊️ 유족케어
+      </button>
+      <button
+        id="btn-isa-transfer-actions"
+        onClick={() => setIsaTransferModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(168, 85, 247, 0.4)",
+          color: "#c084fc",
+          background: "rgba(168, 85, 247, 0.08)",
+        }}
+        title="ISA 만기 자금 연금계좌 전환 및 3년 풍차돌리기 절세 플래너"
+      >
+        💎 ISA전환
       </button>
       <button
         id="btn-export-data"
@@ -697,6 +757,9 @@ export default function DashboardPage() {
             onOpenTax15Modal={() => setTax15ModalOpen(true)}
             onOpenHealthBillModal={() => setHealthBillModalOpen(true)}
             onOpenReverseMortgageModal={() => setReverseMortgageModalOpen(true)}
+            onOpenIncomeBridgeModal={() => setIncomeBridgeModalOpen(true)}
+            onOpenSurvivorCareModal={() => setSurvivorCareModalOpen(true)}
+            onOpenIsaTransferModal={() => setIsaTransferModalOpen(true)}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
@@ -1201,6 +1264,18 @@ export default function DashboardPage() {
       <ReverseMortgageModal
         isOpen={reverseMortgageModalOpen}
         onClose={() => setReverseMortgageModalOpen(false)}
+      />
+      <IncomeBridgeModal
+        isOpen={incomeBridgeModalOpen}
+        onClose={() => setIncomeBridgeModalOpen(false)}
+      />
+      <SurvivorCareModal
+        isOpen={survivorCareModalOpen}
+        onClose={() => setSurvivorCareModalOpen(false)}
+      />
+      <IsaPensionTransferModal
+        isOpen={isaTransferModalOpen}
+        onClose={() => setIsaTransferModalOpen(false)}
       />
     </main>
   );

@@ -22,6 +22,9 @@ interface Props {
   onOpenTax15Modal?: () => void;
   onOpenHealthBillModal?: () => void;
   onOpenReverseMortgageModal?: () => void;
+  onOpenIncomeBridgeModal?: () => void;
+  onOpenSurvivorCareModal?: () => void;
+  onOpenIsaTransferModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -469,6 +472,78 @@ export default function DashboardSidebar(props: Props) {
             >
               <span>🏠</span>
               <span>주택연금(역모기지) 결합</span>
+            </button>
+          )}
+
+          {props.onOpenIncomeBridgeModal && (
+            <button
+              type="button"
+              onClick={props.onOpenIncomeBridgeModal}
+              className="premium-button-secondary"
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                borderColor: "rgba(56, 189, 248, 0.4)",
+                color: "#38bdf8",
+                background: "rgba(56, 189, 248, 0.06)",
+              }}
+            >
+              <span>🌉</span>
+              <span>소득 공백기(크레바스) 플래너</span>
+            </button>
+          )}
+
+          {props.onOpenSurvivorCareModal && (
+            <button
+              type="button"
+              onClick={props.onOpenSurvivorCareModal}
+              className="premium-button-secondary"
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                borderColor: "rgba(244, 63, 94, 0.4)",
+                color: "#fb7185",
+                background: "rgba(244, 63, 94, 0.06)",
+              }}
+            >
+              <span>🕊️</span>
+              <span>홀로 남은 배우자 생애 케어</span>
+            </button>
+          )}
+
+          {props.onOpenIsaTransferModal && (
+            <button
+              type="button"
+              onClick={props.onOpenIsaTransferModal}
+              className="premium-button-secondary"
+              style={{
+                width: "100%",
+                padding: "6px 10px",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                borderColor: "rgba(168, 85, 247, 0.4)",
+                color: "#c084fc",
+                background: "rgba(168, 85, 247, 0.06)",
+              }}
+            >
+              <span>💎</span>
+              <span>ISA 만기 연금 전환 절세</span>
             </button>
           )}
         </div>

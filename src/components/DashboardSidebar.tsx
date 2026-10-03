@@ -24,6 +24,7 @@ interface Props {
   onOpenReverseMortgageModal?: () => void;
   onOpenIncomeBridgeModal?: () => void;
   onOpenNpsBoostModal?: () => void;
+  onOpenSavingsPlanModal?: () => void;
   onOpenSurvivorCareModal?: () => void;
   onOpenIsaTransferModal?: () => void;
 }
@@ -349,6 +350,29 @@ export default function DashboardSidebar(props: Props) {
           현재 비용 수준(현재가치) 기준으로 60대 활동기에서 70·80·90대로 갈수록 노후 생활비가 자연스럽게 체감하는 맞춤 지출 곡선으로 설계됩니다.
           부부 통합 시뮬레이션 및 AI 진단 리포트에 일원화되어 적용됩니다.
         </p>
+      {props.onOpenSavingsPlanModal && (
+          <button
+            type="button"
+            onClick={props.onOpenSavingsPlanModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(56, 189, 248, 0.4)",
+              color: "#38bdf8",
+              background: "rgba(56, 189, 248, 0.06)",
+            }}
+          >
+            <span>🎯</span>
+            <span>부족액 역산 적립 플랜</span>
+          </button>
+        )}
       </details>
 
       <details open style={styles.group}>

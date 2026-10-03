@@ -22,6 +22,7 @@ import { PrivatePensionTaxModal } from "@/components/PrivatePensionTaxModal";
 import { HealthInsuranceBillModal } from "@/components/HealthInsuranceBillModal";
 import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
 import { IncomeBridgeModal } from "@/components/IncomeBridgeModal";
+import { NpsBoostRoadmapModal } from "@/components/NpsBoostRoadmapModal";
 import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 
@@ -189,6 +190,9 @@ export default function DashboardPage() {
 
   // 소득 공백기(크레바스) 브릿지 플래너 모달 열림 상태
   const [incomeBridgeModalOpen, setIncomeBridgeModalOpen] = useState(false);
+
+  // 국민연금 증액 로드맵(반납→추납→임의계속가입→연기) 모달 열림 상태
+  const [npsBoostModalOpen, setNpsBoostModalOpen] = useState(false);
 
   // 홀로 남은 배우자(1인 가구) 생애 케어 모달 열림 상태
   const [survivorCareModalOpen, setSurvivorCareModalOpen] = useState(false);
@@ -358,6 +362,22 @@ export default function DashboardPage() {
         title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기"
       >
         ⚖️ 손익분기(BEP)
+      </button>
+      <button
+        id="btn-nps-boost-actions"
+        onClick={() => setNpsBoostModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(245, 158, 11, 0.4)",
+          color: "#f59e0b",
+          background: "rgba(245, 158, 11, 0.08)",
+        }}
+        title="국민연금 증액 로드맵: 반납 → 추납 → 임의계속가입 → 연기연금"
+      >
+        🪜 연금 증액
       </button>
       <button
         id="btn-tax15-actions"
@@ -766,6 +786,7 @@ export default function DashboardPage() {
             onOpenHealthBillModal={() => setHealthBillModalOpen(true)}
             onOpenReverseMortgageModal={() => setReverseMortgageModalOpen(true)}
             onOpenIncomeBridgeModal={() => setIncomeBridgeModalOpen(true)}
+            onOpenNpsBoostModal={() => setNpsBoostModalOpen(true)}
             onOpenSurvivorCareModal={() => setSurvivorCareModalOpen(true)}
             onOpenIsaTransferModal={() => setIsaTransferModalOpen(true)}
           />
@@ -1281,6 +1302,7 @@ export default function DashboardPage() {
         isOpen={incomeBridgeModalOpen}
         onClose={() => setIncomeBridgeModalOpen(false)}
       />
+      <NpsBoostRoadmapModal isOpen={npsBoostModalOpen} onClose={() => setNpsBoostModalOpen(false)} />
       <SurvivorCareModal
         isOpen={survivorCareModalOpen}
         onClose={() => setSurvivorCareModalOpen(false)}

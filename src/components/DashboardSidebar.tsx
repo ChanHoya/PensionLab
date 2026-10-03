@@ -23,6 +23,7 @@ interface Props {
   onOpenHealthBillModal?: () => void;
   onOpenReverseMortgageModal?: () => void;
   onOpenIncomeBridgeModal?: () => void;
+  onOpenNpsBoostModal?: () => void;
   onOpenSurvivorCareModal?: () => void;
   onOpenIsaTransferModal?: () => void;
 }
@@ -139,6 +140,29 @@ export default function DashboardSidebar(props: Props) {
           1년마다 +{(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%. 시뮬레이션과 모든 시나리오에 같이 적용됩니다.
           {(!params.birthYear || (hasSpouse && !params.spouseBirthYear)) && " 출생연도가 다르면 「정보 재입력」에서 주민번호 앞자리로 나이를 다시 입력하세요."}
         </p>
+        {props.onOpenNpsBoostModal && (
+          <button
+            type="button"
+            onClick={props.onOpenNpsBoostModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(245, 158, 11, 0.4)",
+              color: "#f59e0b",
+              background: "rgba(245, 158, 11, 0.06)",
+            }}
+          >
+            <span>🪜</span>
+            <span>국민연금 증액 로드맵 (반납·추납·임의계속·연기)</span>
+          </button>
+        )}
       </details>
 
       <details open style={styles.group}>

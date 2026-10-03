@@ -83,6 +83,9 @@ export function reportFacts(r: HouseholdReport, input: ReportInput): string {
     `- 종합 점수 ${r.total}점 (등급 ${r.grade.letter}, ${r.grade.label})`,
     ...r.dimensions.map((d) => `- ${d.label} ${d.score}점 (가중치 ${d.weight}%): ${d.metric}`),
     `- 은퇴 후 평균 가구 월 연금 ${r.avgRetiredReal}만원 / 지출곡선 평균 목표 ${r.avgTargetReal}만원, 목표 곡선 대비 누적 부족액 ${won(r.shortfallPV)}`,
+    r.medicalMonthly > 0 && `- 노후 의료비 연 ${(p.annualMedicalExpense || 0).toLocaleString()}만원(월 ${r.medicalMonthly}만원)을 목표·최소 생활비 곡선에 포함`,
+    r.childSupport.total > 0 &&
+      `- 자녀 교육·결혼 지원 예정 총액 ${won(r.childSupport.total)}: 비연금 자산으로 충당하고 노후 자금에서 나갈 금액 ${won(r.childSupport.uncovered)}`,
     r.crevasse.years > 0
       ? `- 소득 공백기: 은퇴 후 국민연금 개시 전 ${r.crevasse.years}년, 이 기간 평균 월 ${r.crevasse.avgReal}만원`
       : "- 소득 공백기 없음 (은퇴 시점에 공적연금 수령 중)",
@@ -265,6 +268,16 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
       impact: ratio < 0.7 ? "높음" : "중간",
       likelihood: "높음",
     });
+  if (r.childSupport.total > 0)
+    risks.push({
+      title: "자녀 지원비 부담",
+      detail:
+        r.childSupport.uncovered > 0
+          ? `자녀 교육·결혼 지원 예정 ${won(r.childSupport.total)} 중 비연금 자산으로 못 메우는 ${won(r.childSupport.uncovered)}이 노후 자금에서 나갑니다.`
+          : `자녀 교육·결혼 지원 예정 ${won(r.childSupport.total)}은 비연금 자산으로 충당할 수 있지만 그만큼 비상자금이 줄어듭니다.`,
+      impact: r.childSupport.uncovered > 0 ? "높음" : "중간",
+      likelihood: "높음",
+    });
   if (r.crevasse.years > 0 && r.crevasse.avgReal < r.minToday)
     risks.push({
       title: "소득 공백기(크레바스)",
@@ -305,6 +318,14 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
       timing: "즉시",
       priority: "높음",
       effect: `목표 대비 부족액 월 ${gap}만원 축소`,
+    });
+  if (r.childSupport.uncovered > 0)
+    actions.push({
+      title: "자녀 지원 한도 정하기",
+      detail: "지원 총액과 시기를 미리 정하고, 연금계좌·퇴직금 같은 노후 자금은 지원 재원에서 분리합니다.",
+      timing: "즉시",
+      priority: "높음",
+      effect: `노후 자금 ${won(r.childSupport.uncovered)} 보전`,
     });
   if (!r.nps.selfAdded && !r.nps.selfRestored)
     actions.push({

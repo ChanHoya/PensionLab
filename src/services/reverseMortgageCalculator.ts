@@ -62,6 +62,19 @@ export interface ReverseMortgageEstimate {
 }
 
 /**
+ * 가구 주택연금: 수령 개시 나이(본인 기준)에 부부 중 나이가 적은 사람 기준으로 월지급금을 정한다 (HF 산정 기준).
+ * 가입은 부부 중 한 명이 만 55세 이상이면 되므로, 연소자가 55세 미만이면 표의 최저 나이(55세) 계수를 쓴다 (실제보다 다소 많을 수 있음).
+ * spouseAgeGap = 배우자 나이 − 본인 나이 (배우자 없으면 null)
+ */
+export function householdReverseMortgage(houseValueWon: number, selfStartAge: number, spouseAgeGap: number | null): ReverseMortgageEstimate {
+  if (spouseAgeGap === null) return calculateReverseMortgage(houseValueWon, selfStartAge);
+  const spouseStartAge = selfStartAge + spouseAgeGap;
+  const younger = Math.min(selfStartAge, spouseStartAge);
+  const older = Math.max(selfStartAge, spouseStartAge);
+  return calculateReverseMortgage(houseValueWon, older < 55 ? older : Math.max(55, younger));
+}
+
+/**
  * 주택가격(원) 및 가입 나이 기준 주택연금 월지급금 산출
  */
 export function calculateReverseMortgage(houseValueWon: number, age: number): ReverseMortgageEstimate {

@@ -261,4 +261,20 @@ const dbLump = runCoupleSimulation({ ...husband, retirementPensions: [{ id: "db"
 near(dbLump.smoothing!.pot, dbFormula.smoothing!.pot, 1);
 assert.ok(dbLump.smoothing!.pot > 0);
 
+// 주택연금: 월지급금은 부부 중 연소자(개시 때 배우자 60세) 기준, 본인 사망 후에도 배우자가 같은 금액을 평생 받는다
+const rm = runCoupleSimulation(
+  husband,
+  wife,
+  { ...params, useReverseMortgage: true, reverseMortgageHouseValue: 50000, reverseMortgageStartAge: 65 } as SimulationParamsState,
+  { ...basic, applyToSimulation: false },
+  2026
+);
+const rmAt = (y: number) => rm.rows.find((row) => row.year === y)!;
+assert.equal(rmAt(2030).self.housing, 0); // 본인 64세: 개시 전
+assert.equal(rmAt(2031).self.housing, 107); // 본인 65세 개시: 5억 × 60세 계수(1억당 21.4만원)
+assert.equal(rmAt(2047).self.housing, 0); // 본인 81세: 사망
+assert.equal(rmAt(2047).spouse!.housing, 107); // 배우자 승계 (감액 없음)
+assert.equal(rmAt(2059).spouse!.housing, 107); // 배우자 88세 마지막 해까지
+assert.ok(rmAt(2047).household >= 107);
+
 console.log("Couple simulation validation success!");

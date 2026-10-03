@@ -184,4 +184,18 @@ console.log("4. Testing normalizeNarrative...");
 const normalized = normalizeNarrative(narrative);
 assert.ok(normalized, "normalized should match valid narrative");
 
+console.log("5. Testing child support & medical expense...");
+const costInput: ReportInput = {
+  ...sampleInput,
+  simulationParams: { ...sampleInput.simulationParams, childSupportExpense: 20000, annualMedicalExpense: 360 },
+};
+const withCosts = buildHouseholdReport(costInput);
+assert.deepEqual(withCosts.childSupport, { total: 20000, uncovered: 15000 }, "비연금 자산 5,000만원으로 먼저 충당");
+assert.equal(withCosts.medicalMonthly, 30);
+assert.ok(withCosts.avgTargetReal > report.avgTargetReal, "의료비만큼 지출 곡선 목표가 올라야 함");
+assert.ok(withCosts.shortfallPV >= report.shortfallPV);
+assert.ok(fallbackNarrative(withCosts).risks.some((x) => x.title === "자녀 지원비 부담"));
+assert.ok(reportFacts(withCosts, costInput).includes("자녀 교육·결혼 지원 예정 총액"));
+assert.deepEqual(report.childSupport, { total: 0, uncovered: 0 });
+
 console.log("All HouseholdReport tests passed!");

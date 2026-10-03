@@ -92,7 +92,7 @@ export function exportCoupleSimulationCsv(
       Math.round(r.self.basic / div),
       Math.round(r.self.retirement / div),
       Math.round((r.self.personal + r.self.insurance) / div),
-      Math.round((r.self.housing || 0) / div),
+      Math.round(((r.self.housing || 0) + (r.spouse?.housing || 0)) / div),
       Math.round(r.self.total / div),
       ...(hasSpouse
         ? [

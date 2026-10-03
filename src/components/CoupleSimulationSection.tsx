@@ -627,7 +627,7 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
             <Line
               type="monotone"
               dataKey="targetSpending"
-              name="맞춤 지출 목표선"
+              name={(simulationParams.annualMedicalExpense || 0) > 0 ? "맞춤 지출 목표선(의료비 포함)" : "맞춤 지출 목표선"}
               stroke="#e11d48"
               strokeWidth={2.5}
               dot={false}

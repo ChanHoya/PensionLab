@@ -141,6 +141,8 @@ export function buildSpendingCurve(
   );
 
   let lastPoint: SpendingPoint | null = null;
+  // 노후 대비 연간 의료비(현재가치)는 어떤 지출 패턴이든 은퇴 후 목표·최소 생활비에 월 환산해 더한다
+  const medical = Math.round((params.annualMedicalExpense || 0) / 12);
 
   for (let t = 0; t <= totalYears; t++) {
     const age = currentAge + t;
@@ -218,8 +220,8 @@ export function buildSpendingCurve(
       year,
       age,
       t: retiredT,
-      targetReal: target,
-      minReal: min,
+      targetReal: target + medical,
+      minReal: min + medical,
       phase,
       phaseLabel,
     };

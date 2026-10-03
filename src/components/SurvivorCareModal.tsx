@@ -5,7 +5,7 @@ import { usePensionStore } from "@/store/usePensionStore";
 import {
   calculateSurvivorCare,
 } from "@/services/survivorCareCalculator";
-import { calculateReverseMortgage } from "@/services/reverseMortgageCalculator";
+import { householdReverseMortgage } from "@/services/reverseMortgageCalculator";
 
 interface SurvivorCareModalProps {
   isOpen: boolean;
@@ -23,16 +23,17 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
 
   // 국민연금 월 수령액
   const selfNpsWon = (store.nationalPension.expectedMonthlyPension || 120) * 10000;
-  const spouseNpsWon = 800000; // 배우자 기본 80만원
+  const spouseNpsWon = (store.spouse.nationalPension.expectedMonthlyPension || 80) * 10000;
 
   // 주택연금 월지급금
   const hasRm = store.simulationParams.useReverseMortgage ?? false;
   const rmResult = useMemo(() => {
-    return calculateReverseMortgage(
+    return householdReverseMortgage(
       (store.simulationParams.reverseMortgageHouseValue || 50000) * 10000,
-      store.simulationParams.reverseMortgageStartAge || 65
+      store.simulationParams.reverseMortgageStartAge || 65,
+      spouseCurrentAge - selfCurrentAge
     );
-  }, [store.simulationParams.reverseMortgageHouseValue, store.simulationParams.reverseMortgageStartAge]);
+  }, [store.simulationParams.reverseMortgageHouseValue, store.simulationParams.reverseMortgageStartAge, spouseCurrentAge, selfCurrentAge]);
 
   // 로컬 슬라이더 상태
   const [selfDeathAge, setSelfDeathAge] = useState<number>(initialSelfDeathAge);

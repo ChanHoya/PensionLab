@@ -191,6 +191,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
   const allocationData = ALLOCATION.map((a) => ({ ...a, value: n.allocation[a.key] })).filter((a) => a.value > 0);
   const survivorChange = r.firstDeath && r.firstDeath.beforeReal > 0 ? Math.round((r.firstDeath.afterReal / r.firstDeath.beforeReal - 1) * 100) : null;
   const ratio = r.avgRetiredReal / (r.avgTargetReal || r.targetToday);
+  const totalGap = r.shortfallPV + r.childSupport.uncovered; // 생활비 부족액 + 비연금 자산으로 못 메우는 자녀 지원비
 
   return (
     <div style={S.root}>
@@ -229,14 +230,18 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
           <Kpi
             label="은퇴 후 평균 가구 월 연금"
             value={`${r.avgRetiredReal.toLocaleString()}만원`}
-            sub={`지출곡선 평균 ${r.avgTargetReal.toLocaleString()}만원의 ${Math.round(ratio * 100)}%`}
+            sub={`지출곡선 평균 ${r.avgTargetReal.toLocaleString()}만원의 ${Math.round(ratio * 100)}%${r.medicalMonthly > 0 ? ` (의료비 월 ${r.medicalMonthly}만원 포함)` : ""}`}
             tone={scoreColor(Math.min(100, ratio * 100))}
           />
           <Kpi
             label="목표 대비 누적 부족액"
-            value={r.shortfallPV > 0 ? won(r.shortfallPV) : "부족 없음"}
-            sub="은퇴 기간 합계 · 현재가치"
-            tone={r.shortfallPV > 0 ? "#ef4444" : "#10b981"}
+            value={totalGap > 0 ? won(totalGap) : "부족 없음"}
+            sub={
+              r.childSupport.uncovered > 0
+                ? `생활비 ${won(r.shortfallPV)} + 자녀 지원 ${won(r.childSupport.uncovered)} · 현재가치`
+                : "은퇴 기간 합계 · 현재가치"
+            }
+            tone={totalGap > 0 ? "#ef4444" : "#10b981"}
           />
           <Kpi
             label="소득 공백기 (국민연금 개시 전)"

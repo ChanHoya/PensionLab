@@ -68,7 +68,7 @@ export function runHouseholdScenarios(
 
   const selfAge0 = params.currentAge;
   const spouseAge0 = personParams(params, "SPOUSE").currentAge;
-  const target = (params.targetMonthlySpending || 300) * 12;
+  const target = (params.targetMonthlySpending || 300) * 12 + (params.annualMedicalExpense || 0); // 노후 의료비 포함 (연)
   const retireT = params.retirementAge - selfAge0;
 
   const rowByYear = new Map(couple.rows.map((r) => [r.year, r]));

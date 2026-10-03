@@ -32,7 +32,7 @@ export function pensionSeriesValues(r: CoupleYear, divisor: number = 1): Record<
     "배우자 퇴직연금": v(r.spouse?.retirement ?? 0),
     "본인 개인연금": v(r.self.personal + r.self.insurance),
     "배우자 개인연금": v((r.spouse?.personal ?? 0) + (r.spouse?.insurance ?? 0)),
-    주택연금: v(r.self.housing || 0),
+    주택연금: v((r.self.housing || 0) + (r.spouse?.housing || 0)), // 본인 사망 후에는 배우자가 승계
   };
 }
 

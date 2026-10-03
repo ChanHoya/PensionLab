@@ -96,6 +96,8 @@ export interface HouseholdReport {
   realHousehold: number[]; // couple.rows와 같은 순서의 가구 월 연금 (현재가치)
   avgRetiredReal: number; // 은퇴 후 평균 가구 월 연금 (현재가치)
   shortfallPV: number; // 은퇴 후 목표 생활비 곡선 대비 누적 부족액 (현재가치, 만원)
+  childSupport: { total: number; uncovered: number }; // 자녀 교육·결혼 지원 예정 총액, 비연금 자산으로 충당하고 남는 금액 (만원)
+  medicalMonthly: number; // 생활비 곡선에 더한 노후 의료비 (현재가치, 만원/월)
   belowMinSpans: Span[]; // 최소 생활비 곡선에 못 미치는 구간
   crevasse: { years: number; avgReal: number }; // 은퇴 후 부부 누구의 국민연금도 나오기 전 (소득 공백기)
   firstDeath: { who: "SELF" | "SPOUSE"; year: number; beforeReal: number; afterReal: number } | null;
@@ -161,6 +163,9 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
     const targetAt = pt?.targetReal ?? targetToday;
     return a + Math.max(0, targetAt - realHousehold[t]) * 12;
   }, 0);
+
+  // 자녀 교육·결혼 지원비(총액, 현재가치)는 비연금 자산에서 먼저 쓰고, 모자란 만큼은 노후 자금에서 나간다고 본다
+  const childSupportTotal = Math.max(0, params.childSupportExpense || 0);
 
   const coveredYears = retired.filter((t) => {
     const y = rows[t].year;
@@ -393,6 +398,8 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
     realHousehold,
     avgRetiredReal: Math.round(avgRetiredReal),
     shortfallPV: Math.round(shortfallPV),
+    childSupport: { total: childSupportTotal, uncovered: Math.max(0, childSupportTotal - Math.max(0, params.nonPensionAssets || 0)) },
+    medicalMonthly: Math.round((params.annualMedicalExpense || 0) / 12),
     belowMinSpans,
     crevasse: { years: crevasseTs.length, avgReal: Math.round(avg(crevasseTs)) },
     firstDeath,

@@ -3,7 +3,7 @@ import { DECREASING_ANNUAL_RATE, privateDrawStartAgeOf } from "@/services/withdr
 import { calcBasicPension, type BasicPensionPerson } from "@/services/basicPensionCalculator";
 import { NPS_RULES, SURVIVOR_OVERLAP_RATE, survivorRateForMonths, statutoryPensionStartAge } from "@/config/npsRules";
 import { SpendingPattern, getSpendingMultiplier } from "@/services/spendingCurve";
-import { calculateReverseMortgage } from "@/services/reverseMortgageCalculator";
+import { householdReverseMortgage } from "@/services/reverseMortgageCalculator";
 import type {
   AgeBandsConfig,
   BasicPensionState,
@@ -162,7 +162,7 @@ export function planHouseholdSmoothing(
 
   const isPattern = pattern !== "FLAT";
 
-  const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0) + (r.self.housing || 0);
+  const publicOf = (r: CoupleYear) => r.self.national + (r.spouse?.national ?? 0) + (r.self.housing || 0) + (r.spouse?.housing || 0);
   const pathAt = (L: number, g: number, t: number) => {
     if (isPattern) return L * weightAt(t);
     return L * Math.pow(1 + g, t - start);
@@ -383,6 +383,11 @@ export function runCoupleSimulation(
     sp ? sp.lifeExpectancy - spouseAge0 : 0
   );
   const infl = params.inflationRate;
+  // 주택연금 월지급금은 개시 연도에 부부 중 연소자 나이로 한 번 정해진다
+  const housingStartAge = params.reverseMortgageStartAge || 65;
+  const housingPayout = params.useReverseMortgage
+    ? householdReverseMortgage((params.reverseMortgageHouseValue || 50000) * 10000, housingStartAge, sp ? spouseAge0 - selfAge0 : null).monthlyPayoutManwon
+    : 0;
 
   // override: 연도(t)별 사람별 사적연금 수령액을 바꿔 끼운다 (가구 소득 평탄화)
   const build = (override?: SmoothingOverride): CoupleSimulationResult => {
@@ -483,20 +488,17 @@ export function runCoupleSimulation(
         index
       );
 
-      // 주택연금(역모기지) 결합 산출
-      let housingPayout = 0;
-      if (params.useReverseMortgage && sAlive && sAge >= (params.reverseMortgageStartAge || 65)) {
-        const houseValueWon = (params.reverseMortgageHouseValue || 50000) * 10000;
-        const entryAge = params.reverseMortgageStartAge || 65;
-        housingPayout = calculateReverseMortgage(houseValueWon, entryAge).monthlyPayoutManwon;
-      }
+      // 주택연금(역모기지): 본인 나이 기준 개시 연도부터 정액(명목). 한 사람이 사망해도 남은 배우자가 같은 금액을 평생 받는다 (HF 100% 승계)
+      const housingOn = params.useReverseMortgage && sAge >= housingStartAge && (sAlive || pAlive);
+      const selfHousing = housingOn && sAlive ? housingPayout : 0;
+      const spouseHousing = housingOn && !sAlive ? housingPayout : 0;
 
       const mk = (alive: boolean, age: number, national: number, o: ReturnType<typeof own>, basicAmt: number, choice: SurvivorChoice | null, part: number, housingAmt = 0): PersonYear => {
         const total = alive ? national + basicAmt + o.retirement + o.personal + o.insurance + housingAmt : 0;
         return { alive, age, national: alive ? national : 0, basic: alive ? basicAmt : 0, retirement: o.retirement, personal: o.personal, insurance: o.insurance, housing: alive ? housingAmt : 0, total, survivorChoice: choice, survivorPart: alive ? part : 0 };
       };
-      const selfYear = mk(sAlive, sAge, sNational, so, b.self, sChoice, sPart, housingPayout);
-      const spouseYear = sp ? mk(pAlive, pAge, pNational, po!, b.spouse, pChoice, pPart, 0) : null;
+      const selfYear = mk(sAlive, sAge, sNational, so, b.self, sChoice, sPart, selfHousing);
+      const spouseYear = sp ? mk(pAlive, pAge, pNational, po!, b.spouse, pChoice, pPart, spouseHousing) : null;
       const household = selfYear.total + (spouseYear?.total ?? 0);
       lifetime.self += selfYear.total * 12;
       lifetime.spouse += (spouseYear?.total ?? 0) * 12;

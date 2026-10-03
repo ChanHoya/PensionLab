@@ -52,8 +52,8 @@ export interface IncomeBridgeResult {
   cfRecommendations: string[];
 }
 
-// 2024~2026년 고용보험법 구직급여 일액 상한선 (1일 66,000원, 월 30일 기준 1,980,000원)
-export const UNEMPLOYMENT_MONTHLY_MAX_WON = 1980000;
+// 고용보험법 구직급여 일액 상한선: 2026.1.1 이후 이직자 1일 68,100원 (월 30일 기준 2,043,000원). 매년 상한 고시를 확인해 갱신
+export const UNEMPLOYMENT_MONTHLY_MAX_WON = 2043000;
 
 export function calculateIncomeBridge(input: IncomeBridgeInput): IncomeBridgeResult {
   const {
@@ -231,7 +231,7 @@ export function calculateIncomeBridge(input: IncomeBridgeInput): IncomeBridgeRes
 
   if (includeUnemploymentBenefit && gapYears >= 1) {
     cfRecommendations.push(
-      "퇴직 직후 즉시 워크넷 구직등록 및 고용센터 방문을 통해 구직급여(최대 9개월, 월 198만원)를 수급하여 은퇴 1년차 현금흐름 충격을 최소화하세요."
+      "퇴직 직후 즉시 워크넷 구직등록 및 고용센터 방문을 통해 구직급여(최대 9개월, 월 최대 약 204만원)를 수급하여 은퇴 1년차 현금흐름 충격을 최소화하세요."
     );
   }
 

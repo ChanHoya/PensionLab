@@ -80,4 +80,11 @@ const p70_trans = curve.get(2039)!; // 70세
 assert.ok(p60.targetReal > p69.targetReal && p69.targetReal > p70_trans.targetReal && p70_trans.targetReal > p70.targetReal,
   "60대에서 70대로 완만하게 스무딩되어야 함");
 
+// 6. 노후 의료비(연 240만원 = 월 20만원)는 은퇴 후 목표·최소 생활비에 더하고, 은퇴 전에는 더하지 않는다
+const medCurve = buildSpendingCurve({ ...mockParams, annualMedicalExpense: 240 }, 2026, 45);
+for (const year of [2028, 2029, 2040, 2060]) {
+  assert.equal(medCurve.get(year)!.targetReal, curve.get(year)!.targetReal + (year >= 2029 ? 20 : 0), `${year} 목표 생활비 의료비 반영`);
+  assert.equal(medCurve.get(year)!.minReal, curve.get(year)!.minReal + (year >= 2029 ? 20 : 0), `${year} 최소 생활비 의료비 반영`);
+}
+
 console.log("All spending curve age bands and horizon tests passed successfully!");

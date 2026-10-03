@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { usePensionStore } from "@/store/usePensionStore";
 import {
-  calculateReverseMortgage,
+  householdReverseMortgage,
 } from "@/services/reverseMortgageCalculator";
 
 interface ReverseMortgageModalProps {
@@ -24,9 +24,12 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
     store.simulationParams.reverseMortgageStartAge || 65 // 기본 65세
   );
 
+  // 부부면 월지급금은 부부 중 연소자 나이 기준 (시뮬레이션과 같은 계산)
+  const { hasSpouse, spouseAge, currentAge } = store.simulationParams;
+  const spouseAgeGap = hasSpouse ? (spouseAge ?? currentAge) - currentAge : null;
   const estimate = useMemo(() => {
-    return calculateReverseMortgage(houseValueManwon * 10000, startAge);
-  }, [houseValueManwon, startAge]);
+    return householdReverseMortgage(houseValueManwon * 10000, startAge, spouseAgeGap);
+  }, [houseValueManwon, startAge, spouseAgeGap]);
 
   if (!isOpen) return null;
 
@@ -249,7 +252,9 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
               <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#38bdf8", marginTop: 4 }}>
                 월 {estimate.monthlyPayoutManwon.toLocaleString()}만원
               </div>
-              <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>평생 정액 지급</div>
+              <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>
+                {spouseAgeGap !== null ? `부부 중 연소자(만 ${estimate.age}세) 기준 · 배우자 100% 승계` : "평생 정액 지급"}
+              </div>
             </div>
 
             <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
@@ -263,7 +268,7 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
             <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
               <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>80세까지 누적 수령</div>
               <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fbbf24", marginTop: 4 }}>
-                {formatWon(estimate.cumulative80Won)}
+                {formatWon(estimate.annualPayoutWon * Math.max(0, 80 - startAge))}
               </div>
               <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>{80 - startAge}년간 누적</div>
             </div>
@@ -271,7 +276,7 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
             <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
               <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>90세까지 누적 수령</div>
               <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#34d399", marginTop: 4 }}>
-                {formatWon(estimate.cumulative90Won)}
+                {formatWon(estimate.annualPayoutWon * Math.max(0, 90 - startAge))}
               </div>
               <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>{90 - startAge}년간 누적</div>
             </div>

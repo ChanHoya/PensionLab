@@ -23,6 +23,7 @@ import { HealthInsuranceBillModal } from "@/components/HealthInsuranceBillModal"
 import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
 import { IncomeBridgeModal } from "@/components/IncomeBridgeModal";
 import { NpsBoostRoadmapModal } from "@/components/NpsBoostRoadmapModal";
+import { SavingsPlanModal } from "@/components/SavingsPlanModal";
 import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 
@@ -193,6 +194,9 @@ export default function DashboardPage() {
 
   // 국민연금 증액 로드맵(반납→추납→임의계속가입→연기) 모달 열림 상태
   const [npsBoostModalOpen, setNpsBoostModalOpen] = useState(false);
+
+  // 부족액 역산 적립 플랜 모달 열림 상태
+  const [savingsPlanModalOpen, setSavingsPlanModalOpen] = useState(false);
 
   // 홀로 남은 배우자(1인 가구) 생애 케어 모달 열림 상태
   const [survivorCareModalOpen, setSurvivorCareModalOpen] = useState(false);
@@ -378,6 +382,22 @@ export default function DashboardPage() {
         title="국민연금 증액 로드맵: 반납 → 추납 → 임의계속가입 → 연기연금"
       >
         🪜 연금 증액
+      </button>
+      <button
+        id="btn-savings-plan-actions"
+        onClick={() => setSavingsPlanModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(56, 189, 248, 0.4)",
+          color: "#38bdf8",
+          background: "rgba(56, 189, 248, 0.08)",
+        }}
+        title="부족액 역산 적립 플랜: 매월 얼마를 몇 년 넣어야 노후 부족액을 메우는지"
+      >
+        🎯 적립 플랜
       </button>
       <button
         id="btn-tax15-actions"
@@ -787,6 +807,7 @@ export default function DashboardPage() {
             onOpenReverseMortgageModal={() => setReverseMortgageModalOpen(true)}
             onOpenIncomeBridgeModal={() => setIncomeBridgeModalOpen(true)}
             onOpenNpsBoostModal={() => setNpsBoostModalOpen(true)}
+            onOpenSavingsPlanModal={() => setSavingsPlanModalOpen(true)}
             onOpenSurvivorCareModal={() => setSurvivorCareModalOpen(true)}
             onOpenIsaTransferModal={() => setIsaTransferModalOpen(true)}
           />
@@ -1303,6 +1324,7 @@ export default function DashboardPage() {
         onClose={() => setIncomeBridgeModalOpen(false)}
       />
       <NpsBoostRoadmapModal isOpen={npsBoostModalOpen} onClose={() => setNpsBoostModalOpen(false)} />
+      <SavingsPlanModal isOpen={savingsPlanModalOpen} onClose={() => setSavingsPlanModalOpen(false)} />
       <SurvivorCareModal
         isOpen={survivorCareModalOpen}
         onClose={() => setSurvivorCareModalOpen(false)}

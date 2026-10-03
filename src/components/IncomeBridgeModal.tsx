@@ -3,8 +3,10 @@
 import React, { useState, useMemo } from "react";
 import { usePensionStore } from "@/store/usePensionStore";
 import { statutoryStartAgeOf } from "@/services/coupleSimulation";
+import { paidTotalsOf } from "@/services/paidTotals";
 import {
   calculateIncomeBridge,
+  UNEMPLOYMENT_MONTHLY_MAX_WON,
 } from "@/services/incomeBridgeCalculator";
 
 interface IncomeBridgeModalProps {
@@ -22,13 +24,18 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
   );
   const defaultExpense = store.simulationParams.targetMonthlySpending || 300;
 
-  // 퇴직연금 및 개인연금 자산 (만원 단위)
-  const severanceManwon = Math.round(
-    store.retirementPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) / 10000 || 8000
+  // 퇴직연금·개인연금 자산 (만원). 스토어 금액은 이미 만원 단위 — 은퇴까지 낼 납입액과 DB형 예상 적립금 포함, 운용수익 제외(원금 기준)
+  const paid = paidTotalsOf(
+    {
+      national: store.nationalPension,
+      retirementPensions: store.retirementPensions,
+      personalPensions: store.personalPensions,
+      pensionInsurances: store.pensionInsurances,
+    },
+    store.simulationParams
   );
-  const personalPensionManwon = Math.round(
-    store.personalPensions.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) / 10000 || 5000
-  );
+  const severanceManwon = Math.round(paid.retirement);
+  const personalPensionManwon = Math.round(paid.personal + paid.insurance);
 
   // 로컬 상태
   const [retAge, setRetAge] = useState<number>(defaultRetAge);
@@ -377,7 +384,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
               <div>
                 <div style={{ fontWeight: 600 }}>구직급여(실업급여) 반영</div>
                 <div style={{ fontSize: "0.7rem", color: "var(--text-secondary, #94a3b8)" }}>
-                  은퇴 1년차 최대 9개월 (총 1,782만원)
+                  은퇴 1년차 최대 9개월 (총 {((UNEMPLOYMENT_MONTHLY_MAX_WON * 9) / 10000).toLocaleString()}만원)
                 </div>
               </div>
             </label>

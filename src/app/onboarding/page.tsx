@@ -776,7 +776,10 @@ export default function OnboardingPage() {
         {/* Form Card */}
         <section style={styles.formCard} className="glass">
           <div style={styles.formHeader}>
-            <span style={styles.stepBadge}>STEP {group.badge}</span>
+            <div style={styles.stepBadgeRow}>
+              <span style={styles.stepBadge}>STEP {group.badge}</span>
+              <span style={styles.formDesc}>{group.desc}</span>
+            </div>
             <div style={styles.titleRow}>
               <h2 style={{ ...styles.formTitle, marginTop: 0 }}>{group.title}</h2>
               {groupSteps.length > 1 && (
@@ -843,7 +846,6 @@ export default function OnboardingPage() {
                 </button>
               )}
             </div>
-            <p style={styles.formDesc}>{group.desc}</p>
           </div>
 
 
@@ -2479,14 +2481,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     paddingBottom: "10px",
     marginBottom: "14px",
   },
+  stepBadgeRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
   stepBadge: {
     fontSize: "0.75rem",
     fontWeight: 700,
     color: "var(--text-accent)",
     backgroundColor: "var(--primary-50)",
-    padding: "4px 8px",
+    padding: "3px 8px",
     borderRadius: "var(--radius-full)",
     letterSpacing: "0.5px",
+    flexShrink: 0,
   },
   formTitle: {
     fontSize: "1.65rem",
@@ -2497,9 +2506,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexShrink: 0,
   },
   formDesc: {
-    fontSize: "0.92rem",
+    fontSize: "0.85rem",
     color: "var(--text-secondary)",
-    marginTop: "6px",
+    margin: 0,
+    lineHeight: 1.4,
   },
   formBody: {
     flexGrow: 1,
@@ -2515,7 +2525,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     flexWrap: "wrap",
     gap: "12px 18px",
-    marginTop: "10px",
+    marginTop: "8px",
   },
   personTabs: {
     display: "flex",

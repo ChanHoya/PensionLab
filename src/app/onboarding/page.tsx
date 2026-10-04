@@ -823,6 +823,25 @@ export default function OnboardingPage() {
                   )}
                 </div>
               )}
+              {group.key === "summary" && (
+                <button
+                  type="button"
+                  id="btn-top-summary-analyze"
+                  onClick={handleFinish}
+                  disabled={isSubmitting}
+                  className="premium-button"
+                  style={{
+                    background: "var(--gradient-secondary)",
+                    padding: "8px 22px",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                    cursor: isSubmitting ? "not-allowed" : "pointer",
+                    boxShadow: "0 4px 14px rgba(236, 72, 153, 0.35)",
+                  }}
+                >
+                  {isSubmitting ? "저장 중..." : "종합 분석하기 🚀"}
+                </button>
+              )}
             </div>
             <p style={styles.formDesc}>{group.desc}</p>
           </div>

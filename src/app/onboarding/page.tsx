@@ -832,29 +832,43 @@ export default function OnboardingPage() {
             {/* STEP 0: 기본 정보 및 노후 재무 목표 */}
             {step.kind === "INFO" && (
               <div style={styles.formGroupList} className="animate-fade-in">
-                <h3 style={{ ...styles.addFormTitle, marginTop: 4 }}>본인 및 가족 정보</h3>
-
-                <div style={styles.fieldRow}>
-                  <label style={styles.label}>배우자 유무</label>
-                  <div style={styles.radioGroup}>
-                    <label style={styles.radioLabel}>
-                      <input
-                        type="radio"
-                        name="hasSpouse"
-                        checked={store.simulationParams.hasSpouse === true}
-                        onChange={() => store.setSimulationParams({ hasSpouse: true })}
-                      />
-                      있음
-                    </label>
-                    <label style={styles.radioLabel}>
-                      <input
-                        type="radio"
-                        name="hasSpouse"
-                        checked={store.simulationParams.hasSpouse === false}
-                        onChange={() => store.setSimulationParams({ hasSpouse: false, spouseAge: undefined })}
-                      />
-                      없음
-                    </label>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "14px 20px",
+                    borderBottom: "1px solid var(--border)",
+                    paddingBottom: "8px",
+                  }}
+                >
+                  <h3 style={{ ...styles.addFormTitle, margin: 0, paddingBottom: 0, borderBottom: "none" }}>
+                    본인 및 가족 정보
+                  </h3>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
+                    <span style={{ fontSize: "0.9rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                      배우자 유무
+                    </span>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: "14px" }}>
+                      <label style={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="hasSpouse"
+                          checked={store.simulationParams.hasSpouse === true}
+                          onChange={() => store.setSimulationParams({ hasSpouse: true })}
+                        />
+                        있음
+                      </label>
+                      <label style={styles.radioLabel}>
+                        <input
+                          type="radio"
+                          name="hasSpouse"
+                          checked={store.simulationParams.hasSpouse === false}
+                          onChange={() => store.setSimulationParams({ hasSpouse: false, spouseAge: undefined })}
+                        />
+                        없음
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -1014,7 +1028,7 @@ export default function OnboardingPage() {
             {/* 1단계 재무목표 탭 */}
             {step.kind === "GOAL" && (
               <div style={styles.formGroupList} className="animate-fade-in">
-                <h3 style={{ ...styles.addFormTitle, marginTop: 10 }}>노후 재무지출 및 자산 목표</h3>
+                <h3 style={{ ...styles.addFormTitle, marginTop: 0 }}>노후 재무지출 및 자산 목표</h3>
                 <div style={styles.fieldGrid}>
                   <div style={styles.fieldRow}>
                     <label style={styles.label}>
@@ -2443,8 +2457,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   formHeader: {
     borderBottom: "1px solid var(--border)",
-    paddingBottom: "20px",
-    marginBottom: "30px",
+    paddingBottom: "10px",
+    marginBottom: "14px",
   },
   stepBadge: {
     fontSize: "0.75rem",
@@ -2464,18 +2478,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexShrink: 0,
   },
   formDesc: {
-    fontSize: "0.95rem",
+    fontSize: "0.92rem",
     color: "var(--text-secondary)",
-    marginTop: "10px",
+    marginTop: "6px",
   },
   formBody: {
     flexGrow: 1,
-    marginBottom: "30px",
+    marginBottom: "20px",
   },
   formGroupList: {
     display: "flex",
     flexDirection: "column",
-    gap: "20px",
+    gap: "16px",
   },
   titleRow: {
     display: "flex",

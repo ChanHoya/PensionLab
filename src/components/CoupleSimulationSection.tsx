@@ -593,7 +593,7 @@ export default function CoupleSimulationSection({
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="year" stroke="var(--text-muted)" tick={<YearAgeTick rowsByYear={rowsByYear} />} height={52} />
             <YAxis tickFormatter={(v) => fmt(Number(v))} stroke="var(--text-muted)" fontSize={12} />
-            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal unit="만원/월" colors={legendColors} notes={totalNotes} />} />
+            <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal totalLabel="월 연금 합계" unit="만원/월" colors={legendColors} notes={totalNotes} />} />
             <Legend
               wrapperStyle={{ fontSize: "0.72rem" }}
               iconSize={10}

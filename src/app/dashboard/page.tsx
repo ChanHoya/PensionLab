@@ -8,6 +8,7 @@ import { downloadElementAsPdf } from "@/utils/exportPdf";
 import { exportWithdrawalFlowsCsv } from "@/utils/exportCsv";
 import type { StrategySimulationResult } from "@/services/withdrawalCalculator";
 import { runHouseholdScenarios } from "@/services/householdScenarios";
+import { buildSpendingCurve } from "@/services/spendingCurve";
 import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
 import { runCoupleSimulation, personParams, deferYearsOf } from "@/services/coupleSimulation";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -50,9 +51,17 @@ const CustomTooltip = ({ active, payload, label, notes, colors }: any) => {
   if (active && payload && payload.length) {
     const activePayload = payload.filter((entry: any) => (entry.value || 0) > 0);
     if (activePayload.length === 0) return null;
-    // 차트 값은 연 금액(만원). 합계는 쌓인 세전 항목만 (세후 선 제외)
+    // 차트 값은 연 금액(만원). 합계는 쌓인 세전 연금 항목만 (세후 선 및 지출선 제외)
     const preTaxTotal = activePayload
-      .filter((entry: { dataKey?: string }) => entry.dataKey !== "totalPostTax")
+      .filter((entry: { dataKey?: string; name?: string }) =>
+        entry.dataKey !== "totalPostTax" &&
+        entry.dataKey !== "targetSpending" &&
+        entry.dataKey !== "minSpending" &&
+        entry.name !== "맞춤 지출 목표선" &&
+        entry.name !== "최저 생활비선" &&
+        entry.name !== "실질 세후 수령액" &&
+        entry.name !== "명목 세후 수령액"
+      )
       .reduce((sum: number, entry: { value?: number }) => sum + (entry.value || 0), 0);
     const year = payload[0]?.payload?.year;
 
@@ -79,21 +88,32 @@ const CustomTooltip = ({ active, payload, label, notes, colors }: any) => {
           gap: "20px",
         }}>
           <span>{label}세{year ? ` · ${year}년` : ""}</span>
-          <span>세전 합계 {preTaxTotal.toLocaleString()} 만원/년</span>
+          <span>세전 연금 합계 {preTaxTotal.toLocaleString()} 만원/년</span>
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-          {activePayload.map((entry: any, index: number) => (
-            <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: colors?.[entry.name] ?? entry.color }} />
-                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{entry.name}</span>
+          {activePayload.map((entry: any, index: number) => {
+            const isSpending =
+              entry.dataKey === "targetSpending" ||
+              entry.dataKey === "minSpending" ||
+              entry.name === "맞춤 지출 목표선" ||
+              entry.name === "최저 생활비선";
+            return (
+              <div key={index} style={{ display: "flex", justifyContent: "space-between", gap: "20px", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: colors?.[entry.name] ?? colors?.[entry.dataKey] ?? entry.color }} />
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{entry.name}</span>
+                </div>
+                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  {entry.value.toLocaleString()} 만원/년
+                  {isSpending ? (
+                    <span style={{ fontWeight: 500, color: "var(--text-muted)" }}> (월 {Math.round(entry.value / 12).toLocaleString()}만원)</span>
+                  ) : (
+                    notes?.[entry.dataKey] && <span style={{ fontWeight: 500, color: "var(--text-muted)" }}> {notes[entry.dataKey]}</span>
+                  )}
+                </span>
               </div>
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                {entry.value.toLocaleString()} 만원/년
-                {notes?.[entry.dataKey] && <span style={{ fontWeight: 500, color: "var(--text-muted)" }}> {notes[entry.dataKey]}</span>}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );
@@ -581,6 +601,8 @@ export default function DashboardPage() {
 
   // 인출전략 그래프: 부부 통합 시뮬레이션과 같은 계열(사람별·유족연금)과 색. 값은 연 세전 금액(만원) (현재가치/명목 반영)
   const survivorName = `${coupleResult.survivorInfo?.deceased === "SPOUSE" ? "본인" : "배우자"} 유족연금`;
+  const spendingCurve = buildSpendingCurve(store.simulationParams, baseYear, activeResult.flows.length);
+
   const scenarioChartData: Record<string, number>[] = activeResult.flows.map((f) => {
     const div = getDivisor(f.year);
     // 사람별 내역이 있으면 사망 후 없는 쪽은 0 (가구 합으로 채우면 유족연금이 본인 몫으로 한 번 더 쌓인다)
@@ -593,6 +615,18 @@ export default function DashboardPage() {
     const svSpouse = f.parts?.survivorSpouse ?? 0;
     // 만원 단위로 반올림: 물가할인 적용
     const r = (v: number) => Math.max(0, Math.round(v / div));
+
+    // 지출 목표선 및 최저 생활비선 (연간 환산: 월 × 12)
+    const pt = spendingCurve.get(f.year);
+    const targetMonthlyReal = pt ? pt.targetReal : (store.simulationParams.targetMonthlySpending || 300);
+    const minMonthlyReal = pt ? pt.minReal : (store.simulationParams.minMonthlySpending || 200);
+    const targetAnnualReal = targetMonthlyReal * 12;
+    const minAnnualReal = minMonthlyReal * 12;
+    const t = Math.max(0, f.year - baseYear);
+    const nominalMultiplier = Math.pow(1 + infl / 100, t);
+    const targetSpending = isRealValue ? targetAnnualReal : Math.round(targetAnnualReal * nominalMultiplier);
+    const minSpending = isRealValue ? minAnnualReal : Math.round(minAnnualReal * nominalMultiplier);
+
     return {
       age: f.age,
       year: f.year,
@@ -607,16 +641,35 @@ export default function DashboardPage() {
       "배우자 개인연금": r(p.personal + p.insurance),
       "커버드콜 배당": r(f.dividendPreTax),
       totalPostTax: Math.round(f.totalPostTax / div),
+      targetSpending,
+      minSpending,
     };
   });
   // 금액이 있는 계열만 (기초연금처럼 입력이 없으면 빠진다)
   const scenarioSeries = [...PENSION_SERIES, { key: "커버드콜 배당", color: "#a78bfa" }].filter((s) =>
     scenarioChartData.some((d) => d[s.key] > 0)
   );
-  const scenarioColors: Record<string, string> = { [survivorName]: SURVIVOR_FILL };
+  const scenarioColors: Record<string, string> = {
+    [survivorName]: SURVIVOR_FILL,
+    totalPostTax: "#10b981",
+    "실질 세후 수령액": "#10b981",
+    "명목 세후 수령액": "#10b981",
+    targetSpending: "#e11d48",
+    "맞춤 지출 목표선": "#e11d48",
+    minSpending: "#d97706",
+    "최저 생활비선": "#d97706",
+  };
   // 탭을 바꿔 고른 계열이 없어지면 강조를 풀어 둔다
   const activeHighlight =
-    scenarioHighlight && (scenarioHighlight === "totalPostTax" || scenarioSeries.some((s) => s.key === scenarioHighlight)) ? scenarioHighlight : null;
+    scenarioHighlight &&
+    (scenarioHighlight === "totalPostTax" ||
+      scenarioHighlight === "targetSpending" ||
+      scenarioHighlight === "minSpending" ||
+      scenarioHighlight === "맞춤 지출 목표선" ||
+      scenarioHighlight === "최저 생활비선" ||
+      scenarioSeries.some((s) => s.key === scenarioHighlight))
+      ? scenarioHighlight
+      : null;
   // 툴팁의 (납부총액/지급총액): 지급은 그래프 기간 세전 수령 합계
   const scenarioPaid: Record<string, number | null> = {
     본인국민연금: selfPaid.national,
@@ -1096,7 +1149,7 @@ export default function DashboardPage() {
               {/* 그래프 ② 인출흐름 & 자산변화 Area+Line Chart */}
               <div style={{ marginTop: "14px" }}>
                 <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {strategies.find(s => s.strategyId === activeTab)?.strategyName} — 연령별 인출흐름 & 자산변화 ({isRealValue ? "현재가치 실질" : "명목 금액"})
+                  {strategies.find(s => s.strategyId === activeTab)?.strategyName} — 연령별 인출흐름 & 자산변화 ({isRealValue ? "현재가치 실질" : "명목 금액"} · 🟢 세후 수령액, 🔴 목표 지출선, 🟡 최저 생활비선)
                 </p>
                 <div style={{ height: 250, width: "100%" }} onClick={() => setScenarioHighlight(null)}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1141,6 +1194,27 @@ export default function DashboardPage() {
                         stroke="#10b981"
                         strokeWidth={3}
                         strokeOpacity={activeHighlight && activeHighlight !== "totalPostTax" ? 0.2 : 1}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="targetSpending"
+                        name="맞춤 지출 목표선"
+                        stroke="#e11d48"
+                        strokeWidth={2.5}
+                        strokeOpacity={activeHighlight && activeHighlight !== "targetSpending" && activeHighlight !== "맞춤 지출 목표선" ? 0.2 : 1}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="minSpending"
+                        name="최저 생활비선"
+                        stroke="#d97706"
+                        strokeWidth={1.8}
+                        strokeDasharray="4 4"
+                        strokeOpacity={activeHighlight && activeHighlight !== "minSpending" && activeHighlight !== "최저 생활비선" ? 0.2 : 1}
                         dot={false}
                         isAnimationActive={false}
                       />

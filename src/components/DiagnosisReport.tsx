@@ -366,7 +366,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="year" stroke="var(--text-muted)" fontSize={11} />
               <YAxis stroke="var(--text-muted)" fontSize={11} />
-              <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal unit="만원/월" colors={legendColors} />} />
+              <Tooltip content={<ChartTooltip labelSuffix="년" hideZero showTotal totalLabel="월 연금 합계" unit="만원/월" colors={legendColors} />} />
               <Legend
                 wrapperStyle={{ fontSize: "0.72rem" }}
                 iconSize={10}

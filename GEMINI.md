@@ -19,16 +19,16 @@ Follow the pipeline that matches the current situation. After each step, output 
 2. `planner` → plan first feature based on user requirements
 3. `sprint-manager` → start Story ("S{N}-{M} Story를 시작해줘")
 4. [Coding] → implement Stories in order from planner
-5. `reviewer` → code review → commit (`git commit -m "S{N}-{M}: ..."`) → push
-6. `learn` → capture session lessons + verify push before ending
+5. [Review & Test] → 코드 리뷰 (`reviewer`) > 테스트(기능 동작 및 브라우저 화면 렌더링 확인)
+6. [Commit & Push] → 이상 없을 시 git commit (`git commit -m "S{N}-{M}: ..."`) & push → 세션 마무리 (`learn`)
 
 ### 🔵 Continue Development (bootstrap already done)
 1. `sprint-manager` → check current status ("where are we?")
 2. `planner` → plan new feature (if needed)
 3. `sprint-manager` → start Story
 4. [Coding] → implement Stories in order
-5. `reviewer` → code review → commit (`git commit -m "S{N}-{M}: ..."`) → push
-6. `learn` → capture session lessons + verify push before ending
+5. [Review & Test] → 코드 리뷰 (`reviewer`) > 테스트(기능 동작 및 브라우저 화면 렌더링 확인)
+6. [Commit & Push] → 이상 없을 시 git commit (`git commit -m "S{N}-{M}: ..."`) & push → 세션 마무리 (`learn`)
 
 ### 🔴 Bug Fix
 1. `investigate` → diagnose the issue
@@ -112,3 +112,4 @@ These laws are enforced across all skills and agents. Violations should be flagg
 7. **Feature Registry**: When adding a feature, register it in features.md in the same commit.
 8. **Session Handoff**: At session end, update project-state.md Quick Summary so the next session has context.
 9. **Common First**: All features must work at Common level (🟢🔵🔴) without crew dependency. Crew-specific logic must be inside crew marker blocks only. Never add crew-only code to Common paths.
+10. **Review & Test Before Commit**: 각 Step에 대한 개발 완료 후 반드시 [코드 리뷰] > [테스트(기능 동작 및 브라우저 화면 렌더링 검증)]까지 수행하여 이상이 없을 때만 커밋 및 푸시를 진행하고 세션을 마무리한다.

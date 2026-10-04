@@ -44,7 +44,7 @@ interface StepDef {
 }
 
 const STEPS: StepDef[] = [
-  { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "기본정보" },
+  { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "적용대상" },
   { key: "goal", kind: "GOAL", who: "SELF", group: "info", tab: "재무목표" },
   { key: "fss", kind: "FSS", who: "SELF", group: "info", tab: "금감원 자료 업로드" },
   { key: "national-self", kind: "NATIONAL", who: "SELF", group: "national", tab: "본인" },
@@ -2456,15 +2456,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     letterSpacing: "0.5px",
   },
   formTitle: {
-    fontSize: "1.75rem",
+    fontSize: "1.65rem",
     fontWeight: 700,
     color: "var(--text-primary)",
-    marginTop: "12px",
+    margin: 0,
+    whiteSpace: "nowrap",
+    flexShrink: 0,
   },
   formDesc: {
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     color: "var(--text-secondary)",
-    marginTop: "6px",
+    marginTop: "10px",
   },
   formBody: {
     flexGrow: 1,
@@ -2479,18 +2481,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: "12px 24px",
-    marginTop: "12px",
+    gap: "12px 18px",
+    marginTop: "10px",
   },
   personTabs: {
     display: "flex",
+    alignItems: "center",
     flexWrap: "wrap",
-    gap: "10px",
+    gap: "8px",
   },
   personTab: {
-    padding: "10px 30px",
-    fontSize: "1.1rem",
-    fontWeight: 700,
+    padding: "7px 18px",
+    fontSize: "0.95rem",
+    fontWeight: 600,
     color: "var(--text-secondary)",
     background: "transparent",
     borderWidth: "1px",
@@ -2498,6 +2501,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderColor: "var(--border)",
     borderRadius: "var(--radius-full)",
     cursor: "pointer",
+    whiteSpace: "nowrap",
     transition: "all var(--transition-fast)",
   },
   personTabActive: {

@@ -1257,6 +1257,11 @@ export default function OnboardingPage() {
                             return months > 0 && B > 0 ? Math.round(estimateBasicPensionAmount(months, A, B)) : "";
                           })()}
                         />
+                        {person.nationalPension.expectedMonthlyPension > 0 && (
+                          <div style={{ fontSize: "0.73rem", color: "var(--text-muted)", marginTop: "4px", lineHeight: "1.4" }}>
+                            💡 공단 공식 예상연금액(<strong>{person.nationalPension.expectedMonthlyPension.toLocaleString()}만원</strong>)은 과거 높은 소득대체율(70%·60%)이 반영된 금액이며, 위 기본연금액은 현행 비례상수(1.29) 기준의 단순 근사치입니다. 모든 실제 시뮬레이션과 진단에는 공단 공식 예상액(<strong>{person.nationalPension.expectedMonthlyPension.toLocaleString()}만원</strong>)이 적용됩니다.
+                          </div>
+                        )}
                       </div>
                       <div style={styles.fieldRow}>
                         <label style={styles.label}>A값 (평균소득 - 만원)</label>

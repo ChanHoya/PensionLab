@@ -834,6 +834,7 @@ export default function OnboardingPage() {
                   disabled={isSubmitting}
                   className="premium-button"
                   style={{
+                    marginLeft: "auto",
                     background: "var(--gradient-secondary)",
                     padding: "8px 22px",
                     fontSize: "0.95rem",

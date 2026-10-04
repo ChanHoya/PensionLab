@@ -291,12 +291,47 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
         </div>
       )}
 
-      {/* 간결한 부제목 (현재 해상도에서 줄바꿈 없이 한 줄로 유지) */}
-      <div style={styles.subtitle}>
-        {hasSpouse
-          ? "부부의 공적·사적연금을 통합 합산한 생애 현금흐름입니다."
-          : "공적·사적연금을 통합 합산한 생애 현금흐름입니다."}{" "}
-        ({isRealValue ? "실질 구매력 기준" : "명목 금액 기준"} · 🔴 목표 지출선, 🟡 최저 생활비선)
+      {/* 부제목 및 국민연금 조기 vs 정상 vs 연기 손익분기(BEP) 버튼 */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "12px",
+          marginTop: "4px",
+          marginBottom: "10px",
+        }}
+      >
+        <div style={styles.subtitle}>
+          {hasSpouse
+            ? "부부의 공적·사적연금을 통합 합산한 생애 현금흐름입니다."
+            : "공적·사적연금을 통합 합산한 생애 현금흐름입니다."}{" "}
+          ({isRealValue ? "실질 구매력 기준" : "명목 금액 기준"} · 🔴 목표 지출선, 🟡 최저 생활비선)
+        </div>
+        <button
+          type="button"
+          onClick={handleOpenBep}
+          className="premium-button-secondary"
+          style={{
+            fontSize: "0.75rem",
+            padding: "6px 12px",
+            fontWeight: 700,
+            borderColor: "rgba(249, 115, 22, 0.4)",
+            color: "#f97316",
+            background: "rgba(249, 115, 22, 0.08)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+          }}
+          title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기 열기"
+        >
+          <span>⚖️ 조기 vs 정상 vs 연기 손익분기(BEP)</span>
+          <span style={{ fontSize: "0.75rem", color: "#f97316" }}>⚡</span>
+        </button>
       </div>
 
       {/* 01 시뮬레이션 핵심 지표 KPI 카드 */}
@@ -401,24 +436,6 @@ export default function CoupleSimulationSection({ result, selfStartAge, spouseSt
               <span style={styles.criteriaArrow}>{activeCriteriaTab === "SMOOTHING" ? "▲" : "▼"}</span>
             </button>
           )}
-
-          {/* S31-3: 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기 열기 버튼 */}
-          <button
-            type="button"
-            onClick={handleOpenBep}
-            style={{
-              ...styles.criteriaTabBtn,
-              borderColor: "rgba(249, 115, 22, 0.4)",
-              color: "#f97316",
-              backgroundColor: "rgba(249, 115, 22, 0.08)",
-              fontWeight: 700,
-              marginLeft: "auto",
-            }}
-            title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기 열기"
-          >
-            <span>⚖️ 조기 vs 정상 vs 연기 손익분기(BEP)</span>
-            <span style={{ fontSize: "0.8rem", color: "#f97316" }}>⚡</span>
-          </button>
         </div>
 
         {/* 선택된 기준의 드롭다운 상세 내용 */}

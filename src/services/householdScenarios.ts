@@ -1,6 +1,7 @@
 import { runWithdrawalSimulation, type PersonFlowParts, type SimulationYearFlow, type StrategySimulationResult } from "@/services/withdrawalCalculator";
 import { personParams, type CoupleSimulationResult, type PersonPensions } from "@/services/coupleSimulation";
 import type { BasicPensionState, SimulationParamsState } from "@/store/usePensionStore";
+import { buildSpendingCurve } from "@/services/spendingCurve";
 
 // 화면에 보이는 인출전략 시나리오 (S2 국민연금 5년 연기는 입력의 연기 옵션으로 흡수)
 export type ScenarioKey = "s0" | "s1" | "s3" | "s4";
@@ -68,8 +69,8 @@ export function runHouseholdScenarios(
 
   const selfAge0 = params.currentAge;
   const spouseAge0 = personParams(params, "SPOUSE").currentAge;
-  const target = (params.targetMonthlySpending || 300) * 12 + (params.annualMedicalExpense || 0); // 노후 의료비 포함 (연)
   const retireT = params.retirementAge - selfAge0;
+  const curve = buildSpendingCurve(params, baseYear, couple.rows.length);
 
   const rowByYear = new Map(couple.rows.map((r) => [r.year, r]));
   const partsOf = (f?: SimulationYearFlow): PersonFlowParts | undefined =>
@@ -99,20 +100,25 @@ export function runHouseholdScenarios(
 
     const flows = [...byT.entries()]
       .sort(([x], [y]) => x - y)
-      .map(([t, f]) => ({
-        ...f,
-        age: selfAge0 + t,
-        year: baseYear + t,
-        spouseAge: spouseAlive.has(t) ? spouseAge0 + t : undefined,
-        deficit: Math.max(0, target - f.totalPostTax), // 가구 목표 생활비 대비
-        // 그래프용 사람별 내역 (유족연금 몫은 통합 시뮬레이션 값, 월 → 연)
-        parts: {
-          self: partsOf(selfByT.get(t)),
-          spouse: partsOf(spouseByT.get(t)),
-          survivorSelf: (rowByYear.get(baseYear + t)?.self.survivorPart ?? 0) * 12,
-          survivorSpouse: (rowByYear.get(baseYear + t)?.spouse?.survivorPart ?? 0) * 12,
-        },
-      }));
+      .map(([t, f]) => {
+        const y = baseYear + t;
+        const pt = curve.get(y);
+        const yearTarget = (pt?.targetReal ?? (params.targetMonthlySpending || 300)) * 12;
+        return {
+          ...f,
+          age: selfAge0 + t,
+          year: y,
+          spouseAge: spouseAlive.has(t) ? spouseAge0 + t : undefined,
+          deficit: Math.max(0, yearTarget - f.totalPostTax), // 연령대별 가구 맞춤 목표 생활비 대비 부족액
+          // 그래프용 사람별 내역 (유족연금 몫은 통합 시뮬레이션 값, 월 → 연)
+          parts: {
+            self: partsOf(selfByT.get(t)),
+            spouse: partsOf(spouseByT.get(t)),
+            survivorSelf: (rowByYear.get(baseYear + t)?.self.survivorPart ?? 0) * 12,
+            survivorSpouse: (rowByYear.get(baseYear + t)?.spouse?.survivorPart ?? 0) * 12,
+          },
+        };
+      });
     const lostSpouse = b?.lostDependencyAge !== undefined ? b.lostDependencyAge - spouseAge0 + selfAge0 : undefined;
     return {
       strategyId: a.strategyId,

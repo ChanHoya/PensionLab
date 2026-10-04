@@ -335,41 +335,9 @@ export default function DashboardPage() {
     </div>
   );
 
-  // 대시보드 퀵 기능 액션 툴바 (페르소나, BEP, 절세, 건보료, 주택연금, 공백기, 유족, ISA)
+  // 대시보드 퀵 기능 액션 툴바 (증액, 적립, 절세, 건보료, 주택연금, 공백기, 유족, ISA, 조기vs정상vs연기 BEP)
   const dataActions = (
     <div className="data-actions-bar" style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", width: "100%" }}>
-      <button
-        id="btn-persona-preset"
-        onClick={() => setPersonaModalOpen(true)}
-        className="premium-button"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-          color: "#ffffff",
-          border: "none",
-        }}
-        title="대한민국 대표 가구 페르소나 데이터 1초 만에 불러오기"
-      >
-        👫 대표 페르소나 체험
-      </button>
-      <button
-        id="btn-nps-bep-actions"
-        onClick={() => setBepModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(249, 115, 22, 0.4)",
-          color: "#f97316",
-          background: "rgba(249, 115, 22, 0.08)",
-        }}
-        title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기"
-      >
-        ⚖️ 손익분기(BEP)
-      </button>
       <button
         id="btn-nps-boost-actions"
         onClick={() => setNpsBoostModalOpen(true)}
@@ -497,6 +465,28 @@ export default function DashboardPage() {
         title="ISA 만기 자금 연금계좌 전환 및 3년 풍차돌리기 절세 플래너"
       >
         💎 ISA전환
+      </button>
+      <button
+        id="btn-nps-bep-toolbar"
+        onClick={() => setBepModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(249, 115, 22, 0.4)",
+          color: "#f97316",
+          background: "rgba(249, 115, 22, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기"
+      >
+        <span>⚖️ 조기 vs 정상 vs 연기 손익분기(BEP)</span>
+        <span style={{ fontSize: "0.75rem", color: "#f97316" }}>⚡</span>
       </button>
     </div>
   );
@@ -798,25 +788,6 @@ export default function DashboardPage() {
             >
               <span>👫</span>
               <span>페르소나 체험</span>
-            </button>
-            <button
-              onClick={() => setBepModalOpen(true)}
-              className="premium-button-secondary"
-              style={{
-                padding: "8px 14px",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                fontWeight: 700,
-                borderColor: "rgba(249, 115, 22, 0.4)",
-                color: "#f97316",
-                background: "rgba(249, 115, 22, 0.08)",
-              }}
-              id="btn-header-nps-bep"
-              title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 분석기"
-            >
-              <span>⚖️</span>
-              <span>손익분기(BEP)</span>
             </button>
             <Link href="/onboarding" className="premium-button-secondary" style={{ padding: "8px 16px" }} id="btn-re-onboard">
               정보 재입력

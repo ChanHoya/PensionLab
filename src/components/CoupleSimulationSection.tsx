@@ -305,47 +305,14 @@ export default function CoupleSimulationSection({
         </div>
       )}
 
-      {/* 부제목 및 국민연금 조기 vs 정상 vs 연기 손익분기(BEP) 버튼 */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "12px",
-          marginTop: "4px",
-          marginBottom: "10px",
-        }}
-      >
+      {/* 부제목 */}
+      <div style={{ marginTop: "4px", marginBottom: "10px" }}>
         <div style={styles.subtitle}>
           {hasSpouse
             ? "부부의 공적·사적연금을 통합 합산한 생애 현금흐름입니다."
             : "공적·사적연금을 통합 합산한 생애 현금흐름입니다."}{" "}
           ({isRealValue ? "실질 구매력 기준" : "명목 금액 기준"} · 🔴 목표 지출선, 🟡 최저 생활비선)
         </div>
-        <button
-          type="button"
-          onClick={handleOpenBep}
-          className="premium-button-secondary"
-          style={{
-            fontSize: "0.75rem",
-            padding: "6px 12px",
-            fontWeight: 700,
-            borderColor: "rgba(249, 115, 22, 0.4)",
-            color: "#f97316",
-            background: "rgba(249, 115, 22, 0.08)",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-          }}
-          title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기 열기"
-        >
-          <span>⚖️ 조기 vs 정상 vs 연기 손익분기(BEP)</span>
-          <span style={{ fontSize: "0.75rem", color: "#f97316" }}>⚡</span>
-        </button>
       </div>
 
       {/* 01 시뮬레이션 핵심 지표 KPI 카드 */}
@@ -658,7 +625,7 @@ export default function CoupleSimulationSection({
             <Line
               type="monotone"
               dataKey="targetSpending"
-              name={(simulationParams.annualMedicalExpense || 0) > 0 ? "맞춤 지출 목표선(의료비 포함)" : "맞춤 지출 목표선"}
+              name="맞춤 지출 목표선"
               stroke="#e11d48"
               strokeWidth={2.5}
               dot={false}

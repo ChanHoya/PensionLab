@@ -119,61 +119,81 @@ export function exportWithdrawalFlowsCsv(
     strategyId: string;
     strategyName: string;
     hasSpouse: boolean;
+    isRealValue?: boolean;
+    inflationRate?: number;
   }
 ): void {
-  const { strategyId, strategyName, hasSpouse } = options;
+  const { strategyId, strategyName, hasSpouse, isRealValue = false, inflationRate = 3 } = options;
   const dateStr = new Date().toISOString().slice(0, 10);
+  const baseYear = flows[0]?.year ?? 2026;
+  const unitLabel = isRealValue ? "만원/현재가치" : "만원/명목";
 
   const headers = [
     hasSpouse ? "본인 나이" : "나이",
     ...(hasSpouse ? ["배우자 나이"] : []),
     "연도",
-    "세전 총수령액(만원/년)",
-    "국민연금(만원/년)",
-    "퇴직연금(만원/년)",
-    "개인연금(만원/년)",
-    "연금보험(만원/년)",
-    ...(strategyId === "S4" ? ["배당소득(커버드콜)", "비상자금누적"] : []),
-    "퇴직소득세(만원/년)",
-    "사적연금세(만원/년)",
-    "건강보험료(만원/년)",
-    "총 공제액(세금+건보)",
-    "세후 실수령액(만원/년)",
-    "세후 월 실수령액(만원/월)",
-    "기말 자산 잔고(만원)",
-    "목표대비 부족액(만원)",
+    `세전 총수령액(${unitLabel})`,
+    `국민연금(${unitLabel})`,
+    `퇴직연금(${unitLabel})`,
+    `개인연금(${unitLabel})`,
+    `연금보험(${unitLabel})`,
+    ...(strategyId === "S4" ? [`배당소득(커버드콜, ${unitLabel})`, `비상자금누적(${unitLabel})`] : []),
+    `퇴직소득세(${unitLabel})`,
+    `사적연금세(${unitLabel})`,
+    `건강보험료(${unitLabel})`,
+    `총 공제액(세금+건보, ${unitLabel})`,
+    `세후 실수령액(${unitLabel})`,
+    `세후 월 실수령액(${unitLabel})`,
+    `기말 자산 잔고(${unitLabel})`,
+    `목표대비 부족액(${unitLabel})`,
   ];
 
   const dataRows = flows.map((f) => {
-    const totalDeductions = f.taxOnRetirement + f.taxOnPersonal + f.healthInsurance;
-    const monthlyNet = Math.round((f.totalPostTax / 12) * 10) / 10;
+    const t = Math.max(0, f.year - baseYear);
+    const div = isRealValue ? Math.pow(1 + inflationRate / 100, t) : 1;
+    const r = (val: number) => Math.round(val / div);
+
+    const preTax = r(f.totalPreTax);
+    const nat = r(f.nationalPreTax);
+    const ret = r(f.retirementPreTax);
+    const per = r(f.personalPreTax);
+    const ins = r(f.insurancePreTax);
+    const taxRet = r(f.taxOnRetirement);
+    const taxPer = r(f.taxOnPersonal);
+    const hi = r(f.healthInsurance);
+    const totalDeductions = taxRet + taxPer + hi;
+    const postTax = r(f.totalPostTax);
+    const monthlyNet = Math.round((postTax / 12) * 10) / 10;
+    const endingBal = r(f.endingBalance);
+    const deficit = f.deficit > 0 ? r(f.deficit) : 0;
 
     return [
       `${f.age}세`,
       ...(hasSpouse ? [f.spouseAge ? `${f.spouseAge}세` : "-"] : []),
       `${f.year}년`,
-      f.totalPreTax,
-      f.nationalPreTax,
-      f.retirementPreTax,
-      f.personalPreTax,
-      f.insurancePreTax,
+      preTax,
+      nat,
+      ret,
+      per,
+      ins,
       ...(strategyId === "S4"
-        ? [f.dividendPreTax || 0, f.accumulatedDividendBuffer || 0]
+        ? [r(f.dividendPreTax || 0), r(f.accumulatedDividendBuffer || 0)]
         : []),
-      f.taxOnRetirement,
-      f.taxOnPersonal,
-      f.healthInsurance,
+      taxRet,
+      taxPer,
+      hi,
       totalDeductions,
-      f.totalPostTax,
+      postTax,
       monthlyNet,
-      f.endingBalance,
-      f.deficit > 0 ? f.deficit : 0,
+      endingBal,
+      deficit,
     ];
   });
 
+  const valueModeName = isRealValue ? "현재가치실질" : "명목금액";
   downloadCsv(
     headers,
     dataRows,
-    `인출전략_${strategyId}_${strategyName.replace(/[\s\(\)\/]+/g, "_")}_상세현금흐름_${dateStr}`
+    `인출전략_${strategyId}_${strategyName.replace(/[\s\(\)\/]+/g, "_")}_${valueModeName}_${dateStr}`
   );
 }

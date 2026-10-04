@@ -35,6 +35,8 @@ interface Props {
   backupActions?: React.ReactNode; // 창 제목과 같은 줄 제일 오른쪽 버튼 (백업·복원)
   paid: { self: PaidTotals; spouse: PaidTotals | null }; // 그래프 안 (납부총액/지급총액) 표기용
   onOpenBepModal?: () => void; // 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 모달 열기 핸들러
+  isRealValue?: boolean; // 현재가치(실질 구매력) vs 명목 금액 외부 제어
+  onToggleRealValue?: (val: boolean) => void;
 }
 
 // x축 눈금: 연도 아래에 본인·배우자 나이 (사망 후에는 -)
@@ -59,9 +61,21 @@ function YearAgeTick({ x, y, payload, index, rowsByYear }: { x?: number; y?: num
   );
 }
 
-export default function CoupleSimulationSection({ result, selfStartAge, spouseStartAge, actions, backupActions, paid, onOpenBepModal }: Props) {
+export default function CoupleSimulationSection({
+  result,
+  selfStartAge,
+  spouseStartAge,
+  actions,
+  backupActions,
+  paid,
+  onOpenBepModal,
+  isRealValue: propIsRealValue,
+  onToggleRealValue,
+}: Props) {
   const simulationParams = usePensionStore((s) => s.simulationParams);
-  const [isRealValue, setIsRealValue] = useState(true); // 기본값: 현재가치 (실질 구매력)
+  const [internalRealValue, setInternalRealValue] = useState(true); // 기본값: 현재가치 (실질 구매력)
+  const isRealValue = propIsRealValue !== undefined ? propIsRealValue : internalRealValue;
+  const setIsRealValue = onToggleRealValue ?? setInternalRealValue;
   const [localBepOpen, setLocalBepOpen] = useState(false);
   const handleOpenBep = () => {
     if (onOpenBepModal) onOpenBepModal();

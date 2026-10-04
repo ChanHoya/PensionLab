@@ -174,6 +174,9 @@ export default function DashboardPage() {
   // 왼쪽 입력 열 접기
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // 현재가치(실질 구매력) vs 명목 금액 토글 (부부 통합 시뮬레이션 및 인출전략 공유)
+  const [isRealValue, setIsRealValue] = useState(true);
+
   // 대표 가구 페르소나 모달 열림 상태
   const [personaModalOpen, setPersonaModalOpen] = useState(false);
 
@@ -537,17 +540,59 @@ export default function DashboardPage() {
     s3CustomPeriods: s3Periods,
   });
 
+  // 물가상승률 할인 헬퍼: 현재가치(실질) 모드 시 연도별 할인율 (1 + infl/100)^t 적용
+  const infl = store.simulationParams.inflationRate || 3;
+  const baseYear = coupleResult.rows[0]?.year ?? (withdrawalSimulation.s0.flows[0]?.year ?? 2026);
+  const getDivisor = (year: number) => {
+    if (!isRealValue) return 1;
+    const t = Math.max(0, year - baseYear);
+    return Math.pow(1 + infl / 100, t);
+  };
+
+  // 현재가치(실질) 또는 명목금액 기준 전략별 지표 계산
+  const getMetrics = (strat: StrategySimulationResult) => {
+    if (!isRealValue) {
+      return {
+        lifetimeTotalPostTax: strat.lifetimeTotalPostTax,
+        lifetimeTotalTaxAndHI: strat.lifetimeTotalTaxAndHI,
+        lifetimeTotalPreTax: strat.flows.reduce((sum, f) => sum + f.totalPreTax, 0),
+      };
+    }
+    let postTax = 0;
+    let taxAndHI = 0;
+    let preTax = 0;
+    for (const f of strat.flows) {
+      const div = getDivisor(f.year);
+      postTax += f.totalPostTax / div;
+      taxAndHI += (f.taxOnRetirement + f.taxOnPersonal + f.healthInsurance) / div;
+      preTax += f.totalPreTax / div;
+    }
+    return {
+      lifetimeTotalPostTax: Math.round(postTax),
+      lifetimeTotalTaxAndHI: Math.round(taxAndHI),
+      lifetimeTotalPreTax: Math.round(preTax),
+    };
+  };
+
+  const stratMetrics: Record<ScenarioTab, ReturnType<typeof getMetrics>> = {
+    S0: getMetrics(withdrawalSimulation.s0),
+    S1: getMetrics(withdrawalSimulation.s1),
+    S3: getMetrics(withdrawalSimulation.s3),
+    S4: getMetrics(withdrawalSimulation.s4),
+  };
+
   // 선택 전에는 생애 세후 수령액이 가장 많은 추천(Best) 전략을 보여 주고 강조한다
   const resultOf = (k: ScenarioTab) => withdrawalSimulation[k.toLowerCase() as Lowercase<ScenarioTab>];
   const bestTab = (["S0", "S1", "S3", "S4"] as ScenarioTab[]).reduce((b, k) =>
-    resultOf(k).lifetimeTotalPostTax > resultOf(b).lifetimeTotalPostTax ? k : b
+    stratMetrics[k].lifetimeTotalPostTax > stratMetrics[b].lifetimeTotalPostTax ? k : b
   );
   const activeTab: ScenarioTab = selectedTab ?? bestTab;
   const activeResult: StrategySimulationResult = resultOf(activeTab);
 
-  // 인출전략 그래프: 부부 통합 시뮬레이션과 같은 계열(사람별·유족연금)과 색. 값은 연 세전 금액(만원)
+  // 인출전략 그래프: 부부 통합 시뮬레이션과 같은 계열(사람별·유족연금)과 색. 값은 연 세전 금액(만원) (현재가치/명목 반영)
   const survivorName = `${coupleResult.survivorInfo?.deceased === "SPOUSE" ? "본인" : "배우자"} 유족연금`;
   const scenarioChartData: Record<string, number>[] = activeResult.flows.map((f) => {
+    const div = getDivisor(f.year);
     // 사람별 내역이 있으면 사망 후 없는 쪽은 0 (가구 합으로 채우면 유족연금이 본인 몫으로 한 번 더 쌓인다)
     const zero = { national: 0, basic: 0, retirement: 0, personal: 0, insurance: 0, dividend: 0 };
     const s = f.parts
@@ -556,8 +601,8 @@ export default function DashboardPage() {
     const p = f.parts?.spouse ?? zero;
     const svSelf = f.parts?.survivorSelf ?? 0;
     const svSpouse = f.parts?.survivorSpouse ?? 0;
-    // 만원 단위로 반올림: 월액×12 환산에서 남는 소수(예: 유족연금만 받는 해의 0.5만원)가 계열로 보이지 않게
-    const r = (v: number) => Math.max(0, Math.round(v));
+    // 만원 단위로 반올림: 물가할인 적용
+    const r = (v: number) => Math.max(0, Math.round(v / div));
     return {
       age: f.age,
       year: f.year,
@@ -571,7 +616,7 @@ export default function DashboardPage() {
       "본인 개인연금": r(s.personal + s.insurance),
       "배우자 개인연금": r(p.personal + p.insurance),
       "커버드콜 배당": r(f.dividendPreTax),
-      totalPostTax: f.totalPostTax,
+      totalPostTax: Math.round(f.totalPostTax / div),
     };
   });
   // 금액이 있는 계열만 (기초연금처럼 입력이 없으면 빠진다)
@@ -602,17 +647,18 @@ export default function DashboardPage() {
   const firstDeathAge = firstDeath ? activeResult.flows.find((f) => f.year === firstDeath.year)?.age : undefined;
 
   const totalFlows = activeResult.flows.reduce((acc, flow) => {
+    const div = getDivisor(flow.year);
     return {
-      totalPreTax: acc.totalPreTax + flow.totalPreTax,
-      nationalPreTax: acc.nationalPreTax + flow.nationalPreTax,
-      retirementPreTax: acc.retirementPreTax + flow.retirementPreTax,
-      personalPreTax: acc.personalPreTax + flow.personalPreTax,
-      insurancePreTax: acc.insurancePreTax + flow.insurancePreTax,
-      taxOnRetirement: acc.taxOnRetirement + flow.taxOnRetirement,
-      taxOnPersonal: acc.taxOnPersonal + flow.taxOnPersonal,
-      healthInsurance: acc.healthInsurance + flow.healthInsurance,
-      totalPostTax: acc.totalPostTax + flow.totalPostTax,
-      deficit: acc.deficit + flow.deficit,
+      totalPreTax: acc.totalPreTax + flow.totalPreTax / div,
+      nationalPreTax: acc.nationalPreTax + flow.nationalPreTax / div,
+      retirementPreTax: acc.retirementPreTax + flow.retirementPreTax / div,
+      personalPreTax: acc.personalPreTax + flow.personalPreTax / div,
+      insurancePreTax: acc.insurancePreTax + flow.insurancePreTax / div,
+      taxOnRetirement: acc.taxOnRetirement + flow.taxOnRetirement / div,
+      taxOnPersonal: acc.taxOnPersonal + flow.taxOnPersonal / div,
+      healthInsurance: acc.healthInsurance + flow.healthInsurance / div,
+      totalPostTax: acc.totalPostTax + flow.totalPostTax / div,
+      deficit: acc.deficit + flow.deficit / div,
     };
   }, {
     totalPreTax: 0,
@@ -653,34 +699,41 @@ export default function DashboardPage() {
       strategyId: activeResult.strategyId,
       strategyName: activeResult.strategyName,
       hasSpouse,
+      isRealValue,
+      inflationRate: infl,
     });
   };
 
   const barChartData = [
     {
       name: "시뮬레이션 기준 (S0)",
-      "세후 수령액": withdrawalSimulation.s0.lifetimeTotalPostTax,
-      "세금 & 건보료": withdrawalSimulation.s0.lifetimeTotalTaxAndHI,
+      "세후 수령액": stratMetrics.S0.lifetimeTotalPostTax,
+      "세금 & 건보료": stratMetrics.S0.lifetimeTotalTaxAndHI,
     },
     {
       name: "절세형 (S1)",
-      "세후 수령액": withdrawalSimulation.s1.lifetimeTotalPostTax,
-      "세금 & 건보료": withdrawalSimulation.s1.lifetimeTotalTaxAndHI,
+      "세후 수령액": stratMetrics.S1.lifetimeTotalPostTax,
+      "세금 & 건보료": stratMetrics.S1.lifetimeTotalTaxAndHI,
     },
     {
       name: "커스텀 (S3)",
-      "세후 수령액": withdrawalSimulation.s3.lifetimeTotalPostTax,
-      "세금 & 건보료": withdrawalSimulation.s3.lifetimeTotalTaxAndHI,
+      "세후 수령액": stratMetrics.S3.lifetimeTotalPostTax,
+      "세금 & 건보료": stratMetrics.S3.lifetimeTotalTaxAndHI,
     },
     {
       name: "하이브리드 (S4)",
-      "세후 수령액": withdrawalSimulation.s4.lifetimeTotalPostTax,
-      "세금 & 건보료": withdrawalSimulation.s4.lifetimeTotalTaxAndHI,
+      "세후 수령액": stratMetrics.S4.lifetimeTotalPostTax,
+      "세금 & 건보료": stratMetrics.S4.lifetimeTotalTaxAndHI,
     }
   ];
 
   // S2(국민연금 5년 연기)는 왼쪽 입력의 국민연금 연기 옵션으로 흡수
-  const strategies = [withdrawalSimulation.s0, withdrawalSimulation.s1, withdrawalSimulation.s3, withdrawalSimulation.s4];
+  const strategies = [
+    { ...withdrawalSimulation.s0, ...stratMetrics.S0 },
+    { ...withdrawalSimulation.s1, ...stratMetrics.S1 },
+    { ...withdrawalSimulation.s3, ...stratMetrics.S3 },
+    { ...withdrawalSimulation.s4, ...stratMetrics.S4 },
+  ];
   const bestStrategy = [...strategies].sort((a, b) => b.lifetimeTotalPostTax - a.lifetimeTotalPostTax)[0];
 
   // PDF Report Capture
@@ -845,6 +898,8 @@ export default function DashboardPage() {
             backupActions={backupActions}
             paid={{ self: selfPaid, spouse: spousePaid }}
             onOpenBepModal={() => setBepModalOpen(true)}
+            isRealValue={isRealValue}
+            onToggleRealValue={setIsRealValue}
           />
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -860,7 +915,25 @@ export default function DashboardPage() {
             <div style={styles.dashboardCard} className="premium-card">
               <div style={styles.dashboardHeader}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", width: "100%" }}>
-                  <h3 style={{ ...styles.dashboardTitle, marginTop: 0 }}>인출전략 시나리오 비교 (세후)</h3>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+                    <h3 style={{ ...styles.dashboardTitle, marginTop: 0, marginBottom: 0 }}>인출전략 시나리오 비교 (세후)</h3>
+                    <div style={styles.toggleGroup} data-html2canvas-ignore>
+                      <button
+                        type="button"
+                        onClick={() => setIsRealValue(true)}
+                        style={isRealValue ? styles.toggleBtnActive : styles.toggleBtn}
+                      >
+                        현재가치(실질 구매력)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsRealValue(false)}
+                        style={!isRealValue ? styles.toggleBtnActive : styles.toggleBtn}
+                      >
+                        명목 금액
+                      </button>
+                    </div>
+                  </div>
                   {/* 버튼은 PDF 캡처에서 제외 */}
                   <button
                     type="button"
@@ -877,6 +950,9 @@ export default function DashboardPage() {
                   {hasSpouse ? "부부 가구 기준입니다. 국민연금·기초연금(연기·유족연금 포함)은 위 부부 통합 시뮬레이션 값을 그대로 쓰고," : "국민연금·기초연금(연기 포함)은 통합 시뮬레이션 값을 그대로 쓰고,"}
                   S0는 퇴직·개인연금도 통합 시뮬레이션의 인출 방식(왼쪽 입력 옵션) 그대로, 나머지는 인출 방식만 시나리오별로 달리해 세금·건보료를 {hasSpouse ? "사람별로 계산한 뒤 합산" : "계산"}합니다.
                   재산·금융소득·기타 소득과 S4 배당(부부 분산을 끄면)은 본인 명의로 봅니다.
+                  <span style={{ color: "var(--primary)", fontWeight: 600, marginLeft: "6px" }}>
+                    ({isRealValue ? "현재가치 · 실질 구매력 기준" : "미래 물가상승 반영 · 명목 금액 기준"})
+                  </span>
                 </p>
               </div>
 
@@ -890,7 +966,8 @@ export default function DashboardPage() {
                     추천 절세 전략: <span className="gradient-text">{bestStrategy.strategyName}</span>
                   </h4>
                   <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px", lineHeight: 1.5 }}>
-                    이 시나리오 적용 시 생애 총 세후 수령액은 약 <strong>{bestStrategy.lifetimeTotalPostTax.toLocaleString()}만원</strong>으로, 
+                    이 시나리오 적용 시 생애 총 세후 수령액은 약 <strong>{bestStrategy.lifetimeTotalPostTax.toLocaleString()}만원</strong>
+                    {isRealValue ? " (실질 구매력)" : " (명목 금액)"}으로, 
                     기존 계획 대비 세후 소득을 극대화할 수 있습니다. 
                   </p>
                 </div>
@@ -1025,7 +1102,7 @@ export default function DashboardPage() {
               {/* 그래프 ① 세금 & 건보료 비교 Bar Chart */}
               <div style={{ marginTop: "14px" }}>
                 <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  전략별 생애 세금 & 건보료 vs 세후 수령액 비교
+                  전략별 생애 세금 & 건보료 vs 세후 수령액 비교 ({isRealValue ? "현재가치 실질" : "명목 금액"})
                 </p>
                 <div style={{ height: 200, width: "100%" }}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1048,7 +1125,7 @@ export default function DashboardPage() {
               {/* 그래프 ② 인출흐름 & 자산변화 Area+Line Chart */}
               <div style={{ marginTop: "14px" }}>
                 <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                  {strategies.find(s => s.strategyId === activeTab)?.strategyName} — 연령별 인출흐름 & 자산변화
+                  {strategies.find(s => s.strategyId === activeTab)?.strategyName} — 연령별 인출흐름 & 자산변화 ({isRealValue ? "현재가치 실질" : "명목 금액"})
                 </p>
                 <div style={{ height: 250, width: "100%" }} onClick={() => setScenarioHighlight(null)}>
                   <ResponsiveContainer width="100%" height="100%">
@@ -1089,7 +1166,7 @@ export default function DashboardPage() {
                       <Line
                         type="monotone"
                         dataKey="totalPostTax"
-                        name="실질 세후 수령액"
+                        name={isRealValue ? "실질 세후 수령액" : "명목 세후 수령액"}
                         stroke="#10b981"
                         strokeWidth={3}
                         strokeOpacity={activeHighlight && activeHighlight !== "totalPostTax" ? 0.2 : 1}
@@ -1195,7 +1272,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <p style={styles.chartSubtitle}>
-                {activeResult.strategyName} 기준 · 원 단위 계산식을 만 원 단위로 절사한 상세 연도별 테이블
+                {activeResult.strategyName} 기준 · {isRealValue ? "현재가치(실질 구매력)" : "명목 금액"} 상세 연도별 테이블 (단위: 만원)
               </p>
 
               {detailTableOpen && (
@@ -1206,7 +1283,7 @@ export default function DashboardPage() {
                       <th style={styles.th}>{hasSpouse ? "본인 나이" : "나이"}</th>
                       {hasSpouse && <th style={styles.th}>배우자 나이</th>}
                       <th style={styles.th}>연도</th>
-                      <th style={styles.th}>세전 합계</th>
+                      <th style={styles.th}>세전 합계 ({isRealValue ? "실질" : "명목"})</th>
                       <th style={styles.th}>국민연금</th>
                       <th style={styles.th}>퇴직연금</th>
                       <th style={styles.th}>개인연금</th>
@@ -1214,34 +1291,38 @@ export default function DashboardPage() {
                       <th style={styles.th}>퇴직소득세</th>
                       <th style={styles.th}>사적연금세</th>
                       <th style={styles.th}>건보료</th>
-                      <th style={{ ...styles.th, color: "var(--success)" }}>세후 수령액</th>
+                      <th style={{ ...styles.th, color: "var(--success)" }}>세후 수령액 ({isRealValue ? "실질" : "명목"})</th>
                       <th style={styles.th}>기말 자산</th>
                       <th style={{ ...styles.th, color: "var(--danger)" }}>목표대비 부족액</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredFlows.map((flow) => (
-                      <tr key={flow.age} style={styles.tr}>
-                        <td style={styles.td}>{flow.age}세</td>
-                        {hasSpouse && <td style={styles.td}>{flow.spouseAge ? `${flow.spouseAge}세` : "-"}</td>}
-                        <td style={styles.td}>{flow.year}년</td>
-                        <td style={{ ...styles.td, fontWeight: 700 }}>{flow.totalPreTax.toLocaleString()}</td>
-                        <td style={styles.td}>{flow.nationalPreTax.toLocaleString()}</td>
-                        <td style={styles.td}>{flow.retirementPreTax.toLocaleString()}</td>
-                        <td style={styles.td}>{flow.personalPreTax.toLocaleString()}</td>
-                        <td style={styles.td}>{flow.insurancePreTax.toLocaleString()}</td>
-                        <td style={{ ...styles.td, color: "var(--warning)" }}>{flow.taxOnRetirement.toLocaleString()}</td>
-                        <td style={{ ...styles.td, color: "var(--warning)" }}>{flow.taxOnPersonal.toLocaleString()}</td>
-                        <td style={{ ...styles.td, color: "var(--warning)" }}>{flow.healthInsurance.toLocaleString()}</td>
-                        <td style={{ ...styles.td, fontWeight: 800, color: "var(--success)" }}>
-                          {flow.totalPostTax.toLocaleString()}
-                        </td>
-                        <td style={styles.td}>{flow.endingBalance.toLocaleString()}</td>
-                        <td style={{ ...styles.td, color: flow.deficit > 0 ? "var(--danger)" : "var(--text-secondary)" }}>
-                          {flow.deficit > 0 ? `${flow.deficit.toLocaleString()}` : "-"}
-                        </td>
-                      </tr>
-                    ))}
+                    {filteredFlows.map((flow) => {
+                      const div = getDivisor(flow.year);
+                      const r = (v: number) => Math.round(v / div);
+                      return (
+                        <tr key={flow.age} style={styles.tr}>
+                          <td style={styles.td}>{flow.age}세</td>
+                          {hasSpouse && <td style={styles.td}>{flow.spouseAge ? `${flow.spouseAge}세` : "-"}</td>}
+                          <td style={styles.td}>{flow.year}년</td>
+                          <td style={{ ...styles.td, fontWeight: 700 }}>{r(flow.totalPreTax).toLocaleString()}</td>
+                          <td style={styles.td}>{r(flow.nationalPreTax).toLocaleString()}</td>
+                          <td style={styles.td}>{r(flow.retirementPreTax).toLocaleString()}</td>
+                          <td style={styles.td}>{r(flow.personalPreTax).toLocaleString()}</td>
+                          <td style={styles.td}>{r(flow.insurancePreTax).toLocaleString()}</td>
+                          <td style={{ ...styles.td, color: "var(--warning)" }}>{r(flow.taxOnRetirement).toLocaleString()}</td>
+                          <td style={{ ...styles.td, color: "var(--warning)" }}>{r(flow.taxOnPersonal).toLocaleString()}</td>
+                          <td style={{ ...styles.td, color: "var(--warning)" }}>{r(flow.healthInsurance).toLocaleString()}</td>
+                          <td style={{ ...styles.td, fontWeight: 800, color: "var(--success)" }}>
+                            {r(flow.totalPostTax).toLocaleString()}
+                          </td>
+                          <td style={styles.td}>{r(flow.endingBalance).toLocaleString()}</td>
+                          <td style={{ ...styles.td, color: flow.deficit > 0 ? "var(--danger)" : "var(--text-secondary)" }}>
+                            {flow.deficit > 0 ? `${r(flow.deficit).toLocaleString()}` : "-"}
+                          </td>
+                        </tr>
+                      );
+                    })}
                     {/* 합계 행 (Total row) */}
                     <tr style={{
                       fontWeight: 700,
@@ -1252,20 +1333,20 @@ export default function DashboardPage() {
                       <td style={{ padding: "7px 8px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>합계</td>
                       {hasSpouse && <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>}
                       <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>
-                      <td style={{ padding: "7px 8px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>{totalFlows.totalPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.nationalPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.retirementPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.personalPreTax.toLocaleString()}</td>
-                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{totalFlows.insurancePreTax.toLocaleString()}</td>
-                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.taxOnRetirement.toLocaleString()}</td>
-                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.taxOnPersonal.toLocaleString()}</td>
-                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{totalFlows.healthInsurance.toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-primary)", textAlign: "right", fontWeight: 800 }}>{Math.round(totalFlows.totalPreTax).toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{Math.round(totalFlows.nationalPreTax).toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{Math.round(totalFlows.retirementPreTax).toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{Math.round(totalFlows.personalPreTax).toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>{Math.round(totalFlows.insurancePreTax).toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{Math.round(totalFlows.taxOnRetirement).toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{Math.round(totalFlows.taxOnPersonal).toLocaleString()}</td>
+                      <td style={{ padding: "7px 8px", color: "var(--warning)", textAlign: "right" }}>{Math.round(totalFlows.healthInsurance).toLocaleString()}</td>
                       <td style={{ padding: "7px 8px", color: "var(--success)", textAlign: "right", fontWeight: 800 }}>
-                        {totalFlows.totalPostTax.toLocaleString()}
+                        {Math.round(totalFlows.totalPostTax).toLocaleString()}
                       </td>
                       <td style={{ padding: "7px 8px", color: "var(--text-secondary)", textAlign: "right" }}>-</td>
                       <td style={{ padding: "7px 8px", color: totalFlows.deficit > 0 ? "var(--danger)" : "var(--text-secondary)", textAlign: "right" }}>
-                        {totalFlows.deficit > 0 ? totalFlows.deficit.toLocaleString() : "-"}
+                        {totalFlows.deficit > 0 ? Math.round(totalFlows.deficit).toLocaleString() : "-"}
                       </td>
                     </tr>
                   </tbody>

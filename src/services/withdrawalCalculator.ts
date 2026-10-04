@@ -833,7 +833,8 @@ export function runWithdrawalSimulation(
     let lostDependencyAge: number | undefined;
 
     // S4 커버드콜 원금 및 배당 안전 비상자금 잔고 (원 단위)
-    let currentCoveredCallAssetWon = (simulationParams.coveredCallAsset || 0) * 10000;
+    const initialCoveredCallAssetWon = (simulationParams.coveredCallAsset || 0) * 10000;
+    let currentCoveredCallAssetWon = initialCoveredCallAssetWon;
     let accumulatedDividendBufferWon = 0;
 
     // 기대수명까지 연도별 계산
@@ -1205,21 +1206,14 @@ export function runWithdrawalSimulation(
       let dividendBuffered = 0;
 
       if (strategyId === "S4" && age >= simulationParams.retirementAge) {
-        // 커버드콜 자산에서 발생하는 연 배당소득 (현재 누적 원금 기준, 원 단위)
+        // 커버드콜 자산에서 발생하는 연 배당소득 (현재 누적 원금 기준, 원 단위 전액 발생)
         const dividendRate = (simulationParams.coveredCallDividendRate || 9.0) / 100;
         const rawDividend = currentCoveredCallAssetWon * dividendRate;
 
-        // 부부 분산 시 1인당 한도: 연 1,000만 원 × 2인 = 2,000만 원
-        // 미분산 시 1인당 한도: 연 1,000만 원
-        const perPersonCap = 10000000; // 1,000만 원
-        const maxDividendForHI = simulationParams.isCoupleDivided
-          ? perPersonCap * 2  // 부부 합산 2,000만 원
-          : perPersonCap;      // 개인 1,000만 원
+        // 실제 발생하는 연간 세전 배당소득 전액 반영 (피부양자 한도로 강제 삭감하던 버그 정상화)
+        dividendPreTax = rawDividend;
 
-        // 건보료 피부양자 유지를 위해 한도 내로 배당 수령액 통제
-        dividendPreTax = Math.min(rawDividend, maxDividendForHI);
-
-        // 배당소득세 15.4% 원천징수 (지방세 포함)
+        // 배당소득세 15.4% 원천징수 (소득세 14% + 지방소득세 1.4%)
         taxOnDividend = Math.round(dividendPreTax * 0.154);
       }
 
@@ -1384,11 +1378,16 @@ export function runWithdrawalSimulation(
       });
     }
 
+    // S4 하이브리드 전략: 재투자(스노우볼) 또는 비상금 풀에 축적된 순 배당 자산(증액된 원금 + 비상풀)을 생애 총 세후 수령/자산가치에 반영
+    const netDividendAssetGain = strategyId === "S4"
+      ? Math.max(0, currentCoveredCallAssetWon - initialCoveredCallAssetWon) + accumulatedDividendBufferWon
+      : 0;
+
     return {
       strategyId,
       strategyName,
       lifetimeTotalPreTax: Math.round(lifetimeTotalPreTax / 10000),
-      lifetimeTotalPostTax: Math.round(lifetimeTotalPostTax / 10000),
+      lifetimeTotalPostTax: Math.round((lifetimeTotalPostTax + netDividendAssetGain) / 10000),
       lifetimeTotalTaxAndHI: Math.round(lifetimeTotalTaxAndHI / 10000),
       lifetimeTotalTax: Math.round(lifetimeTotalTax / 10000),
       lifetimeTotalHI: Math.round(lifetimeTotalHI / 10000),

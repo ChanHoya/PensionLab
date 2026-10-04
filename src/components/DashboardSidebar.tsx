@@ -27,6 +27,7 @@ interface Props {
   onOpenSavingsPlanModal?: () => void;
   onOpenSurvivorCareModal?: () => void;
   onOpenIsaTransferModal?: () => void;
+  onOpenDividendStrategyModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -404,8 +405,42 @@ export default function DashboardSidebar(props: Props) {
         )}
       </details>
 
-      <details style={styles.group}>
-        <summary style={styles.summary}>S4 하이브리드 · 배당</summary>
+      <details open style={styles.group}>
+        <summary style={styles.summary}>▼ S4 하이브리드 · 배당</summary>
+
+        {props.onOpenDividendStrategyModal && (
+          <button
+            type="button"
+            onClick={props.onOpenDividendStrategyModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "7px 10px",
+              fontSize: "0.76rem",
+              fontWeight: 700,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "6px",
+              borderColor: "rgba(99, 102, 241, 0.4)",
+              color: "#a5b4fc",
+              background: "rgba(99, 102, 241, 0.12)",
+              borderRadius: "6px",
+              marginTop: "8px",
+              marginBottom: "10px",
+              cursor: "pointer",
+            }}
+            title="대표적인 연금 배당 투자 포트폴리오 4선 추천 및 분배율 원클릭 적용"
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>💡</span>
+              <span>배당금 투자 전략 추천</span>
+            </span>
+            <span style={{ fontSize: "0.7rem", color: "#818cf8" }}>가이드 ➔</span>
+          </button>
+        )}
+
         {slider("커버드콜 투자금", coveredCallAsset, "만원", 0, 50000, 500, (v) => setParam({ coveredCallAsset: v }))}
         {slider("예상 연 분배율", coveredCallRate, "%", 2, 15, 0.5, (v) => setParam({ coveredCallDividendRate: v }))}
         <label style={styles.checkbox}>

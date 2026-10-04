@@ -27,6 +27,7 @@ import { NpsBoostRoadmapModal } from "@/components/NpsBoostRoadmapModal";
 import { SavingsPlanModal } from "@/components/SavingsPlanModal";
 import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
+import { DividendStrategyModal } from "@/components/DividendStrategyModal";
 
 // Import Recharts components
 import {
@@ -226,6 +227,9 @@ export default function DashboardPage() {
 
   // ISA 만기 자금 연금계좌 전환 모달 열림 상태
   const [isaTransferModalOpen, setIsaTransferModalOpen] = useState(false);
+
+  // 대표 연금 배당 투자 포트폴리오 가이드 모달 열림 상태
+  const [dividendStrategyModalOpen, setDividendStrategyModalOpen] = useState(false);
 
   const handleExportData = () => {
     const data = {
@@ -507,6 +511,27 @@ export default function DashboardPage() {
       >
         <span>⚖️ 조기 vs 정상 vs 연기 손익분기(BEP)</span>
         <span style={{ fontSize: "0.75rem", color: "#f97316" }}>⚡</span>
+      </button>
+      <button
+        id="btn-dividend-strategy-actions"
+        onClick={() => setDividendStrategyModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(99, 102, 241, 0.4)",
+          color: "#a5b4fc",
+          background: "rgba(99, 102, 241, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="대표적인 연금 배당 투자 포트폴리오 4선 추천 및 분배율 원클릭 적용"
+      >
+        <span>💡 배당금 투자 전략</span>
       </button>
     </div>
   );
@@ -887,6 +912,7 @@ export default function DashboardPage() {
             onOpenSavingsPlanModal={() => setSavingsPlanModalOpen(true)}
             onOpenSurvivorCareModal={() => setSurvivorCareModalOpen(true)}
             onOpenIsaTransferModal={() => setIsaTransferModalOpen(true)}
+            onOpenDividendStrategyModal={() => setDividendStrategyModalOpen(true)}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
@@ -1458,6 +1484,13 @@ export default function DashboardPage() {
       <IsaPensionTransferModal
         isOpen={isaTransferModalOpen}
         onClose={() => setIsaTransferModalOpen(false)}
+      />
+      <DividendStrategyModal
+        isOpen={dividendStrategyModalOpen}
+        onClose={() => setDividendStrategyModalOpen(false)}
+        currentInvestmentManwon={store.simulationParams.coveredCallAsset || 40000}
+        currentDividendRate={store.simulationParams.coveredCallDividendRate || 9.0}
+        onApplyRate={(rate) => store.setSimulationParams({ coveredCallDividendRate: rate })}
       />
     </main>
   );

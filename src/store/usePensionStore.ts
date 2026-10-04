@@ -271,7 +271,7 @@ const initialSimulationParams: SimulationParamsState = {
   coveredCallAsset: 5000,
   coveredCallDividendRate: 9.0,
   isCoupleDivided: false,
-  dividendPolicy: "REINVEST",
+  dividendPolicy: "PAYOUT",
   spouseRetirementAge: 60,
   spouseLifeExpectancy: 85,
   spouseNationalPensionStartAge: 65,

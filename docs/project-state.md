@@ -77,32 +77,34 @@
   4. '🏢 추천 실전 ETF 10선' 탭 및 '📌 격주 배당 캘린더 & IRP 30% 안전자산 룰 활용 꿀팁' 신설, 원클릭 종목코드 복사 기능 연동 완료.
   5. 사이드바 및 대시보드 연동: `DashboardSidebar.tsx` S4 그룹 내 `💡 배당금 투자 전략 추천` 버튼 및 상단 툴바 버튼 추가 완료.
 
-## Active Sprint / Story
-- **Sprint 34** (완료): 영상 기반 보완 — S34-1 정확성 보완(완료) → S34-2 국민연금 증액 로드맵(완료) → S34-3 부족액 역산 적립 플랜(완료)
-- **Sprint 33**: 전체 완료 (Sprint 33 로드맵 4대 과제 개발, 단위 검증 및 통합 완수)
-  - **Story S33-1**: 은퇴 소득 공백기(소득 크레바스) 브릿지 집중 플래너 (`IncomeBridgeModal.tsx`, `incomeBridgeCalculator.ts`) (완료)
-  - **Story S33-2**: 부부 기대수명 차이에 따른 '홀로 남은 배우자(1인 가구)' 생애 케어 고도화 (`SurvivorCareModal.tsx`, `survivorCareCalculator.ts`) (완료)
-  - **Story S33-3**: ISA 만기 자금 연금계좌 전환 & 절세 3총사(연금저축/IRP/ISA) 통합 플래너 (`IsaPensionTransferModal.tsx`, `isaPensionTransferCalculator.ts`) (완료)
-  - **Story S33-4**: 대시보드 툴바 연동 및 스마트폰 모바일 뷰포트 반응형 최적화 (`page.tsx`, `DashboardSidebar.tsx`, `globals.css`, `reportNarrative.ts`) (완료)
+- **[Completed]** 국민연금 조기 vs 정상 vs 연기 연금 손익분기점(BEP) 유튜브 분석 영상 정밀 대조 및 A·B값 재평가 인사이트 보완:
+  1. 법정 단순비율(77세/84세)과 5년간 A값(전체 평균소득) 및 B값(과거소득 재평가율) 매년 4~5% 상승에 따른 실질 체감 BEP(조기-정상 약 72세 / 정상-연기 약 81세, 약 3~5년 단축) 원리 규명 및 모달 상단 배너 카드 탑재.
+  2. 근로·사업 소득자 감액 회피 치트키(A값 월 320만원 초과 시 조기는 전액 지급정지되나, 65~69세 소득자는 연기연금 신청 시 최대 50% 감액을 100% 방어하고 연 7.2% 가산 보존) 가이드 추가.
+  3. 건보료 피부양자(연 2,000만원) 탈락 방어 및 부분연기(50~90%) 활용 절세 팁을 `NpsEarlyDeferralModal.tsx` 및 `npsEarlyDeferralBep.ts` CFP 처방전에 동기화 완료.
 
-## Session Handoff (Sprint 33 완료)
+## Active Sprint / Story
+- **Sprint 34** (완료): 유튜브/전문가 피드백 기반 정합성 고도화 및 신규 모달
+  - **Story S34-1**: 정확성 보완 (주택연금 연소자 기준, 의료비/자녀지원비 반영, 단위오류 수정) (완료)
+  - **Story S34-2**: 국민연금 증액 로드맵 (`NpsBoostRoadmapModal.tsx`) (완료)
+  - **Story S34-3**: 부족액 역산 적립 플랜 (`SavingsPlanModal.tsx`) (완료)
+  - **Story S34-4**: S4 배당 옵션 로직 버그 해결 및 실전 배당 ETF 포트폴리오 추천 (`DividendStrategyModal.tsx`) (완료)
+  - **Story S34-5**: 조기·정상·연기연금 BEP 심층 대조 및 A·B값 재평가 인사이트 반영 (`NpsEarlyDeferralModal.tsx`) (완료)
+- **Sprint 35** (착수 예정): 대시보드 및 AI 리포트 종합 연계 / 사용자 경험(UX) 고도화
+  - 후보 과제 1: **Story S35-1** - AI 종합 진단 리포트 내 신규 도구(적립플랜, 배당ETF, 조기/연기BEP) 맞춤 진단 섹션 연동 강화
+  - 후보 과제 2: **Story S35-2** - 종합 분석 PDF 다운로드 시 신규 툴(배당 포트폴리오, 증액 로드맵, BEP 분석) 리포트 페이지 확장
+  - 후보 과제 3: **Story S35-3** - 온보딩에서 대시보드 및 AI 진단 리포트로 이어지는 전반적 사용자 여정 플로우 점검 및 최적화
+
+## Session Handoff (Sprint 34 완료 & Sprint 35 준비)
 - **주요 산출물**:
-  1. 은퇴 소득 공백기(소득 크레바스) 브릿지 플래너 (`IncomeBridgeModal.tsx`, `incomeBridgeCalculator.ts`):
-     - 주직장 퇴직부터 국민연금 법정 개시 사이 소득 절벽 구간(개월수/총필요자금) 자동 감지
-     - 실업급여(최대 9개월, 1일 6.6만원, 월 198만원) + 사적연금 적정 인출 + 건보료 임의계속가입(36개월) + 주택연금 조기 결합 4대 브릿지 수단 모델링
-     - 연도별 수지 균형 타임라인 및 준비율(%), 안전도 등급 카드, CFP 3대 조언 제공
-  2. 홀로 남은 배우자(1인 가구) 생애 케어 시뮬레이터 (`SurvivorCareModal.tsx`, `survivorCareCalculator.ts`):
-     - 부부 기대수명 차이에 따른 1차 사망 후 홀로 생존 기간(년) 및 1인 생활비(부부의 70%) 산출
-     - 국민연금법 제56조(중복급여 조정: 본인연금+유족30% vs 유족100%) 자동 유리 대안 도출
-     - 주택연금 100% 감액 없는 배우자 종신 승계 및 85세 이상 초고령기 집중 간병비(월 100만원) 리스크 분석
-  3. ISA 만기 자금 연금계좌 전환 및 3년 풍차돌리기 플래너 (`IsaPensionTransferModal.tsx`, `isaPensionTransferCalculator.ts`):
-     - 3년 만기 ISA 전환금액의 10%(최대 300만원) 추가 세액공제(연 최대 1,200만원 한도) 및 환급액 산출
-     - 3년 풍차돌리기 N회 반복 누적 절세액 및 일반계좌 vs ISA vs 연금계좌 3총사 핵심 세제 비교표
-  4. 대시보드 연동 및 모바일 반응형 UX 최적화:
-     - 대시보드 `dataActions` 바 및 `DashboardSidebar` 내 3대 도구(소득공백기, 유족케어, ISA전환) 퀵 버튼 연동
-     - 스마트폰(768px 이하) 터치 가로스크롤(`.data-actions-bar`, 테이블), 모바일 모달 팝업 여백 CSS 최적화
-     - AI 종합 진단 리포트 세제 팁 영역에 ISA 전환, 소득 공백기 방어, 홀로 남은 배우자 보호 처방 문구 연동
-- **검증 상태**: `npx tsc --noEmit` 0 에러 통과, Next.js 개발 서버 정상 동작, git commit & push 완료.
+  1. 국민연금 조기 vs 정상 vs 연기 연금 심층 비교 (`NpsEarlyDeferralModal.tsx`, `npsEarlyDeferralBep.ts`):
+     - 법정 단순비율 기준(77세/84세)과 A·B값 재평가 반영 기준(72세/81세) 동시 안내 배너 카드 추가
+     - 65~69세 소득 발생 시 감액 100% 회피 연기연금 치트키 및 부분연기(50~90%) 절세 팁 연동
+  2. S4 하이브리드 배당 옵션 정상화 및 전문가 실전 ETF 포트폴리오 (`DividendStrategyModal.tsx`, `withdrawalCalculator.ts`):
+     - 1,000만원 하드코딩 캡핑 제거 및 PAYOUT/REINVEST/BUFFER 정책별 생애 총액 정확 반영
+     - 박곰희/김성일/운용사 추천 실전 국내 ETF 10선, 티커 복사, 격주 배당 캘린더 탑재
+  3. 시뮬레이션 지표 일치화:
+     - 연령대별 생활비 기본값-곡선 일치화, 툴팁 연금 순합계 버그 수정, 인출전략 차트 목표/최저 생활비선 추가
+- **검증 상태**: `npm run build` 성공(0 errors), git commit & push 완료.
 
 
 

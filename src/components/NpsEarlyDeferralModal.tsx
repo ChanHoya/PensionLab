@@ -295,6 +295,108 @@ export default function NpsEarlyDeferralModal({
             </div>
           </div>
 
+          {/* 2.5 유튜브 영상 심층 비교 및 A·B값 재평가 인사이트 카드 */}
+          <div
+            style={{
+              marginBottom: 20,
+              padding: "18px 20px",
+              background: "linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.95) 100%)",
+              border: "1px solid rgba(99, 102, 241, 0.35)",
+              borderRadius: 14,
+              boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: "1.25rem" }}>💡</span>
+                <span style={{ fontSize: "1rem", fontWeight: 700, color: "#f8fafc", letterSpacing: "-0.01em" }}>
+                  유튜브 영상 심층 비교: 예상안내문의 함정 & A·B값 재평가 반영 BEP
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    padding: "2px 8px",
+                    borderRadius: 6,
+                    background: "rgba(99, 102, 241, 0.2)",
+                    color: "#a5b4fc",
+                    border: "1px solid rgba(99, 102, 241, 0.4)",
+                    fontWeight: 600,
+                  }}
+                >
+                  전문가 분석 반영
+                </span>
+              </div>
+              <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                출처: 유튜브 분석 영상 & 국민연금법 시행령 정밀 대조
+              </span>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gap: 12,
+              }}
+            >
+              {/* 포인트 1: 손익분기점 차이 원인 */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: 10,
+                  border: "1px solid rgba(148, 163, 184, 0.15)",
+                }}
+              >
+                <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#38bdf8", marginBottom: 4 }}>
+                  ⚖️ 손익분기점(BEP) 왜 영상과 차이 날까?
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "#cbd5e1", lineHeight: 1.55 }}>
+                  <strong style={{ color: "#f1f5f9" }}>• 법정 단순비율 기준 (시스템 기본):</strong> 조기-정상 <strong>77세</strong> / 정상-연기 <strong>84세</strong><br />
+                  <strong style={{ color: "#f1f5f9" }}>• A·B값 재평가 반영 시 (영상 기준):</strong> 조기-정상 약 <strong style={{ color: "#fb923c" }}>72세</strong> / 정상-연기 약 <strong style={{ color: "#4ade80" }}>81세</strong> (약 3~5년 단축)<br />
+                  <span style={{ color: "#94a3b8", fontSize: "0.74rem" }}>
+                    ※ 60세 조기신청 시 과거소득이 고정되나, 65세 정상수령까지 대기 시 5년간 A값·B값 재평가율 상승(연 4~5%)으로 시작 연금액이 약 26.7% 더 커져 추격이 빨라집니다.
+                  </span>
+                </div>
+              </div>
+
+              {/* 포인트 2: 소득감액 회피 치트키 */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: 10,
+                  border: "1px solid rgba(148, 163, 184, 0.15)",
+                }}
+              >
+                <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fbbf24", marginBottom: 4 }}>
+                  💼 근로·사업 소득자 필수 체크 (연기연금 치트키)
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "#cbd5e1", lineHeight: 1.55 }}>
+                  <strong style={{ color: "#f1f5f9" }}>• 조기수령 중 A값(월 320만원) 초과 소득:</strong> 즉시 <strong style={{ color: "#ef4444" }}>연금 전액 지급정지</strong><br />
+                  <strong style={{ color: "#f1f5f9" }}>• 65~69세 소득 발생 시 연기연금 활용:</strong> 정상 수령 시 최대 50% 감액되나, <strong style={{ color: "#10b981" }}>연기연금 신청 시 감액 100% 회피 + 연 7.2% 가산</strong> 혜택을 온전히 보존할 수 있습니다.
+                </div>
+              </div>
+
+              {/* 포인트 3: 건보료 피부양자 & 부분 연기 */}
+              <div
+                style={{
+                  padding: "12px 14px",
+                  background: "rgba(15, 23, 42, 0.6)",
+                  borderRadius: 10,
+                  border: "1px solid rgba(148, 163, 184, 0.15)",
+                }}
+              >
+                <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f43f5e", marginBottom: 4 }}>
+                  🛡️ 건보료 피부양자 탈락 & 부분 연기(50~90%)
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "#cbd5e1", lineHeight: 1.55 }}>
+                  <strong style={{ color: "#f1f5f9" }}>• 건보료 덫(Trap):</strong> 공적연금 연 2,000만원(월 166.7만) 초과 시 피부양자 박탈(월 10~25만원 건보료 부과)<br />
+                  <strong style={{ color: "#f1f5f9" }}>• 절세 묘수:</strong> 연기 시 2,000만원을 살짝 넘길 위험이 있다면, <strong style={{ color: "#a5b4fc" }}>부분연기(50~90%)</strong>를 통해 연금 수령액을 안전선 아래로 미세조정 가능합니다.
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* 3. 인터랙티브 누적 수령액 곡선 차트 */}
           <div style={styles.chartCard} className="premium-card">
             <div style={styles.chartHeader}>

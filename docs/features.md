@@ -98,4 +98,11 @@
 - **[FEAT-040] 온보딩 ➔ 대시보드 ➔ AI 진단 사용자 여정 UX 고도화**:
   1) 온보딩 Step 4 완료 시 `[대시보드 바로가기 📊]` 및 `[AI 종합 진단 받기 🔮]` 듀얼 내비게이션 버튼 제공
   2) 대시보드 상단 결과 영역에 AI 종합 진단 리포트 안내 배너 탑재 및 상호 직관적 이동 지원 (Sprint 35, Story S35-3)
+- **[FEAT-041] S4 커버드콜 가격수익률(NAV 변동률) 2변수 모델 및 shortfall 인플레이션 인덱싱**:
+  1) `SimulationParamsState`에 `coveredCallPriceReturnRate`(연간 가격수익률 %, 기본 0.0%) 필드 신설 및 은퇴 후 연차별 자본손익 복리 반영
+  2) 보수(-5%) 시나리오 시 20년 뒤 원금이 약 1,792만원으로 하락하는 현실적 NAV 침식 및 배당금 비례 축소 모델링
+  3) S4 shortfall 연산 시 물가상승률(`inflationFactor = (1+infl)^t`) 인덱싱 적용으로 기준 불일치(FP-020) 해결 및 금감원 핵심위험 안내 고지 탑재 (Sprint 36, Story S36-1, S36-2)
+- **[FEAT-042] 배당 투자 계좌 유형 분리 및 IRP 70% 안전자산 규제 진단기**:
+  1) S4 전략 내 계좌 유형(`coveredCallAccountType: "TAXABLE" | "PENSION"`) 선택 지원: 일반 위탁(15.4% 원천징수) vs 연금계좌(3.3~5.5% 과세이연 및 건보료 금융소득 비과세 면제)
+  2) 퇴직연금감독규정 기반 IRP 위험자산 70% 한도 및 안전자산 30% 의무 판정 엔진(`src/services/pensionAccountRules.ts`) 구현 및 초과 시 경고·필요 안전자산 산출 (Sprint 36, Story S36-3)
 

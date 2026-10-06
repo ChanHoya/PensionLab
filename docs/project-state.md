@@ -95,14 +95,30 @@
   2. 대시보드 상단 결과 영역에 AI 종합 진단 리포트 안내 배너 탑재(원클릭 진단 이동).
   3. 대시보드 ↔ AI 진단 리포트 상호 이동 플로우 및 모바일 반응형 터치 호버 CSS(`toolkit-card-hover`, `btn-action-tool`) 고도화 완료.
 
-## Active Sprint / Story
-- **Sprint 35** (완료): 대시보드 및 AI 리포트 종합 연계 / 사용자 경험(UX) 고도화
-  - **Story S35-1 (완료)**: AI 종합 진단 리포트 & 신규 도구 처방 심층 연동
-  - **Story S35-2 (완료)**: 종합 분석 PDF 다운로드 리포트 확장
-  - **Story S35-3 (완료)**: 온보딩 ➔ 대시보드 ➔ AI 진단 사용자 여정 UX 고도화
-- **Sprint 36** (계획 대기)
+- **[Completed]** Story S36-1: 보안 안내 및 기본값 정합성 동기화
+  1. 대시보드 보안 배너 문구를 "개인식별정보(PII) 미수집 및 브라우저 LocalStorage 로컬 우선 보관"으로 기술적 정합성 완전 일치화.
+  2. `dividendPolicy` 기본값을 전액소비형(`PAYOUT`)으로 store, 사이드바, 계산 엔진 및 대시보드 전체 일원화.
+- **[Completed]** Story S36-2: S4 커버드콜 배당 엔진 현실화 (가격 수익률 축 추가 & 금융당국 핵심위험 고지)
+  1. 커버드콜 2변수 모델 구축: `coveredCallPriceReturnRate`(연간 가격수익률 %, 기본 0.0%) 필드 신설 및 은퇴 후 NAV 침식(보수 -5% 시 20년 뒤 1,792만원) 현실화.
+  2. shortfall 연산 시 물가상승률(`inflationFactor = (1+infl)^t`) 인덱싱 적용으로 기준 불일치(FP-020) 해결.
+  3. 사이드바 및 모달에 금감원 2026 커버드콜 핵심위험 고지 박스 탑재 및 단위 테스트(`validateCoveredCallModel.ts`) 통과.
+- **[Completed]** Story S36-3: 연금계좌 분리 & IRP 70% 안전자산 진단기
+  1. 배당 투자 계좌 유형(`coveredCallAccountType: "TAXABLE" | "PENSION"`) 선택 옵션 신설: 연금계좌 선택 시 15.4% 원천징수 면제 및 연금소득세(3.3~5.5%) 과세이연, 건보료 금융소득 1,000만원 기준에서 제외(피부양자 안전 방어).
+  2. 퇴직연금감독규정 IRP 70% 위험자산 한도 & 30% 안전자산 의무 판정 엔진(`pensionAccountRules.ts`) 및 단위 테스트(`validatePensionAccountRules.ts`) 통과.
 
-## Session Handoff (Sprint 35 완료)
+## Active Sprint / Story
+- **Sprint 36** (완료): 배당·인출 계산 엔진 정밀화 및 데이터·보안 정합성 확립
+  - **Story S36-1 (완료)**: 보안 안내 및 기본값 정합성 동기화
+  - **Story S36-2 (완료)**: 커버드콜 2변수 모델 (가격 수익률 축 & 위험 고지)
+  - **Story S36-3 (완료)**: 연금계좌 분리 & IRP 70% 안전자산 진단기
+- **Sprint 37** (계획 대기)
+
+## Session Handoff (Sprint 36 완료)
+- **주요 산출물**:
+  1. 데이터 보안 및 기본값 정합성: PII 0건 수집 투명 고지, `dividendPolicy: PAYOUT` 일원화
+  2. S4 커버드콜 2변수 모델: 가격수익률(NAV 변동률) 복리 반영, shortfall 인플레이션 인덱싱 동기화, 금감원 핵심위험 고지
+  3. 연금계좌 절세 분리 & IRP 70% 안전자산 룰: `pensionAccountRules.ts` 판정 엔진 및 사이드바 계좌 유형 선택 토글 탑재
+- **검증 상태**: `validateCoveredCallModel.ts`, `validatePensionAccountRules.ts`, `validateS4DividendSuite.ts` 통과 완료.
 - **주요 산출물**:
   1. AI 종합 진단 리포트 & 8대 솔루션 툴킷 심층 연동 (S35-1):
      - Gemini 3.8 Flash 및 fallbackNarrative 8대 도구(SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE) 매핑

@@ -963,7 +963,7 @@ export default function DashboardPage() {
 
         {/* Local Security & Caching Banner */}
         <div style={styles.topSecurityBanner} className="premium-card animate-fade-in">
-          <span>🔒 <strong>개인정보 안심 보장</strong>: 회원님의 소중한 은퇴 설계 정보는 서버에 전송/저장되지 않으며, 오직 웹 브라우저(LocalStorage)에만 안전하게 보관되므로 유출 걱정 없이 안심하고 이용해 주세요.</span>
+          <span>🔒 <strong>개인정보 안심 보장</strong>: 본 서비스는 이름, 주민번호, 금융계좌 등 개인식별정보(PII)를 일체 요구하거나 저장하지 않습니다. 회원님의 연금 시뮬레이션 설정은 브라우저(LocalStorage)에 안전하게 보관되니 유출 걱정 없이 안심하고 이용해 주세요.</span>
         </div>
 
         {/* 추납 반영 배지: 추가납부 탭에서 대시보드 반영을 켠 경우에만 표시 */}
@@ -1118,7 +1118,7 @@ export default function DashboardPage() {
                       ? ((store.simulationParams.coveredCallAsset || 5000) * 10000 * (store.simulationParams.coveredCallDividendRate || 9) / 100) / 2
                       : (store.simulationParams.coveredCallAsset || 5000) * 10000 * (store.simulationParams.coveredCallDividendRate || 9) / 100;
                     const isWithinCap = perPersonDividend <= 10000000;
-                    const policy = store.simulationParams.dividendPolicy || "REINVEST";
+                    const policy = store.simulationParams.dividendPolicy || "PAYOUT";
                     const policyLabel =
                       policy === "REINVEST" ? "🔄 잉여 배당 재투자 (스노우볼형)"
                       : policy === "BUFFER" ? "🛡️ 배당 비상자금 풀 (안전적립형)"

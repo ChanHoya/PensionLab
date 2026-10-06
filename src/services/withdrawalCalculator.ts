@@ -1206,6 +1206,12 @@ export function runWithdrawalSimulation(
       let dividendBuffered = 0;
 
       if (strategyId === "S4" && age >= simulationParams.retirementAge) {
+        // 연간 자본/가격 수익률(NAV 변동률) 반영 (기본 0%, 보수 -5%, 낙관 +3% 등)
+        const priceReturnRate = (simulationParams.coveredCallPriceReturnRate ?? 0) / 100;
+        if (priceReturnRate !== 0 && age > simulationParams.retirementAge) {
+          currentCoveredCallAssetWon = Math.max(0, Math.round(currentCoveredCallAssetWon * (1 + priceReturnRate)));
+        }
+
         // 커버드콜 자산에서 발생하는 연 배당소득 (현재 누적 원금 기준, 원 단위 전액 발생)
         const dividendRate = (simulationParams.coveredCallDividendRate || 9.0) / 100;
         const rawDividend = currentCoveredCallAssetWon * dividendRate;
@@ -1213,8 +1219,16 @@ export function runWithdrawalSimulation(
         // 실제 발생하는 연간 세전 배당소득 전액 반영 (피부양자 한도로 강제 삭감하던 버그 정상화)
         dividendPreTax = rawDividend;
 
-        // 배당소득세 15.4% 원천징수 (소득세 14% + 지방소득세 1.4%)
-        taxOnDividend = Math.round(dividendPreTax * 0.154);
+        // 계좌 유형에 따른 세금 계산 (TAXABLE: 일반위탁 15.4% 원천징수 vs PENSION: 연금계좌 3.3~5.5% 과세이연)
+        const accountType = simulationParams.coveredCallAccountType || "TAXABLE";
+        if (accountType === "PENSION") {
+          // 연금계좌: 수령 시 연령별 연금소득세율 적용 (55~69세: 5.5%, 70~79세: 4.4%, 80세+: 3.3%)
+          const pensionTaxRate = age < 70 ? 0.055 : age < 80 ? 0.044 : 0.033;
+          taxOnDividend = Math.round(dividendPreTax * pensionTaxRate);
+        } else {
+          // 일반 위탁계좌: 배당소득세 15.4% 원천징수 (소득세 14% + 지방소득세 1.4%)
+          taxOnDividend = Math.round(dividendPreTax * 0.154);
+        }
       }
 
       // 2.4 세액공제분 및 공적연금 종합 과세 계산
@@ -1246,9 +1260,10 @@ export function runWithdrawalSimulation(
       }
 
       // 2.5 건강보험료 추정 (재산·금융소득 기준 포함)
-      // S4 전략에서는 커버드콜 배당소득도 금융소득으로 반영
+      // S4 전략: 일반계좌 배당은 금융소득으로 반영, 연금계좌 배당은 사적연금 취급되어 금융소득 1000만원 기준에서 제외
+      const isPensionAccount = strategyId === "S4" && (simulationParams.coveredCallAccountType === "PENSION");
       const effectiveFinancialIncome = strategyId === "S4"
-        ? dividendPreTax  // S4에서는 시뮬레이션된 배당소득을 직접 사용
+        ? (isPensionAccount ? 0 : dividendPreTax)
         : (simulationParams.financialIncome || 0) * 10000;
 
       // S4 부부 분산 시: 1인당 금융소득으로 환산하여 건보료 평가
@@ -1274,7 +1289,7 @@ export function runWithdrawalSimulation(
 
       // S4 배당 운용 정책(재투자/버퍼/소비) 평가
       const netDividend = Math.max(0, dividendPreTax - taxOnDividend);
-      const policy = simulationParams.dividendPolicy || "REINVEST";
+      const policy = simulationParams.dividendPolicy || "PAYOUT";
 
       if (strategyId === "S4" && age >= simulationParams.retirementAge) {
         // 연금(공적+사적)만으로 충당되는 세후 연금 수령액
@@ -1282,8 +1297,10 @@ export function runWithdrawalSimulation(
         const pensionTax = taxOnRetirement + taxOnPersonalYear + taxOnNationalYear;
         const pensionPostTax = Math.max(0, pensionPreTax - (pensionTax + adjustedPremium));
 
-        // 목표 생활비 (연 단위)
-        const targetAnnualSpending = (simulationParams.targetMonthlySpending || 300) * 12 * 10000;
+        // 목표 생활비 (연 단위): 명목 목표액에 연도별 물가상승률 반영 (FP-020 기준 불일치 방지)
+        const baseTargetMonthly = simulationParams.targetMonthlySpending || 300;
+        const inflationFactor = Math.pow(1 + inflationRate, yearOffset);
+        const targetAnnualSpending = baseTargetMonthly * 12 * 10000 * inflationFactor;
         const shortfall = Math.max(0, targetAnnualSpending - pensionPostTax);
 
         if (policy === "PAYOUT") {

@@ -7,9 +7,17 @@ import { usePensionStore } from "@/store/usePensionStore";
 import ThemeToggle from "@/components/ThemeToggle";
 import DiagnosisReport from "@/components/DiagnosisReport";
 import { buildHouseholdReport, type HouseholdReport, type ReportInput } from "@/services/householdReport";
-import { fallbackNarrative, type ReportNarrative } from "@/services/reportNarrative";
+import { fallbackNarrative, type ReportNarrative, type ToolId } from "@/services/reportNarrative";
 import { downloadElementAsPdf } from "@/utils/exportPdf";
 import PersonaPresetModal from "@/components/PersonaPresetModal";
+import { SavingsPlanModal } from "@/components/SavingsPlanModal";
+import { DividendStrategyModal } from "@/components/DividendStrategyModal";
+import NpsEarlyDeferralModal from "@/components/NpsEarlyDeferralModal";
+import { NpsBoostRoadmapModal } from "@/components/NpsBoostRoadmapModal";
+import { IncomeBridgeModal } from "@/components/IncomeBridgeModal";
+import { SurvivorCareModal } from "@/components/SurvivorCareModal";
+import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
+import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
 
 const emptySubscribe = () => () => {};
 
@@ -30,6 +38,7 @@ export default function AiAdvisorPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [pdfDownloading, setPdfDownloading] = useState(false);
   const [personaModalOpen, setPersonaModalOpen] = useState(false);
+  const [activeTool, setActiveTool] = useState<ToolId | null>(null);
 
   useEffect(() => {
     const savedUserId = typeof window !== "undefined" ? localStorage.getItem("pensionlab_user_id") : null;
@@ -292,7 +301,14 @@ export default function AiAdvisorPage() {
           <>
             {/* 화면 표시용 와이드 뷰 */}
             <div id="ai-advisor-screen-view" style={styles.reportContainer} className="animate-fade-in">
-              <DiagnosisReport report={report} narrative={narrative} source={source} model={model} isPrintMode={false} />
+              <DiagnosisReport
+                report={report}
+                narrative={narrative}
+                source={source}
+                model={model}
+                isPrintMode={false}
+                onOpenTool={setActiveTool}
+              />
             </div>
 
             {/* PDF 전용 오프스크린 컨테이너 (A4 최적 가독성 1040px 고정 렌더링) */}
@@ -326,9 +342,51 @@ export default function AiAdvisorPage() {
           </div>
         )}
       </div>
+
       <PersonaPresetModal
         isOpen={personaModalOpen}
         onClose={() => setPersonaModalOpen(false)}
+      />
+
+      {/* 맞춤 은퇴 처방 전문 시뮬레이션 모달 8종 */}
+      <SavingsPlanModal
+        isOpen={activeTool === "SAVINGS_PLAN"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <DividendStrategyModal
+        isOpen={activeTool === "DIVIDEND_STRATEGY"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <NpsEarlyDeferralModal
+        isOpen={activeTool === "NPS_BEP"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <NpsBoostRoadmapModal
+        isOpen={activeTool === "NPS_BOOST"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <IncomeBridgeModal
+        isOpen={activeTool === "INCOME_BRIDGE"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <SurvivorCareModal
+        isOpen={activeTool === "SURVIVOR_CARE"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <IsaPensionTransferModal
+        isOpen={activeTool === "ISA_TRANSFER"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <ReverseMortgageModal
+        isOpen={activeTool === "REVERSE_MORTGAGE"}
+        onClose={() => setActiveTool(null)}
       />
     </main>
   );

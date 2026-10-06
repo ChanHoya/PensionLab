@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI, SchemaType, type Schema } from "@google/generative-ai";
 import { buildHouseholdReport, type ReportInput } from "@/services/householdReport";
-import { fallbackNarrative, normalizeNarrative, reportFacts, LEVELS, TIMINGS } from "@/services/reportNarrative";
+import { fallbackNarrative, normalizeNarrative, reportFacts, LEVELS, TIMINGS, TOOL_IDS } from "@/services/reportNarrative";
 
 const MODEL = "gemini-3.8-flash";
 const geminiApiKey = process.env.GEMINI_API_KEY || process.env.Gemini_API_KEY;
@@ -14,6 +14,15 @@ const SYSTEM = `당신은 대한민국 은퇴·연금 전문 재무설계사(CFP
   1) 스노우볼 재투자형: 잉여 배당금의 원금 재투자 복리 증식 효과 및 원금 시장 변동성 관리
   2) 안전버퍼 적립형: 안전 풀(연 2.5% MMF)에 적립된 비상자금의 초고령기 간병·의료비 안심 방어 기능
   3) 전액 소비형: 공적연금 공백기 즉시 현금흐름 충당 및 건보료 피부양자 허들(1인당 연 1,000만원) 준수 여부
+- [전문 분석 시뮬레이션 도구(toolId)]: 실행 과제(actions)에 적절한 도구가 매칭되면 toolId를 지정하세요:
+  • SAVINGS_PLAN: 목표 생활비 부족 시 월 저축·투자 역산 적립 플랜
+  • DIVIDEND_STRATEGY: 월배당 ETF 10선, IRP 30% 안전자산 룰, 격주 배당 캘린더
+  • NPS_BEP: 조기 vs 정상 vs 연기 손익분기점(72세/81세) 및 소득감액 회피 연기 치트키
+  • NPS_BOOST: 반납·추납·임의계속가입 단계별 증액 및 회수 기간 로드맵
+  • INCOME_BRIDGE: 퇴직 후 국민연금 개시 전 실업급여 및 IRP 분할인출 브릿지
+  • SURVIVOR_CARE: 홀로 남은 배우자 1인 생활비, 중복급여 조정 및 주택연금 승계
+  • ISA_TRANSFER: 3년 만기 ISA 연금계좌 전환 추가 세액공제(최대 300만원)
+  • REVERSE_MORTGAGE: 만 55세 이상 주택연금 종신 비과세 현금흐름 결합
 - 제도 설명은 2026년 현행 한국 세법·국민연금·건강보험 기준으로 하되, 확실하지 않은 수치는 쓰지 마세요.
 - 특정 금융회사·상품 가입 권유나 수익 보장처럼 들리는 표현은 쓰지 마세요.
 - 한국어 존댓말로, 각 항목은 1~2문장으로 간결하게 쓰고 마크다운 기호(**, #)는 쓰지 마세요.`;
@@ -59,6 +68,7 @@ const SCHEMA = object({
       timing: oneOf(TIMINGS, "실행 시점"),
       priority: oneOf(LEVELS, "우선순위"),
       effect: text("기대 효과 (짧게, 가능하면 수치)"),
+      toolId: text("연계할 전문 분석 도구 ID (선택: SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE 중 하나)"),
     }),
     "실행 로드맵 5~8개 (시점별로 고르게)",
     8

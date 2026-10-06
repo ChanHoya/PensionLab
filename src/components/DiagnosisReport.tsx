@@ -28,7 +28,7 @@ import {
 import ChartTooltip from "@/components/ChartTooltip";
 import { PENSION_SERIES, SURVIVOR_FILL, pensionSeriesValues } from "@/components/pensionSeries";
 import type { HouseholdReport } from "@/services/householdReport";
-import { TIMINGS, won, type Level, type ReportNarrative } from "@/services/reportNarrative";
+import { TIMINGS, won, type Level, type ReportNarrative, type ToolId, TOOL_META_MAP, TOOL_IDS } from "@/services/reportNarrative";
 
 // AI 연금 종합 진단 리포트 (컨설팅 보고서 형식). 숫자·차트는 계산 결과, 서술은 AI(없으면 계산 기반 기본 진단)
 
@@ -38,6 +38,7 @@ interface Props {
   source: "base" | "ai" | "fallback"; // 기본 진단 / AI 진단 / AI 실패로 기본 진단
   model?: string;
   isPrintMode?: boolean; // PDF 인쇄/출력 전용 최적화 뷰 플래그
+  onOpenTool?: (toolId: ToolId) => void;
 }
 
 const LEVEL_COLOR: Record<Level, string> = { 높음: "#ef4444", 중간: "#f59e0b", 낮음: "#10b981" };
@@ -130,7 +131,7 @@ function ScoreGauge({ score, grade }: { score: number; grade: HouseholdReport["g
   );
 }
 
-export default function DiagnosisReport({ report: r, narrative: n, source, model, isPrintMode }: Props) {
+export default function DiagnosisReport({ report: r, narrative: n, source, model, isPrintMode, onOpenTool }: Props) {
   const p = r.params;
   const rows = r.couple.rows;
   const who = r.hasSpouse ? "부부 가구" : "본인";
@@ -754,6 +755,20 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                     </div>
                     <div style={S.actionDetail}>{a.detail}</div>
                     {a.effect && <div style={S.actionEffect}>→ {a.effect}</div>}
+                    {a.toolId && onOpenTool && (
+                      <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+                        <button
+                          type="button"
+                          onClick={() => onOpenTool(a.toolId!)}
+                          style={S.actionToolBtn}
+                          className="btn-action-tool"
+                          title={`${TOOL_META_MAP[a.toolId]?.name || "분석 도구"} 열기`}
+                        >
+                          <span>{TOOL_META_MAP[a.toolId]?.badge || "🛠️"}</span>
+                          <span>바로가기 ↗</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -830,6 +845,81 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
             ))}
             {n.allocation.rationale && <div style={S.dimComment}>{n.allocation.rationale}</div>}
           </div>
+        </div>
+      </Section>
+
+      {/* 10 맞춤 은퇴 처방 툴킷 */}
+      <Section
+        no="10"
+        title="맞춤 은퇴 처방 툴킷 (Solution Toolkit)"
+        sub="진단 결과와 부족분을 해결하기 위해 즉시 활용할 수 있는 전문 분석 도구입니다. 카드를 클릭하면 상세 시뮬레이션을 실행할 수 있습니다."
+      >
+        <div style={S.toolkitGrid}>
+          {TOOL_IDS.map((tid) => {
+            const meta = TOOL_META_MAP[tid];
+            if (!meta) return null;
+            let priorityBadge = "";
+            let isUrgent = false;
+            if (tid === "SAVINGS_PLAN" && r.shortfallPV > 0) {
+              priorityBadge = "🚨 부족액 역산 필요";
+              isUrgent = true;
+            } else if (tid === "INCOME_BRIDGE" && r.crevasse.years > 0) {
+              priorityBadge = `⚠️ 공백기 ${r.crevasse.years}년 대비`;
+              isUrgent = true;
+            } else if (tid === "SURVIVOR_CARE" && r.hasSpouse) {
+              priorityBadge = "🕊️ 부부 유족 대비";
+            } else if (tid === "NPS_BEP") {
+              priorityBadge = "⚖️ 골든 크로스오버";
+            } else if (tid === "DIVIDEND_STRATEGY") {
+              priorityBadge = "💵 월배당 파이프라인";
+            } else if (tid === "NPS_BOOST") {
+              priorityBadge = "🪜 평생연금 증액";
+            } else if (tid === "ISA_TRANSFER") {
+              priorityBadge = "💎 세액공제 300만";
+            } else if (tid === "REVERSE_MORTGAGE") {
+              priorityBadge = "🏠 종신 비과세";
+            }
+
+            return (
+              <div
+                key={tid}
+                style={{
+                  ...S.toolkitCard,
+                  borderColor: isUrgent ? "rgba(239, 68, 68, 0.4)" : "var(--border)",
+                  background: isUrgent ? "rgba(239, 68, 68, 0.04)" : "var(--card-bg, rgba(30, 41, 59, 0.4))",
+                }}
+                className="toolkit-card-hover"
+                onClick={() => onOpenTool?.(tid)}
+                role="button"
+                tabIndex={0}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
+                  <span style={S.toolkitBadge}>{meta.badge}</span>
+                  {priorityBadge && (
+                    <span
+                      style={{
+                        fontSize: "0.7rem",
+                        padding: "2px 6px",
+                        borderRadius: 4,
+                        fontWeight: 600,
+                        backgroundColor: isUrgent ? "rgba(239, 68, 68, 0.15)" : "rgba(99, 102, 241, 0.15)",
+                        color: isUrgent ? "#ef4444" : "#818cf8",
+                      }}
+                    >
+                      {priorityBadge}
+                    </span>
+                  )}
+                </div>
+                <div style={S.toolkitName}>{meta.name}</div>
+                <div style={S.toolkitDesc}>{meta.description}</div>
+                <div style={S.toolkitFooter}>
+                  <span style={{ fontSize: "0.74rem", color: "var(--primary, #6366f1)", fontWeight: 700 }}>
+                    시뮬레이션 열기 ↗
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Section>
 
@@ -1043,5 +1133,62 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: "4px",
     cursor: "pointer",
     boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+  },
+  actionToolBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "5px 11px",
+    fontSize: "0.73rem",
+    fontWeight: 700,
+    color: "#ffffff",
+    background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.15)",
+    borderRadius: "6px",
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(79, 70, 229, 0.35)",
+    transition: "all 0.15s ease",
+  },
+  toolkitGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+    gap: "14px",
+  },
+  toolkitCard: {
+    padding: "16px",
+    borderRadius: "12px",
+    border: "1px solid var(--border)",
+    background: "var(--card-bg, rgba(30, 41, 59, 0.4))",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.06)",
+  },
+  toolkitBadge: {
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+  },
+  toolkitName: {
+    fontSize: "0.9rem",
+    fontWeight: 800,
+    color: "var(--text-primary)",
+    marginBottom: "6px",
+  },
+  toolkitDesc: {
+    fontSize: "0.75rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.5,
+    marginBottom: "14px",
+    flex: 1,
+  },
+  toolkitFooter: {
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    borderTop: "1px solid var(--border)",
+    paddingTop: "10px",
   },
 };

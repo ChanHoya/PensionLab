@@ -9,13 +9,99 @@ export type Timing = "즉시" | "은퇴 전" | "은퇴 시점" | "연금 개시 
 export const LEVELS: Level[] = ["높음", "중간", "낮음"];
 export const TIMINGS: Timing[] = ["즉시", "은퇴 전", "은퇴 시점", "연금 개시 후"];
 
+export type ToolId =
+  | "SAVINGS_PLAN"
+  | "DIVIDEND_STRATEGY"
+  | "NPS_BEP"
+  | "NPS_BOOST"
+  | "INCOME_BRIDGE"
+  | "SURVIVOR_CARE"
+  | "ISA_TRANSFER"
+  | "REVERSE_MORTGAGE";
+
+export const TOOL_IDS: ToolId[] = [
+  "SAVINGS_PLAN",
+  "DIVIDEND_STRATEGY",
+  "NPS_BEP",
+  "NPS_BOOST",
+  "INCOME_BRIDGE",
+  "SURVIVOR_CARE",
+  "ISA_TRANSFER",
+  "REVERSE_MORTGAGE",
+];
+
+export interface ToolMeta {
+  id: ToolId;
+  name: string;
+  badge: string;
+  description: string;
+}
+
+export const TOOL_META_MAP: Record<ToolId, ToolMeta> = {
+  SAVINGS_PLAN: {
+    id: "SAVINGS_PLAN",
+    name: "부족액 역산 적립 플랜",
+    badge: "🎯 적립 플랜",
+    description: "은퇴 후 목표 부족액을 메우기 위한 최적의 월 저축·투자 납입액을 역산합니다.",
+  },
+  DIVIDEND_STRATEGY: {
+    id: "DIVIDEND_STRATEGY",
+    name: "배당 투자 전략 추천",
+    badge: "💡 배당 포트폴리오",
+    description: "국내 상장 ETF 10선, IRP 30% 룰, 격주 배당 캘린더를 활용한 실전 배당 포트폴리오를 설계합니다.",
+  },
+  NPS_BEP: {
+    id: "NPS_BEP",
+    name: "조기 vs 정상 vs 연기 손익분기점",
+    badge: "⚖️ 손익분기(BEP)",
+    description: "A·B값 재평가 반영 실질 손익분기(72세/81세) 및 소득감액 회피 연기연금 치트키를 확인합니다.",
+  },
+  NPS_BOOST: {
+    id: "NPS_BOOST",
+    name: "국민연금 증액 로드맵",
+    badge: "🪜 연금 증액",
+    description: "반납 ➔ 추납 ➔ 임의계속 ➔ 연기 4단계별 월 연금 증액과 원금 회수 기간을 비교합니다.",
+  },
+  INCOME_BRIDGE: {
+    id: "INCOME_BRIDGE",
+    name: "소득 공백기 브릿지 플래너",
+    badge: "🌉 소득 크레바스",
+    description: "퇴직 후 국민연금 개시 전 공백기를 실업급여, IRP 분할인출, 임의계속가입으로 방어합니다.",
+  },
+  SURVIVOR_CARE: {
+    id: "SURVIVOR_CARE",
+    name: "홀로 남은 배우자 생애 케어",
+    badge: "🕊️ 유족 케어",
+    description: "1차 사망 후 배우자 1인 생활비(70%), 국민연금 중복급여 조정 및 주택연금 승계를 점검합니다.",
+  },
+  ISA_TRANSFER: {
+    id: "ISA_TRANSFER",
+    name: "ISA 연금 전환 절세 플래너",
+    badge: "💎 ISA 전환",
+    description: "3년 만기 ISA 전환금 10% 추가 세액공제(최대 300만원) 및 풍차돌리기 누적 절세를 산출합니다.",
+  },
+  REVERSE_MORTGAGE: {
+    id: "REVERSE_MORTGAGE",
+    name: "주택연금(역모기지) 결합",
+    badge: "🏠 주택연금",
+    description: "내 집을 담보로 평생 비과세 종신 월지급금을 수령하여 초고령기 생활비 결손을 방어합니다.",
+  },
+};
+
 export interface ReportNarrative {
   headline: string; // 한 줄 결론
   summary: string; // 종합 소견
   dimensionComments: Record<DimensionKey, string>;
   strengths: string[];
   risks: { title: string; detail: string; impact: Level; likelihood: Level }[];
-  actions: { title: string; detail: string; timing: Timing; priority: Level; effect: string }[];
+  actions: {
+    title: string;
+    detail: string;
+    timing: Timing;
+    priority: Level;
+    effect: string;
+    toolId?: ToolId;
+  }[];
   withdrawalOrder: { period: string; source: string; reason: string }[];
   taxTips: string[];
   allocation: { safe: number; income: number; growth: number; rationale: string }; // 연금 적립금·금융자산 배분 (%)
@@ -54,6 +140,8 @@ function productLines(label: string, d: PersonData): string[] {
 
 export function reportFacts(r: HouseholdReport, input: ReportInput): string {
   const p = r.params;
+  const targetBench = r.avgTargetReal || r.targetToday;
+  const gap = Math.round(Math.max(0, targetBench - r.avgRetiredReal));
   const lines: string[] = [];
   const add = (...xs: (string | false | null | undefined)[]) => xs.forEach((x) => typeof x === "string" && lines.push(x));
 
@@ -117,6 +205,16 @@ export function reportFacts(r: HouseholdReport, input: ReportInput): string {
       : `- 생활비 직접 충당 배당금 누적: ${won(r.s4Analysis.accumulatedSpent)}`,
     `- 핵심 처방: ${r.s4Analysis.policyEvaluation.strategicPrescription}`,
     "",
+    "[활용 가능한 전문 분석 시뮬레이션 도구 (toolId)]",
+    `- SAVINGS_PLAN (부족액 역산 적립 플랜): 은퇴 후 목표 대비 월 부족액(${gap > 0 ? `월 ${gap}만원` : "0원"})을 메우기 위해 필요한 월 저축·투자 납입액을 복리 시뮬레이션으로 역산합니다.`,
+    `- DIVIDEND_STRATEGY (배당 투자 전략): 국내 상장 ETF 10선, IRP 30% 안전자산 룰, 격주 배당 캘린더를 활용한 맞춤 배당 포트폴리오를 제공합니다.`,
+    `- NPS_BEP (조기 vs 정상 vs 연기 손익분기점): A·B값 재평가 반영 실질 BEP(72세/81세) 및 65~69세 소득감액 회피 연기연금 치트키를 분석합니다.`,
+    `- NPS_BOOST (국민연금 증액 로드맵): 반납·추납·임의계속·연기 4단계별 월 연금 증액과 회수 기간을 비교합니다.`,
+    r.crevasse.years > 0 ? `- INCOME_BRIDGE (소득 공백기 플래너): 국민연금 개시 전 ${r.crevasse.years}년 공백기를 실업급여, IRP 분할인출, 임의계속가입으로 방어합니다.` : "",
+    r.hasSpouse ? `- SURVIVOR_CARE (홀로 남은 배우자 생애 케어): 부부 기대수명 차이에 따른 배우자 1인 생활비(70%), 국민연금 중복급여 조정 및 주택연금 종신 승계를 점검합니다.` : "",
+    `- ISA_TRANSFER (ISA 연금 전환 플래너): 3년 만기 ISA 전환금 10% 추가 세액공제(최대 300만원) 및 풍차돌리기 절세를 산출합니다.`,
+    `- REVERSE_MORTGAGE (주택연금 결합): 내 집을 담보로 평생 비과세 종신 월지급금을 수령하여 초고령기 생활비 결손을 방어합니다.`,
+    "",
     "[가구 월 연금 흐름 — 5년 간격, 현재가치 만원/월]"
   );
   const rows = r.couple.rows;
@@ -137,6 +235,7 @@ const str = (x: unknown) => (typeof x === "string" ? x.replace(/\*\*/g, "").trim
 const strList = (x: unknown) => (Array.isArray(x) ? x.map(str).filter(Boolean) : []);
 const level = (x: unknown): Level => (LEVELS.includes(x as Level) ? (x as Level) : "중간");
 const timing = (x: unknown): Timing => (TIMINGS.includes(x as Timing) ? (x as Timing) : "즉시");
+const toolId = (x: unknown): ToolId | undefined => (TOOL_IDS.includes(x as ToolId) ? (x as ToolId) : undefined);
 const objects = (x: unknown) => (Array.isArray(x) ? (x.filter((i) => i && typeof i === "object") as Record<string, unknown>[]) : []);
 
 // AI가 돌려준 JSON을 화면 형식으로 다듬는다. 핵심 항목이 비면 null (기본 진단으로 대체)
@@ -163,7 +262,14 @@ export function normalizeNarrative(raw: unknown): ReportNarrative | null {
       .filter((x) => x.title)
       .slice(0, 8),
     actions: objects(o.actions)
-      .map((x) => ({ title: str(x.title), detail: str(x.detail), timing: timing(x.timing), priority: level(x.priority), effect: str(x.effect) }))
+      .map((x) => ({
+        title: str(x.title),
+        detail: str(x.detail),
+        timing: timing(x.timing),
+        priority: level(x.priority),
+        effect: str(x.effect),
+        toolId: toolId(x.toolId),
+      }))
       .filter((x) => x.title)
       .slice(0, 10),
     withdrawalOrder: objects(o.withdrawalOrder)
@@ -313,11 +419,12 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
   const actions: ReportNarrative["actions"] = [];
   if (ratio < 1)
     actions.push({
-      title: "연금저축·IRP 추가 납입",
-      detail: "연금저축 연 600만원을 포함해 IRP 합산 연 900만원까지 세액공제를 받으며 은퇴 전까지 사적연금 적립금을 늘립니다.",
+      title: "연금저축·IRP 추가 납입 (적립 플랜)",
+      detail: `연금저축 연 600만원을 포함해 IRP 합산 연 900만원까지 세액공제를 받으며, 월 ${gap}만원 부족액을 채우는 최적 적립 플랜을 가동합니다.`,
       timing: "즉시",
       priority: "높음",
       effect: `목표 대비 부족액 월 ${gap}만원 축소`,
+      toolId: "SAVINGS_PLAN",
     });
   if (r.childSupport.uncovered > 0)
     actions.push({
@@ -329,20 +436,30 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
     });
   if (!r.nps.selfAdded && !r.nps.selfRestored)
     actions.push({
-      title: "국민연금 추납·반납 검토",
-      detail: "납부예외·반환일시금 기간이 있으면 추납·반납으로 가입기간을 늘려 종신 연금액을 높일 수 있습니다 (국민연금공단 ☎1355).",
+      title: "국민연금 증액 로드맵 점검 (추납·반납)",
+      detail: "납부예외·반환일시금 기간이 있으면 추납·반납 및 임의계속가입을 통해 평생 종신 연금액을 높이고 원금 회수 기간을 확인합니다.",
       timing: "즉시",
       priority: "중간",
       effect: "물가연동 종신 연금 증액",
+      toolId: "NPS_BOOST",
     });
   if (r.crevasse.years > 0)
     actions.push({
-      title: "공백기 생활비 재원 확보",
-      detail: `국민연금 개시 전 ${r.crevasse.years}년은 퇴직연금(IRP)을 먼저 연금으로 받고, 2~3년치 생활비는 예금·단기채로 따로 둡니다.`,
+      title: "소득 공백기 브릿지 생활비 확보",
+      detail: `국민연금 개시 전 ${r.crevasse.years}년은 실업급여(구직급여), 퇴직연금(IRP) 분할 인출, 임의계속가입으로 소득 절벽을 방어합니다.`,
       timing: "은퇴 시점",
       priority: "높음",
-      effect: "공백기 소득 안정",
+      effect: "공백기 소득 안정 및 건보료 절감",
+      toolId: "INCOME_BRIDGE",
     });
+  actions.push({
+    title: "국민연금 수령 시점(BEP) 최적화",
+    detail: "조기 vs 정상 vs 연기 손익분기점(A·B값 재평가 반영 72세/81세)을 비교하고, 65~69세 소득 발생 시 연기연금을 통한 감액 방어 전략을 수립합니다.",
+    timing: "은퇴 시점",
+    priority: "중간",
+    effect: "평생 연금 누적액 극대화",
+    toolId: "NPS_BEP",
+  });
   actions.push(
     r.best.key === "s0"
       ? { title: "현재 인출 계획 유지", detail: "통합 시뮬레이션 기준(S0) 인출의 생애 세후 수령액이 가장 많습니다.", timing: "은퇴 시점", priority: "중간", effect: `생애 세후 ${won(r.best.postTax)}` }
@@ -356,11 +473,12 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
   );
   if (survivorRatio !== null && survivorRatio < 0.7)
     actions.push({
-      title: "유족 소득 대비",
-      detail: "종신형 연금 수령, 유족연금과 「본인 연금 + 유족연금 30%」 비교, 종신보험·주택연금을 검토해 혼자 남은 배우자의 소득을 지킵니다.",
+      title: "홀로 남은 배우자 생애 케어",
+      detail: "배우자 1차 사망 후 국민연금 중복급여 조정(본인연금+유족30% vs 유족100%)과 주택연금 100% 종신 승계를 점검해 유족 소득을 지킵니다.",
       timing: "은퇴 전",
       priority: "높음",
       effect: "사망 후 가구 소득 하락 완화",
+      toolId: "SURVIVOR_CARE",
     });
   if (r.best.lostDependencyAge)
     actions.push({
@@ -373,29 +491,61 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
   if (r.s4Analysis.coveredCallAssetInitial > 0) {
     if (r.s4Analysis.policy === "BUFFER") {
       actions.push({
-        title: "비상 안전버퍼 계좌 분리 관리",
+        title: "배당 비상 안전버퍼 계좌 분리 관리",
         detail: `잉여 배당금으로 적립 중인 안전버퍼(최종 예상 ${won(r.s4Analysis.finalEmergencyBuffer)})를 파킹형/단기채로 엄격히 분리 운용하여 초고령기 긴급 의료비 전용으로 유지합니다.`,
         timing: "은퇴 시점",
         priority: "높음",
         effect: "초고령기 간병·의료비 안심 자금 확보",
+        toolId: "DIVIDEND_STRATEGY",
       });
     } else if (r.s4Analysis.policy === "REINVEST") {
       actions.push({
-        title: "스노우볼 재투자 성과 점검",
+        title: "배당 스노우볼 재투자 성과 점검",
         detail: `60대 전반에는 잉여 배당금을 커버드콜에 재투자해 자산을 증식(최종 예상 ${won(r.s4Analysis.finalCoveredCallAsset)})하고, 70대 진입 시 안전버퍼형 전환을 검토합니다.`,
         timing: "연금 개시 후",
         priority: "중간",
         effect: "자산 복리 성장 및 원금 리스크 통제",
+        toolId: "DIVIDEND_STRATEGY",
       });
     } else {
       actions.push({
-        title: "배당 현금흐름과 건보료 모니터링",
-        detail: `매월 배당금으로 생활비를 보당하되, 1인당 연 1,000만원 한도를 넘지 않도록 부부 명의 분산 및 배당 재조정을 관리합니다.`,
+        title: "배당 투자 전략 및 건보료 모니터링",
+        detail: `매월 배당금으로 생활비를 보당하되, 1인당 연 1,000만원 한도를 넘지 않도록 부부 명의 분산 및 추천 실전 ETF 10선을 활용합니다.`,
         timing: "즉시",
         priority: "중간",
         effect: "공백기 소득 보당 및 피부양자 방어",
+        toolId: "DIVIDEND_STRATEGY",
       });
     }
+  } else {
+    actions.push({
+      title: "실전 연금 배당 투자 포트폴리오 설계",
+      detail: "월배당 인컴형 및 배당성장형 국내 상장 ETF 10선, IRP 30% 룰, 격주 배당 캘린더를 활용해 추가 현금흐름을 마련합니다.",
+      timing: "즉시",
+      priority: "중간",
+      effect: "월배당 파이프라인 구축",
+      toolId: "DIVIDEND_STRATEGY",
+    });
+  }
+
+  actions.push({
+    title: "ISA 만기 자금 연금 전환 세액공제",
+    detail: "3년 만기 ISA 자금을 연금저축·IRP로 전환하여 전환금의 10%(최대 300만원)를 추가 세액공제받아 절세 혜택을 극대화합니다.",
+    timing: "즉시",
+    priority: "중간",
+    effect: "연간 최대 1,200만원 한도 환급",
+    toolId: "ISA_TRANSFER",
+  });
+
+  if (!p.useReverseMortgage) {
+    actions.push({
+      title: "주택연금(역모기지) 결합 검토",
+      detail: "만 55세 이상부터 가입 가능한 주택연금을 결합하여 집값 변동 걱정 없는 평생 비과세 종신 월지급금을 확보합니다.",
+      timing: "은퇴 시점",
+      priority: ratio < 1 ? "높음" : "낮음",
+      effect: "초고령기 종신 현금흐름 보강",
+      toolId: "REVERSE_MORTGAGE",
+    });
   }
 
   actions.push({

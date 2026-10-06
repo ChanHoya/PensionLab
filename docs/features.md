@@ -88,4 +88,8 @@
 - **[FEAT-037] 실전 연금 배당 투자 포트폴리오 가이드 및 격주 배당 캘린더**:
   1) 국내 대표 연금 전문가 포트폴리오 다각도 조사 기반 4대 대표 배당 포트폴리오(배당성장형, 월배당 인컴형, 안전 복합형, 리츠 인프라형)와 실제 국내 상장 ETF(TIGER 미국배당다우존스 458730, SOL 미국배당미국채혼합50 490490 등) 티커 매핑
   2) IRP 30% 안전자산 룰 적격 여부 가이드, 실전 추천 ETF 10선 원클릭 티커 복사, 월초/월중/월말 격주 배당 캘린더 모달(`src/components/DividendStrategyModal.tsx`) 연동 및 대시보드/사이드바 연결 완료 (Sprint 34, Story S34-4)
+- **[FEAT-038] AI 종합 진단 리포트 신규 처방 도구 툴킷 심층 연동**:
+  1) Gemini 3.8 Flash 시스템 프롬프트 및 `fallbackNarrative`에 신규 8대 전문 시뮬레이션 도구(SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE) 팩트 주입 및 실행 로드맵(`actions`) `toolId` 매핑
+  2) AI 종합 진단 리포트(`DiagnosisReport.tsx`) 섹션 07 실행 로드맵 카드 내 전용 `바로가기 ↗` 버튼 제공
+  3) 섹션 10 **"맞춤 은퇴 처방 툴킷 (Solution Toolkit)"** 인터랙티브 카드 그리드 신설 및 AI 진단 페이지(`page.tsx`) 원클릭 모달 연동 완료 (Sprint 35, Story S35-1)
 

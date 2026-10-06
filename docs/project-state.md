@@ -82,17 +82,17 @@
   2. 근로·사업 소득자 감액 회피 치트키(A값 월 320만원 초과 시 조기는 전액 지급정지되나, 65~69세 소득자는 연기연금 신청 시 최대 50% 감액을 100% 방어하고 연 7.2% 가산 보존) 가이드 추가.
   3. 건보료 피부양자(연 2,000만원) 탈락 방어 및 부분연기(50~90%) 활용 절세 팁을 `NpsEarlyDeferralModal.tsx` 및 `npsEarlyDeferralBep.ts` CFP 처방전에 동기화 완료.
 
+- **[Completed]** Story S35-1: AI 종합 진단 리포트 & 신규 도구 처방 심층 연동
+  1. Gemini 3.8 Flash 시스템 프롬프트 및 `fallbackNarrative`에 신규 8대 전문 분석 도구(SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE) 팩트 주입 및 실행 로드맵(`actions`) `toolId` 매핑.
+  2. AI 종합 진단 리포트(`DiagnosisReport.tsx`) 섹션 07 실행 로드맵 카드 내 전용 `바로가기 ↗` 버튼 제공.
+  3. 섹션 10 **"맞춤 은퇴 처방 툴킷 (Solution Toolkit)"** 인터랙티브 카드 그리드 신설 및 AI 진단 페이지(`page.tsx`) 원클릭 모달 연동 완료.
+
 ## Active Sprint / Story
-- **Sprint 34** (완료): 유튜브/전문가 피드백 기반 정합성 고도화 및 신규 모달
-  - **Story S34-1**: 정확성 보완 (주택연금 연소자 기준, 의료비/자녀지원비 반영, 단위오류 수정) (완료)
-  - **Story S34-2**: 국민연금 증액 로드맵 (`NpsBoostRoadmapModal.tsx`) (완료)
-  - **Story S34-3**: 부족액 역산 적립 플랜 (`SavingsPlanModal.tsx`) (완료)
-  - **Story S34-4**: S4 배당 옵션 로직 버그 해결 및 실전 배당 ETF 포트폴리오 추천 (`DividendStrategyModal.tsx`) (완료)
-  - **Story S34-5**: 조기·정상·연기연금 BEP 심층 대조 및 A·B값 재평가 인사이트 반영 (`NpsEarlyDeferralModal.tsx`) (완료)
-- **Sprint 35** (착수 예정): 대시보드 및 AI 리포트 종합 연계 / 사용자 경험(UX) 고도화
-  - 후보 과제 1: **Story S35-1** - AI 종합 진단 리포트 내 신규 도구(적립플랜, 배당ETF, 조기/연기BEP) 맞춤 진단 섹션 연동 강화
-  - 후보 과제 2: **Story S35-2** - 종합 분석 PDF 다운로드 시 신규 툴(배당 포트폴리오, 증액 로드맵, BEP 분석) 리포트 페이지 확장
-  - 후보 과제 3: **Story S35-3** - 온보딩에서 대시보드 및 AI 진단 리포트로 이어지는 전반적 사용자 여정 플로우 점검 및 최적화
+- **Sprint 35** (진행 중): 대시보드 및 AI 리포트 종합 연계 / 사용자 경험(UX) 고도화
+  - **Story S35-1 (완료)**: AI 종합 진단 리포트 & 신규 도구 처방 심층 연동
+  - **Story S35-2 (대기)**: 종합 분석 PDF 다운로드 시 신규 툴(배당 포트폴리오, 증액 로드맵, BEP 분석) 리포트 페이지 확장
+  - **Story S35-3 (대기)**: 온보딩에서 대시보드 및 AI 진단 리포트로 이어지는 전반적 사용자 여정 플로우 점검 및 최적화
+- **Sprint 34** (완료): 유튜브/전문가 피드백 기반 정합성 고도화 및 신규 모달 5종 완수
 
 ## Session Handoff (Sprint 34 완료 & Sprint 35 준비)
 - **주요 산출물**:

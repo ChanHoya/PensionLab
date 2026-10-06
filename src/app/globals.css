@@ -521,3 +521,20 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   }
 }
 
+/* Solution Toolkit Card Hover & Micro-interactions */
+.toolkit-card-hover {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease !important;
+}
+.toolkit-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+}
+.btn-action-tool:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+.btn-action-tool:active {
+  transform: translateY(0);
+}
+

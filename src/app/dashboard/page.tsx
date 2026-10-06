@@ -916,6 +916,51 @@ export default function DashboardPage() {
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
+        {/* AI 진단 리포트 안내 배너 */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 18px",
+            borderRadius: "var(--radius-lg, 12px)",
+            background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(236, 72, 153, 0.1) 100%)",
+            border: "1px solid rgba(99, 102, 241, 0.3)",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+          className="animate-fade-in"
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.3rem" }}>🔮</span>
+            <div>
+              <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                AI 종합 진단 & 10대 핵심 리밸런싱 리포트
+              </div>
+              <div style={{ fontSize: "0.76rem", color: "var(--text-secondary)" }}>
+                가구 현금흐름 결손 분석, 소득 공백기 방어, 8대 솔루션 툴킷 처방을 확인하세요.
+              </div>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/ai-advisor"
+            id="btn-goto-ai-advisor-banner"
+            className="premium-button"
+            style={{
+              padding: "7px 16px",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              background: "var(--gradient-brand)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span>진단 리포트 보기</span>
+            <span>↗</span>
+          </Link>
+        </div>
+
         {/* Local Security & Caching Banner */}
         <div style={styles.topSecurityBanner} className="premium-card animate-fade-in">
           <span>🔒 <strong>개인정보 안심 보장</strong>: 회원님의 소중한 은퇴 설계 정보는 서버에 전송/저장되지 않으며, 오직 웹 브라우저(LocalStorage)에만 안전하게 보관되므로 유출 걱정 없이 안심하고 이용해 주세요.</span>

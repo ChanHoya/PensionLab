@@ -86,15 +86,32 @@
   1. Gemini 3.8 Flash 시스템 프롬프트 및 `fallbackNarrative`에 신규 8대 전문 분석 도구(SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE) 팩트 주입 및 실행 로드맵(`actions`) `toolId` 매핑.
   2. AI 종합 진단 리포트(`DiagnosisReport.tsx`) 섹션 07 실행 로드맵 카드 내 전용 `바로가기 ↗` 버튼 제공.
   3. 섹션 10 **"맞춤 은퇴 처방 툴킷 (Solution Toolkit)"** 인터랙티브 카드 그리드 신설 및 AI 진단 페이지(`page.tsx`) 원클릭 모달 연동 완료.
+- **[Completed]** Story S35-2: 종합 분석 PDF 다운로드 리포트 확장 및 인쇄 최적화
+  1. 표지 KPI 직후 인쇄 모드(`isPrintMode`) 전용 3열 경영 요약본(Executive Summary: 진단 결론, 최적 인출 전략, 우선 권장 과제) 패널 신설.
+  2. 섹션 07 실행 로드맵 카드에서 버튼 대신 인쇄용 '연계 솔루션' 배지 렌더링.
+  3. 섹션 10 Solution Toolkit을 A4 인쇄 친화적 4열 그리드, 문서형 배지, 맞춤형 폰트 크기로 자동 치환 렌더링 완료.
+- **[Completed]** Story S35-3: 온보딩 ➔ 대시보드 ➔ AI 진단 사용자 여정 UX 고도화
+  1. 온보딩 Step 4 요약 탭 상단 및 하단 버튼에 `[대시보드 바로가기 📊]`와 `[AI 종합 진단 받기 🔮]` 듀얼 내비게이션 버튼 제공.
+  2. 대시보드 상단 결과 영역에 AI 종합 진단 리포트 안내 배너 탑재(원클릭 진단 이동).
+  3. 대시보드 ↔ AI 진단 리포트 상호 이동 플로우 및 모바일 반응형 터치 호버 CSS(`toolkit-card-hover`, `btn-action-tool`) 고도화 완료.
 
 ## Active Sprint / Story
-- **Sprint 35** (진행 중): 대시보드 및 AI 리포트 종합 연계 / 사용자 경험(UX) 고도화
+- **Sprint 35** (완료): 대시보드 및 AI 리포트 종합 연계 / 사용자 경험(UX) 고도화
   - **Story S35-1 (완료)**: AI 종합 진단 리포트 & 신규 도구 처방 심층 연동
-  - **Story S35-2 (대기)**: 종합 분석 PDF 다운로드 시 신규 툴(배당 포트폴리오, 증액 로드맵, BEP 분석) 리포트 페이지 확장
-  - **Story S35-3 (대기)**: 온보딩에서 대시보드 및 AI 진단 리포트로 이어지는 전반적 사용자 여정 플로우 점검 및 최적화
-- **Sprint 34** (완료): 유튜브/전문가 피드백 기반 정합성 고도화 및 신규 모달 5종 완수
+  - **Story S35-2 (완료)**: 종합 분석 PDF 다운로드 리포트 확장
+  - **Story S35-3 (완료)**: 온보딩 ➔ 대시보드 ➔ AI 진단 사용자 여정 UX 고도화
+- **Sprint 36** (계획 대기)
 
-## Session Handoff (Sprint 34 완료 & Sprint 35 준비)
+## Session Handoff (Sprint 35 완료)
+- **주요 산출물**:
+  1. AI 종합 진단 리포트 & 8대 솔루션 툴킷 심층 연동 (S35-1):
+     - Gemini 3.8 Flash 및 fallbackNarrative 8대 도구(SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE) 매핑
+     - 섹션 07 로드맵 바로가기 버튼 및 섹션 10 맞춤 은퇴 처방 툴킷 인터랙티브 그리드 탑재
+  2. PDF 인쇄 모드 확장 및 Executive Summary (S35-2):
+     - `isPrintMode` 대응 3열 경영 요약본 패널 및 4열 인쇄 그리드 최적화
+  3. 온보딩 ➔ 대시보드 ➔ AI 진단 사용자 여정 UX 고도화 (S35-3):
+     - 온보딩 Step 4 듀얼 진입 버튼, 대시보드 상단 AI 진단 안내 배너 탑재
+- **검증 상태**: `npx tsc --noEmit` 통과, `npm run build` 프로덕션 빌드 성공(0 errors), Chrome 브라우저 화면 검증 완료.
 - **주요 산출물**:
   1. 국민연금 조기 vs 정상 vs 연기 연금 심층 비교 (`NpsEarlyDeferralModal.tsx`, `npsEarlyDeferralBep.ts`):
      - 법정 단순비율 기준(77세/84세)과 A·B값 재평가 반영 기준(72세/81세) 동시 안내 배너 카드 추가

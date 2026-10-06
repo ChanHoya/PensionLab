@@ -263,6 +263,49 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
           <Kpi label={`생애 ${r.hasSpouse ? "가구 " : ""}연금 수령액`} value={won(r.couple.lifetime.household)} sub="명목 · 세전" />
           <Kpi label="추천 인출전략" value={r.best.id} sub={`${r.best.name} · 생애 세후 ${won(r.best.postTax)}`} tone="#6366f1" />
         </div>
+
+        {isPrintMode && (
+          <div
+            style={{
+              marginTop: 18,
+              padding: "16px 20px",
+              borderRadius: "10px",
+              backgroundColor: "rgba(99, 102, 241, 0.06)",
+              border: "1px solid rgba(99, 102, 241, 0.3)",
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 12,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-accent)" }}>🎯 진단 결론</div>
+              <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
+                {ratio >= 1 ? "노후 지출 목표 충족" : `월 ${Math.round(Math.max(0, (r.avgTargetReal || r.targetToday) - r.avgRetiredReal))}만원 부족`}
+              </div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: 2 }}>
+                목표 충족률 {Math.round(ratio * 100)}% · 누적 부족 {totalGap > 0 ? won(totalGap) : "0원"}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#10b981" }}>🏆 최적 인출 전략</div>
+              <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
+                {r.best.id} ({r.best.name})
+              </div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: 2 }}>
+                생애 세후 {won(r.best.postTax)} 수령 (절세 극대화)
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#f59e0b" }}>⚡ 우선 권장 과제</div>
+              <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-primary)", marginTop: 4 }}>
+                {topActions[0]?.title || "연금 구조 모니터링"}
+              </div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-secondary)", marginTop: 2 }}>
+                {topActions[0]?.effect || "안정적 현금흐름 구축"}
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 01 핵심 요약 */}
@@ -755,18 +798,34 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                     </div>
                     <div style={S.actionDetail}>{a.detail}</div>
                     {a.effect && <div style={S.actionEffect}>→ {a.effect}</div>}
-                    {a.toolId && onOpenTool && (
+                    {a.toolId && (
                       <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
-                        <button
-                          type="button"
-                          onClick={() => onOpenTool(a.toolId!)}
-                          style={S.actionToolBtn}
-                          className="btn-action-tool"
-                          title={`${TOOL_META_MAP[a.toolId]?.name || "분석 도구"} 열기`}
-                        >
-                          <span>{TOOL_META_MAP[a.toolId]?.badge || "🛠️"}</span>
-                          <span>바로가기 ↗</span>
-                        </button>
+                        {!isPrintMode && onOpenTool ? (
+                          <button
+                            type="button"
+                            onClick={() => onOpenTool(a.toolId!)}
+                            style={S.actionToolBtn}
+                            className="btn-action-tool"
+                            title={`${TOOL_META_MAP[a.toolId]?.name || "분석 도구"} 열기`}
+                          >
+                            <span>{TOOL_META_MAP[a.toolId]?.badge || "🛠️"}</span>
+                            <span>바로가기 ↗</span>
+                          </button>
+                        ) : (
+                          <span
+                            style={{
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              color: "var(--primary, #6366f1)",
+                              backgroundColor: "rgba(99, 102, 241, 0.1)",
+                              padding: "2px 8px",
+                              borderRadius: 4,
+                              border: "1px solid rgba(99, 102, 241, 0.25)",
+                            }}
+                          >
+                            {TOOL_META_MAP[a.toolId]?.badge || "🛠️"} 연계 솔루션
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -854,7 +913,13 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
         title="맞춤 은퇴 처방 툴킷 (Solution Toolkit)"
         sub="진단 결과와 부족분을 해결하기 위해 즉시 활용할 수 있는 전문 분석 도구입니다. 카드를 클릭하면 상세 시뮬레이션을 실행할 수 있습니다."
       >
-        <div style={S.toolkitGrid}>
+        <div
+          style={
+            isPrintMode
+              ? { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" }
+              : S.toolkitGrid
+          }
+        >
           {TOOL_IDS.map((tid) => {
             const meta = TOOL_META_MAP[tid];
             if (!meta) return null;
@@ -887,18 +952,20 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                   ...S.toolkitCard,
                   borderColor: isUrgent ? "rgba(239, 68, 68, 0.4)" : "var(--border)",
                   background: isUrgent ? "rgba(239, 68, 68, 0.04)" : "var(--card-bg, rgba(30, 41, 59, 0.4))",
+                  padding: isPrintMode ? "12px 14px" : "16px",
+                  cursor: isPrintMode ? "default" : "pointer",
                 }}
-                className="toolkit-card-hover"
-                onClick={() => onOpenTool?.(tid)}
-                role="button"
-                tabIndex={0}
+                className={!isPrintMode ? "toolkit-card-hover" : undefined}
+                onClick={!isPrintMode ? () => onOpenTool?.(tid) : undefined}
+                role={!isPrintMode ? "button" : undefined}
+                tabIndex={!isPrintMode ? 0 : undefined}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8, flexWrap: "wrap", gap: 4 }}>
                   <span style={S.toolkitBadge}>{meta.badge}</span>
                   {priorityBadge && (
                     <span
                       style={{
-                        fontSize: "0.7rem",
+                        fontSize: "0.68rem",
                         padding: "2px 6px",
                         borderRadius: 4,
                         fontWeight: 600,
@@ -911,10 +978,10 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                   )}
                 </div>
                 <div style={S.toolkitName}>{meta.name}</div>
-                <div style={S.toolkitDesc}>{meta.description}</div>
+                <div style={{ ...S.toolkitDesc, fontSize: isPrintMode ? "0.72rem" : "0.75rem" }}>{meta.description}</div>
                 <div style={S.toolkitFooter}>
-                  <span style={{ fontSize: "0.74rem", color: "var(--primary, #6366f1)", fontWeight: 700 }}>
-                    시뮬레이션 열기 ↗
+                  <span style={{ fontSize: "0.72rem", color: "var(--primary, #6366f1)", fontWeight: 700 }}>
+                    {isPrintMode ? "📄 권장 연계 솔루션" : "시뮬레이션 열기 ↗"}
                   </span>
                 </div>
               </div>

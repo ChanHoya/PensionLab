@@ -98,8 +98,10 @@ export interface SimulationParamsState {
   // S4 하이브리드(배당+연금) 전략 매개변수
   coveredCallAsset: number;        // 커버드콜/월배당 투자금 (만원, 기본 5000)
   coveredCallDividendRate: number;  // 예상 연 분배율 (%, 기본 9.0)
+  coveredCallPriceReturnRate?: number; // 연간 자본/가격 수익률 (NAV 변동률 %, 기본 0.0)
+  coveredCallAccountType?: "TAXABLE" | "PENSION"; // 계좌 유형 (TAXABLE: 일반위탁 15.4% 원천징수, PENSION: 연금계좌 3.3~5.5% 과세이연, 기본 TAXABLE)
   isCoupleDivided: boolean;         // 부부 명의 분산 여부 (기본 false)
-  dividendPolicy: "REINVEST" | "BUFFER" | "PAYOUT"; // 배당금 운용 정책 (스노우볼 재투자 / 비상자금 안전버퍼 / 전액소비, 기본 REINVEST)
+  dividendPolicy: "REINVEST" | "BUFFER" | "PAYOUT"; // 배당금 운용 정책 (스노우볼 재투자 / 비상자금 안전버퍼 / 전액소비, 기본 PAYOUT)
   spouseRetirementAge: number;      // 배우자 은퇴 예상 나이
   spouseLifeExpectancy: number;     // 배우자 기대수명
   spouseNationalPensionStartAge: number; // 배우자 국민연금 개시 나이
@@ -270,6 +272,8 @@ const initialSimulationParams: SimulationParamsState = {
   ageBands: DEFAULT_AGE_BANDS,
   coveredCallAsset: 5000,
   coveredCallDividendRate: 9.0,
+  coveredCallPriceReturnRate: 0.0,
+  coveredCallAccountType: "TAXABLE",
   isCoupleDivided: false,
   dividendPolicy: "PAYOUT",
   spouseRetirementAge: 60,

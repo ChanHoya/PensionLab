@@ -109,6 +109,7 @@ export default function DashboardSidebar(props: Props) {
   ];
   const coveredCallAsset = params.coveredCallAsset || 5000;
   const coveredCallRate = params.coveredCallDividendRate || 9.0;
+  const coveredCallPriceReturn = params.coveredCallPriceReturnRate ?? 0.0;
 
   return (
     <aside style={styles.sidebar} className="dash-sidebar">
@@ -443,6 +444,90 @@ export default function DashboardSidebar(props: Props) {
 
         {slider("커버드콜 투자금", coveredCallAsset, "만원", 0, 50000, 500, (v) => setParam({ coveredCallAsset: v }))}
         {slider("예상 연 분배율", coveredCallRate, "%", 2, 15, 0.5, (v) => setParam({ coveredCallDividendRate: v }))}
+        {slider("예상 가격수익률(NAV 변동)", coveredCallPriceReturn, "%", -10, 5, 0.5, (v) => setParam({ coveredCallPriceReturnRate: v }))}
+        <div style={{ display: "flex", gap: "4px", marginBottom: "8px" }}>
+          {[
+            { label: "보수 (-5%)", val: -5.0 },
+            { label: "중립 (0%)", val: 0.0 },
+            { label: "낙관 (+2%)", val: 2.0 },
+          ].map((sc) => (
+            <button
+              key={sc.label}
+              type="button"
+              onClick={() => setParam({ coveredCallPriceReturnRate: sc.val })}
+              style={{
+                flex: 1,
+                padding: "3px 4px",
+                fontSize: "0.68rem",
+                borderRadius: "4px",
+                border: `1px solid ${coveredCallPriceReturn === sc.val ? "var(--primary)" : "var(--border)"}`,
+                background: coveredCallPriceReturn === sc.val ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                color: coveredCallPriceReturn === sc.val ? "var(--text-accent)" : "var(--text-muted)",
+                cursor: "pointer",
+              }}
+            >
+              {sc.label}
+            </button>
+          ))}
+        </div>
+
+        {/* 금감원 2026 커버드콜 핵심위험 고지 */}
+        <div
+          style={{
+            padding: "8px 10px",
+            borderRadius: "6px",
+            backgroundColor: "rgba(245, 158, 11, 0.08)",
+            border: "1px solid rgba(245, 158, 11, 0.25)",
+            fontSize: "0.69rem",
+            color: "var(--text-secondary)",
+            lineHeight: 1.5,
+            marginBottom: "8px",
+          }}
+        >
+          <div style={{ fontWeight: 700, color: "#f59e0b", marginBottom: "2px" }}>⚠️ 커버드콜 핵심 투자 유의사항</div>
+          • 분배율은 확정 수익이 아니며, 기초자산 하락 시 원금(NAV) 침식이 발생할 수 있습니다.<br />
+          • 옵션 프리미엄 수취 대가로 주가 상승 참여가 제한(상승 캡)됩니다.
+        </div>
+
+        {/* 배당 투자 계좌 유형 선택 */}
+        <div style={{ marginTop: "6px", marginBottom: "8px" }}>
+          <label style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>
+            배당 투자 계좌 유형
+          </label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+            {[
+              { id: "TAXABLE", label: "일반 위탁계좌", sub: "15.4% 원천징수" },
+              { id: "PENSION", label: "연금저축/IRP", sub: "3.3~5.5% 절세" },
+            ].map((acc) => {
+              const isSelected = (params.coveredCallAccountType || "TAXABLE") === acc.id;
+              return (
+                <button
+                  key={acc.id}
+                  type="button"
+                  onClick={() => setParam({ coveredCallAccountType: acc.id as any })}
+                  style={{
+                    padding: "6px 4px",
+                    borderRadius: "6px",
+                    border: `1px solid ${isSelected ? "var(--primary)" : "var(--border)"}`,
+                    backgroundColor: isSelected ? "rgba(99, 102, 241, 0.12)" : "transparent",
+                    color: isSelected ? "var(--text-primary)" : "var(--text-secondary)",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: "0.74rem", fontWeight: isSelected ? 700 : 500 }}>{acc.label}</div>
+                  <div style={{ fontSize: "0.66rem", color: isSelected ? "var(--text-accent)" : "var(--text-muted)" }}>{acc.sub}</div>
+                </button>
+              );
+            })}
+          </div>
+          {params.coveredCallAccountType === "PENSION" && (
+            <div style={{ marginTop: 6, fontSize: "0.68rem", color: "#10b981", lineHeight: 1.4, padding: "4px 6px", borderRadius: 4, backgroundColor: "rgba(16, 185, 129, 0.08)" }}>
+              💡 <strong>연금계좌 혜택</strong>: 금융소득 1,000만원 기준에서 제외되어 건보료 피부양자가 안전하게 방어되며, 인출 시 3.3~5.5% 저율과세됩니다. (IRP는 안전자산 30% 의무 적용)
+            </div>
+          )}
+        </div>
+
         <label style={styles.checkbox}>
           <input type="checkbox" checked={params.isCoupleDivided || false} onChange={(e) => setParam({ isCoupleDivided: e.target.checked })} />
           부부 명의 분산 (인당 배당 1,000만원 한도)
@@ -457,7 +542,7 @@ export default function DashboardSidebar(props: Props) {
               { id: "BUFFER", label: "🛡️ 배당 비상자금 풀 (안전적립)", desc: "잉여 배당금을 안전자산(연 2.5%)에 누적" },
               { id: "PAYOUT", label: "💸 전액 현금화 소비 (소진형)", desc: "매년 발생하는 배당금을 전액 생활비로 소비" },
             ].map((opt) => {
-              const isSelected = (params.dividendPolicy || "REINVEST") === opt.id;
+              const isSelected = (params.dividendPolicy || "PAYOUT") === opt.id;
               return (
                 <button
                   key={opt.id}

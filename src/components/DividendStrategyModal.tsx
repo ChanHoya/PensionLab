@@ -1174,8 +1174,8 @@ export function DividendStrategyModal({
             backgroundColor: "rgba(15, 23, 42, 0.7)",
           }}
         >
-          <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
-            * 종목코드 복사(📋) 버튼을 누르면 증권사 앱에서 손쉽게 상품을 검색하여 매수할 수 있습니다.
+          <div style={{ fontSize: "0.72rem", color: "#94a3b8", lineHeight: 1.5, maxWidth: "75%" }}>
+            <span style={{ color: "#f59e0b", fontWeight: 700 }}>⚠️ 금융당국 핵심 유의사항:</span> 분배율은 확정 수익이 아니며 기초자산 하락 시 원금(NAV) 손실이 발생할 수 있습니다. 옵션 매도로 상승이 제한되며, 장기 트랙레코드가 짧으므로 보수적 자본손익 시나리오를 함께 점검하세요. (종목코드 복사 📋 지원)
           </div>
           <button
             onClick={onClose}

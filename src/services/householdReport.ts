@@ -234,7 +234,7 @@ export function buildHouseholdReport(input: ReportInput, baseYear: number = new 
   ].filter((m) => m.paid > 0 || m.received > 0);
 
   const s4Run = runs.s4;
-  const s4Policy = params.dividendPolicy || "REINVEST";
+  const s4Policy = params.dividendPolicy || "PAYOUT";
   const s4AssetInitial = params.coveredCallAsset || 0;
   const s4DivRate = params.coveredCallDividendRate ?? 9.0;
   const annualDividendGross = Math.round(s4AssetInitial * (s4DivRate / 100));

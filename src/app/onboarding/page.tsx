@@ -579,7 +579,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleFinish = async () => {
+  const handleFinish = async (destination: "/dashboard" | "/dashboard/ai-advisor" = "/dashboard") => {
     if (isSubmitting) return; // prevent double clicks
     setIsSubmitting(true);
     
@@ -637,7 +637,7 @@ export default function OnboardingPage() {
       retirementAge: store.simulationParams.retirementAge,
     });
 
-    router.push("/dashboard");
+    router.push(destination);
     setIsSubmitting(false);
   };
 
@@ -827,24 +827,41 @@ export default function OnboardingPage() {
                 </div>
               )}
               {group.key === "summary" && (
-                <button
-                  type="button"
-                  id="btn-top-summary-analyze"
-                  onClick={handleFinish}
-                  disabled={isSubmitting}
-                  className="premium-button"
-                  style={{
-                    marginLeft: "auto",
-                    background: "var(--gradient-secondary)",
-                    padding: "8px 22px",
-                    fontSize: "0.95rem",
-                    fontWeight: 700,
-                    cursor: isSubmitting ? "not-allowed" : "pointer",
-                    boxShadow: "0 4px 14px rgba(236, 72, 153, 0.35)",
-                  }}
-                >
-                  {isSubmitting ? "저장 중..." : "종합 분석하기 🚀"}
-                </button>
+                <div style={{ marginLeft: "auto", display: "flex", gap: "8px", alignItems: "center" }}>
+                  <button
+                    type="button"
+                    id="btn-top-dashboard-navigate"
+                    onClick={() => handleFinish("/dashboard")}
+                    disabled={isSubmitting}
+                    className="premium-button"
+                    style={{
+                      background: "var(--gradient-brand)",
+                      padding: "8px 18px",
+                      fontSize: "0.9rem",
+                      fontWeight: 700,
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {isSubmitting ? "저장 중..." : "대시보드 📊"}
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-top-ai-advisor-navigate"
+                    onClick={() => handleFinish("/dashboard/ai-advisor")}
+                    disabled={isSubmitting}
+                    className="premium-button"
+                    style={{
+                      background: "var(--gradient-secondary)",
+                      padding: "8px 18px",
+                      fontSize: "0.9rem",
+                      fontWeight: 700,
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                      boxShadow: "0 4px 14px rgba(236, 72, 153, 0.35)",
+                    }}
+                  >
+                    {isSubmitting ? "저장 중..." : "AI 종합 진단 🔮"}
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -2258,15 +2275,26 @@ export default function OnboardingPage() {
                 </button>
               )}
               {step.group === visibleSteps[lastStepIndex].group && (
-                <button
-                  type="button"
-                  onClick={handleFinish}
-                  disabled={isSubmitting}
-                  className="premium-button"
-                  style={{ background: "var(--gradient-secondary)" }}
-                >
-                  {isSubmitting ? "저장 중..." : "종합 분석하기 🚀"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleFinish("/dashboard")}
+                    disabled={isSubmitting}
+                    className="premium-button"
+                    style={{ background: "var(--gradient-brand)" }}
+                  >
+                    {isSubmitting ? "저장 중..." : "대시보드 바로가기 📊"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleFinish("/dashboard/ai-advisor")}
+                    disabled={isSubmitting}
+                    className="premium-button"
+                    style={{ background: "var(--gradient-secondary)" }}
+                  >
+                    {isSubmitting ? "저장 중..." : "AI 종합 진단 받기 🔮"}
+                  </button>
+                </>
               )}
             </div>
           </div>

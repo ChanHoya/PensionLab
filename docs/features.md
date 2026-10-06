@@ -92,4 +92,10 @@
   1) Gemini 3.8 Flash 시스템 프롬프트 및 `fallbackNarrative`에 신규 8대 전문 시뮬레이션 도구(SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE) 팩트 주입 및 실행 로드맵(`actions`) `toolId` 매핑
   2) AI 종합 진단 리포트(`DiagnosisReport.tsx`) 섹션 07 실행 로드맵 카드 내 전용 `바로가기 ↗` 버튼 제공
   3) 섹션 10 **"맞춤 은퇴 처방 툴킷 (Solution Toolkit)"** 인터랙티브 카드 그리드 신설 및 AI 진단 페이지(`page.tsx`) 원클릭 모달 연동 완료 (Sprint 35, Story S35-1)
+- **[FEAT-039] 종합 진단 PDF 다운로드 리포트 확장 & 인쇄 최적화**:
+  1) PDF 인쇄 모드(`isPrintMode`) 전용 3열 경영 요약본(Executive Summary: 진단 결론·최적 인출 전략·우선 권장 과제) 패널 신설
+  2) 실행 로드맵(섹션 07) 버튼을 인쇄용 연계 배지로 자동 치환 및 섹션 10 처방 툴킷을 A4 가로 인쇄 최적화 4열 그리드 및 문서형 배지로 전환 (Sprint 35, Story S35-2)
+- **[FEAT-040] 온보딩 ➔ 대시보드 ➔ AI 진단 사용자 여정 UX 고도화**:
+  1) 온보딩 Step 4 완료 시 `[대시보드 바로가기 📊]` 및 `[AI 종합 진단 받기 🔮]` 듀얼 내비게이션 버튼 제공
+  2) 대시보드 상단 결과 영역에 AI 종합 진단 리포트 안내 배너 탑재 및 상호 직관적 이동 지원 (Sprint 35, Story S35-3)
 

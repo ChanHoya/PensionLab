@@ -42,12 +42,12 @@ export default function FssUploadPanel({ hasSpouse, files, onChange, analyzing, 
           ℹ️ 통합연금포털은 <strong>회원가입(본인인증) 후</strong> 이용할 수 있습니다. 가입 후 처음 연금정보를 조회하면 국민연금공단·금융회사에서
           정보를 모으는 데 <strong>일정 기간이 걸려</strong> 바로 PDF를 받을 수 없으니, 미리 가입하고 조회를 신청해 두세요.
         </p>
-        <p style={{ ...styles.alertText, color: "#818cf8" }}>
+        <p style={{ ...styles.alertText, color: "var(--text-accent)" }}>
           💡 본인 자료 조회 가능 전까지{" "}
           <span
             onClick={onOpenPersonaModal}
             style={{
-              color: "#c4b5fd",
+              color: "var(--primary-600, #4f46e5)",
               fontWeight: 700,
               textDecoration: "underline",
               cursor: onOpenPersonaModal ? "pointer" : "default",

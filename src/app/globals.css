@@ -51,8 +51,8 @@
   --border-subtle: #f0f2f8;
 
   --text-primary:   #0f1127;
-  --text-secondary: #4b5563;
-  --text-muted:     #9ca3af;
+  --text-secondary: #334155;
+  --text-muted:     #64748b;
 
   /* ── Semantic adaptive colors ── */
   --text-accent:      #4f46e5;            /* indigo-600: readable on light bg */
@@ -60,12 +60,13 @@
   --modal-bg:         #ffffff;
   --modal-header-bg:  rgba(248, 250, 255, 0.97);
   --overlay-bg:       rgba(15, 17, 39, 0.5);
-  --muted-label:      #6b7280;
+  --muted-label:      #475569;
 
   /* Gradients */
-  --gradient-brand:   linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --gradient-primary: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  --gradient-hero:    linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #a78bfa 100%);
+  --gradient-brand:     linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --gradient-secondary: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  --gradient-primary:   linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  --gradient-hero:      linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #a78bfa 100%);
 
   /* Glass */
   --glass-bg:     rgba(255, 255, 255, 0.90);

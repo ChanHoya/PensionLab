@@ -687,9 +687,9 @@ export default function OnboardingPage() {
               onClick={() => setPersonaModalOpen(true)}
               style={{
                 ...styles.saveBtn,
-                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%)",
-                borderColor: "rgba(99, 102, 241, 0.4)",
-                color: "var(--text-primary)",
+                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.16) 100%)",
+                borderColor: "rgba(99, 102, 241, 0.35)",
+                color: "var(--text-accent)",
                 fontWeight: 700,
               }}
               title="대한민국 대표 가구 페르소나 데이터 1초 만에 불러오기"
@@ -765,7 +765,7 @@ export default function OnboardingPage() {
                     <div style={{ ...styles.stepTitle, fontWeight: isActive ? "700" : "500" }}>
                       {g.title}
                     </div>
-                    <div style={styles.stepDesc}>{g.desc}</div>
+                    <div style={{ ...styles.stepDesc, color: isActive ? "var(--text-secondary)" : "var(--text-muted)", fontWeight: isActive ? 600 : 400 }}>{g.desc}</div>
                   </div>
                 </div>
               );
@@ -804,9 +804,9 @@ export default function OnboardingPage() {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "6px",
-                        background: "linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.22) 100%)",
-                        borderColor: "rgba(139, 92, 246, 0.5)",
-                        color: "#c4b5fd",
+                        background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.16) 100%)",
+                        borderColor: "rgba(139, 92, 246, 0.4)",
+                        color: "var(--text-accent)",
                         fontWeight: 700,
                         cursor: "pointer",
                       }}
@@ -816,9 +816,9 @@ export default function OnboardingPage() {
                         e.currentTarget.style.background = "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.5)";
-                        e.currentTarget.style.color = "#c4b5fd";
-                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.22) 100%)";
+                        e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.4)";
+                        e.currentTarget.style.color = "var(--text-accent)";
+                        e.currentTarget.style.background = "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.16) 100%)";
                       }}
                     >
                       <span>👫</span> 페르소나 체험하기
@@ -851,7 +851,8 @@ export default function OnboardingPage() {
                     disabled={isSubmitting}
                     className="premium-button"
                     style={{
-                      background: "var(--gradient-secondary)",
+                      background: "var(--gradient-secondary, linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%))",
+                      color: "#ffffff",
                       padding: "8px 18px",
                       fontSize: "0.9rem",
                       fontWeight: 700,
@@ -2290,7 +2291,10 @@ export default function OnboardingPage() {
                     onClick={() => handleFinish("/dashboard/ai-advisor")}
                     disabled={isSubmitting}
                     className="premium-button"
-                    style={{ background: "var(--gradient-secondary)" }}
+                    style={{
+                      background: "var(--gradient-secondary, linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%))",
+                      color: "#ffffff",
+                    }}
                   >
                     {isSubmitting ? "저장 중..." : "AI 종합 진단 받기 🔮"}
                   </button>

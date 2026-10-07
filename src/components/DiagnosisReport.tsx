@@ -649,7 +649,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                           r.s4Analysis.policy === "BUFFER"
                             ? "#10b981"
                             : r.s4Analysis.policy === "REINVEST"
-                            ? "#818cf8"
+                            ? "var(--text-accent)"
                             : "#f59e0b",
                         border: "1px solid",
                         borderColor:
@@ -718,7 +718,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                 <span style={{ color: "var(--text-secondary)", lineHeight: 1.45 }}>{r.s4Analysis.policyEvaluation.coreBenefit}</span>
               </div>
               <div style={{ backgroundColor: "rgba(99, 102, 241, 0.06)", border: "1px solid rgba(99, 102, 241, 0.2)", borderRadius: "var(--radius-sm)", padding: "10px 12px" }}>
-                <strong style={{ color: "#818cf8", display: "block", marginBottom: "3px" }}>🧭 전문가 운용 처방</strong>
+                <strong style={{ color: "var(--text-accent)", display: "block", marginBottom: "3px" }}>🧭 전문가 운용 처방</strong>
                 <span style={{ color: "var(--text-secondary)", lineHeight: 1.45 }}>{r.s4Analysis.policyEvaluation.strategicPrescription}</span>
               </div>
             </div>
@@ -970,7 +970,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                         borderRadius: 4,
                         fontWeight: 600,
                         backgroundColor: isUrgent ? "rgba(239, 68, 68, 0.15)" : "rgba(99, 102, 241, 0.15)",
-                        color: isUrgent ? "#ef4444" : "#818cf8",
+                        color: isUrgent ? "#ef4444" : "var(--text-accent)",
                       }}
                     >
                       {priorityBadge}

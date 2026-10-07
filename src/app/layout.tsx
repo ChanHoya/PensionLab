@@ -15,15 +15,15 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "PensionLab", statusBarStyle: "black-translucent" },
 };
 
-// 다크모드 기본값 초기화 — ETF Lens와 동일하게 다크 우선
+// 기본 접속 테마: 라이트 모드 기본값
 const darkModeScript = `
 (function() {
   try {
     var saved = localStorage.getItem('pensionlab_theme');
-    var isDark = saved !== 'light'; // 명시적으로 'light'로 저장한 경우만 라이트모드
+    var isDark = saved === 'dark'; // 명시적으로 'dark'로 저장한 경우만 다크모드, 기본은 라이트모드
     document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
   } catch(e) {
-    document.documentElement.setAttribute('data-theme', 'dark');
+    document.documentElement.setAttribute('data-theme', '');
   }
 })();
 `;

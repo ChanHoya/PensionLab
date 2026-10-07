@@ -425,7 +425,7 @@ export default function DashboardSidebar(props: Props) {
               justifyContent: "space-between",
               gap: "6px",
               borderColor: "rgba(99, 102, 241, 0.4)",
-              color: "#a5b4fc",
+              color: "var(--text-accent)",
               background: "rgba(99, 102, 241, 0.12)",
               borderRadius: "6px",
               marginTop: "8px",
@@ -438,7 +438,7 @@ export default function DashboardSidebar(props: Props) {
               <span>💡</span>
               <span>배당금 투자 전략 추천</span>
             </span>
-            <span style={{ fontSize: "0.7rem", color: "#818cf8" }}>가이드 ➔</span>
+            <span style={{ fontSize: "0.7rem", color: "var(--text-accent)" }}>가이드 ➔</span>
           </button>
         )}
 

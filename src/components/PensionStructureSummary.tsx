@@ -182,11 +182,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   layerHead: { display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", marginBottom: "10px" },
   badge: { color: "#ffffff", borderRadius: "999px", padding: "2px 10px", fontSize: "0.75rem" },
-  layerSize: { marginLeft: "auto", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-muted)" },
+  layerSize: { marginLeft: "auto", fontSize: "0.78rem", fontWeight: 600, color: "var(--text-secondary)" },
   people: { display: "grid", gap: "12px" },
   personCol: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
-  personLabel: { fontSize: "0.78rem", fontWeight: 700, color: "var(--text-muted)" },
-  empty: { fontSize: "0.8rem", color: "var(--text-muted)", padding: "8px 0" },
+  personLabel: { fontSize: "0.78rem", fontWeight: 700, color: "var(--text-secondary)" },
+  empty: { fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: 500, padding: "8px 0" },
   card: {
     border: "1px solid var(--border)",
     borderLeft: "3px solid",
@@ -195,6 +195,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: "var(--surface)",
   },
   cardTitle: { fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" },
-  cardSub: { fontSize: "0.75rem", color: "var(--text-accent)", marginTop: 2 },
-  cardLine: { fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 2 },
+  cardSub: { fontSize: "0.76rem", color: "var(--text-accent)", marginTop: 2, fontWeight: 600 },
+  cardLine: { fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 2, fontWeight: 500 },
 };

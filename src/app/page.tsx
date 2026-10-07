@@ -265,6 +265,7 @@ export default function LandingPage() {
       }}
       pdfUrl={pdfConfig.url}
       title={pdfConfig.title}
+      defaultFullscreen={true}
     />
     </>
   );

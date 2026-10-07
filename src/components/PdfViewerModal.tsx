@@ -7,22 +7,34 @@ interface PdfViewerModalProps {
   onClose: () => void;
   pdfUrl?: string;
   title?: string;
+  defaultFullscreen?: boolean;
 }
 
 export default function PdfViewerModal({
   isOpen,
   onClose,
   pdfUrl = "/Pension_Blueprint.pdf",
-  title = "서비스 소개"
+  title = "서비스 소개",
+  defaultFullscreen = true,
 }: PdfViewerModalProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [scale, setScale] = useState(1.3);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [currentScale, setCurrentScale] = useState(1.0);
+  const [zoomOverride, setZoomOverride] = useState<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(defaultFullscreen);
   const renderTaskRef = useRef<any>(null);
+
+  // 모달이 열릴 때마다 기본 전체화면 및 1페이지로 리셋
+  useEffect(() => {
+    if (isOpen) {
+      setIsFullscreen(defaultFullscreen);
+      setCurrentPage(1);
+      setZoomOverride(null);
+    }
+  }, [isOpen, defaultFullscreen]);
 
   // PDF 로드
   useEffect(() => {
@@ -51,7 +63,7 @@ export default function PdfViewerModal({
     return () => { cancelled = true; };
   }, [isOpen, pdfUrl]);
 
-  // 페이지 렌더링 (일반/전체화면 공통)
+  // 페이지 렌더링 (일반/전체화면 공통: 뷰포트 맞춤 전체화면 보기 비율 디폴트)
   const renderPage = useCallback(async (pageNum: number) => {
     if (!pdfDoc || !canvasRef.current) return;
 
@@ -68,16 +80,36 @@ export default function PdfViewerModal({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      let useScale = scale;
+      let useScale = 1.0;
 
-      // 전체화면 모드: 뷰포트에 맞게 스케일 자동 계산
+      // 전체화면 모드: 뷰포트에 맞게 스케일 자동 계산 (화면 맞춤 비율)
       if (isFullscreen) {
-        const baseViewport = page.getViewport({ scale: 1.0 });
-        const availW = window.innerWidth - 180;  // 좌우 화살표 공간
-        const availH = window.innerHeight - 130; // 상단 바 + 하단 인디케이터
-        useScale = Math.min(availW / baseViewport.width, availH / baseViewport.height);
-        useScale = Math.max(0.4, useScale);
+        if (zoomOverride !== null) {
+          useScale = zoomOverride;
+        } else {
+          const baseViewport = page.getViewport({ scale: 1.0 });
+          const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+          const sidePadding = isMobile ? 32 : 160;  // 좌우 화살표 공간
+          const topBottomPadding = isMobile ? 90 : 120; // 상단 바 + 하단 인디케이터
+          const availW = Math.max(200, (typeof window !== "undefined" ? window.innerWidth : 1200) - sidePadding);
+          const availH = Math.max(200, (typeof window !== "undefined" ? window.innerHeight : 800) - topBottomPadding);
+          useScale = Math.min(availW / baseViewport.width, availH / baseViewport.height);
+          useScale = Math.max(0.3, useScale);
+        }
+      } else {
+        // 일반 창 모드: 모달 뷰 영역 맞춤 비율 또는 사용자 줌
+        if (zoomOverride !== null) {
+          useScale = zoomOverride;
+        } else {
+          const baseViewport = page.getViewport({ scale: 1.0 });
+          const availW = 1100;
+          const availH = Math.max(300, (typeof window !== "undefined" ? window.innerHeight : 800) - 240);
+          useScale = Math.min(1.0, availW / baseViewport.width, availH / baseViewport.height);
+          useScale = Math.max(0.4, useScale);
+        }
       }
+
+      setCurrentScale(useScale);
 
       const viewport = page.getViewport({ scale: useScale });
       canvas.width = viewport.width;
@@ -93,11 +125,23 @@ export default function PdfViewerModal({
     } finally {
       setIsLoading(false);
     }
-  }, [pdfDoc, scale, isFullscreen]);
+  }, [pdfDoc, isFullscreen, zoomOverride]);
 
   useEffect(() => {
     if (pdfDoc) renderPage(currentPage);
   }, [pdfDoc, currentPage, renderPage]);
+
+  // 창 크기 변경 시 화면 맞춤 비율 자동 재계산
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleResize = () => {
+      if (pdfDoc && zoomOverride === null) {
+        renderPage(currentPage);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isOpen, pdfDoc, currentPage, zoomOverride, renderPage]);
 
   // 키보드 네비게이션
   useEffect(() => {
@@ -106,8 +150,12 @@ export default function PdfViewerModal({
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") setCurrentPage(p => Math.max(1, p - 1));
       if (e.key === "ArrowRight" || e.key === "ArrowDown") setCurrentPage(p => Math.min(totalPages, p + 1));
       if (e.key === "Escape") {
-        if (isFullscreen) setIsFullscreen(false);
-        else onClose();
+        if (isFullscreen) {
+          setIsFullscreen(false);
+          setZoomOverride(null);
+        } else {
+          onClose();
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -129,9 +177,34 @@ export default function PdfViewerModal({
           <span style={fsPageInfo}>{currentPage} / {totalPages}</span>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             <button
-              onClick={() => setIsFullscreen(false)}
+              onClick={() => setZoomOverride(prev => Math.max(0.3, Number(((prev ?? currentScale) - 0.15).toFixed(2))))}
               style={iconBtn}
-              title="전체화면 종료 (Esc)"
+              title="축소"
+            >−</button>
+            <span style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", minWidth: "42px", textAlign: "center" }}>
+              {Math.round(currentScale * 100)}%
+            </span>
+            <button
+              onClick={() => setZoomOverride(prev => Math.min(3.0, Number(((prev ?? currentScale) + 0.15).toFixed(2))))}
+              style={iconBtn}
+              title="확대"
+            >+</button>
+            {zoomOverride !== null && (
+              <button
+                onClick={() => setZoomOverride(null)}
+                style={{ ...iconBtn, width: "auto", padding: "0 8px", fontSize: "0.75rem" }}
+                title="화면 맞춤 비율로 복원"
+              >
+                화면맞춤
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setIsFullscreen(false);
+                setZoomOverride(null);
+              }}
+              style={iconBtn}
+              title="창 모드로 전환 (Esc)"
             >
               ⊡
             </button>
@@ -214,18 +287,30 @@ export default function PdfViewerModal({
           </div>
           <div style={headerRight}>
             <button
-              onClick={() => setScale(s => Math.max(0.5, s - 0.2))}
+              onClick={() => setZoomOverride(prev => Math.max(0.4, Number(((prev ?? currentScale) - 0.15).toFixed(2))))}
               style={iconBtn}
               title="축소"
             >−</button>
-            <span style={scaleLabel}>{Math.round(scale * 100)}%</span>
+            <span style={scaleLabel}>{Math.round(currentScale * 100)}%</span>
             <button
-              onClick={() => setScale(s => Math.min(3.0, s + 0.2))}
+              onClick={() => setZoomOverride(prev => Math.min(3.0, Number(((prev ?? currentScale) + 0.15).toFixed(2))))}
               style={iconBtn}
               title="확대"
             >+</button>
+            {zoomOverride !== null && (
+              <button
+                onClick={() => setZoomOverride(null)}
+                style={{ ...iconBtn, width: "auto", padding: "0 8px", fontSize: "0.75rem" }}
+                title="창 맞춤 비율로 복원"
+              >
+                창맞춤
+              </button>
+            )}
             <button
-              onClick={() => setIsFullscreen(true)}
+              onClick={() => {
+                setIsFullscreen(true);
+                setZoomOverride(null);
+              }}
               style={{ ...iconBtn, marginLeft: "6px", fontSize: "1rem" }}
               title="전체화면"
             >⛶</button>
@@ -531,7 +616,7 @@ const fsCanvasArea: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  overflow: "hidden",
+  overflow: "auto",
   position: "relative",
   height: "100%",
 };

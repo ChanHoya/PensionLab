@@ -840,7 +840,7 @@ export default function DashboardPage() {
           </nav>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <AiHelper
-              pageName="대시보드(결과 화면: 부부 통합 연금 시뮬레이션·인출전략 시나리오 비교)"
+              pageName="자산관리(부부 통합 연금 시뮬레이션·인출전략 시나리오 비교)"
               examples={[
                 "지금 화면의 추천 전략이 왜 가장 유리한가요?",
                 "본인 기대수명 이후 가구 월 연금이 줄어드는 이유는?",

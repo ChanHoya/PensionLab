@@ -842,7 +842,7 @@ export default function OnboardingPage() {
                       cursor: isSubmitting ? "not-allowed" : "pointer",
                     }}
                   >
-                    {isSubmitting ? "저장 중..." : "대시보드 📊"}
+                    {isSubmitting ? "저장 중..." : "자산관리 📊"}
                   </button>
                   <button
                     type="button"
@@ -2284,7 +2284,7 @@ export default function OnboardingPage() {
                     className="premium-button"
                     style={{ background: "var(--gradient-brand)" }}
                   >
-                    {isSubmitting ? "저장 중..." : "대시보드 바로가기 📊"}
+                    {isSubmitting ? "저장 중..." : "자산관리 바로가기 📊"}
                   </button>
                   <button
                     type="button"

@@ -20,7 +20,7 @@ export default function WithdrawalStrategyPage() {
       backgroundColor: "var(--background)",
       color: "var(--text-secondary)",
     }}>
-      <p>대시보드로 이동 중...</p>
+      <p>자산관리로 이동 중...</p>
     </div>
   );
 }

@@ -24,7 +24,11 @@ export const DEFAULT_ACTIVE_YEARS = 5; // 초기 활동기 기본 유지 기간:
 export const DEFAULT_ANNUAL_DECLINE_RATE = 2.0; // 이후 연간 감액률 기본값: 2.0%
 
 /**
- * 연령대별 목표/최소 생활비를 나이에 따라 부드럽게 보간(Smoothing)하여 계산
+ * 연령대별 설정에 따라 목표/최소 생활비를 나이대별로 정확하게 반영
+ * - 60대 (70세 미만 전체): 60대 설정값 (목표 / 최소)
+ * - 70대 (70~79세): 70대 설정값 (목표 / 최소)
+ * - 80대 (80~89세): 80대 설정값 (목표 / 최소)
+ * - 90대+ (90세 이상): 90대+ 설정값 (목표 / 최소)
  */
 function interpolateAgeBands(
   age: number,
@@ -36,8 +40,8 @@ function interpolateAgeBands(
   const b80 = bands.age80s || DEFAULT_AGE_BANDS.age80s;
   const b90 = bands.age90s || DEFAULT_AGE_BANDS.age90s;
 
-  // 60대 (은퇴 나이 ~ 68세)
-  if (age < 69) {
+  // 60대 (70세 미만 전체: 은퇴 초기 및 60대 활동기)
+  if (age < 70) {
     return {
       target: b60.target,
       min: b60.min,
@@ -45,19 +49,8 @@ function interpolateAgeBands(
       phaseLabel: "60대 초기 활동기",
     };
   }
-  // 69~70세: 60대에서 70대로 완만한 전환 (스무딩)
-  if (age === 69) {
-    const t = Math.round(b60.target * 0.7 + b70.target * 0.3);
-    const m = Math.round(b60.min * 0.7 + b70.min * 0.3);
-    return { target: t, min: m, phase: "ACTIVE", phaseLabel: "활동기 전환 (69세)" };
-  }
-  if (age === 70) {
-    const t = Math.round(b60.target * 0.3 + b70.target * 0.7);
-    const m = Math.round(b60.min * 0.3 + b70.min * 0.7);
-    return { target: t, min: m, phase: "PASSIVE", phaseLabel: "70대 소비 안정기 (70세)" };
-  }
-  // 71~78세: 70대 안정기
-  if (age < 79) {
+  // 70대 (70~79세: 소비 안정기)
+  if (age < 80) {
     return {
       target: b70.target,
       min: b70.min,
@@ -65,19 +58,8 @@ function interpolateAgeBands(
       phaseLabel: "70대 소비 안정기",
     };
   }
-  // 79~80세: 70대에서 80대로 완만한 전환
-  if (age === 79) {
-    const t = Math.round(b70.target * 0.7 + b80.target * 0.3);
-    const m = Math.round(b70.min * 0.7 + b80.min * 0.3);
-    return { target: t, min: m, phase: "PASSIVE", phaseLabel: "안정기 전환 (79세)" };
-  }
-  if (age === 80) {
-    const t = Math.round(b70.target * 0.3 + b80.target * 0.7);
-    const m = Math.round(b70.min * 0.3 + b80.min * 0.7);
-    return { target: t, min: m, phase: "LATE", phaseLabel: "80대 활동 감소기 (80세)" };
-  }
-  // 81~88세: 80대 활동 감소기
-  if (age < 89) {
+  // 80대 (80~89세: 활동 감소기)
+  if (age < 90) {
     return {
       target: b80.target,
       min: b80.min,
@@ -85,13 +67,7 @@ function interpolateAgeBands(
       phaseLabel: "80대 활동 감소기",
     };
   }
-  // 89~90세: 80대에서 90대로 완만한 전환
-  if (age === 89) {
-    const t = Math.round(b80.target * 0.7 + b90.target * 0.3);
-    const m = Math.round(b80.min * 0.7 + b90.min * 0.3);
-    return { target: t, min: m, phase: "LATE", phaseLabel: "노년기 전환 (89세)" };
-  }
-  // 90세 이상: 간병/노년기 (100세, 105세까지 일정하게 안전한 수준 유지)
+  // 90대 이상 (90세~: 간병·노년기)
   return {
     target: b90.target,
     min: b90.min,

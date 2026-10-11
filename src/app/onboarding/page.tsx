@@ -15,6 +15,7 @@ import { extractPdfText } from "@/utils/pdfText";
 import FssUploadPanel, { FSS_SLOTS, emptyFssFiles, type FssFiles, type FssSlot } from "@/components/FssUploadPanel";
 import PensionStructureSummary from "@/components/PensionStructureSummary";
 import PersonaPresetModal from "@/components/PersonaPresetModal";
+import { SlidingTabs } from "@/components/motion";
 
 type StepKind = "INFO" | "GOAL" | "FSS" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SUMMARY";
 
@@ -783,17 +784,19 @@ export default function OnboardingPage() {
             <div style={styles.titleRow}>
               <h2 style={{ ...styles.formTitle, marginTop: 0 }}>{group.title}</h2>
               {groupSteps.length > 1 && (
-                <div style={styles.personTabs}>
-                  {groupSteps.map((s) => (
-                    <button
-                      key={s.key}
-                      type="button"
-                      onClick={() => goToStep(visibleSteps.indexOf(s))}
-                      style={{ ...styles.personTab, ...(s.key === step.key ? styles.personTabActive : null) }}
-                    >
-                      {s.tab}
-                    </button>
-                  ))}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <SlidingTabs
+                    tabs={groupSteps.map((s) => ({
+                      id: s.key,
+                      label: s.tab,
+                    }))}
+                    activeTabId={step.key}
+                    onChange={(id) => {
+                      const target = visibleSteps.find((s) => s.key === id);
+                      if (target) goToStep(visibleSteps.indexOf(target));
+                    }}
+                    size="sm"
+                  />
                   {group.key === "info" && (
                     <button
                       type="button"
@@ -833,7 +836,7 @@ export default function OnboardingPage() {
                     id="btn-top-dashboard-navigate"
                     onClick={() => handleFinish("/dashboard")}
                     disabled={isSubmitting}
-                    className="premium-button"
+                    className="premium-button t-btn-glossy"
                     style={{
                       background: "var(--gradient-brand)",
                       padding: "8px 18px",
@@ -849,7 +852,7 @@ export default function OnboardingPage() {
                     id="btn-top-ai-advisor-navigate"
                     onClick={() => handleFinish("/dashboard/ai-advisor")}
                     disabled={isSubmitting}
-                    className="premium-button"
+                    className="premium-button t-btn-glossy"
                     style={{
                       background: "var(--gradient-secondary, linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%))",
                       color: "#ffffff",

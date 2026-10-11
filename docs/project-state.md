@@ -111,19 +111,21 @@
 - **[Completed]** Story S37-3: AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출 (`AiThinkingStream.tsx` 4단계 스트리밍 시뮬레이션 및 `DiagnosisReport.tsx` 게이지 스코어 `NumberPopIn` 연동 완료)
 - **[Completed]** Story S37-4: 온보딩 슬라이딩 탭 및 랜딩 페이지 3D 틸트/글로시 CTA 비주얼 업그레이드 (`onboarding/page.tsx` Step 0 `SlidingTabs`, `page.tsx` 히어로 `t-btn-glossy`, 벤치마킹 카드 `CardTilt` 및 모달 `t-modal-spring` 연동 완료)
 - **[Completed]** 전체 모달 컴포넌트 다크/라이트 테마 일관성 일원화: `globals.css` 모달 토큰 확장 및 11개 전문 팝업 모달 하드코딩 다크 스타일 제거, 라이트모드 텍스트 묻힘 해결 및 테마 동기화 완료
+- **[Completed]** AI 종합 진단 PDF 빈 화면(Blank Page) 출력 버그 수정: 오프스크린 인쇄 전용 컨테이너(`#ai-prescription-pdf-root`)의 `opacity: 0`을 `1`로 정상화하고 `exportPdf.ts`에 일시적 opacity 안전 복구 및 캔버스 크기 검증 로직 추가 (FP-030)
 
 ## Active Sprint / Story
 - **Sprint 37** (완료): transitions.dev 기반 UI/UX 모션 고도화 및 인터랙티브 인터페이스 확립
-- **UI/UX 테마 픽스** (완료): 전체 모달 컴포넌트 다크/라이트 모드 테마 일원화 및 가독성 개선
+- **Hotfix** (완료): AI 종합 진단 리포트 PDF 빈 화면 출력 결함 수정 (FP-030)
 
-## Session Handoff (모달 테마 일관성 작업 완료)
+## Session Handoff (PDF 빈 화면 결함 수정 완료)
 - **주요 수정 내역**:
-  1. `src/app/globals.css`:
-     - `:root` 및 `[data-theme="dark"]`에 `--modal-bg`, `--modal-surface`, `--modal-surface-sub`, `--modal-surface-card`, `--modal-border`, `--modal-border-subtle`, `--modal-subbox-bg`, `--modal-subbox-border`, `--modal-table-th`, `--modal-table-border`, `--tooltip-bg`, `--tooltip-border`, `--tooltip-text` 토큰 추가.
-  2. 11개 전문 팝업 모달 전면 개편:
-     - `NpsBoostRoadmapModal`, `SurvivorCareModal`, `DividendStrategyModal`, `IncomeBridgeModal`, `IsaPensionTransferModal`, `ReverseMortgageModal`, `SavingsPlanModal`, `HealthInsuranceBillModal`, `PrivatePensionTaxModal`, `NpsEarlyDeferralModal`, `PersonaPresetModal`
-     - 라이트 모드에서 순백/연회색 카드 배경 및 명확한 글자 대비 가독성 확보, 다크 모드 전환 시 기존 ETF Lens 다크 테마 완벽 동기화.
-- **검증 상태**: `npm run build` 성공(0 errors), Chrome 브라우저 시각 검증 완료 (국민연금 증액 로드맵, 홀로 남은 배우자 생애 케어, 실전 배당 포트폴리오 가이드, 소득 공백기 플래너 등 확인).
+  1. `src/app/dashboard/ai-advisor/page.tsx`:
+     - 오프스크린 인쇄 컨테이너(`#ai-prescription-pdf-root`)의 불필요한 `opacity: 0`을 `1`로 수정 (이미 `position: fixed; left: -9999px; pointerEvents: none`으로 화면 밖 숨김 처리되어 있어 투명도 0은 html2canvas에 투명 캔버스만 생성하는 원인이었음).
+  2. `src/utils/exportPdf.ts`:
+     - 캡처 대상 엘리먼트의 `style.opacity === "0"` 감지 시 html2canvas 캡처 동안 일시적으로 1로 복구하는 방어 로직 추가.
+     - 캔버스 너비/높이 0 검증 및 안전한 배경색 fallback 처리.
+- **검증 상태**: `npm run build` 성공(0 errors), Chrome 브라우저 실제 PDF 다운로드 트리거 및 html2canvas 캔버스 픽셀 렌더링(480만+ 유효 픽셀) 검증 완료.
+
 
 
 - **주요 산출물**:

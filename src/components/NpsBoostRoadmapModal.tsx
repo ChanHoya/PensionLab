@@ -124,12 +124,19 @@ export function NpsBoostRoadmapModal({ isOpen, onClose }: Props) {
         <div style={{ height: 260, flexShrink: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 24, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.15)" vertical={false} />
-              <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
-              <YAxis stroke="#94a3b8" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--modal-border, rgba(148,163,184,0.15))" vertical={false} />
+              <XAxis dataKey="name" stroke="var(--text-muted, #94a3b8)" fontSize={11} />
+              <YAxis stroke="var(--text-muted, #94a3b8)" fontSize={11} />
               <Tooltip
                 cursor={{ fill: "rgba(148,163,184,0.08)" }}
-                contentStyle={{ background: "#0f172a", border: "1px solid #334155", borderRadius: 8, fontSize: "0.78rem" }}
+                contentStyle={{
+                  background: "var(--modal-bg, #ffffff)",
+                  border: "1px solid var(--modal-border, #e2e8f0)",
+                  color: "var(--text-primary, #0f1127)",
+                  borderRadius: 8,
+                  fontSize: "0.78rem",
+                  boxShadow: "var(--shadow-md)"
+                }}
                 formatter={(value, name) => (name === "base" ? [null, null] : [`${Number(value ?? 0).toFixed(1)}만원`, "증가분"])}
               />
               <Bar dataKey="base" stackId="w" fill="transparent" isAnimationActive={false} />
@@ -137,7 +144,7 @@ export function NpsBoostRoadmapModal({ isOpen, onClose }: Props) {
                 {chartData.map((d) => (
                   <Cell key={d.key} fill={STEP_COLOR[d.key as BoostStepKey]} />
                 ))}
-                <LabelList dataKey="total" position="top" fill="#e2e8f0" fontSize={11} />
+                <LabelList dataKey="total" position="top" fill="var(--text-primary, #0f1127)" fontSize={11} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -246,7 +253,7 @@ const S: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    backgroundColor: "var(--overlay-bg, rgba(15, 23, 42, 0.65))",
     backdropFilter: "blur(6px)",
     padding: "16px",
   },
@@ -255,38 +262,39 @@ const S: Record<string, React.CSSProperties> = {
     maxWidth: "960px",
     maxHeight: "92vh",
     overflowY: "auto",
-    background: "var(--card-bg, #1e293b)",
-    color: "var(--text-primary, #f8fafc)",
+    background: "var(--modal-bg, #ffffff)",
+    color: "var(--text-primary, #0f1127)",
     borderRadius: "16px",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+    border: "1px solid var(--modal-border, #e2e8f0)",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
     padding: "24px",
     display: "flex",
     flexDirection: "column",
     gap: "16px",
   },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 14 },
-  title: { fontSize: "1.25rem", fontWeight: 800, margin: 0 },
-  subtitle: { fontSize: "0.82rem", color: "var(--text-secondary, #94a3b8)", margin: "6px 0 0", lineHeight: 1.6 },
-  close: { background: "none", border: "none", color: "var(--text-secondary, #94a3b8)", fontSize: "1.4rem", cursor: "pointer", padding: 4 },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, borderBottom: "1px solid var(--modal-border, #e2e8f0)", paddingBottom: 14 },
+  title: { fontSize: "1.25rem", fontWeight: 800, margin: 0, color: "var(--text-primary, #0f1127)" },
+  subtitle: { fontSize: "0.82rem", color: "var(--text-secondary, #334155)", margin: "6px 0 0", lineHeight: 1.6 },
+  close: { background: "none", border: "none", color: "var(--text-muted, #64748b)", fontSize: "1.4rem", cursor: "pointer", padding: 4 },
   kpiRow: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 },
-  kpi: { padding: 14, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" },
-  kpiLabel: { fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" },
-  kpiValue: { fontSize: "1.15rem", fontWeight: 800, marginTop: 4 },
-  kpiSub: { fontSize: "0.72rem", color: "#94a3b8", marginTop: 2 },
+  kpi: { padding: 14, borderRadius: 10, background: "var(--modal-surface-card, #f8fafc)", border: "1px solid var(--modal-border, #e2e8f0)" },
+  kpiLabel: { fontSize: "0.75rem", color: "var(--text-muted, #64748b)" },
+  kpiValue: { fontSize: "1.15rem", fontWeight: 800, marginTop: 4, color: "var(--text-primary, #0f1127)" },
+  kpiSub: { fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginTop: 2 },
   tabs: { display: "flex", gap: 6 },
-  tab: { padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "#cbd5e1", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" },
-  tabOn: { background: "#6366f1", borderColor: "#6366f1", color: "#fff" },
+  tab: { padding: "6px 14px", borderRadius: 8, border: "1px solid var(--modal-border, #e2e8f0)", background: "var(--modal-surface-card, #f8fafc)", color: "var(--text-secondary, #334155)", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" },
+  tabOn: { background: "#6366f1", borderColor: "#6366f1", color: "#ffffff" },
   table: { width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" },
-  th: { textAlign: "left", padding: "8px 6px", borderBottom: "1px solid rgba(255,255,255,0.15)", color: "#94a3b8", fontSize: "0.72rem", fontWeight: 700 },
-  td: { padding: "8px 6px", borderBottom: "1px solid rgba(255,255,255,0.06)", verticalAlign: "top" },
+  th: { textAlign: "left", padding: "8px 6px", borderBottom: "1px solid var(--modal-border, #e2e8f0)", color: "var(--text-muted, #64748b)", fontSize: "0.72rem", fontWeight: 700, background: "var(--modal-table-th, #f8fafc)" },
+  td: { padding: "8px 6px", borderBottom: "1px solid var(--modal-border-subtle, #f1f5f9)", verticalAlign: "top", color: "var(--text-primary, #0f1127)" },
   dot: { display: "inline-block", width: 9, height: 9, borderRadius: 2, marginRight: 6 },
   chip: { marginLeft: 6, fontSize: "0.65rem", fontWeight: 700, padding: "1px 6px", borderRadius: 999, border: "1px solid", whiteSpace: "nowrap" },
   controls: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 },
-  control: { display: "flex", flexDirection: "column", gap: 6, padding: 12, borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" },
-  controlLabel: { fontSize: "0.8rem", fontWeight: 600 },
+  control: { display: "flex", flexDirection: "column", gap: 6, padding: 12, borderRadius: 10, background: "var(--modal-surface-card, #f8fafc)", border: "1px solid var(--modal-border, #e2e8f0)" },
+  controlLabel: { fontSize: "0.8rem", fontWeight: 600, color: "var(--text-primary, #0f1127)" },
   range: { width: "100%", accentColor: "#6366f1", cursor: "pointer" },
-  hint: { fontSize: "0.7rem", color: "#94a3b8", lineHeight: 1.5 },
+  hint: { fontSize: "0.7rem", color: "var(--text-muted, #64748b)", lineHeight: 1.5 },
   insights: { display: "flex", flexDirection: "column", gap: 8, padding: 14, borderRadius: 10, background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.25)" },
-  insight: { fontSize: "0.78rem", lineHeight: 1.65, margin: 0, color: "#cbd5e1" },
+  insight: { fontSize: "0.78rem", lineHeight: 1.65, margin: 0, color: "var(--text-secondary, #334155)" },
 };
+

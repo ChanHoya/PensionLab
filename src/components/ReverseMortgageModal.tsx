@@ -74,14 +74,14 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
           width: "100%",
           maxWidth: "880px",
           maxHeight: "90vh",
-          backgroundColor: "#161b26",
-          border: "1px solid #2d3748",
+          backgroundColor: "var(--modal-bg, #ffffff)",
+          border: "1px solid var(--modal-border, #e2e8f0)",
           borderRadius: "16px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.7)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          color: "#e2e8f0",
+          color: "var(--text-primary, #0f1127)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -89,17 +89,17 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
         <div
           style={{
             padding: "20px 24px",
-            borderBottom: "1px solid #2d3748",
+            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            background: "linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9))",
+            background: "var(--modal-bg, #ffffff)",
           }}
         >
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: "1.4rem" }}>🏠</span>
-              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "#f8fafc" }}>
+              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>
                 주택연금(역모기지) 결합 시뮬레이터
               </h2>
               <span
@@ -108,15 +108,15 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
                   padding: "3px 8px",
                   borderRadius: "12px",
                   fontWeight: 600,
-                  backgroundColor: useReverseMortgage ? "rgba(16, 185, 129, 0.2)" : "rgba(148, 163, 184, 0.2)",
-                  color: useReverseMortgage ? "#34d399" : "#94a3b8",
-                  border: useReverseMortgage ? "1px solid #059669" : "1px solid #475569",
+                  backgroundColor: useReverseMortgage ? "rgba(16, 185, 129, 0.15)" : "var(--modal-subbox-bg, #f1f5f9)",
+                  color: useReverseMortgage ? "#059669" : "var(--text-muted, #64748b)",
+                  border: useReverseMortgage ? "1px solid #10b981" : "1px solid var(--modal-border, #cbd5e1)",
                 }}
               >
                 {useReverseMortgage ? "시뮬레이션 결합 활성" : "미결합 상태"}
               </span>
             </div>
-            <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "#94a3b8" }}>
+            <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "var(--text-secondary, #64748b)" }}>
               한국주택금융공사(HF) 기준 — 보유 주택을 담보로 평생 매월 연금을 수령하여 은퇴 후 소득 결손을 완벽히 방어합니다.
             </p>
           </div>
@@ -126,7 +126,7 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
             style={{
               background: "transparent",
               border: "none",
-              color: "#94a3b8",
+              color: "var(--text-secondary, #64748b)",
               fontSize: "1.5rem",
               cursor: "pointer",
               padding: "4px 8px",
@@ -143,19 +143,19 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
             style={{
               padding: "16px 20px",
               borderRadius: "12px",
-              backgroundColor: useReverseMortgage ? "rgba(16, 185, 129, 0.08)" : "rgba(30, 41, 59, 0.6)",
-              border: useReverseMortgage ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid #334155",
+              backgroundColor: useReverseMortgage ? "rgba(16, 185, 129, 0.08)" : "var(--modal-subbox-bg, #f8fafc)",
+              border: useReverseMortgage ? "1px solid rgba(16, 185, 129, 0.4)" : "1px solid var(--modal-subbox-border, #e2e8f0)",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
             }}
           >
             <div>
-              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: useReverseMortgage ? "#34d399" : "#f8fafc" }}>
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: useReverseMortgage ? "#059669" : "var(--text-primary, #0f1127)" }}>
                 대시보드 은퇴 현금흐름에 주택연금 결합하기
               </div>
-              <div style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: 4 }}>
-                스위치를 켜면 {startAge}세부터 매월 <b style={{ color: "#38bdf8" }}>{estimate.monthlyPayoutManwon.toLocaleString()}만원</b>이 가구 고정 수령액으로 합산됩니다.
+              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary, #64748b)", marginTop: 4 }}>
+                스위치를 켜면 {startAge}세부터 매월 <b style={{ color: "#0284c7" }}>{estimate.monthlyPayoutManwon.toLocaleString()}만원</b>이 가구 고정 수령액으로 합산됩니다.
               </div>
             </div>
             <label style={{ position: "relative", display: "inline-block", width: "52px", height: "28px" }}>
@@ -173,7 +173,7 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  backgroundColor: useReverseMortgage ? "#10b981" : "#475569",
+                  backgroundColor: useReverseMortgage ? "#10b981" : "#cbd5e1",
                   borderRadius: "28px",
                   transition: "0.3s",
                 }}
@@ -198,10 +198,10 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
           {/* Interactive Sliders */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {/* Slider 1: House Price */}
-            <div style={{ padding: "16px", borderRadius: "12px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
+            <div style={{ padding: "16px", borderRadius: "12px", backgroundColor: "var(--modal-subbox-bg, #f8fafc)", border: "1px solid var(--modal-subbox-border, #e2e8f0)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span style={{ fontSize: "0.85rem", color: "#94a3b8" }}>주택 공시가격 (시세 기준)</span>
-                <span style={{ fontWeight: 700, fontSize: "1rem", color: "#38bdf8" }}>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary, #64748b)" }}>주택 공시가격 (시세 기준)</span>
+                <span style={{ fontWeight: 700, fontSize: "1rem", color: "#0284c7" }}>
                   {(houseValueManwon / 10000).toFixed(1)}억원
                 </span>
               </div>
@@ -212,20 +212,20 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
                 step={5000} // 5천만원 단위
                 value={houseValueManwon}
                 onChange={(e) => setHouseValueManwon(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#38bdf8", cursor: "pointer" }}
+                style={{ width: "100%", accentColor: "#0284c7", cursor: "pointer" }}
               />
-              <div style={{ fontSize: "0.7rem", color: "#64748b", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+              <div style={{ fontSize: "0.7rem", color: "var(--text-muted, #94a3b8)", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                 <span>1억원</span>
-                <span style={{ color: "#fbbf24" }}>공시가 상한 12억원</span>
+                <span style={{ color: "#d97706" }}>공시가 상한 12억원</span>
                 <span>15억원</span>
               </div>
             </div>
 
             {/* Slider 2: Entry Age */}
-            <div style={{ padding: "16px", borderRadius: "12px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
+            <div style={{ padding: "16px", borderRadius: "12px", backgroundColor: "var(--modal-subbox-bg, #f8fafc)", border: "1px solid var(--modal-subbox-border, #e2e8f0)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span style={{ fontSize: "0.85rem", color: "#94a3b8" }}>수령 개시 연령 (만 나이)</span>
-                <span style={{ fontWeight: 700, fontSize: "1rem", color: "#38bdf8" }}>
+                <span style={{ fontSize: "0.85rem", color: "var(--text-secondary, #64748b)" }}>수령 개시 연령 (만 나이)</span>
+                <span style={{ fontWeight: 700, fontSize: "1rem", color: "#0284c7" }}>
                   만 {startAge}세
                 </span>
               </div>
@@ -236,9 +236,9 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
                 step={1}
                 value={startAge}
                 onChange={(e) => setStartAge(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#38bdf8", cursor: "pointer" }}
+                style={{ width: "100%", accentColor: "#0284c7", cursor: "pointer" }}
               />
-              <div style={{ fontSize: "0.7rem", color: "#64748b", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+              <div style={{ fontSize: "0.7rem", color: "var(--text-muted, #94a3b8)", display: "flex", justifyContent: "space-between", marginTop: 4 }}>
                 <span>법정 최소 55세</span>
                 <span>권장 65세</span>
                 <span>85세</span>
@@ -248,38 +248,38 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
 
           {/* Key Output Metrics Cards */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
-              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>월 지급금 (종신)</div>
-              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#38bdf8", marginTop: 4 }}>
+            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "var(--modal-surface-card, #f8fafc)", border: "1px solid var(--modal-border, #e2e8f0)" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>월 지급금 (종신)</div>
+              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0284c7", marginTop: 4 }}>
                 월 {estimate.monthlyPayoutManwon.toLocaleString()}만원
               </div>
-              <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>
+              <div style={{ fontSize: "0.7rem", color: "var(--text-muted, #94a3b8)", marginTop: 2 }}>
                 {spouseAgeGap !== null ? `부부 중 연소자(만 ${estimate.age}세) 기준 · 배우자 100% 승계` : "평생 정액 지급"}
               </div>
             </div>
 
-            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
-              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>연간 지급금 합계</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f8fafc", marginTop: 4 }}>
+            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "var(--modal-surface-card, #f8fafc)", border: "1px solid var(--modal-border, #e2e8f0)" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>연간 지급금 합계</div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text-primary, #0f1127)", marginTop: 4 }}>
                 {formatWon(estimate.annualPayoutWon)}
               </div>
-              <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>1억원당 월 {(estimate.monthlyPer100M / 10000).toFixed(1)}만원</div>
+              <div style={{ fontSize: "0.7rem", color: "var(--text-muted, #94a3b8)", marginTop: 2 }}>1억원당 월 {(estimate.monthlyPer100M / 10000).toFixed(1)}만원</div>
             </div>
 
-            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
-              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>80세까지 누적 수령</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fbbf24", marginTop: 4 }}>
+            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "var(--modal-surface-card, #f8fafc)", border: "1px solid var(--modal-border, #e2e8f0)" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>80세까지 누적 수령</div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#d97706", marginTop: 4 }}>
                 {formatWon(estimate.annualPayoutWon * Math.max(0, 80 - startAge))}
               </div>
-              <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>{80 - startAge}년간 누적</div>
+              <div style={{ fontSize: "0.7rem", color: "var(--text-muted, #94a3b8)", marginTop: 2 }}>{80 - startAge}년간 누적</div>
             </div>
 
-            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "#0f172a", border: "1px solid #1e293b" }}>
-              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>90세까지 누적 수령</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#34d399", marginTop: 4 }}>
+            <div style={{ padding: "14px", borderRadius: "10px", backgroundColor: "var(--modal-surface-card, #f8fafc)", border: "1px solid var(--modal-border, #e2e8f0)" }}>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>90세까지 누적 수령</div>
+              <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#059669", marginTop: 4 }}>
                 {formatWon(estimate.annualPayoutWon * Math.max(0, 90 - startAge))}
               </div>
-              <div style={{ fontSize: "0.7rem", color: "#64748b", marginTop: 2 }}>{90 - startAge}년간 누적</div>
+              <div style={{ fontSize: "0.7rem", color: "var(--text-muted, #94a3b8)", marginTop: 2 }}>{90 - startAge}년간 누적</div>
             </div>
           </div>
 
@@ -288,52 +288,52 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
             style={{
               padding: "16px 20px",
               borderRadius: "12px",
-              backgroundColor: "#0f172a",
-              border: "1px solid #1e293b",
+              backgroundColor: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
               display: "flex",
               flexDirection: "column",
               gap: 12,
             }}
           >
-            <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "#f8fafc" }}>
+            <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary, #0f1127)" }}>
               🛡️ 한국주택금융공사(HF) 주택연금 4대 안심 보장
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: "0.8rem" }}>
               <div style={{ display: "flex", gap: 8 }}>
-                <span style={{ color: "#34d399" }}>✔</span>
+                <span style={{ color: "#059669" }}>✔</span>
                 <div>
-                  <b style={{ color: "#e2e8f0" }}>평생 거주 & 종신 지급 보장</b>
-                  <div style={{ color: "#94a3b8", marginTop: 2 }}>
+                  <b style={{ color: "var(--text-primary, #0f1127)" }}>평생 거주 & 종신 지급 보장</b>
+                  <div style={{ color: "var(--text-secondary, #64748b)", marginTop: 2 }}>
                     부부 모두 사망할 때까지 평생 거주하면서 동일한 월지급금을 종신토록 지급받습니다.
                   </div>
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>
-                <span style={{ color: "#34d399" }}>✔</span>
+                <span style={{ color: "#059669" }}>✔</span>
                 <div>
-                  <b style={{ color: "#e2e8f0" }}>비소구 대출 (상속인 부담 없음)</b>
-                  <div style={{ color: "#94a3b8", marginTop: 2 }}>
+                  <b style={{ color: "var(--text-primary, #0f1127)" }}>비소구 대출 (상속인 부담 없음)</b>
+                  <div style={{ color: "var(--text-secondary, #64748b)", marginTop: 2 }}>
                     집값이 떨어져 총 수령액이 주택가격을 초과해도 자녀에게 청구하지 않으며, 남으면 상속인에게 환급합니다.
                   </div>
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>
-                <span style={{ color: "#34d399" }}>✔</span>
+                <span style={{ color: "#059669" }}>✔</span>
                 <div>
-                  <b style={{ color: "#e2e8f0" }}>건강보험료 완전 비과세 (영향 0원)</b>
-                  <div style={{ color: "#94a3b8", marginTop: 2 }}>
+                  <b style={{ color: "var(--text-primary, #0f1127)" }}>건강보험료 완전 비과세 (영향 0원)</b>
+                  <div style={{ color: "var(--text-secondary, #64748b)", marginTop: 2 }}>
                     소득이 아닌 역모기지 대출금이므로 소득으로 잡히지 않아 건강보험료가 전혀 증가하지 않습니다.
                   </div>
                 </div>
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>
-                <span style={{ color: "#34d399" }}>✔</span>
+                <span style={{ color: "#059669" }}>✔</span>
                 <div>
-                  <b style={{ color: "#e2e8f0" }}>세제 혜택 (재산세 감면 & 소득공제)</b>
-                  <div style={{ color: "#94a3b8", marginTop: 2 }}>
+                  <b style={{ color: "var(--text-primary, #0f1127)" }}>세제 혜택 (재산세 감면 & 소득공제)</b>
+                  <div style={{ color: "var(--text-secondary, #64748b)", marginTop: 2 }}>
                     {estimate.benefits.propertyTaxRelief} 및 연간 대출이자 200만원 한도 소득공제를 지원합니다.
                   </div>
                 </div>
@@ -346,14 +346,14 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid #2d3748",
+            borderTop: "1px solid var(--modal-border, #e2e8f0)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            backgroundColor: "#0f172a",
+            backgroundColor: "var(--modal-subbox-bg, #f8fafc)",
           }}
         >
-          <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+          <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #94a3b8)" }}>
             * 공시가격 12억원 초과 주택은 가입이 제한되거나 상한액(12억원) 기준으로 산출됩니다.
           </div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -363,9 +363,9 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
               style={{
                 padding: "8px 16px",
                 borderRadius: "8px",
-                backgroundColor: "#334155",
-                color: "#e2e8f0",
-                border: "none",
+                backgroundColor: "var(--modal-surface, #ffffff)",
+                color: "var(--text-secondary, #64748b)",
+                border: "1px solid var(--modal-border, #cbd5e1)",
                 fontWeight: 600,
                 cursor: "pointer",
                 fontSize: "0.85rem",

@@ -106,7 +106,7 @@ export default function PolicyNewsPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
-  const [isBriefingExpanded, setIsBriefingExpanded] = useState(false);
+  const [expandedArticleId, setExpandedArticleId] = useState<string | null>(null);
 
   const fetchNews = async (refresh: boolean = false) => {
     if (refresh) {
@@ -271,72 +271,112 @@ export default function PolicyNewsPage() {
             </div>
           ) : (
             <>
-              {/* Top Unified Summary Box (펼치기/접히기 토글로 5칸 크기 확장 및 전체 기사 스크롤) */}
-              {filteredArticles.length > 0 && (
-                <div
-                  style={{
-                    ...styles.topSummaryBox,
-                    maxHeight: isBriefingExpanded ? "580px" : "340px",
-                    transition: "max-height 0.3s ease-in-out",
-                  }}
-                  className="premium-card"
-                >
+              {/* Top Unified Summary Box (3개 주요 기사 중 하나를 클릭하면 5줄 이상 내용 펼치기/접히기 & 스크롤) */}
+              {filteredArticles.slice(0, 3).length > 0 && (
+                <div style={styles.topSummaryBox} className="premium-card">
                   <div style={styles.topSummaryHeader}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <span style={{ fontSize: "1.2rem" }}>⚡</span>
                       <span style={styles.topSummaryBadge}>
-                        오늘의 연금 주요 뉴스 핵심 브리핑 {isBriefingExpanded ? `(전체 ${filteredArticles.length}개 기사)` : `(주요 뉴스 TOP ${Math.min(3, filteredArticles.length)})`}
+                        오늘의 연금 주요 뉴스 핵심 브리핑 (주요 뉴스 TOP {Math.min(3, filteredArticles.length)})
                       </span>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                      <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                        * 기사를 클릭하면 전체 화면 원문 뷰어로 열립니다
-                      </span>
-                      <button
-                        id="btn-toggle-briefing-expand"
-                        onClick={() => setIsBriefingExpanded((prev) => !prev)}
-                        className="premium-button-secondary"
-                        style={{
-                          padding: "5px 12px",
-                          fontSize: "0.82rem",
-                          fontWeight: 700,
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          cursor: "pointer",
-                          borderRadius: "6px",
-                          backgroundColor: isBriefingExpanded ? "rgba(99, 102, 241, 0.15)" : "var(--surface)",
-                          borderColor: "var(--primary-light)",
-                          color: "var(--text-primary)",
-                          transition: "all var(--transition-fast)",
-                        }}
-                        title={isBriefingExpanded ? "원래 3칸 크기로 접기" : "5칸 크기로 넓혀 모든 기사 스크롤하여 보기"}
-                      >
-                        <span>{isBriefingExpanded ? "접히기 ▴" : "펼치기 ▾"}</span>
-                      </button>
-                    </div>
+                    <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                      * 기사를 클릭하면 5줄 이상 내용이 펼쳐지며, 박스 내 스크롤로 상세 내용을 볼 수 있습니다
+                    </span>
                   </div>
 
                   <div style={{ ...styles.topSummaryContent, overflowY: "auto", flex: 1 }}>
-                    {(isBriefingExpanded ? filteredArticles : filteredArticles.slice(0, 3)).map((art, idx) => (
-                      <div
-                        key={art.id}
-                        onClick={() => handleArticleClick(art)}
-                        style={styles.topSummaryItem}
-                        className="top-summary-item-hover"
-                      >
-                        <div style={styles.topSummaryItemHeader}>
-                          <span style={styles.topSummaryIndex}>{idx + 1}</span>
-                          <span style={styles.cardBadge}>{art.category}</span>
-                          <span style={styles.topSummaryItemTitle}>{art.title}</span>
-                          <span style={styles.topSummaryItemMeta}>{art.author} • {art.date}</span>
+                    {filteredArticles.slice(0, 3).map((art, idx) => {
+                      const isExpanded = expandedArticleId === art.id;
+                      return (
+                        <div
+                          key={art.id}
+                          onClick={() => setExpandedArticleId(isExpanded ? null : art.id)}
+                          style={{
+                            ...styles.topSummaryItem,
+                            borderColor: isExpanded ? "rgba(99, 102, 241, 0.45)" : "rgba(99, 102, 241, 0.12)",
+                            backgroundColor: isExpanded ? "rgba(99, 102, 241, 0.06)" : "rgba(99, 102, 241, 0.03)",
+                          }}
+                          className="top-summary-item-hover"
+                        >
+                          <div style={styles.topSummaryItemHeader}>
+                            <span style={styles.topSummaryIndex}>{idx + 1}</span>
+                            <span style={styles.cardBadge}>{art.category}</span>
+                            <span style={styles.topSummaryItemTitle}>{art.title}</span>
+                            <span style={styles.topSummaryItemMeta}>{art.author} • {art.date}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedArticleId(isExpanded ? null : art.id);
+                              }}
+                              className="premium-button-secondary"
+                              style={{
+                                padding: "4px 10px",
+                                fontSize: "0.76rem",
+                                fontWeight: 700,
+                                borderRadius: "5px",
+                                cursor: "pointer",
+                                marginLeft: "auto",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "3px",
+                                backgroundColor: isExpanded ? "rgba(99, 102, 241, 0.18)" : "var(--surface)",
+                              }}
+                              title={isExpanded ? "기사 내용 접기" : "기사 내용 5줄 이상 펼쳐보기"}
+                            >
+                              <span>{isExpanded ? "접히기 ▴" : "펼치기 ▾"}</span>
+                            </button>
+                          </div>
+
+                          {isExpanded ? (
+                            <div style={styles.expandedArticleBox} onClick={(e) => e.stopPropagation()}>
+                              <div style={styles.expandedArticleScrollContent}>
+                                <p style={styles.expandedArticleText}>
+                                  {art.content || art.summary}
+                                </p>
+                              </div>
+                              <div style={styles.expandedArticleFooter}>
+                                <button
+                                  onClick={() => setSelectedArticle(art)}
+                                  className="premium-button-secondary"
+                                  style={{
+                                    padding: "5px 12px",
+                                    fontSize: "0.78rem",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  <span>🌐</span>
+                                  <span>원문 기사 뷰어로 크게 보기 ↗</span>
+                                </button>
+                                <button
+                                  onClick={() => setExpandedArticleId(null)}
+                                  style={{
+                                    background: "none",
+                                    border: "none",
+                                    color: "var(--text-muted)",
+                                    fontSize: "0.78rem",
+                                    cursor: "pointer",
+                                    textDecoration: "underline",
+                                  }}
+                                >
+                                  내용 접히기 ▴
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p style={styles.topSummaryItemText}>{art.summary}</p>
+                          )}
                         </div>
-                        <p style={styles.topSummaryItemText}>{art.summary}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
+
 
               {/* Remaining News Cards (첫 3개 이후 기사 목록) */}
               {filteredArticles.slice(3).map((art) => {
@@ -711,6 +751,36 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "var(--text-secondary)",
     lineHeight: 1.55,
     margin: 0,
+  },
+  expandedArticleBox: {
+    marginTop: "8px",
+    backgroundColor: "var(--background)",
+    border: "1px solid var(--border)",
+    borderRadius: "8px",
+    padding: "12px 16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+  expandedArticleScrollContent: {
+    maxHeight: "140px", /* 5줄 이상 충분히 보이는 높이 */
+    overflowY: "auto",
+    paddingRight: "6px",
+  },
+  expandedArticleText: {
+    fontSize: "0.88rem",
+    color: "var(--text-primary)",
+    lineHeight: 1.68,
+    margin: 0,
+    wordBreak: "keep-all",
+    whiteSpace: "pre-line",
+  },
+  expandedArticleFooter: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderTop: "1px dashed var(--border)",
+    paddingTop: "10px",
   },
   newsCard: {
     padding: "24px",

@@ -125,17 +125,16 @@
   - **Story S39-2 (완료)**: 3대 연금 채널(박곰희TV, 연금박사, 연금이야기) 공식 YouTube RSS 실시간 피드 API 신설 및 추천 영상 새로고침 UI 연동
   - **Story S39-3 (완료)**: `npm run build` 프로덕션 빌드, 브라우저 subagent 실화면 렌더링 검증 및 Git 커밋/푸시/PR 머지
 
-## Session Handoff (뉴스 브리핑 펼치기/접히기 & 유튜브 영상 요약 스크롤 및 핵심 메시지 3~5선 탑재)
+## Session Handoff (뉴스 기사별 5줄+ 펼치기/접히기 스크롤 & 유튜브 요약 전면확장 및 단일 박스 핵심 메시지)
 - **주요 수정 내역**:
   1. `src/app/news/page.tsx`:
-     - 상단 통합 브리핑 박스(`topSummaryBox`)에 `펼치기 ▾` / `접히기 ▴` 토글 버튼 연동.
-     - 펼치기 클릭 시 5칸 높이(`maxHeight: 580px`)로 시원하게 확장되며 전체 기사 목록(25건+)을 내부 세로 스크롤(`overflowY: "auto"`)로 탐색 가능.
-     - 접히기 클릭 시 기존 기본 3칸 높이(`maxHeight: 340px`, 상위 3건)로 깔끔하게 복원.
-  2. `src/app/youtube/page.tsx` & `src/app/api/youtube/route.ts`:
-     - 제목 및 본문 요약에서 노이즈 `#키워드`(해시태그) 정규식 완전 제거.
-     - 섹션명을 `📌 영상 요약`으로 개편하고, 말줄임표 없이 요약문 전체를 독립된 세로 지정 칸(`summaryParagraphBox`, `maxHeight: 135px`, `overflowY: "auto"`)에 넣어 깔끔한 내부 스크롤 제공.
-     - `🎯 핵심 메시지` 섹션을 구성하여 영상 주제에 맞춘 3~5개 핵심 메시지(월배당 ETF 전략, 절세/건보료, 지수 분할 매수, 단기 변동성 관리 등)와 번호 배지(①, ②, ③, ④) 렌더링.
-- **검증 상태**: `npm run build` 프로덕션 빌드 성공(0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`expanded_briefing_box_1791723577796.png`, `youtube_modal_refined_1791723596710.png`).
+     - 상단 주요 뉴스 TOP 3 브리핑 박스에서 개별 기사 클릭(또는 `펼치기 ▾` 버튼) 시, 해당 기사 박스가 **5줄 이상 본문이 넉넉히 보이는 높이로 확장(`expandedArticleBox`)**되고 내부 세로 스크롤(`overflowY: "auto"`)로 상세 기사 내용을 끝까지 읽을 수 있도록 구현.
+     - `내용 접히기 ▴` 클릭 시 즉시 1~2줄 컴팩트 요약으로 복귀, 펼쳐진 상태에서 `🌐 원문 기사 뷰어로 크게 보기 ↗` 원클릭 연동.
+  2. `src/app/youtube/page.tsx`:
+     - `📌 영상 요약`: 우측 패널 상단의 남은 세로 공간 전체(`flex: 1`, `minHeight: 160px`)를 시원하게 채우며 말줄임표 없이 전체 요약문 렌더링 및 스크롤 지원.
+     - `🎯 핵심 메시지`: 빈 공간 낭비를 없애기 위해 개별 카드 분할 대신 **단일 박스(`singleCoreMessageBox`)** 내에서 텍스트 줄간([1]~[4])으로 콤팩트하게 분리하여 표시.
+- **검증 상태**: `npm run build` 프로덕션 빌드 성공(0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`news_article_expanded_1791724282244.png`, `youtube_modal_refined_1791724311151.png`).
+
 
 
 

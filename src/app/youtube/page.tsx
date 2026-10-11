@@ -774,31 +774,31 @@ export default function YoutubeHubPage() {
                 </div>
 
                 <div style={styles.summaryBoxContent}>
-                  {/* Detailed Video Summary (#키워드 삭제 & 전부 표시 & 세로 지정 칸 스크롤) */}
-                  <div style={styles.summarySection}>
+                  {/* Detailed Video Summary (#키워드 삭제 & 전부 표시 & 남은 세로공간 전체 채움 및 스크롤) */}
+                  <div style={{ ...styles.summarySection, flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
                     <h5 style={styles.summarySectionHeading}>📌 영상 요약</h5>
-                    <div style={styles.summaryParagraphBox}>
+                    <div style={{ ...styles.summaryParagraphBox, flex: 1, minHeight: "160px", overflowY: "auto" }}>
                       <p style={styles.summaryParagraph}>
                         {cleanSummary || "선택하신 영상의 핵심 요약 정보를 불러오는 중입니다."}
                       </p>
                     </div>
                   </div>
 
-                  {/* Core Key Messages (3~5가지 구성) */}
-                  <div style={styles.summarySection}>
+                  {/* Core Key Messages (하나의 박스 내에서 텍스트로만 줄간 분리) */}
+                  <div style={{ ...styles.summarySection, flexShrink: 0 }}>
                     <h5 style={styles.summarySectionHeading}>🎯 핵심 메시지</h5>
-                    <ul style={styles.summaryPointsList}>
+                    <div style={styles.singleCoreMessageBox}>
                       {keyMessages.map((msg, mIdx) => (
-                        <li key={mIdx} style={styles.summaryPointItem}>
-                          <span style={styles.summaryPointBadge}>{mIdx + 1}</span>
-                          <span style={{ flex: 1 }}>{msg}</span>
-                        </li>
+                        <div key={mIdx} style={styles.coreMessageLine}>
+                          <span style={styles.coreMessageIndex}>[{mIdx + 1}]</span>
+                          <span style={styles.coreMessageText}>{msg}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
 
                   {/* Channel Direct Link */}
-                  <div style={{ marginTop: "auto", paddingTop: "16px", borderTop: "1px dashed var(--border)" }}>
+                  <div style={{ marginTop: "4px", paddingTop: "12px", borderTop: "1px dashed var(--border)", flexShrink: 0 }}>
                     <a
                       href={`https://www.youtube.com/watch?v=${activeVideoId}`}
                       target="_blank"
@@ -806,7 +806,7 @@ export default function YoutubeHubPage() {
                       className="premium-button-secondary"
                       style={{
                         width: "100%",
-                        padding: "10px 16px",
+                        padding: "9px 14px",
                         textAlign: "center",
                         fontSize: "0.82rem",
                         display: "flex",
@@ -1408,55 +1408,45 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "4px",
   },
   summaryParagraphBox: {
-    maxHeight: "135px",
-    overflowY: "auto",
     backgroundColor: "var(--background)",
-    padding: "12px 14px",
+    padding: "14px 16px",
     borderRadius: "10px",
     border: "1px solid var(--border)",
   },
   summaryParagraph: {
-    fontSize: "0.86rem",
+    fontSize: "0.87rem",
     color: "var(--text-secondary)",
-    lineHeight: 1.65,
+    lineHeight: 1.7,
     margin: 0,
     wordBreak: "keep-all",
     whiteSpace: "pre-line",
   },
-  summaryPointsList: {
-    margin: 0,
-    padding: 0,
-    listStyle: "none",
+  singleCoreMessageBox: {
+    backgroundColor: "var(--background)",
+    border: "1px solid var(--border)",
+    borderRadius: "10px",
+    padding: "12px 14px",
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
+    gap: "6px",
   },
-  summaryPointItem: {
-    fontSize: "0.83rem",
-    color: "var(--text-secondary)",
-    lineHeight: 1.55,
-    backgroundColor: "var(--background)",
-    padding: "10px 14px",
-    borderRadius: "10px",
-    border: "1px solid var(--border)",
-    wordBreak: "keep-all",
+  coreMessageLine: {
     display: "flex",
     alignItems: "flex-start",
-    gap: "10px",
+    gap: "8px",
+    fontSize: "0.82rem",
+    lineHeight: 1.48,
   },
-  summaryPointBadge: {
-    width: "20px",
-    height: "20px",
-    borderRadius: "50%",
-    backgroundColor: "var(--primary)",
-    color: "#ffffff",
-    fontSize: "0.72rem",
-    fontWeight: 800,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
+  coreMessageIndex: {
+    color: "var(--primary-light)",
+    fontWeight: 700,
+    fontSize: "0.8rem",
     flexShrink: 0,
-    marginTop: "1px",
+  },
+  coreMessageText: {
+    color: "var(--text-secondary)",
+    flex: 1,
+    wordBreak: "keep-all",
   },
   videoWrapper: {
     position: "relative",

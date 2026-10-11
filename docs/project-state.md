@@ -125,17 +125,18 @@
   - **Story S39-2 (완료)**: 3대 연금 채널(박곰희TV, 연금박사, 연금이야기) 공식 YouTube RSS 실시간 피드 API 신설 및 추천 영상 새로고침 UI 연동
   - **Story S39-3 (완료)**: `npm run build` 프로덕션 빌드, 브라우저 subagent 실화면 렌더링 검증 및 Git 커밋/푸시/PR 머지
 
-## Session Handoff (Sprint 39 완료)
+## Session Handoff (Sprint 39 완료 + 최신 뉴스 실시간 페칭 핫픽스)
 - **주요 수정 내역**:
   1. `src/app/api/news/route.ts` & `src/app/news/page.tsx`:
-     - `?refresh=true` 쿼리 파라미터 시 Data Cache 우회(`cache: "no-store"`) 및 Google News RSS 원본 피드 즉각 재페칭
-     - Google News RSS의 이스케이프된 HTML 엔티티(`&lt;a href...&gt;`) 누출 결함 완전 해결 (`sanitizeHtmlText`, `decodeHtmlEntities`)
-     - 뉴스 필터 바 우측에 `🔄 최신 뉴스 새로고침` 버튼, 로딩 스피너 애니메이션, 최근 갱신 시각 타임스탬프 인디케이터 탑재
+     - **최신 10월 뉴스 수집 쿼리 개선**: 기존 relevance 정렬로 인해 8월 과거 기사에 갇히던 문제를 해결하기 위해 `when:14d` 및 `when:30d` 기간 쿼리 4종 병렬 페칭(`Promise.allSettled`) 도입.
+     - **스팸/광고 필터링 정밀화**: 불필요한 외국 스팸 도메인(Calgary Roughnecks, 메이플/게임 등)을 차단하고, "지원/신청/전망" 등 정책 키워드가 삭제되지 않도록 순수 경품/캐시백성 광고만 핀포인트 제외.
+     - **실시간 정렬**: 정확한 기사 타임스탬프(`timestamp`) 역순 정렬 및 `allArticles.sort((a,b) => b.date.localeCompare(a.date))`로 오늘(2026-10-11) 기사가 최상단에 100% 노출되도록 보장.
+     - 뉴스 필터 바 우측에 `🔄 최신 뉴스 새로고침` 버튼, 로딩 스피너 애니메이션, 최근 갱신 시각 타임스탬프 인디케이터 탑재.
   2. `src/app/api/youtube/route.ts` & `src/app/youtube/page.tsx`:
-     - 박곰희TV(`UCr7XsrSrvAn_WcU4kF99bbQ`), 연금박사 이영주(`UCD9mxN8o9qLei1MbzroeP_A`), 연금이야기(`UCXRlkKtaSUSAiZXQrpOFwaA`) 공식 YouTube RSS 실시간 페칭 API 신설
-     - API Key 소진 없는 2026년 최신 발행 영상 실시간 수집, 카테고리 자동 판정 및 네트워크 장애 시 기존 시드 안전 Fallback 보장
-     - 영상 허브 상단에 `🔄 최신 영상 새로고침` 버튼 및 최근 갱신 시각 탑재, 채널 필터 및 검색과 완벽 연동
-- **검증 상태**: `npm run build` 성공(0 errors), 브라우저 subagent를 통한 뉴스/유튜브 페이지 실화면 렌더링 및 새로고침 버튼 상호작용 검증 완료.
+     - 박곰희TV(`UCr7XsrSrvAn_WcU4kF99bbQ`), 연금박사 이영주(`UCD9mxN8o9qLei1MbzroeP_A`), 연금이야기(`UCXRlkKtaSUSAiZXQrpOFwaA`) 공식 YouTube RSS 실시간 페칭 API 신설.
+     - API Key 소진 없는 2026년 최신 발행 영상 실시간 수집, 카테고리 자동 판정 및 네트워크 장애 시 기존 시드 안전 Fallback 보장.
+     - 영상 허브 상단에 `🔄 최신 영상 새로고침` 버튼 및 최근 갱신 시각 탑재, 채널 필터 및 검색과 완벽 연동.
+- **검증 상태**: `npm run build` 성공(0 errors), 브라우저 subagent를 통해 2026-10-11 당일 최신 뉴스 렌더링 및 새로고침 상호작용 검증 완료.
 
 
 

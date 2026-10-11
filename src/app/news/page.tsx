@@ -104,29 +104,40 @@ export default function PolicyNewsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
+  const fetchNews = async (refresh: boolean = false) => {
+    if (refresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    
+    try {
+      const res = await fetch(`/api/news${refresh ? "?refresh=true" : ""}`, {
+        cache: refresh ? "no-store" : "default",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setArticles(data);
+          const now = new Date();
+          const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+          setLastUpdated(timeStr);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load real-time news, using mock data:", err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     setIsMounted(true);
-    
-    async function fetchNews() {
-      try {
-        const res = await fetch("/api/news");
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setArticles(data);
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (err) {
-        console.error("Failed to load real-time news, using mock data:", err);
-      }
-      setArticles([]);
-      setLoading(false);
-    }
-    
-    fetchNews();
+    fetchNews(false);
   }, []);
 
   if (!isMounted) {
@@ -190,27 +201,64 @@ export default function PolicyNewsPage() {
           </p>
         </section>
 
-        {/* Category Filters */}
+        {/* Category Filters & Refresh Toolbar */}
         <div style={styles.filterRow} className="animate-fade-in">
-          {["ALL", "국민·기초연금", "퇴직·개인연금", "자산관리"].map((cat) => (
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            {["ALL", "국민·기초연금", "퇴직·개인연금", "자산관리"].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={selectedCategory === cat ? "nav-tab active" : "nav-tab"}
+                style={{
+                  fontSize: "0.85rem",
+                  padding: "8px 16px",
+                  border: "none",
+                  borderRadius: "var(--radius-sm)",
+                  cursor: "pointer",
+                  fontWeight: selectedCategory === cat ? 700 : 500,
+                  color: selectedCategory === cat ? "#ffffff" : "var(--text-secondary)",
+                  transition: "all var(--transition-fast)"
+                }}
+              >
+                {cat === "ALL" ? "전체 뉴스" : cat}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {lastUpdated && (
+              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                최근 갱신 {lastUpdated}
+              </span>
+            )}
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={selectedCategory === cat ? "nav-tab active" : "nav-tab"}
+              id="btn-refresh-news"
+              onClick={() => fetchNews(true)}
+              disabled={isRefreshing || loading}
+              className="premium-button-secondary"
               style={{
-                fontSize: "0.85rem",
-                padding: "8px 16px",
-                border: "none",
-                borderRadius: "var(--radius-sm)",
-                cursor: "pointer",
-                fontWeight: selectedCategory === cat ? 700 : 500,
-                color: selectedCategory === cat ? "#ffffff" : "var(--text-secondary)",
-                transition: "all var(--transition-fast)"
+                fontSize: "0.82rem",
+                padding: "7px 14px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                cursor: isRefreshing || loading ? "not-allowed" : "pointer",
+                opacity: isRefreshing || loading ? 0.7 : 1,
               }}
+              title="최신 Google News 정책 피드를 실시간으로 갱신합니다"
             >
-              {cat === "ALL" ? "전체 뉴스" : cat}
+              <span
+                style={{
+                  display: "inline-block",
+                  animation: isRefreshing ? "spin 1s infinite linear" : "none",
+                  fontSize: "0.95rem"
+                }}
+              >
+                🔄
+              </span>
+              <span>{isRefreshing ? "갱신 중..." : "최신 뉴스 새로고침"}</span>
             </button>
-          ))}
+          </div>
         </div>
 
         {/* News Grid */}
@@ -455,8 +503,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   filterRow: {
     display: "flex",
-    justifyContent: "center",
-    gap: "10px",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
     flexWrap: "wrap",
     borderBottom: "1.5px solid var(--border)",
     paddingBottom: "16px",

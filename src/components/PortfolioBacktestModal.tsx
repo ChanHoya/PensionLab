@@ -28,7 +28,7 @@ interface Props {
 }
 
 const SCENARIO_TABS: { id: MarketScenario; label: string }[] = [
-  { id: "REAL_10Y", label: "🌟 실전 10년 (2015~2024)" },
+  { id: "REAL_10Y", label: "🌟 실전 10년 (2016~2025)" },
   { id: "CRISIS_STRESS", label: "📉 위기 스트레스 (하락장)" },
   { id: "SIDEWAYS_INCOME", label: "📈 횡보 인컴 (박스권)" },
 ];

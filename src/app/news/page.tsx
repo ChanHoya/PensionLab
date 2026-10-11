@@ -154,7 +154,7 @@ export default function PolicyNewsPage() {
     (mockArt) => !articles.some((realArt) => realArt.title.replace(/\s/g, "") === mockArt.title.replace(/\s/g, ""))
   );
 
-  const allArticles = [...articles, ...uniqueMockArticles];
+  const allArticles = [...articles, ...uniqueMockArticles].sort((a, b) => b.date.localeCompare(a.date));
 
   const filteredArticles = selectedCategory === "ALL"
     ? allArticles

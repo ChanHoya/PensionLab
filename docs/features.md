@@ -125,6 +125,15 @@
   1) `globals.css` 내 모달 전용 테마 변수 토큰(`--modal-bg`, `--modal-surface`, `--modal-surface-sub`, `--modal-surface-card`, `--modal-border`, `--modal-border-subtle`, `--modal-subbox-bg`, `--modal-subbox-border`, `--modal-table-th`, `--modal-table-border`, `--tooltip-bg`, `--tooltip-border`, `--tooltip-text`) 정의
   2) 전체 11개 전문 팝업 모달(`NpsBoostRoadmapModal`, `SurvivorCareModal`, `DividendStrategyModal`, `IncomeBridgeModal`, `IsaPensionTransferModal`, `ReverseMortgageModal`, `SavingsPlanModal`, `HealthInsuranceBillModal`, `PrivatePensionTaxModal`, `NpsEarlyDeferralModal`, `PersonaPresetModal`)의 하드코딩된 다크 배경 제거 및 테마 토큰 일괄 바인딩
   3) 라이트모드에서 순백/연회색 카드 배경 및 명확한 글자 대비 가독성 확보, 다크모드 시 ETF Lens 테마 자동 동기화 지원
+- **[FEAT-048] 은퇴 자산 포트폴리오 시장 시나리오 백테스트 & 배당 복리 시뮬레이터**:
+  1) `src/services/portfolioBacktest.ts` 엔진: 과거 10개년 실전 시장(2015~2024), 복합 위기 스트레스, 횡보 인컴장 시나리오 기반 5대 자산군(미당다, 커버드콜, S&P500, 국채, 리츠) 비중 시뮬레이션
+  2) 배당 전액 재투자(스노우볼) vs 현금 인출(소비형) 비교 및 CAGR, 최대 낙폭(MDD), 누적 배당금 산출
+  3) `src/components/PortfolioBacktestModal.tsx` 모달: Recharts 복합 차트, KPI 카드, 상세 연도별 테이블, 대시보드 툴바/사이드바 및 AI 진단 툴킷 연동 (Sprint 38, Story S38-1)
+- **[FEAT-049] 모바일 뷰포트 터치 제스처 & 접근성(a11y) 세부 폴리싱**:
+  1) 모바일 뷰포트(768px 이하) 바텀시트형 모달 래퍼, 슬라이더 터치 타겟(22px thumb) 및 `-webkit-tap-highlight-color: transparent` 터치 제스처 최적화
+  2) 모바일 테이블 가로 스크롤 관성 터치(`-webkit-overflow-scrolling: touch`), 슬라이딩 탭 스크롤 최적화
+  3) 모달 대화상자 접근성 표준 준수 (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, 닫기 버튼 `aria-label="닫기"`, `:focus-visible` 포커스 링) (Sprint 38, Story S38-2)
+
 
 
 

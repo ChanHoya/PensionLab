@@ -145,6 +145,55 @@ const SEED_VIDEOS: Video[] = [
   }
 ];
 
+function getKeyMessages(video: Video | null): string[] {
+  if (!video) return [];
+  const title = (video.title || "").replace(/#[\w가-힣_]+/g, "").trim();
+  const summary = (video.summary || "").replace(/#[\w가-힣_]+/g, "").trim();
+  const text = `${title} ${summary}`.toLowerCase();
+
+  const messages: string[] = [];
+
+  // 1. Core theme / strategy
+  if (text.includes("배당") || text.includes("월배당") || text.includes("etf")) {
+    messages.push("월배당 ETF 적립식 투자로 은퇴 후 매월 마르지 않는 현금흐름 구축");
+  } else if (text.includes("국민연금") || text.includes("노령연금") || text.includes("개혁")) {
+    messages.push("국민연금 수령 시기(조기 vs 정상 vs 연기) 최적화 및 연금 수령액 극대화");
+  } else if (text.includes("퇴직연금") || text.includes("irp") || text.includes("퇴직금")) {
+    messages.push("퇴직연금(DB/DC/IRP) 안전자산 의무 비중 준수 및 절세 수령 순서 전략");
+  } else if (text.includes("isa")) {
+    messages.push("ISA 만기 자금의 연금계좌 이전 전환을 통한 추가 세액공제(최대 300만원) 확보");
+  } else {
+    messages.push(`${video.channelName} 전문가가 전하는 실전 은퇴 설계 및 자산 배분 핵심 원칙`);
+  }
+
+  // 2. Tax / Health Insurance
+  if (text.includes("건보료") || text.includes("건강보험") || text.includes("피부양자")) {
+    messages.push("연 2,000만원 초과 시 건강보험 피부양자 탈락 리스크 사전 방어 및 절감 팁");
+  } else if (text.includes("절세") || text.includes("세금") || text.includes("과세") || text.includes("1500만")) {
+    messages.push("사적연금 연 1,500만원 초과 시 종합과세 vs 16.5% 분리과세 유불리 실전 선택 기준");
+  } else {
+    messages.push("연금계좌 내 비과세·과세이연 효과를 극대화하고 저율(3.3~5.5%) 연금소득세 적용");
+  }
+
+  // 3. Asset Allocation / Practical Action
+  if (text.includes("나스닥") || text.includes("s&p") || text.includes("지수") || text.includes("schd") || text.includes("미당다")) {
+    messages.push("미국 우량 지수 및 배당성장 자산 중심의 장기 적립식 분할 매수로 복리 극대화");
+  } else if (text.includes("인출") || text.includes("순서")) {
+    messages.push("일시금 수령을 피하고 10년 이상 장기 분할 인출로 퇴직소득세 30~40% 절감");
+  } else {
+    messages.push("목돈이 없어도 매월 일정 금액을 꾸준히 적립식으로 분할 매수하는 장기 투자 실행");
+  }
+
+  // 4. Risk / Horizon
+  if (text.includes("단기") || text.includes("기대치") || text.includes("변동성") || text.includes("하락")) {
+    messages.push("단기 수익률 기대치를 합리화하고 시장 변동성에 흔들리지 않는 원칙 투자 유지");
+  } else {
+    messages.push("물가상승률을 방어할 수 있는 실질 구매력 중심의 포트폴리오 관리 및 정기 리밸런싱");
+  }
+
+  return messages; // 4 core messages (between 3 and 5 items)
+}
+
 export default function YoutubeHubPage() {
   const [selectedChannel, setSelectedChannel] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -158,15 +207,20 @@ export default function YoutubeHubPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
+  // Active Video Modal State
+  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
+  const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
+  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
+
+  const cleanTitle = (activeVideo?.title || activeVideoTitle || "").replace(/#[\w가-힣_]+/g, "").trim();
+  const cleanSummary = (activeVideo?.summary || "").replace(/#[\w가-힣_]+/g, "").trim();
+  const keyMessages = getKeyMessages(activeVideo);
+
+
   // AI Chat States
   const [question, setQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string; sources?: any[] }[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
-
-  // YouTube Modal States
-  const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
-  const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
-  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
 
   const fetchVideos = async (refresh: boolean = false) => {
     if (refresh) {
@@ -652,8 +706,8 @@ export default function YoutubeHubPage() {
                   <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>• {activeVideo.publishDate}</span>
                 )}
                 <span style={{ color: "var(--border)" }}>|</span>
-                <h4 style={styles.modalTitle} title={activeVideo?.title || activeVideoTitle}>
-                  {activeVideo?.title || activeVideoTitle}
+                <h4 style={styles.modalTitle} title={cleanTitle}>
+                  {cleanTitle}
                 </h4>
               </div>
 
@@ -698,7 +752,7 @@ export default function YoutubeHubPage() {
                     width="100%"
                     height="100%"
                     src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`}
-                    title={activeVideoTitle}
+                    title={cleanTitle}
                     frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
@@ -720,27 +774,26 @@ export default function YoutubeHubPage() {
                 </div>
 
                 <div style={styles.summaryBoxContent}>
-                  {/* Detailed Video Summary */}
+                  {/* Detailed Video Summary (#키워드 삭제 & 전부 표시 & 세로 지정 칸 스크롤) */}
                   <div style={styles.summarySection}>
-                    <h5 style={styles.summarySectionHeading}>📌 영상 개요 및 주요 메시지</h5>
-                    <p style={styles.summaryParagraph}>
-                      {activeVideo?.summary || "선택하신 영상의 핵심 요약 정보를 불러오는 중입니다."}
-                    </p>
+                    <h5 style={styles.summarySectionHeading}>📌 영상 요약</h5>
+                    <div style={styles.summaryParagraphBox}>
+                      <p style={styles.summaryParagraph}>
+                        {cleanSummary || "선택하신 영상의 핵심 요약 정보를 불러오는 중입니다."}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Key Takeaways */}
+                  {/* Core Key Messages (3~5가지 구성) */}
                   <div style={styles.summarySection}>
-                    <h5 style={styles.summarySectionHeading}>🎯 핵심 시청 포인트</h5>
+                    <h5 style={styles.summarySectionHeading}>🎯 핵심 메시지</h5>
                     <ul style={styles.summaryPointsList}>
-                      <li style={styles.summaryPointItem}>
-                        <strong>연금 맞춤 전략:</strong> {activeVideo?.channelName || "전문가"} 채널에서 전하는 실전 노하우와 은퇴 준비 가이드
-                      </li>
-                      <li style={styles.summaryPointItem}>
-                        <strong>절세 및 건보료 영향:</strong> 연금 수령 시 세금 및 건강보험료 피부양자 자격 변동 주의사항
-                      </li>
-                      <li style={styles.summaryPointItem}>
-                        <strong>실전 실행 팁:</strong> 국민연금, 퇴직연금(IRP), 개인연금저축 간 최적 배분 인사이트
-                      </li>
+                      {keyMessages.map((msg, mIdx) => (
+                        <li key={mIdx} style={styles.summaryPointItem}>
+                          <span style={styles.summaryPointBadge}>{mIdx + 1}</span>
+                          <span style={{ flex: 1 }}>{msg}</span>
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -1354,16 +1407,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     gap: "4px",
   },
+  summaryParagraphBox: {
+    maxHeight: "135px",
+    overflowY: "auto",
+    backgroundColor: "var(--background)",
+    padding: "12px 14px",
+    borderRadius: "10px",
+    border: "1px solid var(--border)",
+  },
   summaryParagraph: {
     fontSize: "0.86rem",
     color: "var(--text-secondary)",
     lineHeight: 1.65,
     margin: 0,
-    backgroundColor: "var(--background)",
-    padding: "12px 14px",
-    borderRadius: "10px",
-    border: "1px solid var(--border)",
     wordBreak: "keep-all",
+    whiteSpace: "pre-line",
   },
   summaryPointsList: {
     margin: 0,
@@ -1382,6 +1440,23 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: "10px",
     border: "1px solid var(--border)",
     wordBreak: "keep-all",
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "10px",
+  },
+  summaryPointBadge: {
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    backgroundColor: "var(--primary)",
+    color: "#ffffff",
+    fontSize: "0.72rem",
+    fontWeight: 800,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    marginTop: "1px",
   },
   videoWrapper: {
     position: "relative",

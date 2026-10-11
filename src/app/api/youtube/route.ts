@@ -190,12 +190,17 @@ function parseYoutubeRss(xml: string, channel: ChannelConfig): YoutubeVideoItem[
 
     let rawDesc = descMatch ? descMatch[1].trim() : "";
     rawDesc = sanitizeText(rawDesc);
-    // Remove links and normalize whitespaces
-    let summary = rawDesc.replace(/https?:\/\/[^\s]+/g, "").replace(/\s+/g, " ").trim();
+    // Remove links, hashtags, and normalize whitespaces
+    let summary = rawDesc
+      .replace(/https?:\/\/[^\s]+/g, "")
+      .replace(/#[\w가-힣_]+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
     if (!summary || summary.length < 10) {
-      summary = `${channel.name}의 최신 영상 '${title}'입니다. 핵심 연금 자산관리 팁을 확인해보세요.`;
-    } else if (summary.length > 150) {
-      summary = summary.slice(0, 150) + "...";
+      const cleanTitle = title.replace(/#[\w가-힣_]+/g, "").trim();
+      summary = `${channel.name}의 최신 영상 '${cleanTitle}'입니다. 핵심 연금 자산관리 팁을 확인해보세요.`;
+    } else if (summary.length > 800) {
+      summary = summary.slice(0, 800).trim();
     }
 
     const category = categorizeVideo(title + " " + summary, channel.defaultCategory);

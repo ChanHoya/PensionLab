@@ -125,19 +125,18 @@
   - **Story S39-2 (완료)**: 3대 연금 채널(박곰희TV, 연금박사, 연금이야기) 공식 YouTube RSS 실시간 피드 API 신설 및 추천 영상 새로고침 UI 연동
   - **Story S39-3 (완료)**: `npm run build` 프로덕션 빌드, 브라우저 subagent 실화면 렌더링 검증 및 Git 커밋/푸시/PR 머지
 
-## Session Handoff (뉴스 상단 3개 통합 브리핑 박스 & 유튜브 플레이어 좌측+우측 동일높이 요약 패널 2열 모달 탑재)
+## Session Handoff (뉴스 브리핑 펼치기/접히기 & 유튜브 영상 요약 스크롤 및 핵심 메시지 3~5선 탑재)
 - **주요 수정 내역**:
   1. `src/app/news/page.tsx`:
-     - 상단 3개 카드 영역을 하나의 와이드 브리핑 박스(`topSummaryBox`)로 통합하여 오늘 연금 관련 주요 뉴스 최대 3건을 1, 2, 3 인덱스 배지 및 핵심 요약 텍스트와 함께 노출.
-     - 높이 초과 시 내부 세로 스크롤(`maxHeight: 340px`, `overflowY: "auto"`) 및 개별 항목 클릭 시 기사 원문 iframe 모달 연동.
-     - 하단에는 4번째 이후 기사들을 3열 그리드로 깔끔하게 렌더링.
-  2. `src/app/youtube/page.tsx`:
-     - 헤더 타이틀을 "연금 전문 유튜버 추천 영상"으로 직관화.
-     - 비디오 플레이어 팝업 모달을 2열 레이아웃(`modalBodyRow`)으로 전환: 좌측에는 영상을 왼쪽 끝으로 배치(`modalVideoCol`), 우측 빈 공간에는 동일한 세로 높이를 갖는 '영상 핵심 내용 요약 박스'(`modalSummaryCol`)를 신설하여 영상 개요, 주요 메시지 및 3대 핵심 시청 포인트(연금 맞춤 전략, 절세/건보료, 실전 실행 팁) 제공.
-     - 텍스트 길이가 길어질 경우 우측 요약 박스 내부 세로 스크롤(`overflowY: "auto"`) 지원.
-  3. `src/app/globals.css`:
-     - 뉴스 요약 아이템 호버 인터랙션(`.top-summary-item-hover`) 및 모바일 뷰포트(900px 이하) 2열 모달 반응형 세로 배치(`flex-direction: column`) 지원.
-- **검증 상태**: `npm run build` 프로덕션 빌드 성공(0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`news_summary_briefing_1791722704420.png`, `youtube_modal_2_column_1791722725786.png`).
+     - 상단 통합 브리핑 박스(`topSummaryBox`)에 `펼치기 ▾` / `접히기 ▴` 토글 버튼 연동.
+     - 펼치기 클릭 시 5칸 높이(`maxHeight: 580px`)로 시원하게 확장되며 전체 기사 목록(25건+)을 내부 세로 스크롤(`overflowY: "auto"`)로 탐색 가능.
+     - 접히기 클릭 시 기존 기본 3칸 높이(`maxHeight: 340px`, 상위 3건)로 깔끔하게 복원.
+  2. `src/app/youtube/page.tsx` & `src/app/api/youtube/route.ts`:
+     - 제목 및 본문 요약에서 노이즈 `#키워드`(해시태그) 정규식 완전 제거.
+     - 섹션명을 `📌 영상 요약`으로 개편하고, 말줄임표 없이 요약문 전체를 독립된 세로 지정 칸(`summaryParagraphBox`, `maxHeight: 135px`, `overflowY: "auto"`)에 넣어 깔끔한 내부 스크롤 제공.
+     - `🎯 핵심 메시지` 섹션을 구성하여 영상 주제에 맞춘 3~5개 핵심 메시지(월배당 ETF 전략, 절세/건보료, 지수 분할 매수, 단기 변동성 관리 등)와 번호 배지(①, ②, ③, ④) 렌더링.
+- **검증 상태**: `npm run build` 프로덕션 빌드 성공(0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`expanded_briefing_box_1791723577796.png`, `youtube_modal_refined_1791723596710.png`).
+
 
 
 

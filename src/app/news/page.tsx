@@ -106,6 +106,7 @@ export default function PolicyNewsPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [isBriefingExpanded, setIsBriefingExpanded] = useState(false);
 
   const fetchNews = async (refresh: boolean = false) => {
     if (refresh) {
@@ -270,23 +271,54 @@ export default function PolicyNewsPage() {
             </div>
           ) : (
             <>
-              {/* Top Unified 3-Article Summary Box (첫 3개 박스를 하나로 합쳐 최대 3개 기사 요약 및 스크롤) */}
-              {filteredArticles.slice(0, 3).length > 0 && (
-                <div style={styles.topSummaryBox} className="premium-card">
+              {/* Top Unified Summary Box (펼치기/접히기 토글로 5칸 크기 확장 및 전체 기사 스크롤) */}
+              {filteredArticles.length > 0 && (
+                <div
+                  style={{
+                    ...styles.topSummaryBox,
+                    maxHeight: isBriefingExpanded ? "580px" : "340px",
+                    transition: "max-height 0.3s ease-in-out",
+                  }}
+                  className="premium-card"
+                >
                   <div style={styles.topSummaryHeader}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <span style={{ fontSize: "1.2rem" }}>⚡</span>
                       <span style={styles.topSummaryBadge}>
-                        오늘의 연금 주요 뉴스 핵심 브리핑 (주요 뉴스 TOP {Math.min(3, filteredArticles.length)})
+                        오늘의 연금 주요 뉴스 핵심 브리핑 {isBriefingExpanded ? `(전체 ${filteredArticles.length}개 기사)` : `(주요 뉴스 TOP ${Math.min(3, filteredArticles.length)})`}
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                      * 기사를 클릭하면 전체 화면 원문 뷰어로 열립니다
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                        * 기사를 클릭하면 전체 화면 원문 뷰어로 열립니다
+                      </span>
+                      <button
+                        id="btn-toggle-briefing-expand"
+                        onClick={() => setIsBriefingExpanded((prev) => !prev)}
+                        className="premium-button-secondary"
+                        style={{
+                          padding: "5px 12px",
+                          fontSize: "0.82rem",
+                          fontWeight: 700,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          cursor: "pointer",
+                          borderRadius: "6px",
+                          backgroundColor: isBriefingExpanded ? "rgba(99, 102, 241, 0.15)" : "var(--surface)",
+                          borderColor: "var(--primary-light)",
+                          color: "var(--text-primary)",
+                          transition: "all var(--transition-fast)",
+                        }}
+                        title={isBriefingExpanded ? "원래 3칸 크기로 접기" : "5칸 크기로 넓혀 모든 기사 스크롤하여 보기"}
+                      >
+                        <span>{isBriefingExpanded ? "접히기 ▴" : "펼치기 ▾"}</span>
+                      </button>
+                    </div>
                   </div>
 
-                  <div style={styles.topSummaryContent}>
-                    {filteredArticles.slice(0, 3).map((art, idx) => (
+                  <div style={{ ...styles.topSummaryContent, overflowY: "auto", flex: 1 }}>
+                    {(isBriefingExpanded ? filteredArticles : filteredArticles.slice(0, 3)).map((art, idx) => (
                       <div
                         key={art.id}
                         onClick={() => handleArticleClick(art)}

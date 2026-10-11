@@ -83,7 +83,7 @@ export function NpsBoostRoadmapModal({ isOpen, onClose }: Props) {
 
   return (
     <div role="dialog" aria-modal="true" style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="glass-card" style={S.panel}>
+      <div className="glass-card t-modal-spring" style={S.panel}>
         <div style={S.header}>
           <div>
             <h3 style={S.title}>🪜 국민연금 증액 로드맵</h3>

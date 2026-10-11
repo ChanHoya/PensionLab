@@ -48,7 +48,7 @@ export default function PersonaPresetModal({
 
   return (
     <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div className="t-modal-spring" style={styles.modal} onClick={(e) => e.stopPropagation()}>
         {/* 헤더 */}
         <div style={styles.header}>
           <div>

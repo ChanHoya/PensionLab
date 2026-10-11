@@ -29,6 +29,7 @@ import ChartTooltip from "@/components/ChartTooltip";
 import { PENSION_SERIES, SURVIVOR_FILL, pensionSeriesValues } from "@/components/pensionSeries";
 import type { HouseholdReport } from "@/services/householdReport";
 import { TIMINGS, won, type Level, type ReportNarrative, type ToolId, TOOL_META_MAP, TOOL_IDS } from "@/services/reportNarrative";
+import { NumberPopIn } from "@/components/motion";
 
 // AI 연금 종합 진단 리포트 (컨설팅 보고서 형식). 숫자·차트는 계산 결과, 서술은 AI(없으면 계산 기반 기본 진단)
 
@@ -119,7 +120,7 @@ function ScoreGauge({ score, grade }: { score: number; grade: HouseholdReport["g
         {score > 0 && <path d={arc(Math.min(1, score / 100))} stroke={grade.color} strokeWidth={14} fill="none" strokeLinecap="round" />}
       </svg>
       <div style={S.gaugeText}>
-        <div style={S.gaugeScore}>{score}</div>
+        <div style={S.gaugeScore}><NumberPopIn value={score} /></div>
         <div style={S.gaugeUnit}>/ 100점</div>
       </div>
       <div style={{ textAlign: "center", marginTop: 6 }}>

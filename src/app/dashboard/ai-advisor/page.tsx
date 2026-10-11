@@ -18,6 +18,7 @@ import { IncomeBridgeModal } from "@/components/IncomeBridgeModal";
 import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
+import { AiThinkingStream } from "@/components/motion";
 
 const emptySubscribe = () => () => {};
 
@@ -294,6 +295,9 @@ export default function AiAdvisorPage() {
               <span style={{ marginRight: 8 }}>⚠️</span> {errorMsg}
             </div>
           )}
+
+          {/* AI Reasoning Stream (transitions.dev) */}
+          {loading && <AiThinkingStream />}
         </section>
 
         {/* Diagnostic Report: Screen View (1680px 와이드 최대 활용) & PDF Export (1040px 가독성 최적화) */}

@@ -100,8 +100,12 @@ graph TD
   Motion --> SlidingTabs[src/components/motion/SlidingTabs.tsx]
   Motion --> CopyCheckButton[src/components/motion/CopyCheckButton.tsx]
   Motion --> CardTilt[src/components/motion/CardTilt.tsx]
+  Motion --> AiThinkingStream[src/components/motion/AiThinkingStream.tsx]
   Dashboard --> Motion
   DividendModal[src/components/DividendStrategyModal.tsx] --> Motion
+  Landing --> Motion
+  OnboardingUI --> Motion
+  AIAdvisor --> Motion
 ```
 
 

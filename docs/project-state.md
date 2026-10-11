@@ -107,20 +107,29 @@
   2. 퇴직연금감독규정 IRP 70% 위험자산 한도 & 30% 안전자산 의무 판정 엔진(`pensionAccountRules.ts`) 및 단위 테스트(`validatePensionAccountRules.ts`) 통과.
 
 - **[Completed]** Story S37-1: transitions.dev 기반 모션 디자인 시스템 토큰 및 공통 인터랙션 컴포넌트 구축 (`globals.css` 모션 토큰/클래스, `NumberPopIn`, `SlidingTabs`, `CopyCheckButton`, `CardTilt` 및 `DividendStrategyModal` 스프링 모달/성공체크 연동 완료)
+- **[Completed]** Story S37-2: 대시보드 KPI 롤링 카운터, 슬라이딩 탭 및 8대 전문 모달 스프링 트랜지션 연동 (`CoupleSimulationSection` 및 `dashboard/page.tsx`에 `NumberPopIn`, `SlidingTabs` 탑재, 전체 전문 모달에 `t-modal-spring` 적용 완료)
+- **[Completed]** Story S37-3: AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출 (`AiThinkingStream.tsx` 4단계 스트리밍 시뮬레이션 및 `DiagnosisReport.tsx` 게이지 스코어 `NumberPopIn` 연동 완료)
+- **[Completed]** Story S37-4: 온보딩 슬라이딩 탭 및 랜딩 페이지 3D 틸트/글로시 CTA 비주얼 업그레이드 (`onboarding/page.tsx` Step 0 `SlidingTabs`, `page.tsx` 히어로 `t-btn-glossy`, 벤치마킹 카드 `CardTilt` 및 모달 `t-modal-spring` 연동 완료)
 
 ## Active Sprint / Story
-- **Sprint 37** (진행 중): transitions.dev 기반 UI/UX 모션 고도화 및 인터랙티브 인터페이스 확립
+- **Sprint 37** (완료): transitions.dev 기반 UI/UX 모션 고도화 및 인터랙티브 인터페이스 확립
   - **Story S37-1 (완료)**: 모션 디자인 시스템 토큰 및 공통 인터랙션 훅/컴포넌트 구축
-  - **Story S37-2 (계획 대기)**: 대시보드 KPI 롤링 카운터, 슬라이딩 탭 및 스프링 모달 연동
-  - **Story S37-3 (계획 대기)**: AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출
-  - **Story S37-4 (계획 대기)**: 온보딩 및 랜딩 페이지 3D Tilt, Glossy CTA 비주얼 업그레이드
+  - **Story S37-2 (완료)**: 대시보드 KPI 롤링 카운터, 슬라이딩 탭 및 스프링 모달 연동
+  - **Story S37-3 (완료)**: AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출
+  - **Story S37-4 (완료)**: 온보딩 및 랜딩 페이지 3D Tilt, Glossy CTA 비주얼 업그레이드
 
-## Session Handoff (Sprint 36 완료)
+## Session Handoff (Sprint 37 완료)
 - **주요 산출물**:
-  1. 데이터 보안 및 기본값 정합성: PII 0건 수집 투명 고지, `dividendPolicy: PAYOUT` 일원화
-  2. S4 커버드콜 2변수 모델: 가격수익률(NAV 변동률) 복리 반영, shortfall 인플레이션 인덱싱 동기화, 금감원 핵심위험 고지
-  3. 연금계좌 절세 분리 & IRP 70% 안전자산 룰: `pensionAccountRules.ts` 판정 엔진 및 사이드바 계좌 유형 선택 토글 탑재
-- **검증 상태**: `validateCoveredCallModel.ts`, `validatePensionAccountRules.ts`, `validateS4DividendSuite.ts` 통과 완료.
+  1. transitions.dev 모션 디자인 시스템 (`globals.css`, `src/components/motion/`):
+     - CSS 스프링 토큰(`--ease-spring`, `--ease-out-expo`), 모션 클래스(`t-digit-group`, `t-sliding-nav`, `t-modal-spring`, `t-success-check`, `t-shimmer-text`, `t-btn-glossy`).
+     - 범용 리액트 모션 컴포넌트: `NumberPopIn`, `SlidingTabs`, `CopyCheckButton`, `CardTilt`, `AiThinkingStream`.
+  2. 대시보드 및 온보딩/랜딩 화면 전면 이식:
+     - 4대 KPI 및 추천 수치 카운팅 롤링 모션, 인출 시나리오/온보딩 Step 0 부드러운 슬라이딩 탭 전환.
+     - 8대 전문 모달 및 팝업 대화상자 탄성 스프링 진입 연출.
+     - AI 종합 진단 4단계 Reasoning Stream 로딩 및 게이지 롤링.
+     - 랜딩 히어로 글로시 CTA 및 벤치마킹 카드 3D 마우스 틸트 인터랙션.
+- **검증 상태**: `npx tsc --noEmit` 통과(0 errors), `npm run build` 프로덕션 빌드 통과(0 errors), Chrome 브라우저 각 화면(대시보드, 온보딩, 랜딩, AI 진단) 렌더링 및 인터랙션 검증 완료.
+
 - **주요 산출물**:
   1. AI 종합 진단 리포트 & 8대 솔루션 툴킷 심층 연동 (S35-1):
      - Gemini 3.8 Flash 및 fallbackNarrative 8대 도구(SAVINGS_PLAN, DIVIDEND_STRATEGY, NPS_BEP, NPS_BOOST, INCOME_BRIDGE, SURVIVOR_CARE, ISA_TRANSFER, REVERSE_MORTGAGE) 매핑

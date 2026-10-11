@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import dynamic from "next/dynamic";
+import { CardTilt } from "@/components/motion";
 
 const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
   ssr: false,
@@ -137,11 +138,11 @@ export default function LandingPage() {
             </button>
             <Link 
               href="/onboarding" 
-              className="premium-button" 
+              className="premium-button t-btn-glossy" 
               style={{ padding: "8px 20px", fontSize: "0.9rem", textDecoration: "none" }} 
               id="btn-header-start"
             >
-              진단 시작하기
+              진단 시작하기 🚀
             </Link>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -172,7 +173,7 @@ export default function LandingPage() {
     {/* 참고 서비스 모달 */}
     {isReferenceOpen && (
       <div style={styles.libOverlay} onClick={() => { setIsReferenceOpen(false); setActiveMenu(null); }}>
-        <div style={{ ...styles.libModal, maxWidth: "760px" }} onClick={(e) => e.stopPropagation()}>
+        <div className="t-modal-spring" style={{ ...styles.libModal, maxWidth: "760px" }} onClick={(e) => e.stopPropagation()}>
           <div style={styles.libHeader}>
             <span style={styles.libTitle}>🔗 벤치마킹 참고 서비스</span>
             <button 
@@ -186,26 +187,27 @@ export default function LandingPage() {
             <p style={styles.libSubtitle}>Hoya Pension Lab의 은퇴 연산 엔진 설계에 영감을 준 국내외 대표적인 은퇴/인출 시뮬레이션 서비스 목록입니다.</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
               {REFERENCE_SERVICES.map((srv, idx) => (
-                <a
-                  key={idx}
-                  href={srv.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ ...styles.libCard, textDecoration: "none", display: "flex", gap: "10px", alignItems: "flex-start", width: "100%", padding: "9px 12px" }}
-                  className="premium-card animate-fade-in"
-                >
-                  <div style={{ ...styles.libCardIcon, fontSize: "1.2rem", marginTop: "1px" }}>🔗</div>
-                  <div style={{ ...styles.libCardContent, flex: 1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap" }}>
-                      <h4 style={{ ...styles.libCardTitle, color: "var(--text-accent)", fontSize: "0.9rem" }}>{srv.title}</h4>
-                      <span style={{ fontSize: "0.72rem", color: "var(--primary-light)", textDecoration: "underline" }}>공식 사이트 바로가기 ↗</span>
+                <CardTilt key={idx} maxTilt={4} scale={1.01}>
+                  <a
+                    href={srv.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ ...styles.libCard, textDecoration: "none", display: "flex", gap: "10px", alignItems: "flex-start", width: "100%", padding: "9px 12px" }}
+                    className="premium-card animate-fade-in"
+                  >
+                    <div style={{ ...styles.libCardIcon, fontSize: "1.2rem", marginTop: "1px" }}>🔗</div>
+                    <div style={{ ...styles.libCardContent, flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap" }}>
+                        <h4 style={{ ...styles.libCardTitle, color: "var(--text-accent)", fontSize: "0.9rem" }}>{srv.title}</h4>
+                        <span style={{ fontSize: "0.72rem", color: "var(--primary-light)", textDecoration: "underline" }}>공식 사이트 바로가기 ↗</span>
+                      </div>
+                      <p style={{ ...styles.libCardDesc, marginTop: "2px" }}>{srv.desc}</p>
+                      <div style={{ fontSize: "0.72rem", color: "var(--success-light)", marginTop: "3px", backgroundColor: "rgba(16, 185, 129, 0.08)", padding: "2px 7px", borderRadius: "4px", display: "inline-block" }}>
+                        💡 <strong>벤치마킹 포인트:</strong> {srv.point}
+                      </div>
                     </div>
-                    <p style={{ ...styles.libCardDesc, marginTop: "2px" }}>{srv.desc}</p>
-                    <div style={{ fontSize: "0.72rem", color: "var(--success-light)", marginTop: "3px", backgroundColor: "rgba(16, 185, 129, 0.08)", padding: "2px 7px", borderRadius: "4px", display: "inline-block" }}>
-                      💡 <strong>벤치마킹 포인트:</strong> {srv.point}
-                    </div>
-                  </div>
-                </a>
+                  </a>
+                </CardTilt>
               ))}
             </div>
           </div>
@@ -216,7 +218,7 @@ export default function LandingPage() {
     {/* 연금 정보창고 모달 */}
     {isLibraryOpen && (
       <div style={styles.libOverlay} onClick={() => { setIsLibraryOpen(false); setActiveMenu(null); }}>
-        <div style={styles.libModal} onClick={(e) => e.stopPropagation()}>
+        <div className="t-modal-spring" style={styles.libModal} onClick={(e) => e.stopPropagation()}>
           <div style={styles.libHeader}>
             <span style={styles.libTitle}>📚 연금 정보창고</span>
             <button 

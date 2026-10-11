@@ -276,7 +276,7 @@ export default function PdfViewerModal({
   // ─── 일반 모달 렌더 ───────────────────────────────────────
   return (
     <div style={overlay} onClick={onClose}>
-      <div style={modal} onClick={e => e.stopPropagation()}>
+      <div className="t-modal-spring" style={modal} onClick={e => e.stopPropagation()}>
         {/* 헤더 */}
         <div style={header}>
           <div style={headerLeft}>

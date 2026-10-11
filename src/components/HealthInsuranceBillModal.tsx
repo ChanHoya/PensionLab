@@ -56,6 +56,7 @@ export function HealthInsuranceBillModal({ isOpen, onClose }: HealthInsuranceBil
       onClick={onClose}
     >
       <div
+        className="t-modal-spring"
         style={{
           width: "100%",
           maxWidth: "920px",

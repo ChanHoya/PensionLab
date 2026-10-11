@@ -110,7 +110,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
       }}
     >
       <div
-        className="glass-card"
+        className="glass-card t-modal-spring"
         style={{
           width: "100%",
           maxWidth: "920px",

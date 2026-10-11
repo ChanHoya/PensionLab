@@ -109,4 +109,17 @@
   1) `globals.css` 내 transitions.dev 모션 토큰(`--ease-spring`, `--digit-*`, `--modal-spring-*`, `--tab-slider-*`) 및 키프레임 애니메이션 등록
   2) 공통 마이크로 인터랙션 컴포넌트(`src/components/motion/`): 숫자 팝인(`NumberPopIn`), 슬라이딩 탭(`SlidingTabs`), 성공 체크 복사 버튼(`CopyCheckButton`), 3D 카드 틸트(`CardTilt`) 구축
   3) 전문 모달(`DividendStrategyModal`) 스프링 진입(`t-modal-spring`) 및 종목코드 복사 피드백(`t-success-check`) 연동 완료 (Sprint 37, Story S37-1)
+- **[FEAT-044] 대시보드 KPI 롤링 카운터, 슬라이딩 탭 및 8대 모달 스프링 트랜지션**:
+  1) `CoupleSimulationSection.tsx` 부부 연금 시뮬레이션 4대 KPI 수치 및 `dashboard/page.tsx` 인출전략 추천 수치에 `NumberPopIn` 카운팅 롤링 모션 연동
+  2) 인출 최적화 처방 조언 시나리오 탭(S0, S1, S3, S4)에 부드러운 인디케이터 슬라이딩을 지원하는 `SlidingTabs` 연동
+  3) 8대 전문 분석 모달(`PrivatePensionTaxModal`, `HealthInsuranceBillModal`, `ReverseMortgageModal`, `IncomeBridgeModal`, `SurvivorCareModal`, `IsaPensionTransferModal`, `SavingsPlanModal`, `NpsBoostRoadmapModal`, `NpsEarlyDeferralModal`, `PersonaPresetModal`, `PdfViewerModal`) 다이얼로그 래퍼에 `t-modal-spring` 클래스 일괄 적용 완료 (Sprint 37, Story S37-2)
+- **[FEAT-045] AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출**:
+  1) Gemini 3.8 Flash 종합 진단 대기 상태 중 transitions.dev Reasoning Stream 인터랙티브 시뮬레이션 컴포넌트(`src/components/motion/AiThinkingStream.tsx`) 개발
+  2) 4단계 순차 분석(입력 데이터 검증 → 3층 연금 및 결손액 분석 → AI 맞춤 처방 생성 → 종합 진단 리포트 조립), 상단 실시간 프로그레스 바, 쉬머 텍스트(`t-shimmer-text`), 단계별 완료 체크 피드백 연출
+  3) AI 종합 진단 페이지(`dashboard/ai-advisor/page.tsx`) 로딩 중 화면 연동 및 `DiagnosisReport.tsx` 점수 게이지(`ScoreGauge`)에 `NumberPopIn` 카운팅 연동 완료 (Sprint 37, Story S37-3)
+- **[FEAT-046] 온보딩 슬라이딩 탭 및 랜딩 페이지 3D 틸트/글로시 CTA 비주얼 업그레이드**:
+  1) 온보딩 마법사 Step 0 가로 내비게이션 바(적용대상/재무목표/금감원자료/페르소나체험)에 `SlidingTabs` 연동 및 상단 시작 버튼에 유리 광택(`t-btn-glossy`) 효과 적용
+  2) 랜딩 페이지(`src/app/page.tsx`) 히어로 '시뮬레이션 시작하기 🚀' CTA 버튼에 `t-btn-glossy` 모션 적용
+  3) 랜딩 페이지 '벤치마킹 참고 서비스 탐색' 카드 그리드에 transitions.dev 인터랙티브 3D 원근 반사 컴포넌트(`CardTilt`) 연동 및 모달 스프링 팝업(`t-modal-spring`) 적용 완료 (Sprint 37, Story S37-4)
+
 

@@ -106,12 +106,14 @@
   1. 배당 투자 계좌 유형(`coveredCallAccountType: "TAXABLE" | "PENSION"`) 선택 옵션 신설: 연금계좌 선택 시 15.4% 원천징수 면제 및 연금소득세(3.3~5.5%) 과세이연, 건보료 금융소득 1,000만원 기준에서 제외(피부양자 안전 방어).
   2. 퇴직연금감독규정 IRP 70% 위험자산 한도 & 30% 안전자산 의무 판정 엔진(`pensionAccountRules.ts`) 및 단위 테스트(`validatePensionAccountRules.ts`) 통과.
 
+- **[Completed]** Story S37-1: transitions.dev 기반 모션 디자인 시스템 토큰 및 공통 인터랙션 컴포넌트 구축 (`globals.css` 모션 토큰/클래스, `NumberPopIn`, `SlidingTabs`, `CopyCheckButton`, `CardTilt` 및 `DividendStrategyModal` 스프링 모달/성공체크 연동 완료)
+
 ## Active Sprint / Story
-- **Sprint 36** (완료): 배당·인출 계산 엔진 정밀화 및 데이터·보안 정합성 확립
-  - **Story S36-1 (완료)**: 보안 안내 및 기본값 정합성 동기화
-  - **Story S36-2 (완료)**: 커버드콜 2변수 모델 (가격 수익률 축 & 위험 고지)
-  - **Story S36-3 (완료)**: 연금계좌 분리 & IRP 70% 안전자산 진단기
-- **Sprint 37** (계획 대기)
+- **Sprint 37** (진행 중): transitions.dev 기반 UI/UX 모션 고도화 및 인터랙티브 인터페이스 확립
+  - **Story S37-1 (완료)**: 모션 디자인 시스템 토큰 및 공통 인터랙션 훅/컴포넌트 구축
+  - **Story S37-2 (계획 대기)**: 대시보드 KPI 롤링 카운터, 슬라이딩 탭 및 스프링 모달 연동
+  - **Story S37-3 (계획 대기)**: AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출
+  - **Story S37-4 (계획 대기)**: 온보딩 및 랜딩 페이지 3D Tilt, Glossy CTA 비주얼 업그레이드
 
 ## Session Handoff (Sprint 36 완료)
 - **주요 산출물**:

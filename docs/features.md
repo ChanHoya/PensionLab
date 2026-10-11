@@ -105,4 +105,8 @@
 - **[FEAT-042] 배당 투자 계좌 유형 분리 및 IRP 70% 안전자산 규제 진단기**:
   1) S4 전략 내 계좌 유형(`coveredCallAccountType: "TAXABLE" | "PENSION"`) 선택 지원: 일반 위탁(15.4% 원천징수) vs 연금계좌(3.3~5.5% 과세이연 및 건보료 금융소득 비과세 면제)
   2) 퇴직연금감독규정 기반 IRP 위험자산 70% 한도 및 안전자산 30% 의무 판정 엔진(`src/services/pensionAccountRules.ts`) 구현 및 초과 시 경고·필요 안전자산 산출 (Sprint 36, Story S36-3)
+- **[FEAT-043] transitions.dev 기반 모션 디자인 시스템 및 마이크로 인터랙션 훅**:
+  1) `globals.css` 내 transitions.dev 모션 토큰(`--ease-spring`, `--digit-*`, `--modal-spring-*`, `--tab-slider-*`) 및 키프레임 애니메이션 등록
+  2) 공통 마이크로 인터랙션 컴포넌트(`src/components/motion/`): 숫자 팝인(`NumberPopIn`), 슬라이딩 탭(`SlidingTabs`), 성공 체크 복사 버튼(`CopyCheckButton`), 3D 카드 틸트(`CardTilt`) 구축
+  3) 전문 모달(`DividendStrategyModal`) 스프링 진입(`t-modal-spring`) 및 종목코드 복사 피드백(`t-success-check`) 연동 완료 (Sprint 37, Story S37-1)
 

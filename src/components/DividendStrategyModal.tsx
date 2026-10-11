@@ -473,6 +473,7 @@ export function DividendStrategyModal({
       }}
     >
       <div
+        className="t-modal-spring"
         style={{
           width: "100%",
           maxWidth: "1100px",
@@ -722,16 +723,24 @@ export function DividendStrategyModal({
                                 }}
                                 style={{
                                   fontSize: "0.68rem",
-                                  color: "#38bdf8",
-                                  background: "rgba(56, 189, 248, 0.1)",
-                                  border: "1px solid rgba(56, 189, 248, 0.3)",
-                                  borderRadius: "3px",
-                                  padding: "1px 4px",
+                                  color: copiedTicker === a.ticker ? "#34d399" : "#38bdf8",
+                                  background: copiedTicker === a.ticker ? "rgba(16, 185, 129, 0.2)" : "rgba(56, 189, 248, 0.1)",
+                                  border: copiedTicker === a.ticker ? "1px solid #10b981" : "1px solid rgba(56, 189, 248, 0.3)",
+                                  borderRadius: "4px",
+                                  padding: "2px 6px",
                                   cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                                 }}
                                 title="종목코드 복사"
                               >
-                                {a.ticker} 📋
+                                {copiedTicker === a.ticker ? (
+                                  <span className="t-success-check" style={{ fontWeight: 700 }}>✓ 복사됨</span>
+                                ) : (
+                                  <>{a.ticker} 📋</>
+                                )}
                               </button>
                             </div>
                             <span style={{ fontWeight: 700, color: p.badgeColor }}>{a.weight}%</span>
@@ -879,18 +888,26 @@ export function DividendStrategyModal({
                             type="button"
                             onClick={() => handleCopyTicker(etf.ticker)}
                             style={{
-                              backgroundColor: "rgba(56, 189, 248, 0.12)",
-                              border: "1px solid rgba(56, 189, 248, 0.3)",
-                              color: "#38bdf8",
+                              backgroundColor: copiedTicker === etf.ticker ? "rgba(16, 185, 129, 0.2)" : "rgba(56, 189, 248, 0.12)",
+                              border: copiedTicker === etf.ticker ? "1px solid #10b981" : "1px solid rgba(56, 189, 248, 0.3)",
+                              color: copiedTicker === etf.ticker ? "#34d399" : "#38bdf8",
                               fontWeight: 700,
                               fontSize: "0.74rem",
-                              padding: "2px 6px",
+                              padding: "2px 8px",
                               borderRadius: "4px",
                               cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                             }}
                             title="종목코드 클립보드 복사"
                           >
-                            {etf.ticker} 📋
+                            {copiedTicker === etf.ticker ? (
+                              <span className="t-success-check" style={{ fontWeight: 700 }}>✓ 복사됨</span>
+                            ) : (
+                              <>{etf.ticker} 📋</>
+                            )}
                           </button>
                         </td>
                         <td style={{ padding: "8px 10px", fontWeight: 700, color: "#f8fafc" }}>{etf.name}</td>

@@ -93,4 +93,15 @@ graph TD
   Dashboard --> WithdrawalUI[src/app/dashboard/withdrawal/page.tsx]
   WithdrawalUI --> Store
   WithdrawalUI --> WithdrawalCalc[src/services/withdrawalCalculator.ts]
+
+  %% Motion & Transitions (Sprint 37)
+  Motion[src/components/motion/index.ts]
+  Motion --> NumberPopIn[src/components/motion/NumberPopIn.tsx]
+  Motion --> SlidingTabs[src/components/motion/SlidingTabs.tsx]
+  Motion --> CopyCheckButton[src/components/motion/CopyCheckButton.tsx]
+  Motion --> CardTilt[src/components/motion/CardTilt.tsx]
+  Dashboard --> Motion
+  DividendModal[src/components/DividendStrategyModal.tsx] --> Motion
 ```
+
+

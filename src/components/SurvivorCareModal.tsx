@@ -103,7 +103,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
+        backgroundColor: "var(--overlay-bg, rgba(15, 23, 42, 0.65))",
         backdropFilter: "blur(6px)",
         padding: "16px",
       }}
@@ -118,11 +118,11 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
           maxWidth: "920px",
           maxHeight: "92vh",
           overflowY: "auto",
-          background: "var(--card-bg, #1e293b)",
-          color: "var(--text-primary, #f8fafc)",
+          background: "var(--modal-bg, #ffffff)",
+          color: "var(--text-primary, #0f1127)",
           borderRadius: "16px",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          border: "1px solid var(--modal-border, #e2e8f0)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           padding: "24px",
           display: "flex",
           flexDirection: "column",
@@ -135,14 +135,14 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
             paddingBottom: "14px",
           }}
         >
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ fontSize: "1.6rem" }}>🕊️</span>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 700, margin: 0, color: "var(--text-primary, #0f1127)" }}>
                 홀로 남은 배우자(1인 가구) 생애 케어 고도화
               </h2>
               <span
@@ -162,7 +162,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             <p
               style={{
                 fontSize: "0.825rem",
-                color: "var(--text-secondary, #94a3b8)",
+                color: "var(--text-secondary, #334155)",
                 margin: "4px 0 0 0",
               }}
             >
@@ -176,7 +176,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             style={{
               background: "none",
               border: "none",
-              color: "var(--text-secondary, #94a3b8)",
+              color: "var(--text-muted, #64748b)",
               fontSize: "1.4rem",
               cursor: "pointer",
               padding: "4px",
@@ -198,17 +198,17 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #64748b)" }}>
               홀로 생존 기간
             </div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#38bdf8" }}>
               {result.aloneYears}년 ({result.survivorStartAge}~{result.survivorEndAge}세)
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginTop: "2px" }}>
               {deceasedName} 사망 후 {survivorName} 홀로 생존
             </div>
           </div>
@@ -217,17 +217,17 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #64748b)" }}>
               1인 가구 월 목표 생활비
             </div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#f43f5e" }}>
               {(result.aloneTargetMonthlyWon / 10000).toFixed(0)}만원/월
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginTop: "2px" }}>
               부부 기준({coupleSpending}만원)의 {(singleExpenseRatio * 100).toFixed(0)}%
             </div>
           </div>
@@ -236,17 +236,17 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #64748b)" }}>
               국민연금 확정 수령액
             </div>
             <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#34d399" }}>
               {(result.finalMonthlyNpsWon / 10000).toFixed(0)}만원/월
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginTop: "2px" }}>
               {result.chosenOptionLabel}
             </div>
           </div>
@@ -255,11 +255,11 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted, #64748b)" }}>
               월 수지 밸런스
             </div>
             <div
@@ -274,17 +274,18 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
                 ? `+${(result.monthlyNetBalanceWon / 10000).toFixed(0)}만원`
                 : `${(result.monthlyNetBalanceWon / 10000).toFixed(0)}만원`}
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginTop: "2px" }}>
               총 월수입 {(result.monthlyTotalInflowWon / 10000).toFixed(0)}만원
             </div>
           </div>
         </div>
 
+
         {/* 조절 슬라이더 및 시나리오 컨트롤 */}
         <div
           style={{
-            background: "rgba(0, 0, 0, 0.25)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
+            background: "var(--modal-subbox-bg, #f8fafc)",
+            border: "1px solid var(--modal-border, #e2e8f0)",
             borderRadius: "12px",
             padding: "16px",
             display: "flex",
@@ -292,7 +293,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             gap: "14px",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#38bdf8" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-accent, #4f46e5)" }}>
             ⚙️ 기대수명 및 1인 가구 생활비·간병비 조건 설정
           </div>
 
@@ -306,7 +307,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             {/* 본인 기대수명 */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
-                <span>본인 기대수명</span>
+                <span style={{ color: "var(--text-secondary, #334155)" }}>본인 기대수명</span>
                 <span style={{ fontWeight: 700, color: "#38bdf8" }}>만 {selfDeathAge}세</span>
               </div>
               <input
@@ -323,7 +324,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             {/* 배우자 기대수명 */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
-                <span>배우자 기대수명</span>
+                <span style={{ color: "var(--text-secondary, #334155)" }}>배우자 기대수명</span>
                 <span style={{ fontWeight: 700, color: "#38bdf8" }}>만 {spouseDeathAge}세</span>
               </div>
               <input
@@ -340,7 +341,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             {/* 1인 생활비 비율 */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
-                <span>1인 가구 생활비 감소율</span>
+                <span style={{ color: "var(--text-secondary, #334155)" }}>1인 가구 생활비 감소율</span>
                 <span style={{ fontWeight: 700, color: "#f43f5e" }}>
                   {(singleExpenseRatio * 100).toFixed(0)}% (월 {(result.aloneTargetMonthlyWon / 10000).toFixed(0)}만원)
                 </span>
@@ -359,7 +360,7 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
             {/* 85세 이후 월 간병비 */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
-                <span>85세 이후 월 집중 간병비</span>
+                <span style={{ color: "var(--text-secondary, #334155)" }}>85세 이후 월 집중 간병비</span>
                 <span style={{ fontWeight: 700, color: "#fbbf24" }}>월 {careMonthlyManwon}만원</span>
               </div>
               <input
@@ -385,8 +386,8 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
                 cursor: "pointer",
                 padding: "8px 12px",
                 borderRadius: "8px",
-                background: hasReverseMortgage ? "rgba(251, 191, 36, 0.1)" : "rgba(255, 255, 255, 0.03)",
-                border: `1px solid ${hasReverseMortgage ? "rgba(251, 191, 36, 0.4)" : "rgba(255, 255, 255, 0.08)"}`,
+                background: hasReverseMortgage ? "rgba(251, 191, 36, 0.12)" : "var(--modal-surface-card, #f8fafc)",
+                border: `1px solid ${hasReverseMortgage ? "rgba(251, 191, 36, 0.4)" : "var(--modal-border, #e2e8f0)"}`,
               }}
             >
               <input
@@ -395,8 +396,8 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
                 onChange={(e) => setHasReverseMortgage(e.target.checked)}
               />
               <div>
-                <span style={{ fontWeight: 700 }}>주택연금 배우자 100% 종신 승계 반영</span>
-                <span style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginLeft: "8px" }}>
+                <span style={{ fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>주택연금 배우자 100% 종신 승계 반영</span>
+                <span style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginLeft: "8px" }}>
                   (사망 시 배우자에게 월 {(rmResult.monthlyPayoutWon / 10000).toFixed(0)}만원 감액 없이 승계 지급)
                 </span>
               </div>
@@ -407,13 +408,13 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
         {/* 국민연금법 제56조 중복급여 조정 비교 패널 */}
         <div
           style={{
-            background: "rgba(255, 255, 255, 0.03)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            background: "var(--modal-subbox-bg, #f8fafc)",
+            border: "1px solid var(--modal-border, #e2e8f0)",
             borderRadius: "10px",
             padding: "16px",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#38bdf8", marginBottom: "8px" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-accent, #4f46e5)", marginBottom: "8px" }}>
             ⚖️ 국민연금법 제56조 (중복급여의 조정) 비교 분석
           </div>
           <div
@@ -427,20 +428,20 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
               style={{
                 padding: "12px",
                 borderRadius: "8px",
-                background: result.chosenOption === "OPTION_A" ? "rgba(56, 189, 248, 0.12)" : "rgba(0,0,0,0.2)",
-                border: `1px solid ${result.chosenOption === "OPTION_A" ? "rgba(56, 189, 248, 0.5)" : "rgba(255,255,255,0.06)"}`,
+                background: result.chosenOption === "OPTION_A" ? "rgba(56, 189, 248, 0.12)" : "var(--modal-surface, #ffffff)",
+                border: `1.5px solid ${result.chosenOption === "OPTION_A" ? "rgba(56, 189, 248, 0.6)" : "var(--modal-border, #e2e8f0)"}`,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 700, fontSize: "0.8rem" }}>[대안 A] 본인 노령 + 유족연금 30%</span>
+                <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "var(--text-primary, #0f1127)" }}>[대안 A] 본인 노령 + 유족연금 30%</span>
                 {result.chosenOption === "OPTION_A" && (
-                  <span style={{ fontSize: "0.7rem", color: "#38bdf8", fontWeight: 700 }}>★ 유리 (선택)</span>
+                  <span style={{ fontSize: "0.7rem", color: "#0284c7", fontWeight: 700 }}>★ 유리 (선택)</span>
                 )}
               </div>
-              <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#38bdf8", marginTop: "6px" }}>
+              <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#0284c7", marginTop: "6px" }}>
                 {(result.survivorOptionA_Won / 10000).toFixed(0)}만원/월
               </div>
-              <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "4px" }}>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginTop: "4px" }}>
                 본인 연금 {( (result.survivor === "SELF" ? selfNpsWon : spouseNpsWon) / 10000).toFixed(0)}만 + 유족연금 30%({( (result.pureSurvivorPensionWon * 0.3) / 10000).toFixed(0)}만)
               </div>
             </div>
@@ -449,20 +450,20 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
               style={{
                 padding: "12px",
                 borderRadius: "8px",
-                background: result.chosenOption === "OPTION_B" ? "rgba(56, 189, 248, 0.12)" : "rgba(0,0,0,0.2)",
-                border: `1px solid ${result.chosenOption === "OPTION_B" ? "rgba(56, 189, 248, 0.5)" : "rgba(255,255,255,0.06)"}`,
+                background: result.chosenOption === "OPTION_B" ? "rgba(56, 189, 248, 0.12)" : "var(--modal-surface, #ffffff)",
+                border: `1.5px solid ${result.chosenOption === "OPTION_B" ? "rgba(56, 189, 248, 0.6)" : "var(--modal-border, #e2e8f0)"}`,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontWeight: 700, fontSize: "0.8rem" }}>[대안 B] 유족연금 100% 단독</span>
+                <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "var(--text-primary, #0f1127)" }}>[대안 B] 유족연금 100% 단독</span>
                 {result.chosenOption === "OPTION_B" && (
-                  <span style={{ fontSize: "0.7rem", color: "#38bdf8", fontWeight: 700 }}>★ 유리 (선택)</span>
+                  <span style={{ fontSize: "0.7rem", color: "#0284c7", fontWeight: 700 }}>★ 유리 (선택)</span>
                 )}
               </div>
-              <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#94a3b8", marginTop: "6px" }}>
+              <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "var(--text-secondary, #334155)", marginTop: "6px" }}>
                 {(result.survivorOptionB_Won / 10000).toFixed(0)}만원/월
               </div>
-              <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "4px" }}>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", marginTop: "4px" }}>
                 사망자 기본연금의 {(result.survivorNpsRate * 100).toFixed(0)}% (본인 노령연금 포기)
               </div>
             </div>
@@ -472,23 +473,24 @@ export function SurvivorCareModal({ isOpen, onClose }: SurvivorCareModalProps) {
         {/* 전문가 추천 가이드 */}
         <div
           style={{
-            background: "rgba(56, 189, 248, 0.06)",
-            border: "1px solid rgba(56, 189, 248, 0.2)",
+            background: "rgba(56, 189, 248, 0.08)",
+            border: "1px solid rgba(56, 189, 248, 0.25)",
             borderRadius: "10px",
             padding: "14px",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#38bdf8", marginBottom: "6px" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-accent, #4f46e5)", marginBottom: "6px" }}>
             💡 CFP 은퇴설계 전문가 홀로 생존 생애 케어 조언
           </div>
           <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.78rem", lineHeight: 1.6 }}>
             {result.recommendations.map((rec, idx) => (
-              <li key={idx} style={{ color: "var(--text-secondary, #cbd5e1)", marginTop: "2px" }}>
+              <li key={idx} style={{ color: "var(--text-secondary, #334155)", marginTop: "2px" }}>
                 {rec}
               </li>
             ))}
           </ul>
         </div>
+
 
         {/* 모달 닫기 버튼 */}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>

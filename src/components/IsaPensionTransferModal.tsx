@@ -61,11 +61,11 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
           maxWidth: "920px",
           maxHeight: "92vh",
           overflowY: "auto",
-          background: "var(--card-bg, #1e293b)",
-          color: "var(--text-primary, #f8fafc)",
+          background: "var(--modal-bg, #ffffff)",
+          color: "var(--text-primary, #0f1127)",
           borderRadius: "16px",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          border: "1px solid var(--modal-border, #e2e8f0)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           padding: "24px",
           display: "flex",
           flexDirection: "column",
@@ -78,7 +78,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
             paddingBottom: "14px",
           }}
         >
@@ -94,9 +94,9 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
                   padding: "3px 8px",
                   borderRadius: "6px",
                   fontWeight: 700,
-                  color: "#38bdf8",
-                  background: "rgba(56, 189, 248, 0.15)",
-                  border: "1px solid rgba(56, 189, 248, 0.4)",
+                  color: "#0284c7",
+                  background: "rgba(2, 132, 199, 0.12)",
+                  border: "1px solid rgba(2, 132, 199, 0.3)",
                 }}
               >
                 {result.taxCreditRateLabel}
@@ -105,7 +105,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             <p
               style={{
                 fontSize: "0.825rem",
-                color: "var(--text-secondary, #94a3b8)",
+                color: "var(--text-secondary, #64748b)",
                 margin: "4px 0 0 0",
               }}
             >
@@ -119,7 +119,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             style={{
               background: "none",
               border: "none",
-              color: "var(--text-secondary, #94a3b8)",
+              color: "var(--text-secondary, #64748b)",
               fontSize: "1.4rem",
               cursor: "pointer",
               padding: "4px",
@@ -141,17 +141,17 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               ISA 전환 추가 공제 한도
             </div>
-            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#38bdf8" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#0284c7" }}>
               +{(result.isaTransferTaxCreditWon / 10000).toLocaleString()}만원
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               전환금액({isaMaturityManwon}만)의 10% (상한 300만)
             </div>
           </div>
@@ -160,17 +160,17 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               당해 연도 총 공제 인정액
             </div>
-            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#a855f7" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#9333ea" }}>
               {(result.totalTaxCreditEligibleWon / 10000).toLocaleString()}만원
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               기본 연금 {regularDepositManwon}만 + ISA {result.isaTransferTaxCreditWon / 10000}만
             </div>
           </div>
@@ -179,17 +179,17 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               당해 연말정산 총 환급액
             </div>
-            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#10b981" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#059669" }}>
               {(result.totalAnnualTaxRefundWon / 10000).toFixed(1)}만원
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               ISA 보너스 환급 {(result.isaBonusTaxRefundWon / 10000).toFixed(1)}만원 포함
             </div>
           </div>
@@ -198,17 +198,17 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               {cycles * 3}개년 누적 절세 환급액
             </div>
-            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#fbbf24" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#d97706" }}>
               {(result.cumulativeTaxBenefitWon / 10000).toFixed(0)}만원
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               3년 풍차돌리기 {cycles}회 반복 기준
             </div>
           </div>
@@ -217,8 +217,8 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
         {/* 조절 슬라이더 영역 */}
         <div
           style={{
-            background: "rgba(0, 0, 0, 0.25)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
+            background: "var(--modal-subbox-bg, #f8fafc)",
+            border: "1px solid var(--modal-subbox-border, #e2e8f0)",
             borderRadius: "12px",
             padding: "16px",
             display: "flex",
@@ -226,7 +226,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             gap: "14px",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#38bdf8" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0284c7" }}>
             ⚙️ 전환 자금 및 소득 조건 시뮬레이션
           </div>
 
@@ -241,7 +241,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
                 <span>ISA 3년 만기 해지 자금</span>
-                <span style={{ fontWeight: 700, color: "#38bdf8" }}>{isaMaturityManwon}만원</span>
+                <span style={{ fontWeight: 700, color: "#0284c7" }}>{isaMaturityManwon}만원</span>
               </div>
               <input
                 type="range"
@@ -258,7 +258,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
                 <span>근로자 연간 총급여</span>
-                <span style={{ fontWeight: 700, color: salaryManwon <= 5500 ? "#10b981" : "#38bdf8" }}>
+                <span style={{ fontWeight: 700, color: salaryManwon <= 5500 ? "#059669" : "#0284c7" }}>
                   {salaryManwon}만원 {salaryManwon <= 5500 ? "(16.5% 우대)" : "(13.2%)"}
                 </span>
               </div>
@@ -277,7 +277,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
                 <span>정기 연금저축/IRP 연 납입액</span>
-                <span style={{ fontWeight: 700, color: "#a855f7" }}>{regularDepositManwon}만원</span>
+                <span style={{ fontWeight: 700, color: "#9333ea" }}>{regularDepositManwon}만원</span>
               </div>
               <input
                 type="range"
@@ -294,7 +294,7 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
                 <span>3년 풍차돌리기 반복 횟수</span>
-                <span style={{ fontWeight: 700, color: "#fbbf24" }}>{cycles}회 ({cycles * 3}개년)</span>
+                <span style={{ fontWeight: 700, color: "#d97706" }}>{cycles}회 ({cycles * 3}개년)</span>
               </div>
               <input
                 type="range"
@@ -324,20 +324,20 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
               }}
             >
               <thead>
-                <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                  <th style={{ padding: "8px 10px", width: "18%" }}>구분</th>
-                  <th style={{ padding: "8px 10px", width: "24%", color: "#94a3b8" }}>일반 위탁계좌</th>
-                  <th style={{ padding: "8px 10px", width: "29%", color: "#38bdf8" }}>ISA 계좌</th>
-                  <th style={{ padding: "8px 10px", width: "29%", color: "#a855f7" }}>연금저축 / IRP</th>
+                <tr style={{ background: "var(--modal-table-th, #f8fafc)", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>
+                  <th style={{ padding: "8px 10px", width: "18%", color: "var(--text-muted, #64748b)" }}>구분</th>
+                  <th style={{ padding: "8px 10px", width: "24%", color: "var(--text-secondary, #64748b)" }}>일반 위탁계좌</th>
+                  <th style={{ padding: "8px 10px", width: "29%", color: "#0284c7" }}>ISA 계좌</th>
+                  <th style={{ padding: "8px 10px", width: "29%", color: "#9333ea" }}>연금저축 / IRP</th>
                 </tr>
               </thead>
               <tbody>
                 {result.comparisonTable.map((row, idx) => (
-                  <tr key={idx} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
-                    <td style={{ padding: "8px 10px", fontWeight: 600 }}>{row.feature}</td>
-                    <td style={{ padding: "8px 10px", color: "var(--text-secondary, #94a3b8)" }}>{row.generalAccount}</td>
-                    <td style={{ padding: "8px 10px", color: "#38bdf8", fontWeight: 500 }}>{row.isaAccount}</td>
-                    <td style={{ padding: "8px 10px", color: "#c084fc", fontWeight: 500 }}>{row.pensionAccount}</td>
+                  <tr key={idx} style={{ borderBottom: "1px solid var(--modal-border-subtle, #f1f5f9)" }}>
+                    <td style={{ padding: "8px 10px", fontWeight: 600, color: "var(--text-primary)" }}>{row.feature}</td>
+                    <td style={{ padding: "8px 10px", color: "var(--text-secondary, #64748b)" }}>{row.generalAccount}</td>
+                    <td style={{ padding: "8px 10px", color: "#0284c7", fontWeight: 500 }}>{row.isaAccount}</td>
+                    <td style={{ padding: "8px 10px", color: "#9333ea", fontWeight: 500 }}>{row.pensionAccount}</td>
                   </tr>
                 ))}
               </tbody>
@@ -348,18 +348,18 @@ export function IsaPensionTransferModal({ isOpen, onClose }: IsaPensionTransferM
         {/* 전문가 권고 박스 */}
         <div
           style={{
-            background: "rgba(56, 189, 248, 0.06)",
-            border: "1px solid rgba(56, 189, 248, 0.2)",
+            background: "rgba(2, 132, 199, 0.08)",
+            border: "1px solid rgba(2, 132, 199, 0.25)",
             borderRadius: "10px",
             padding: "14px",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#38bdf8", marginBottom: "6px" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0284c7", marginBottom: "6px" }}>
             💡 CFP 은퇴설계 전문가 ISA 풍차돌리기 조언
           </div>
           <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.78rem", lineHeight: 1.6 }}>
             {result.expertTips.map((tip, idx) => (
-              <li key={idx} style={{ color: "var(--text-secondary, #cbd5e1)", marginTop: "2px" }}>
+              <li key={idx} style={{ color: "var(--text-secondary, #475569)", marginTop: "2px" }}>
                 {tip}
               </li>
             ))}

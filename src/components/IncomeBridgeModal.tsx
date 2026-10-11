@@ -116,11 +116,11 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
           maxWidth: "920px",
           maxHeight: "92vh",
           overflowY: "auto",
-          background: "var(--card-bg, #1e293b)",
-          color: "var(--text-primary, #f8fafc)",
+          background: "var(--modal-bg, #ffffff)",
+          color: "var(--text-primary, #0f1127)",
           borderRadius: "16px",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          border: "1px solid var(--modal-border, #e2e8f0)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           padding: "24px",
           display: "flex",
           flexDirection: "column",
@@ -133,7 +133,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
             paddingBottom: "14px",
           }}
         >
@@ -196,17 +196,17 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               소득 공백 기간
             </div>
-            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#38bdf8" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#0284c7" }}>
               {bridgeResult.gapYears}년 ({bridgeResult.gapMonths}개월)
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               은퇴 {retAge}세 ~ 국민연금 {npsAge}세
             </div>
           </div>
@@ -215,17 +215,17 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               공백기 총 필요 생활비
             </div>
-            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#f43f5e" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#e11d48" }}>
               {(bridgeResult.totalRequiredFundsWon / 100000000).toFixed(2)}억원
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               월 {targetExpenseManwon}만원 기준
             </div>
           </div>
@@ -234,17 +234,17 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               조달 가능 총 자산
             </div>
-            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#34d399" }}>
+            <div style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "4px", color: "#059669" }}>
               {(bridgeResult.totalProcuredFundsWon / 100000000).toFixed(2)}억원
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               준비율 {bridgeResult.coverageRatio}%
             </div>
           </div>
@@ -253,11 +253,11 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             style={{
               padding: "14px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "var(--modal-surface-card, #f8fafc)",
+              border: "1px solid var(--modal-border, #e2e8f0)",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #64748b)" }}>
               최종 자금 밸런스
             </div>
             <div
@@ -265,14 +265,14 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
                 fontSize: "1.3rem",
                 fontWeight: 800,
                 marginTop: "4px",
-                color: bridgeResult.shortfallWon > 0 ? "#ef4444" : "#10b981",
+                color: bridgeResult.shortfallWon > 0 ? "#dc2626" : "#059669",
               }}
             >
               {bridgeResult.shortfallWon > 0
                 ? `-${(bridgeResult.shortfallWon / 10000).toLocaleString()}만원`
                 : "충족 (+0원)"}
             </div>
-            <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)", marginTop: "2px" }}>
               {bridgeResult.shortfallWon > 0 ? "적자 자금 발생" : "소득 결손 방어 완료"}
             </div>
           </div>
@@ -281,8 +281,8 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
         {/* 조절 슬라이더 및 전략 토글 박스 */}
         <div
           style={{
-            background: "rgba(0, 0, 0, 0.25)",
-            border: "1px solid rgba(255, 255, 255, 0.06)",
+            background: "var(--modal-subbox-bg, #f8fafc)",
+            border: "1px solid var(--modal-subbox-border, #e2e8f0)",
             borderRadius: "12px",
             padding: "16px",
             display: "flex",
@@ -290,7 +290,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             gap: "14px",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#38bdf8" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0284c7" }}>
             ⚙️ 공백기 조건 및 4대 브릿지 수단 시뮬레이션
           </div>
 
@@ -305,7 +305,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
                 <span>은퇴 예정 나이</span>
-                <span style={{ fontWeight: 700, color: "#38bdf8" }}>만 {retAge}세</span>
+                <span style={{ fontWeight: 700, color: "#0284c7" }}>만 {retAge}세</span>
               </div>
               <input
                 type="range"
@@ -322,7 +322,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
                 <span>국민연금 수령 개시 나이</span>
-                <span style={{ fontWeight: 700, color: "#38bdf8" }}>만 {npsAge}세 (법정 {defaultNpsAge}세)</span>
+                <span style={{ fontWeight: 700, color: "#0284c7" }}>만 {npsAge}세 (법정 {defaultNpsAge}세)</span>
               </div>
               <input
                 type="range"
@@ -339,7 +339,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.78rem" }}>
                 <span>공백기 월 목표 생활비</span>
-                <span style={{ fontWeight: 700, color: "#f43f5e" }}>월 {targetExpenseManwon}만원</span>
+                <span style={{ fontWeight: 700, color: "#e11d48" }}>월 {targetExpenseManwon}만원</span>
               </div>
               <input
                 type="range"
@@ -372,8 +372,8 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
                 cursor: "pointer",
                 padding: "8px 10px",
                 borderRadius: "8px",
-                background: includeUnemployment ? "rgba(56, 189, 248, 0.1)" : "rgba(255, 255, 255, 0.02)",
-                border: `1px solid ${includeUnemployment ? "rgba(56, 189, 248, 0.4)" : "rgba(255, 255, 255, 0.08)"}`,
+                background: includeUnemployment ? "rgba(2, 132, 199, 0.1)" : "var(--modal-surface, #ffffff)",
+                border: `1px solid ${includeUnemployment ? "rgba(2, 132, 199, 0.4)" : "var(--modal-border, #e2e8f0)"}`,
               }}
             >
               <input
@@ -383,7 +383,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
               />
               <div>
                 <div style={{ fontWeight: 600 }}>구직급여(실업급여) 반영</div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary, #94a3b8)" }}>
+                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary, #64748b)" }}>
                   은퇴 1년차 최대 9개월 (총 {((UNEMPLOYMENT_MONTHLY_MAX_WON * 9) / 10000).toLocaleString()}만원)
                 </div>
               </div>
@@ -399,8 +399,8 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
                 cursor: "pointer",
                 padding: "8px 10px",
                 borderRadius: "8px",
-                background: includeHealthSavings ? "rgba(52, 211, 153, 0.1)" : "rgba(255, 255, 255, 0.02)",
-                border: `1px solid ${includeHealthSavings ? "rgba(52, 211, 153, 0.4)" : "rgba(255, 255, 255, 0.08)"}`,
+                background: includeHealthSavings ? "rgba(16, 185, 129, 0.1)" : "var(--modal-surface, #ffffff)",
+                border: `1px solid ${includeHealthSavings ? "rgba(16, 185, 129, 0.4)" : "var(--modal-border, #e2e8f0)"}`,
               }}
             >
               <input
@@ -410,7 +410,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
               />
               <div>
                 <div style={{ fontWeight: 600 }}>건보료 임의계속가입(36개월)</div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary, #94a3b8)" }}>
+                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary, #64748b)" }}>
                   월 약 15만원 건보료 지출 방어
                 </div>
               </div>
@@ -426,8 +426,8 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
                 cursor: "pointer",
                 padding: "8px 10px",
                 borderRadius: "8px",
-                background: includeReverseMortgage ? "rgba(251, 191, 36, 0.1)" : "rgba(255, 255, 255, 0.02)",
-                border: `1px solid ${includeReverseMortgage ? "rgba(251, 191, 36, 0.4)" : "rgba(255, 255, 255, 0.08)"}`,
+                background: includeReverseMortgage ? "rgba(245, 158, 11, 0.1)" : "var(--modal-surface, #ffffff)",
+                border: `1px solid ${includeReverseMortgage ? "rgba(245, 158, 11, 0.4)" : "var(--modal-border, #e2e8f0)"}`,
               }}
             >
               <input
@@ -437,7 +437,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
               />
               <div>
                 <div style={{ fontWeight: 600 }}>주택연금 조기 브릿지</div>
-                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary, #94a3b8)" }}>
+                <div style={{ fontSize: "0.7rem", color: "var(--text-secondary, #64748b)" }}>
                   {includeReverseMortgage ? `월 ${reverseMortgageMonthlyManwon}만원 연계` : "비활성화 (필요시 활성화)"}
                 </div>
               </div>
@@ -448,7 +448,7 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
             <div style={{ marginTop: "4px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem" }}>
                 <span>주택연금 월 수령 연계액</span>
-                <span style={{ fontWeight: 700, color: "#fbbf24" }}>월 {reverseMortgageMonthlyManwon}만원</span>
+                <span style={{ fontWeight: 700, color: "#d97706" }}>월 {reverseMortgageMonthlyManwon}만원</span>
               </div>
               <input
                 type="range"
@@ -466,18 +466,18 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
         {/* CFP 전문 권장안 콜아웃 */}
         <div
           style={{
-            background: "rgba(56, 189, 248, 0.06)",
-            border: "1px solid rgba(56, 189, 248, 0.2)",
+            background: "rgba(2, 132, 199, 0.08)",
+            border: "1px solid rgba(2, 132, 199, 0.25)",
             borderRadius: "10px",
             padding: "14px",
           }}
         >
-          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#38bdf8", marginBottom: "6px" }}>
+          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0284c7", marginBottom: "6px" }}>
             💡 CFP 은퇴설계 전문가 브릿지 전략 권고
           </div>
           <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.78rem", lineHeight: 1.6 }}>
             {bridgeResult.cfRecommendations.map((rec, idx) => (
-              <li key={idx} style={{ color: "var(--text-secondary, #cbd5e1)", marginTop: "2px" }}>
+              <li key={idx} style={{ color: "var(--text-secondary, #475569)", marginTop: "2px" }}>
                 {rec}
               </li>
             ))}
@@ -500,17 +500,17 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
                 }}
               >
                 <thead>
-                  <tr style={{ background: "rgba(255, 255, 255, 0.06)", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                    <th style={{ padding: "8px 6px", textAlign: "center" }}>연차</th>
-                    <th style={{ padding: "8px 6px", textAlign: "center" }}>나이</th>
-                    <th style={{ padding: "8px 6px" }}>연 목표생활비</th>
-                    <th style={{ padding: "8px 6px", color: "#38bdf8" }}>실업급여</th>
-                    <th style={{ padding: "8px 6px", color: "#34d399" }}>건보료절감</th>
-                    <th style={{ padding: "8px 6px", color: "#fbbf24" }}>주택연금</th>
-                    <th style={{ padding: "8px 6px" }}>퇴직연금인출</th>
-                    <th style={{ padding: "8px 6px" }}>개인연금인출</th>
-                    <th style={{ padding: "8px 6px", fontWeight: 700 }}>총조달액(월평균)</th>
-                    <th style={{ padding: "8px 6px", textAlign: "center" }}>결손여부</th>
+                  <tr style={{ background: "var(--modal-table-th, #f8fafc)", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>
+                    <th style={{ padding: "8px 6px", textAlign: "center", color: "var(--text-muted, #64748b)" }}>연차</th>
+                    <th style={{ padding: "8px 6px", textAlign: "center", color: "var(--text-muted, #64748b)" }}>나이</th>
+                    <th style={{ padding: "8px 6px", color: "var(--text-muted, #64748b)" }}>연 목표생활비</th>
+                    <th style={{ padding: "8px 6px", color: "#0284c7" }}>실업급여</th>
+                    <th style={{ padding: "8px 6px", color: "#059669" }}>건보료절감</th>
+                    <th style={{ padding: "8px 6px", color: "#d97706" }}>주택연금</th>
+                    <th style={{ padding: "8px 6px", color: "var(--text-muted, #64748b)" }}>퇴직연금인출</th>
+                    <th style={{ padding: "8px 6px", color: "var(--text-muted, #64748b)" }}>개인연금인출</th>
+                    <th style={{ padding: "8px 6px", fontWeight: 700, color: "var(--text-primary)" }}>총조달액(월평균)</th>
+                    <th style={{ padding: "8px 6px", textAlign: "center", color: "var(--text-muted, #64748b)" }}>결손여부</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -518,36 +518,36 @@ export function IncomeBridgeModal({ isOpen, onClose }: IncomeBridgeModalProps) {
                     <tr
                       key={row.yearIndex}
                       style={{
-                        borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
+                        borderBottom: "1px solid var(--modal-border-subtle, #f1f5f9)",
                         background: row.netSurplusWon < 0 ? "rgba(239, 68, 68, 0.08)" : "transparent",
                       }}
                     >
-                      <td style={{ padding: "8px 6px", textAlign: "center" }}>{row.yearIndex}년차</td>
-                      <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: 600 }}>{row.age}세</td>
-                      <td style={{ padding: "8px 6px" }}>{(row.annualTargetWon / 10000).toLocaleString()}만원</td>
-                      <td style={{ padding: "8px 6px", color: "#38bdf8" }}>
+                      <td style={{ padding: "8px 6px", textAlign: "center", color: "var(--text-secondary)" }}>{row.yearIndex}년차</td>
+                      <td style={{ padding: "8px 6px", textAlign: "center", fontWeight: 600, color: "var(--text-primary)" }}>{row.age}세</td>
+                      <td style={{ padding: "8px 6px", color: "var(--text-primary)" }}>{(row.annualTargetWon / 10000).toLocaleString()}만원</td>
+                      <td style={{ padding: "8px 6px", color: "#0284c7" }}>
                         {row.unemploymentWon > 0 ? `${(row.unemploymentWon / 10000).toLocaleString()}만` : "-"}
                       </td>
-                      <td style={{ padding: "8px 6px", color: "#34d399" }}>
+                      <td style={{ padding: "8px 6px", color: "#059669" }}>
                         {row.healthInsuranceSavingsWon > 0 ? `${(row.healthInsuranceSavingsWon / 10000).toLocaleString()}만` : "-"}
                       </td>
-                      <td style={{ padding: "8px 6px", color: "#fbbf24" }}>
+                      <td style={{ padding: "8px 6px", color: "#d97706" }}>
                         {row.reverseMortgageWon > 0 ? `${(row.reverseMortgageWon / 10000).toLocaleString()}만` : "-"}
                       </td>
-                      <td style={{ padding: "8px 6px" }}>
+                      <td style={{ padding: "8px 6px", color: "var(--text-secondary)" }}>
                         {row.severanceWithdrawalWon > 0 ? `${(row.severanceWithdrawalWon / 10000).toLocaleString()}만` : "-"}
                       </td>
-                      <td style={{ padding: "8px 6px" }}>
+                      <td style={{ padding: "8px 6px", color: "var(--text-secondary)" }}>
                         {row.personalPensionWithdrawalWon > 0 ? `${(row.personalPensionWithdrawalWon / 10000).toLocaleString()}만` : "-"}
                       </td>
-                      <td style={{ padding: "8px 6px", fontWeight: 700 }}>
+                      <td style={{ padding: "8px 6px", fontWeight: 700, color: "var(--text-primary)" }}>
                         {(row.monthlyAverageIncomeWon / 10000).toFixed(0)}만원
                       </td>
                       <td style={{ padding: "8px 6px", textAlign: "center" }}>
                         {row.netSurplusWon >= 0 ? (
-                          <span style={{ color: "#10b981", fontWeight: 700 }}>충족</span>
+                          <span style={{ color: "#059669", fontWeight: 700 }}>충족</span>
                         ) : (
-                          <span style={{ color: "#ef4444", fontWeight: 700 }}>
+                          <span style={{ color: "#dc2626", fontWeight: 700 }}>
                             {Math.round(row.netSurplusWon / 10000)}만원
                           </span>
                         )}

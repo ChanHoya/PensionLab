@@ -461,7 +461,7 @@ export function DividendStrategyModal({
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        backgroundColor: "rgba(3, 7, 18, 0.75)",
+        backgroundColor: "var(--overlay-bg, rgba(15, 23, 42, 0.65))",
         backdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
@@ -478,31 +478,31 @@ export function DividendStrategyModal({
           width: "100%",
           maxWidth: "1100px",
           maxHeight: "92vh",
-          backgroundColor: "#0b1329",
-          border: "1px solid rgba(99, 102, 241, 0.3)",
+          backgroundColor: "var(--modal-bg, #ffffff)",
+          border: "1px solid var(--modal-border, #e2e8f0)",
           borderRadius: "16px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.15)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          color: "#e2e8f0",
+          color: "var(--text-primary, #0f1127)",
         }}
       >
         {/* Header */}
         <div
           style={{
             padding: "20px 24px",
-            borderBottom: "1px solid rgba(148, 163, 184, 0.15)",
+            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-start",
-            background: "linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.4) 100%)",
+            background: "var(--modal-header-bg, #ffffff)",
           }}
         >
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ fontSize: "1.4rem" }}>💡</span>
-              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "#f8fafc" }}>
+              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>
                 연금저축 & IRP 실전 배당 포트폴리오 가이드
               </h2>
               <span
@@ -510,16 +510,16 @@ export function DividendStrategyModal({
                   fontSize: "0.72rem",
                   padding: "3px 8px",
                   borderRadius: "6px",
-                  backgroundColor: "rgba(99, 102, 241, 0.2)",
-                  color: "#a5b4fc",
-                  border: "1px solid rgba(99, 102, 241, 0.3)",
+                  backgroundColor: "rgba(99, 102, 241, 0.12)",
+                  color: "var(--text-accent, #4f46e5)",
+                  border: "1px solid rgba(99, 102, 241, 0.25)",
                   fontWeight: 600,
                 }}
               >
                 전문가 추천 실전 ETF 10선 매핑
               </span>
             </div>
-            <p style={{ margin: "6px 0 0 0", fontSize: "0.82rem", color: "#94a3b8", lineHeight: 1.45 }}>
+            <p style={{ margin: "6px 0 0 0", fontSize: "0.82rem", color: "var(--text-secondary, #334155)", lineHeight: 1.45 }}>
               국내 금융투자 전문가(자산운용사·연금 전문가)들이 실제 추천하는 포트폴리오 4선과 실전 매수 가능 국내 상장 ETF(티커/종목코드)를 확인하고, 내 은퇴 자금에 즉시 적용하세요.
             </p>
           </div>
@@ -528,7 +528,7 @@ export function DividendStrategyModal({
             style={{
               background: "transparent",
               border: "none",
-              color: "#94a3b8",
+              color: "var(--text-muted, #64748b)",
               fontSize: "1.4rem",
               cursor: "pointer",
               padding: "4px 8px",
@@ -545,13 +545,13 @@ export function DividendStrategyModal({
         <div
           style={{
             padding: "10px 24px",
-            backgroundColor: "rgba(245, 158, 11, 0.08)",
-            borderBottom: "1px solid rgba(245, 158, 11, 0.2)",
+            backgroundColor: "rgba(245, 158, 11, 0.1)",
+            borderBottom: "1px solid rgba(245, 158, 11, 0.25)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             fontSize: "0.76rem",
-            color: "#fbbf24",
+            color: "#d97706",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -561,7 +561,7 @@ export function DividendStrategyModal({
             </span>
           </div>
           {copiedTicker && (
-            <span style={{ color: "#34d399", fontWeight: 700, backgroundColor: "rgba(52, 211, 153, 0.15)", padding: "2px 8px", borderRadius: "4px" }}>
+            <span style={{ color: "#059669", fontWeight: 700, backgroundColor: "rgba(16, 185, 129, 0.15)", padding: "2px 8px", borderRadius: "4px" }}>
               종목코드 [{copiedTicker}] 복사 완료!
             </span>
           )}
@@ -573,8 +573,8 @@ export function DividendStrategyModal({
             display: "flex",
             gap: "8px",
             padding: "12px 24px 0 24px",
-            borderBottom: "1px solid rgba(148, 163, 184, 0.15)",
-            backgroundColor: "rgba(15, 23, 42, 0.5)",
+            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
+            backgroundColor: "var(--modal-surface-sub, #f8faff)",
           }}
         >
           {[
@@ -592,10 +592,10 @@ export function DividendStrategyModal({
                   padding: "8px 16px",
                   fontSize: "0.82rem",
                   fontWeight: isTabActive ? 700 : 500,
-                  color: isTabActive ? "#38bdf8" : "#94a3b8",
-                  backgroundColor: isTabActive ? "rgba(56, 189, 248, 0.12)" : "transparent",
+                  color: isTabActive ? "var(--text-accent, #4f46e5)" : "var(--text-secondary, #334155)",
+                  backgroundColor: isTabActive ? "rgba(99, 102, 241, 0.12)" : "transparent",
                   border: "none",
-                  borderBottom: `2px solid ${isTabActive ? "#38bdf8" : "transparent"}`,
+                  borderBottom: `2px solid ${isTabActive ? "var(--text-accent, #4f46e5)" : "transparent"}`,
                   cursor: "pointer",
                   borderRadius: "6px 6px 0 0",
                   transition: "all 0.15s ease",
@@ -624,8 +624,8 @@ export function DividendStrategyModal({
                       style={{
                         padding: "16px",
                         borderRadius: "12px",
-                        backgroundColor: isSelected ? p.bgColor : "rgba(15, 23, 42, 0.6)",
-                        border: `1.5px solid ${isSelected ? p.badgeColor : "rgba(148, 163, 184, 0.15)"}`,
+                        backgroundColor: isSelected ? p.bgColor : "var(--modal-surface-card, #f8fafc)",
+                        border: `1.5px solid ${isSelected ? p.badgeColor : "var(--modal-border, #e2e8f0)"}`,
                         cursor: "pointer",
                         transition: "all 0.2s ease",
                         display: "flex",
@@ -637,7 +637,7 @@ export function DividendStrategyModal({
                       {/* Top Row: Title + Yield Badge */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                         <div>
-                          <div style={{ fontSize: "1rem", fontWeight: 700, color: "#f8fafc" }}>{p.name}</div>
+                          <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>{p.name}</div>
                           <div style={{ fontSize: "0.75rem", color: p.badgeColor, marginTop: "2px", fontWeight: 600 }}>
                             {p.tagline}
                           </div>
@@ -663,13 +663,14 @@ export function DividendStrategyModal({
                         <div
                           style={{
                             fontSize: "0.74rem",
-                            backgroundColor: "rgba(0, 0, 0, 0.25)",
+                            backgroundColor: "var(--modal-subbox-bg, #f1f5f9)",
                             padding: "5px 8px",
                             borderRadius: "6px",
-                            color: "#cbd5e1",
+                            color: "var(--text-primary, #0f1127)",
+                            border: "1px solid var(--modal-border-subtle, #e2e8f0)",
                           }}
                         >
-                          <b style={{ color: "#94a3b8" }}>추천 대상: </b> {p.targetAudience}
+                          <b style={{ color: "var(--text-muted, #64748b)" }}>추천 대상: </b> {p.targetAudience}
                         </div>
                         <div
                           style={{
@@ -677,7 +678,7 @@ export function DividendStrategyModal({
                             backgroundColor: "rgba(99, 102, 241, 0.1)",
                             padding: "4px 8px",
                             borderRadius: "6px",
-                            color: "#a5b4fc",
+                            color: "var(--text-accent, #4f46e5)",
                             border: "1px dashed rgba(99, 102, 241, 0.3)",
                           }}
                         >
@@ -697,8 +698,8 @@ export function DividendStrategyModal({
                               fontSize: "0.74rem",
                               padding: "4px 6px",
                               borderRadius: "4px",
-                              backgroundColor: "rgba(15, 23, 42, 0.4)",
-                              borderBottom: i < p.assets.length - 1 ? "1px dashed rgba(148, 163, 184, 0.1)" : "none",
+                              backgroundColor: "var(--modal-subbox-bg, #f1f5f9)",
+                              borderBottom: i < p.assets.length - 1 ? "1px dashed var(--modal-border, rgba(148, 163, 184, 0.2))" : "none",
                             }}
                           >
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -708,13 +709,13 @@ export function DividendStrategyModal({
                                   padding: "1px 5px",
                                   borderRadius: "4px",
                                   backgroundColor: a.irpCategory === "안전자산" ? "rgba(16, 185, 129, 0.2)" : "rgba(244, 63, 94, 0.15)",
-                                  color: a.irpCategory === "안전자산" ? "#34d399" : "#fda4af",
+                                  color: a.irpCategory === "안전자산" ? "#059669" : "#e11d48",
                                   fontWeight: 600,
                                 }}
                               >
                                 {a.irpCategory}
                               </span>
-                              <span style={{ color: "#f8fafc", fontWeight: 600 }}>{a.recommendedETF}</span>
+                              <span style={{ color: "var(--text-primary, #0f1127)", fontWeight: 600 }}>{a.recommendedETF}</span>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -723,9 +724,9 @@ export function DividendStrategyModal({
                                 }}
                                 style={{
                                   fontSize: "0.68rem",
-                                  color: copiedTicker === a.ticker ? "#34d399" : "#38bdf8",
-                                  background: copiedTicker === a.ticker ? "rgba(16, 185, 129, 0.2)" : "rgba(56, 189, 248, 0.1)",
-                                  border: copiedTicker === a.ticker ? "1px solid #10b981" : "1px solid rgba(56, 189, 248, 0.3)",
+                                  color: copiedTicker === a.ticker ? "#059669" : "#0284c7",
+                                  background: copiedTicker === a.ticker ? "rgba(16, 185, 129, 0.15)" : "rgba(56, 189, 248, 0.15)",
+                                  border: copiedTicker === a.ticker ? "1px solid #10b981" : "1px solid rgba(56, 189, 248, 0.4)",
                                   borderRadius: "4px",
                                   padding: "2px 6px",
                                   cursor: "pointer",
@@ -751,22 +752,22 @@ export function DividendStrategyModal({
                       {/* Expected Payout for User's Asset */}
                       <div
                         style={{
-                          backgroundColor: "rgba(0, 0, 0, 0.35)",
+                          backgroundColor: "var(--modal-subbox-bg, #f1f5f9)",
                           padding: "10px 12px",
                           borderRadius: "8px",
-                          border: "1px solid rgba(148, 163, 184, 0.1)",
+                          border: "1px solid var(--modal-border, #e2e8f0)",
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
                         }}
                       >
                         <div>
-                          <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                          <div style={{ fontSize: "0.7rem", color: "var(--text-muted, #64748b)" }}>
                             현재 설정액({currentInvestmentOk > 0 ? `${currentInvestmentOk.toFixed(1)}억` : "4.0억"}) 기준 예상
                           </div>
-                          <div style={{ fontSize: "0.92rem", fontWeight: 800, color: "#34d399", marginTop: "2px" }}>
+                          <div style={{ fontSize: "0.92rem", fontWeight: 800, color: "#059669", marginTop: "2px" }}>
                             월 {custom.monthly.toLocaleString()}만원
-                            <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#94a3b8", marginLeft: "4px" }}>
+                            <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--text-muted, #64748b)", marginLeft: "4px" }}>
                               (연 {custom.annual.toLocaleString()}만)
                             </span>
                           </div>
@@ -800,8 +801,8 @@ export function DividendStrategyModal({
                       </div>
 
                       {/* Caution / Features Snippet */}
-                      <div style={{ fontSize: "0.72rem", color: "#94a3b8", lineHeight: 1.4 }}>
-                        <span style={{ color: "#f87171" }}>⚠️ </span> {p.caution}
+                      <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", lineHeight: 1.4 }}>
+                        <span style={{ color: "#ef4444" }}>⚠️ </span> {p.caution}
                       </div>
                     </div>
                   );
@@ -813,7 +814,7 @@ export function DividendStrategyModal({
                 style={{
                   padding: "18px 20px",
                   borderRadius: "12px",
-                  backgroundColor: "rgba(15, 23, 42, 0.8)",
+                  backgroundColor: "var(--modal-surface-card, #f8fafc)",
                   border: `1px solid ${selectedPortfolio.borderColor}`,
                   display: "flex",
                   flexDirection: "column",
@@ -827,19 +828,19 @@ export function DividendStrategyModal({
                       {selectedPortfolio.name} 전문가 실전 운용 해설
                     </h3>
                   </div>
-                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                    가정 연 분배율: <b style={{ color: "#34d399" }}>{selectedPortfolio.expectedYield}%</b>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted, #64748b)" }}>
+                    가정 연 분배율: <b style={{ color: "#059669" }}>{selectedPortfolio.expectedYield}%</b>
                   </span>
                 </div>
 
-                <div style={{ fontSize: "0.82rem", color: "#e2e8f0", lineHeight: 1.5 }}>
+                <div style={{ fontSize: "0.82rem", color: "var(--text-primary, #0f1127)", lineHeight: 1.5 }}>
                   <b>포트폴리오 특징: </b> {selectedPortfolio.features}
                 </div>
-                <div style={{ fontSize: "0.82rem", color: "#fca5a5", lineHeight: 1.5 }}>
+                <div style={{ fontSize: "0.82rem", color: "#dc2626", lineHeight: 1.5 }}>
                   <b>주의 및 리스크 관리: </b> {selectedPortfolio.caution}
                 </div>
                 {selectedPortfolio.expertTip && (
-                  <div style={{ fontSize: "0.82rem", color: "#93c5fd", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: "0.82rem", color: "#2563eb", lineHeight: 1.5 }}>
                     <b>💡 전문가 실전 팁: </b> {selectedPortfolio.expertTip}
                   </div>
                 )}
@@ -847,31 +848,32 @@ export function DividendStrategyModal({
             </>
           )}
 
+
           {/* TAB 2: 10 RECOMMENDED ETFS WITH TICKERS */}
           {activeTab === "EXPERT_ETFS" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc" }}>
+                  <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>
                     🏢 연금저축 & IRP 전문가 추천 실전 ETF 10선
                   </h3>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "0.76rem", color: "#94a3b8" }}>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "0.76rem", color: "var(--text-secondary, #334155)" }}>
                     국내 대형 운용사(미래에셋·삼성·한국투자·신한)의 연금 전용 월배당·인컴 핵심 상품 리스트입니다. 종목코드를 클릭하면 바로 복사할 수 있습니다.
                   </p>
                 </div>
               </div>
 
-              <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)" }}>
+              <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid var(--modal-border, #e2e8f0)" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.76rem", textAlign: "left" }}>
                   <thead>
-                    <tr style={{ backgroundColor: "rgba(30, 41, 59, 0.8)", color: "#cbd5e1" }}>
-                      <th style={{ padding: "8px 10px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>종목코드</th>
-                      <th style={{ padding: "8px 10px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>ETF 종목명</th>
-                      <th style={{ padding: "8px 10px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>운용사</th>
-                      <th style={{ padding: "8px 10px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>추정 분배율</th>
-                      <th style={{ padding: "8px 10px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>분배 주기</th>
-                      <th style={{ padding: "8px 10px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>IRP 계좌 분류</th>
-                      <th style={{ padding: "8px 10px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>전문가 추천 사유 및 핵심 특징</th>
+                    <tr style={{ backgroundColor: "var(--modal-table-th, #f8fafc)", color: "var(--text-muted, #64748b)" }}>
+                      <th style={{ padding: "8px 10px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>종목코드</th>
+                      <th style={{ padding: "8px 10px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>ETF 종목명</th>
+                      <th style={{ padding: "8px 10px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>운용사</th>
+                      <th style={{ padding: "8px 10px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>추정 분배율</th>
+                      <th style={{ padding: "8px 10px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>분배 주기</th>
+                      <th style={{ padding: "8px 10px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>IRP 계좌 분류</th>
+                      <th style={{ padding: "8px 10px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>전문가 추천 사유 및 핵심 특징</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -879,8 +881,8 @@ export function DividendStrategyModal({
                       <tr
                         key={etf.ticker}
                         style={{
-                          backgroundColor: idx % 2 === 0 ? "rgba(15, 23, 42, 0.6)" : "rgba(15, 23, 42, 0.3)",
-                          borderBottom: "1px solid rgba(148, 163, 184, 0.1)",
+                          backgroundColor: idx % 2 === 0 ? "var(--modal-surface, #ffffff)" : "var(--modal-surface-card, #f8fafc)",
+                          borderBottom: "1px solid var(--modal-border-subtle, #f1f5f9)",
                         }}
                       >
                         <td style={{ padding: "8px 10px" }}>
@@ -888,9 +890,9 @@ export function DividendStrategyModal({
                             type="button"
                             onClick={() => handleCopyTicker(etf.ticker)}
                             style={{
-                              backgroundColor: copiedTicker === etf.ticker ? "rgba(16, 185, 129, 0.2)" : "rgba(56, 189, 248, 0.12)",
-                              border: copiedTicker === etf.ticker ? "1px solid #10b981" : "1px solid rgba(56, 189, 248, 0.3)",
-                              color: copiedTicker === etf.ticker ? "#34d399" : "#38bdf8",
+                              backgroundColor: copiedTicker === etf.ticker ? "rgba(16, 185, 129, 0.15)" : "rgba(56, 189, 248, 0.15)",
+                              border: copiedTicker === etf.ticker ? "1px solid #10b981" : "1px solid rgba(56, 189, 248, 0.4)",
+                              color: copiedTicker === etf.ticker ? "#059669" : "#0284c7",
                               fontWeight: 700,
                               fontSize: "0.74rem",
                               padding: "2px 8px",
@@ -910,12 +912,12 @@ export function DividendStrategyModal({
                             )}
                           </button>
                         </td>
-                        <td style={{ padding: "8px 10px", fontWeight: 700, color: "#f8fafc" }}>{etf.name}</td>
-                        <td style={{ padding: "8px 10px", color: "#cbd5e1" }}>{etf.provider}</td>
-                        <td style={{ padding: "8px 10px", fontWeight: 700, color: "#34d399" }}>
+                        <td style={{ padding: "8px 10px", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>{etf.name}</td>
+                        <td style={{ padding: "8px 10px", color: "var(--text-secondary, #334155)" }}>{etf.provider}</td>
+                        <td style={{ padding: "8px 10px", fontWeight: 700, color: "#059669" }}>
                           {etf.yieldRate > 0 ? `연 ${etf.yieldRate}%` : "성장위주"}
                         </td>
-                        <td style={{ padding: "8px 10px", color: "#a5b4fc", fontWeight: 600 }}>{etf.payoutCycle}</td>
+                        <td style={{ padding: "8px 10px", color: "var(--text-accent, #4f46e5)", fontWeight: 600 }}>{etf.payoutCycle}</td>
                         <td style={{ padding: "8px 10px" }}>
                           <span
                             style={{
@@ -926,15 +928,15 @@ export function DividendStrategyModal({
                               backgroundColor: etf.irpEligible.includes("안전자산")
                                 ? "rgba(16, 185, 129, 0.15)"
                                 : "rgba(244, 63, 94, 0.15)",
-                              color: etf.irpEligible.includes("안전자산") ? "#34d399" : "#fda4af",
+                              color: etf.irpEligible.includes("안전자산") ? "#059669" : "#e11d48",
                             }}
                           >
                             {etf.irpEligible}
                           </span>
                         </td>
-                        <td style={{ padding: "8px 10px", color: "#94a3b8", fontSize: "0.73rem", lineHeight: 1.4 }}>
-                          <b>{etf.reason}</b> <br />
-                          <span style={{ color: "#64748b" }}>{etf.featureNote}</span>
+                        <td style={{ padding: "8px 10px", color: "var(--text-secondary, #334155)", fontSize: "0.73rem", lineHeight: 1.4 }}>
+                          <b style={{ color: "var(--text-primary, #0f1127)" }}>{etf.reason}</b> <br />
+                          <span style={{ color: "var(--text-muted, #64748b)" }}>{etf.featureNote}</span>
                         </td>
                       </tr>
                     ))}
@@ -950,24 +952,24 @@ export function DividendStrategyModal({
               {/* Table 1: Payout By Investment Scale */}
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc" }}>
+                  <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>
                     📊 한눈에 보기: 포트폴리오별 예상 배당금 (세전)
                   </h3>
-                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                    내 현재 설정 투자금: <b style={{ color: "#38bdf8" }}>{currentInvestmentOk > 0 ? `${currentInvestmentOk.toFixed(1)}억` : "4.0억"} ({currentInvestmentManwon.toLocaleString()}만원)</b>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted, #64748b)" }}>
+                    내 현재 설정 투자금: <b style={{ color: "var(--text-accent, #4f46e5)" }}>{currentInvestmentOk > 0 ? `${currentInvestmentOk.toFixed(1)}억` : "4.0억"} ({currentInvestmentManwon.toLocaleString()}만원)</b>
                   </span>
                 </div>
 
-                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)" }}>
+                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid var(--modal-border, #e2e8f0)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem", textAlign: "left" }}>
                     <thead>
-                      <tr style={{ backgroundColor: "rgba(30, 41, 59, 0.8)", color: "#cbd5e1" }}>
-                        <th style={{ padding: "10px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>포트폴리오</th>
-                        <th style={{ padding: "10px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>가정 수익률</th>
-                        <th style={{ padding: "10px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>3억 연간 (월)</th>
-                        <th style={{ padding: "10px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>5억 연간 (월)</th>
-                        <th style={{ padding: "10px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>10억 연간 (월)</th>
-                        <th style={{ padding: "10px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)", backgroundColor: "rgba(56, 189, 248, 0.12)", color: "#38bdf8" }}>
+                      <tr style={{ backgroundColor: "var(--modal-table-th, #f8fafc)", color: "var(--text-muted, #64748b)" }}>
+                        <th style={{ padding: "10px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>포트폴리오</th>
+                        <th style={{ padding: "10px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>가정 수익률</th>
+                        <th style={{ padding: "10px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>3억 연간 (월)</th>
+                        <th style={{ padding: "10px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>5억 연간 (월)</th>
+                        <th style={{ padding: "10px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>10억 연간 (월)</th>
+                        <th style={{ padding: "10px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)", backgroundColor: "rgba(99, 102, 241, 0.1)", color: "var(--text-accent, #4f46e5)" }}>
                           내 투자금({currentInvestmentOk > 0 ? `${currentInvestmentOk.toFixed(1)}억` : "4억"}) 연간 (월)
                         </th>
                       </tr>
@@ -979,23 +981,23 @@ export function DividendStrategyModal({
                           <tr
                             key={p.id}
                             style={{
-                              backgroundColor: idx % 2 === 0 ? "rgba(15, 23, 42, 0.6)" : "rgba(15, 23, 42, 0.3)",
-                              borderBottom: "1px solid rgba(148, 163, 184, 0.1)",
+                              backgroundColor: idx % 2 === 0 ? "var(--modal-surface, #ffffff)" : "var(--modal-surface-card, #f8fafc)",
+                              borderBottom: "1px solid var(--modal-border-subtle, #f1f5f9)",
                             }}
                           >
                             <td style={{ padding: "10px 12px", fontWeight: 700, color: p.badgeColor }}>{p.name}</td>
-                            <td style={{ padding: "10px 12px", fontWeight: 600 }}>{p.expectedYield}%</td>
-                            <td style={{ padding: "10px 12px", color: "#cbd5e1" }}>
-                              {p.yield300M.annual.toLocaleString()}만 <span style={{ color: "#94a3b8" }}>(월 {p.yield300M.monthly}만)</span>
+                            <td style={{ padding: "10px 12px", fontWeight: 600, color: "var(--text-primary, #0f1127)" }}>{p.expectedYield}%</td>
+                            <td style={{ padding: "10px 12px", color: "var(--text-secondary, #334155)" }}>
+                              {p.yield300M.annual.toLocaleString()}만 <span style={{ color: "var(--text-muted, #64748b)" }}>(월 {p.yield300M.monthly}만)</span>
                             </td>
-                            <td style={{ padding: "10px 12px", color: "#cbd5e1" }}>
-                              {p.yield500M.annual.toLocaleString()}만 <span style={{ color: "#94a3b8" }}>(월 {p.yield500M.monthly}만)</span>
+                            <td style={{ padding: "10px 12px", color: "var(--text-secondary, #334155)" }}>
+                              {p.yield500M.annual.toLocaleString()}만 <span style={{ color: "var(--text-muted, #64748b)" }}>(월 {p.yield500M.monthly}만)</span>
                             </td>
-                            <td style={{ padding: "10px 12px", color: "#cbd5e1" }}>
-                              {p.yield1000M.annual.toLocaleString()}만 <span style={{ color: "#94a3b8" }}>(월 {p.yield1000M.monthly}만)</span>
+                            <td style={{ padding: "10px 12px", color: "var(--text-secondary, #334155)" }}>
+                              {p.yield1000M.annual.toLocaleString()}만 <span style={{ color: "var(--text-muted, #64748b)" }}>(월 {p.yield1000M.monthly}만)</span>
                             </td>
-                            <td style={{ padding: "10px 12px", backgroundColor: "rgba(56, 189, 248, 0.06)", fontWeight: 700, color: "#34d399" }}>
-                              {custom.annual.toLocaleString()}만 <span style={{ color: "#38bdf8", fontWeight: 600 }}>(월 {custom.monthly}만)</span>
+                            <td style={{ padding: "10px 12px", backgroundColor: "rgba(16, 185, 129, 0.08)", fontWeight: 700, color: "#059669" }}>
+                              {custom.annual.toLocaleString()}만 <span style={{ color: "var(--text-accent, #4f46e5)", fontWeight: 600 }}>(월 {custom.monthly}만)</span>
                             </td>
                           </tr>
                         );
@@ -1007,17 +1009,17 @@ export function DividendStrategyModal({
 
               {/* Table 2: Benchmark Yield by Asset Class */}
               <div style={{ marginTop: "12px" }}>
-                <h3 style={{ margin: "0 0 8px 0", fontSize: "0.95rem", fontWeight: 700, color: "#f8fafc" }}>
+                <h3 style={{ margin: "0 0 8px 0", fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>
                   📋 계산에 쓴 자산별 연간 분배율 (세전, 최근 시장 기준 가정치)
                 </h3>
-                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid rgba(148, 163, 184, 0.2)" }}>
+                <div style={{ overflowX: "auto", borderRadius: "8px", border: "1px solid var(--modal-border, #e2e8f0)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.78rem", textAlign: "left" }}>
                     <thead>
-                      <tr style={{ backgroundColor: "rgba(30, 41, 59, 0.8)", color: "#cbd5e1" }}>
-                        <th style={{ padding: "8px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>자산군</th>
-                        <th style={{ padding: "8px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>가정 분배율</th>
-                        <th style={{ padding: "8px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>대표 추천 ETF</th>
-                        <th style={{ padding: "8px 12px", borderBottom: "1px solid rgba(148, 163, 184, 0.2)" }}>비고 및 특징</th>
+                      <tr style={{ backgroundColor: "var(--modal-table-th, #f8fafc)", color: "var(--text-muted, #64748b)" }}>
+                        <th style={{ padding: "8px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>자산군</th>
+                        <th style={{ padding: "8px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>가정 분배율</th>
+                        <th style={{ padding: "8px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>대표 추천 ETF</th>
+                        <th style={{ padding: "8px 12px", borderBottom: "1px solid var(--modal-table-border, #e2e8f0)" }}>비고 및 특징</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1034,14 +1036,14 @@ export function DividendStrategyModal({
                         <tr
                           key={idx}
                           style={{
-                            backgroundColor: idx % 2 === 0 ? "rgba(15, 23, 42, 0.6)" : "rgba(15, 23, 42, 0.3)",
-                            borderBottom: "1px solid rgba(148, 163, 184, 0.1)",
+                            backgroundColor: idx % 2 === 0 ? "var(--modal-surface, #ffffff)" : "var(--modal-surface-card, #f8fafc)",
+                            borderBottom: "1px solid var(--modal-border-subtle, #f1f5f9)",
                           }}
                         >
-                          <td style={{ padding: "8px 12px", fontWeight: 600, color: "#f8fafc" }}>{item.asset}</td>
-                          <td style={{ padding: "8px 12px", color: "#38bdf8", fontWeight: 700 }}>{item.rate}</td>
-                          <td style={{ padding: "8px 12px", color: "#34d399", fontWeight: 600 }}>{item.etf}</td>
-                          <td style={{ padding: "8px 12px", color: "#94a3b8" }}>{item.desc}</td>
+                          <td style={{ padding: "8px 12px", fontWeight: 600, color: "var(--text-primary, #0f1127)" }}>{item.asset}</td>
+                          <td style={{ padding: "8px 12px", color: "var(--text-accent, #4f46e5)", fontWeight: 700 }}>{item.rate}</td>
+                          <td style={{ padding: "8px 12px", color: "#059669", fontWeight: 600 }}>{item.etf}</td>
+                          <td style={{ padding: "8px 12px", color: "var(--text-secondary, #334155)" }}>{item.desc}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1051,6 +1053,7 @@ export function DividendStrategyModal({
             </>
           )}
 
+
           {/* TAB 4: CHECKPOINTS & EXPERT TIPS */}
           {activeTab === "CHECKPOINTS" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -1059,8 +1062,8 @@ export function DividendStrategyModal({
                 style={{
                   padding: "16px",
                   borderRadius: "10px",
-                  backgroundColor: "rgba(99, 102, 241, 0.1)",
-                  border: "1px solid rgba(99, 102, 241, 0.3)",
+                  backgroundColor: "rgba(99, 102, 241, 0.08)",
+                  border: "1px solid rgba(99, 102, 241, 0.25)",
                   display: "flex",
                   gap: "14px",
                   alignItems: "flex-start",
@@ -1068,10 +1071,10 @@ export function DividendStrategyModal({
               >
                 <div style={{ fontSize: "1.6rem" }}>📅</div>
                 <div>
-                  <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "#a5b4fc", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-accent, #4f46e5)", marginBottom: "4px" }}>
                     전문가 실전 꿀팁 ①: 한 달에 두 번 월급 받는 '격주 배당 캘린더'
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#cbd5e1", lineHeight: 1.55 }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-secondary, #334155)", lineHeight: 1.55 }}>
                     국내 월배당 ETF는 운용사별로 분배금 지급일이 다릅니다. <br />
                     • <b>월중(매월 15일경) 지급:</b> TIGER 미국배당다우존스, TIGER 은행고배당플러스TOP10, ACE 미국배당다우존스 <br />
                     • <b>월말(매월 28~31일경) 지급:</b> SOL 미국배당다우존스, KODEX 한국부동산리츠인프라, TIGER 미국배당+7%프리미엄 <br />
@@ -1085,8 +1088,8 @@ export function DividendStrategyModal({
                 style={{
                   padding: "16px",
                   borderRadius: "10px",
-                  backgroundColor: "rgba(16, 185, 129, 0.1)",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                  backgroundColor: "rgba(16, 185, 129, 0.08)",
+                  border: "1px solid rgba(16, 185, 129, 0.25)",
                   display: "flex",
                   gap: "14px",
                   alignItems: "flex-start",
@@ -1094,10 +1097,10 @@ export function DividendStrategyModal({
               >
                 <div style={{ fontSize: "1.6rem" }}>🛡️</div>
                 <div>
-                  <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "#34d399", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "#059669", marginBottom: "4px" }}>
                     전문가 실전 꿀팁 ②: IRP 안전자산 30%를 배당주로 채우는 법
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#cbd5e1", lineHeight: 1.55 }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-secondary, #334155)", lineHeight: 1.55 }}>
                     IRP 계좌는 법적으로 위험자산(주식형 ETF)을 70%까지만 담을 수 있습니다. 이때 나머지 30%를 단순 예금에 묵혀두지 않고,
                     <b>'SOL 미국배당미국채혼합50 (490490)'</b> 또는 <b>'ACE 미국배당다우존스채권혼합50 (494340)'</b> 같은 <b>채권혼합형 ETF</b>를 매수하면
                     해당 상품 자체가 법정 안전자산으로 인정됩니다. 이렇게 하면 계좌 전체의 실질 배당주 비중을 <b>최대 85%까지</b> 끌어올려 복리 수익률을 극대화할 수 있습니다.
@@ -1110,31 +1113,31 @@ export function DividendStrategyModal({
                   no: "1",
                   title: "연금계좌의 세제 혜택을 100% 활용하세요",
                   desc: "일반 계좌에서는 배당을 받을 때마다 15.4%의 배당소득세가 즉시 원천징수되고, 연 2,000만원 초과 시 금융소득 종합과세 및 건보료 부과 대상이 됩니다. 반면 연금저축·IRP에서는 배당에 대한 세금이 인출 시점까지 이연되며(과세이연), 55세 이후 연금으로 수령할 때 3.3~5.5%의 아주 낮은 세율이 적용됩니다.",
-                  color: "#38bdf8",
+                  color: "#0284c7",
                 },
                 {
                   no: "2",
                   title: "나이와 라이프사이클에 따라 비중을 점진적으로 이동하세요",
                   desc: "은퇴까지 시간이 많이 남은 30~40대에는 ①번 배당성장형으로 자산의 크기를 키우고, 은퇴가 다가올수록 ④번(한·미 분산)이나 ②번(고배당 인컴), ③번(안정 혼합) 쪽으로 서서히 무게중심을 옮겨가는 것이 정석적인 생애주기 자산배분입니다.",
-                  color: "#10b981",
+                  color: "#059669",
                 },
                 {
                   no: "3",
                   title: "1년에 한 번 정기 리밸런싱을 실천하세요",
                   desc: "시간이 지나면 많이 오른 자산의 비중이 커지고 덜 오른 자산의 비중이 작아집니다. 1년에 한 번 특정 일자를 정해 목표 비중으로 되돌리는 리밸런싱(비싼 자산 일부 매도, 싼 자산 추가 매수)을 진행하면 변동성을 낮추고 장기 복리 효과를 극대화할 수 있습니다.",
-                  color: "#f59e0b",
+                  color: "#d97706",
                 },
                 {
                   no: "4",
                   title: "단순 분배율만 보지 말고 '총수익률(배당+원금)'을 확인하세요",
                   desc: "배당률이 연 10~12%로 높아 보여도, 주가가 지속적으로 하락하여 원금이 깎여 나간다면 실질 수익은 마이너스가 될 수 있습니다. 특히 커버드콜 상품은 주가 상승에 제약이 있으므로, 배당금과 원금의 주가 변동을 합친 '토탈 리턴(Total Return)'을 반드시 검토해야 합니다.",
-                  color: "#f87171",
+                  color: "#dc2626",
                 },
                 {
                   no: "5",
                   title: "연 1,500만원 사적연금 절세 한도와 건강보험료 기준을 점검하세요",
                   desc: "연금저축·IRP(세액공제 납입분 및 운용수익)에서 1년에 1,500만원을 초과하여 인출하면 3.3~5.5% 저율과세 대신 16.5% 분리과세 또는 종합과세를 선택해야 합니다. 또한 은퇴 후 피부양자 자격을 유지하려면 배당 등 금융소득을 연 1,000만원(부부 분산 시 2,000만원) 이하로 관리하는 전략이 중요합니다.",
-                  color: "#a855f7",
+                  color: "#9333ea",
                 },
               ].map((cp) => (
                 <div
@@ -1142,8 +1145,8 @@ export function DividendStrategyModal({
                   style={{
                     padding: "14px 16px",
                     borderRadius: "10px",
-                    backgroundColor: "rgba(15, 23, 42, 0.7)",
-                    border: "1px solid rgba(148, 163, 184, 0.15)",
+                    backgroundColor: "var(--modal-surface-card, #f8fafc)",
+                    border: "1px solid var(--modal-border, #e2e8f0)",
                     display: "flex",
                     gap: "14px",
                     alignItems: "flex-start",
@@ -1155,7 +1158,7 @@ export function DividendStrategyModal({
                       height: "28px",
                       borderRadius: "50%",
                       backgroundColor: cp.color,
-                      color: "#0f172a",
+                      color: "#ffffff",
                       fontWeight: 800,
                       display: "flex",
                       alignItems: "center",
@@ -1167,10 +1170,10 @@ export function DividendStrategyModal({
                     {cp.no}
                   </div>
                   <div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#f8fafc", marginBottom: "4px" }}>
+                    <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary, #0f1127)", marginBottom: "4px" }}>
                       {cp.title}
                     </div>
-                    <div style={{ fontSize: "0.78rem", color: "#94a3b8", lineHeight: 1.55 }}>
+                    <div style={{ fontSize: "0.78rem", color: "var(--text-secondary, #334155)", lineHeight: 1.55 }}>
                       {cp.desc}
                     </div>
                   </div>
@@ -1184,15 +1187,15 @@ export function DividendStrategyModal({
         <div
           style={{
             padding: "14px 24px",
-            borderTop: "1px solid rgba(148, 163, 184, 0.15)",
+            borderTop: "1px solid var(--modal-border, #e2e8f0)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            backgroundColor: "rgba(15, 23, 42, 0.7)",
+            backgroundColor: "var(--modal-surface-sub, #f8faff)",
           }}
         >
-          <div style={{ fontSize: "0.72rem", color: "#94a3b8", lineHeight: 1.5, maxWidth: "75%" }}>
-            <span style={{ color: "#f59e0b", fontWeight: 700 }}>⚠️ 금융당국 핵심 유의사항:</span> 분배율은 확정 수익이 아니며 기초자산 하락 시 원금(NAV) 손실이 발생할 수 있습니다. 옵션 매도로 상승이 제한되며, 장기 트랙레코드가 짧으므로 보수적 자본손익 시나리오를 함께 점검하세요. (종목코드 복사 📋 지원)
+          <div style={{ fontSize: "0.72rem", color: "var(--text-muted, #64748b)", lineHeight: 1.5, maxWidth: "75%" }}>
+            <span style={{ color: "#d97706", fontWeight: 700 }}>⚠️ 금융당국 핵심 유의사항:</span> 분배율은 확정 수익이 아니며 기초자산 하락 시 원금(NAV) 손실이 발생할 수 있습니다. 옵션 매도로 상승이 제한되며, 장기 트랙레코드가 짧으므로 보수적 자본손익 시나리오를 함께 점검하세요. (종목코드 복사 📋 지원)
           </div>
           <button
             onClick={onClose}
@@ -1215,3 +1218,4 @@ export function DividendStrategyModal({
     </div>
   );
 }
+

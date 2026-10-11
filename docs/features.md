@@ -121,5 +121,10 @@
   1) 온보딩 마법사 Step 0 가로 내비게이션 바(적용대상/재무목표/금감원자료/페르소나체험)에 `SlidingTabs` 연동 및 상단 시작 버튼에 유리 광택(`t-btn-glossy`) 효과 적용
   2) 랜딩 페이지(`src/app/page.tsx`) 히어로 '시뮬레이션 시작하기 🚀' CTA 버튼에 `t-btn-glossy` 모션 적용
   3) 랜딩 페이지 '벤치마킹 참고 서비스 탐색' 카드 그리드에 transitions.dev 인터랙티브 3D 원근 반사 컴포넌트(`CardTilt`) 연동 및 모달 스프링 팝업(`t-modal-spring`) 적용 완료 (Sprint 37, Story S37-4)
+- **[FEAT-047] 전체 모달 컴포넌트 다크/라이트 테마 일관성 일원화**:
+  1) `globals.css` 내 모달 전용 테마 변수 토큰(`--modal-bg`, `--modal-surface`, `--modal-surface-sub`, `--modal-surface-card`, `--modal-border`, `--modal-border-subtle`, `--modal-subbox-bg`, `--modal-subbox-border`, `--modal-table-th`, `--modal-table-border`, `--tooltip-bg`, `--tooltip-border`, `--tooltip-text`) 정의
+  2) 전체 11개 전문 팝업 모달(`NpsBoostRoadmapModal`, `SurvivorCareModal`, `DividendStrategyModal`, `IncomeBridgeModal`, `IsaPensionTransferModal`, `ReverseMortgageModal`, `SavingsPlanModal`, `HealthInsuranceBillModal`, `PrivatePensionTaxModal`, `NpsEarlyDeferralModal`, `PersonaPresetModal`)의 하드코딩된 다크 배경 제거 및 테마 토큰 일괄 바인딩
+  3) 라이트모드에서 순백/연회색 카드 배경 및 명확한 글자 대비 가독성 확보, 다크모드 시 ETF Lens 테마 자동 동기화 지원
+
 
 

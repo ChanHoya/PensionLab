@@ -110,25 +110,21 @@
 - **[Completed]** Story S37-2: 대시보드 KPI 롤링 카운터, 슬라이딩 탭 및 8대 전문 모달 스프링 트랜지션 연동 (`CoupleSimulationSection` 및 `dashboard/page.tsx`에 `NumberPopIn`, `SlidingTabs` 탑재, 전체 전문 모달에 `t-modal-spring` 적용 완료)
 - **[Completed]** Story S37-3: AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출 (`AiThinkingStream.tsx` 4단계 스트리밍 시뮬레이션 및 `DiagnosisReport.tsx` 게이지 스코어 `NumberPopIn` 연동 완료)
 - **[Completed]** Story S37-4: 온보딩 슬라이딩 탭 및 랜딩 페이지 3D 틸트/글로시 CTA 비주얼 업그레이드 (`onboarding/page.tsx` Step 0 `SlidingTabs`, `page.tsx` 히어로 `t-btn-glossy`, 벤치마킹 카드 `CardTilt` 및 모달 `t-modal-spring` 연동 완료)
+- **[Completed]** 전체 모달 컴포넌트 다크/라이트 테마 일관성 일원화: `globals.css` 모달 토큰 확장 및 11개 전문 팝업 모달 하드코딩 다크 스타일 제거, 라이트모드 텍스트 묻힘 해결 및 테마 동기화 완료
 
 ## Active Sprint / Story
 - **Sprint 37** (완료): transitions.dev 기반 UI/UX 모션 고도화 및 인터랙티브 인터페이스 확립
-  - **Story S37-1 (완료)**: 모션 디자인 시스템 토큰 및 공통 인터랙션 훅/컴포넌트 구축
-  - **Story S37-2 (완료)**: 대시보드 KPI 롤링 카운터, 슬라이딩 탭 및 스프링 모달 연동
-  - **Story S37-3 (완료)**: AI 종합 진단 (AI Advisor) Thinking States & Reasoning Stream 프리미엄 연출
-  - **Story S37-4 (완료)**: 온보딩 및 랜딩 페이지 3D Tilt, Glossy CTA 비주얼 업그레이드
+- **UI/UX 테마 픽스** (완료): 전체 모달 컴포넌트 다크/라이트 모드 테마 일원화 및 가독성 개선
 
-## Session Handoff (Sprint 37 완료)
-- **주요 산출물**:
-  1. transitions.dev 모션 디자인 시스템 (`globals.css`, `src/components/motion/`):
-     - CSS 스프링 토큰(`--ease-spring`, `--ease-out-expo`), 모션 클래스(`t-digit-group`, `t-sliding-nav`, `t-modal-spring`, `t-success-check`, `t-shimmer-text`, `t-btn-glossy`).
-     - 범용 리액트 모션 컴포넌트: `NumberPopIn`, `SlidingTabs`, `CopyCheckButton`, `CardTilt`, `AiThinkingStream`.
-  2. 대시보드 및 온보딩/랜딩 화면 전면 이식:
-     - 4대 KPI 및 추천 수치 카운팅 롤링 모션, 인출 시나리오/온보딩 Step 0 부드러운 슬라이딩 탭 전환.
-     - 8대 전문 모달 및 팝업 대화상자 탄성 스프링 진입 연출.
-     - AI 종합 진단 4단계 Reasoning Stream 로딩 및 게이지 롤링.
-     - 랜딩 히어로 글로시 CTA 및 벤치마킹 카드 3D 마우스 틸트 인터랙션.
-- **검증 상태**: `npx tsc --noEmit` 통과(0 errors), `npm run build` 프로덕션 빌드 통과(0 errors), Chrome 브라우저 각 화면(대시보드, 온보딩, 랜딩, AI 진단) 렌더링 및 인터랙션 검증 완료.
+## Session Handoff (모달 테마 일관성 작업 완료)
+- **주요 수정 내역**:
+  1. `src/app/globals.css`:
+     - `:root` 및 `[data-theme="dark"]`에 `--modal-bg`, `--modal-surface`, `--modal-surface-sub`, `--modal-surface-card`, `--modal-border`, `--modal-border-subtle`, `--modal-subbox-bg`, `--modal-subbox-border`, `--modal-table-th`, `--modal-table-border`, `--tooltip-bg`, `--tooltip-border`, `--tooltip-text` 토큰 추가.
+  2. 11개 전문 팝업 모달 전면 개편:
+     - `NpsBoostRoadmapModal`, `SurvivorCareModal`, `DividendStrategyModal`, `IncomeBridgeModal`, `IsaPensionTransferModal`, `ReverseMortgageModal`, `SavingsPlanModal`, `HealthInsuranceBillModal`, `PrivatePensionTaxModal`, `NpsEarlyDeferralModal`, `PersonaPresetModal`
+     - 라이트 모드에서 순백/연회색 카드 배경 및 명확한 글자 대비 가독성 확보, 다크 모드 전환 시 기존 ETF Lens 다크 테마 완벽 동기화.
+- **검증 상태**: `npm run build` 성공(0 errors), Chrome 브라우저 시각 검증 완료 (국민연금 증액 로드맵, 홀로 남은 배우자 생애 케어, 실전 배당 포트폴리오 가이드, 소득 공백기 플래너 등 확인).
+
 
 - **주요 산출물**:
   1. AI 종합 진단 리포트 & 8대 솔루션 툴킷 심층 연동 (S35-1):

@@ -166,6 +166,7 @@ export default function YoutubeHubPage() {
   // YouTube Modal States
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
+  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
 
   const fetchVideos = async (refresh: boolean = false) => {
     if (refresh) {
@@ -456,6 +457,7 @@ export default function YoutubeHubPage() {
               <div
                 key={video.id}
                 onClick={() => {
+                  setActiveVideo(video);
                   setActiveVideoId(video.videoId);
                   setActiveVideoTitle(`[${video.channelName}] ${video.title}`);
                 }}
@@ -546,6 +548,17 @@ export default function YoutubeHubPage() {
                                   href={`https://www.youtube.com/watch?v=${src.videoId}`}
                                   onClick={(e) => {
                                     e.preventDefault();
+                                    const matched = (videos.length > 0 ? videos : SEED_VIDEOS).find((v) => v.videoId === src.videoId);
+                                    setActiveVideo(matched || {
+                                      id: src.videoId,
+                                      videoId: src.videoId,
+                                      channelName: src.channelName,
+                                      channelHandle: "",
+                                      title: src.title,
+                                      summary: "AI 실시간 연금 Q&A에서 추천된 핵심 영상입니다.",
+                                      publishDate: "실시간 추천",
+                                      category: "추천영상"
+                                    });
                                     setActiveVideoId(src.videoId);
                                     setActiveVideoTitle(`[${src.channelName}] ${src.title}`);
                                   }}
@@ -624,37 +637,138 @@ export default function YoutubeHubPage() {
 
       {/* YouTube Video Player Modal */}
       {activeVideoId && (
-        <div style={styles.modalOverlay} onClick={() => setActiveVideoId(null)} className="animate-fade-in">
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="glass">
+        <div style={styles.modalOverlay} onClick={() => { setActiveVideoId(null); setActiveVideo(null); }} className="animate-fade-in">
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="premium-card">
+            {/* Modal Header */}
             <div style={styles.modalHeader}>
-              <h4 style={styles.modalTitle}>{activeVideoTitle}</h4>
-              <button
-                id="btn-close-video"
-                onClick={() => setActiveVideoId(null)}
-                style={styles.modalCloseButton}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--surface-hover)";
-                  e.currentTarget.style.color = "var(--text-primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "var(--text-secondary)";
-                }}
-              >
-                ✕
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
+                {activeVideo?.category && (
+                  <span style={styles.categoryBadgeInline}>{activeVideo.category}</span>
+                )}
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  {activeVideo?.channelName || "유튜브 전문가"}
+                </span>
+                {activeVideo?.publishDate && (
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>• {activeVideo.publishDate}</span>
+                )}
+                <span style={{ color: "var(--border)" }}>|</span>
+                <h4 style={styles.modalTitle} title={activeVideo?.title || activeVideoTitle}>
+                  {activeVideo?.title || activeVideoTitle}
+                </h4>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                <a
+                  href={`https://www.youtube.com/watch?v=${activeVideoId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="premium-button-secondary"
+                  style={{
+                    padding: "7px 14px",
+                    textDecoration: "none",
+                    fontSize: "0.82rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px"
+                  }}
+                  id="btn-open-youtube-external"
+                  title="유튜브에서 새 창으로 영상 열기"
+                >
+                  <span>📺</span>
+                  <span>유튜브에서 보기 ↗</span>
+                </a>
+                <button
+                  id="btn-close-video"
+                  onClick={() => { setActiveVideoId(null); setActiveVideo(null); }}
+                  style={styles.modalCloseButton}
+                  aria-label="닫기"
+                  title="닫기"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-            <div style={styles.videoWrapper}>
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`}
-                title={activeVideoTitle}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                style={{ borderRadius: "var(--radius-sm)", border: "none", position: "absolute", top: 0, left: 0 }}
-              />
+
+            {/* Modal Body: Left Video + Right Companion Summary Box */}
+            <div style={styles.modalBodyRow} className="youtube-modal-body-row">
+              {/* Left Column: Video Player */}
+              <div style={styles.modalVideoCol}>
+                <div style={styles.videoWrapper}>
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    src={`https://www.youtube.com/embed/${activeVideoId}?autoplay=1&rel=0`}
+                    title={activeVideoTitle}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    style={{ border: "none", position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                  />
+                </div>
+              </div>
+
+              {/* Right Column: Companion Summary Box (동일 세로크기 & 넘어가면 스크롤) */}
+              <div style={styles.modalSummaryCol} className="youtube-modal-summary-col">
+                <div style={styles.summaryBoxHeader}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "1.1rem" }}>💡</span>
+                    <span style={styles.summaryBoxTitle}>영상 핵심 내용 요약</span>
+                  </div>
+                  <span style={styles.summaryChannelBadge}>
+                    {activeVideo?.channelHandle || "전문가 채널"}
+                  </span>
+                </div>
+
+                <div style={styles.summaryBoxContent}>
+                  {/* Detailed Video Summary */}
+                  <div style={styles.summarySection}>
+                    <h5 style={styles.summarySectionHeading}>📌 영상 개요 및 주요 메시지</h5>
+                    <p style={styles.summaryParagraph}>
+                      {activeVideo?.summary || "선택하신 영상의 핵심 요약 정보를 불러오는 중입니다."}
+                    </p>
+                  </div>
+
+                  {/* Key Takeaways */}
+                  <div style={styles.summarySection}>
+                    <h5 style={styles.summarySectionHeading}>🎯 핵심 시청 포인트</h5>
+                    <ul style={styles.summaryPointsList}>
+                      <li style={styles.summaryPointItem}>
+                        <strong>연금 맞춤 전략:</strong> {activeVideo?.channelName || "전문가"} 채널에서 전하는 실전 노하우와 은퇴 준비 가이드
+                      </li>
+                      <li style={styles.summaryPointItem}>
+                        <strong>절세 및 건보료 영향:</strong> 연금 수령 시 세금 및 건강보험료 피부양자 자격 변동 주의사항
+                      </li>
+                      <li style={styles.summaryPointItem}>
+                        <strong>실전 실행 팁:</strong> 국민연금, 퇴직연금(IRP), 개인연금저축 간 최적 배분 인사이트
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Channel Direct Link */}
+                  <div style={{ marginTop: "auto", paddingTop: "16px", borderTop: "1px dashed var(--border)" }}>
+                    <a
+                      href={`https://www.youtube.com/watch?v=${activeVideoId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="premium-button-secondary"
+                      style={{
+                        width: "100%",
+                        padding: "10px 16px",
+                        textAlign: "center",
+                        fontSize: "0.82rem",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        textDecoration: "none"
+                      }}
+                    >
+                      <span>▶️</span>
+                      <span>유튜브에서 댓글 및 원본 보기</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1110,7 +1224,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "16px",
   },
   modalContent: {
-    width: "min(94vw, calc((92vh - 65px) * 16 / 9), 1280px)",
+    width: "min(96vw, 1380px)",
+    maxHeight: "92vh",
     backgroundColor: "var(--surface)",
     border: "1px solid var(--border)",
     borderRadius: "16px",
@@ -1127,8 +1242,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderBottom: "1px solid var(--border)",
     backgroundColor: "var(--surface)",
   },
+  categoryBadgeInline: {
+    backgroundColor: "rgba(99, 102, 241, 0.12)",
+    color: "var(--primary-light)",
+    border: "1px solid rgba(99, 102, 241, 0.25)",
+    padding: "3px 8px",
+    borderRadius: "6px",
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    whiteSpace: "nowrap",
+  },
   modalTitle: {
-    fontSize: "1.05rem",
+    fontSize: "1.02rem",
     fontWeight: 700,
     color: "var(--text-primary)",
     whiteSpace: "nowrap",
@@ -1153,6 +1278,111 @@ const styles: { [key: string]: React.CSSProperties } = {
     justifyContent: "center",
     flexShrink: 0,
   },
+  modalBodyRow: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "stretch",
+    flex: 1,
+    minHeight: 0,
+    position: "relative",
+    backgroundColor: "var(--surface)",
+  },
+  modalVideoCol: {
+    flex: "1 1 62%",
+    minWidth: 0,
+    backgroundColor: "#000000",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    position: "relative",
+  },
+  modalSummaryCol: {
+    flex: "0 0 38%",
+    minWidth: "320px",
+    maxWidth: "500px",
+    backgroundColor: "var(--surface)",
+    borderLeft: "1px solid var(--border)",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    minHeight: 0,
+    overflow: "hidden",
+  },
+  summaryBoxHeader: {
+    padding: "16px 20px",
+    borderBottom: "1px solid var(--border)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(99, 102, 241, 0.03)",
+    flexShrink: 0,
+  },
+  summaryBoxTitle: {
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    letterSpacing: "-0.3px",
+  },
+  summaryChannelBadge: {
+    fontSize: "0.75rem",
+    fontWeight: 600,
+    color: "var(--primary-light)",
+    backgroundColor: "rgba(99, 102, 241, 0.1)",
+    padding: "3px 8px",
+    borderRadius: "12px",
+  },
+  summaryBoxContent: {
+    padding: "20px",
+    overflowY: "auto",
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "18px",
+    minHeight: 0,
+  },
+  summarySection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  summarySectionHeading: {
+    fontSize: "0.86rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    margin: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+  },
+  summaryParagraph: {
+    fontSize: "0.86rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.65,
+    margin: 0,
+    backgroundColor: "var(--background)",
+    padding: "12px 14px",
+    borderRadius: "10px",
+    border: "1px solid var(--border)",
+    wordBreak: "keep-all",
+  },
+  summaryPointsList: {
+    margin: 0,
+    padding: 0,
+    listStyle: "none",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+  summaryPointItem: {
+    fontSize: "0.83rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.55,
+    backgroundColor: "var(--background)",
+    padding: "10px 14px",
+    borderRadius: "10px",
+    border: "1px solid var(--border)",
+    wordBreak: "keep-all",
+  },
   videoWrapper: {
     position: "relative",
     paddingBottom: "56.25%", /* 16:9 Aspect Ratio */
@@ -1171,3 +1401,4 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginTop: "16px",
   }
 };
+

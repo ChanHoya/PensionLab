@@ -125,20 +125,20 @@
   - **Story S39-2 (완료)**: 3대 연금 채널(박곰희TV, 연금박사, 연금이야기) 공식 YouTube RSS 실시간 피드 API 신설 및 추천 영상 새로고침 UI 연동
   - **Story S39-3 (완료)**: `npm run build` 프로덕션 빌드, 브라우저 subagent 실화면 렌더링 검증 및 Git 커밋/푸시/PR 머지
 
-## Session Handoff (Sprint 39 완료 + 기사 원문 iframe 와이드 모달 뷰어 탑재)
+## Session Handoff (뉴스 상단 3개 통합 브리핑 박스 & 유튜브 플레이어 좌측+우측 동일높이 요약 패널 2열 모달 탑재)
 - **주요 수정 내역**:
-  1. `src/app/api/news/proxy/route.ts` (신규):
-     - Google News RSS 리다이렉트 URL(`news.google.com/rss/articles/...`)의 batchexecute 실시간 디코딩 엔드포인트 구축 (언론사 원본 웹사이트 링크 자동 추출).
-     - 서버 사이드 HTML 페칭 및 `X-Frame-Options: ALLOWALL`, `Content-Security-Policy: frame-ancestors *` 헤더 제공으로 iframe 차단 우회.
-     - 상대 경로 리소스 깨짐 방지를 위한 `<base href="...">` 태그 자동 삽입 및 frame-busting 스크립트(`top.location`) 중화.
-  2. `src/app/news/page.tsx`:
-     - 기사 카드 클릭 시 기존 텍스트 요약 대신 브라우저 뷰포트 대부분을 채우는 98vw/94vh 와이드 팝업 모달(`modalContentWide`) 및 `<iframe>` 직접 렌더링.
-     - `modalOverlay`를 `contentBody` 밖으로 분리하고 `zIndex: 9999`를 부여하여 화면 상단 및 전체 영역에 시원하게 표시되도록 개선.
-     - 상단 헤더에 카테고리 배지, 언론사, 일자, 기사 제목, `🌐 새 창에서 원문 보기 ↗` 버튼 및 닫기(`✕`) 버튼 배치.
-  3. `src/app/api/news/route.ts`:
-     - `when:14d` 및 `when:30d` 기간 쿼리 병렬 페칭 및 2026-10-11 당일 최신 뉴스 실시간 노출 보장.
-     - 새로고침 시 캐시 우회(`cache: "no-store"`), HTML 태그 완전 정제.
-- **검증 상태**: `npm run build` 성공(0 errors), Chrome 브라우저 서브에이전트로 2026-10-11 당일 최신 기사(`농민신문` 등) 클릭 시 98vw/94vh 대형 팝업 모달 내부 iframe으로 실제 기사 웹사이트가 정상 로드됨을 실시간 스크린샷으로 검증 완료.
+  1. `src/app/news/page.tsx`:
+     - 상단 3개 카드 영역을 하나의 와이드 브리핑 박스(`topSummaryBox`)로 통합하여 오늘 연금 관련 주요 뉴스 최대 3건을 1, 2, 3 인덱스 배지 및 핵심 요약 텍스트와 함께 노출.
+     - 높이 초과 시 내부 세로 스크롤(`maxHeight: 340px`, `overflowY: "auto"`) 및 개별 항목 클릭 시 기사 원문 iframe 모달 연동.
+     - 하단에는 4번째 이후 기사들을 3열 그리드로 깔끔하게 렌더링.
+  2. `src/app/youtube/page.tsx`:
+     - 헤더 타이틀을 "연금 전문 유튜버 추천 영상"으로 직관화.
+     - 비디오 플레이어 팝업 모달을 2열 레이아웃(`modalBodyRow`)으로 전환: 좌측에는 영상을 왼쪽 끝으로 배치(`modalVideoCol`), 우측 빈 공간에는 동일한 세로 높이를 갖는 '영상 핵심 내용 요약 박스'(`modalSummaryCol`)를 신설하여 영상 개요, 주요 메시지 및 3대 핵심 시청 포인트(연금 맞춤 전략, 절세/건보료, 실전 실행 팁) 제공.
+     - 텍스트 길이가 길어질 경우 우측 요약 박스 내부 세로 스크롤(`overflowY: "auto"`) 지원.
+  3. `src/app/globals.css`:
+     - 뉴스 요약 아이템 호버 인터랙션(`.top-summary-item-hover`) 및 모바일 뷰포트(900px 이하) 2열 모달 반응형 세로 배치(`flex-direction: column`) 지원.
+- **검증 상태**: `npm run build` 프로덕션 빌드 성공(0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`news_summary_briefing_1791722704420.png`, `youtube_modal_2_column_1791722725786.png`).
+
 
 
 

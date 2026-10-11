@@ -269,54 +269,93 @@ export default function PolicyNewsPage() {
               <p>실시간 연금 정책 뉴스를 불러오는 중입니다...</p>
             </div>
           ) : (
-            filteredArticles.map((art) => {
-              return (
-                <div
-                  key={art.id}
-                  onClick={() => handleArticleClick(art)}
-                  style={{
-                    ...styles.newsCard,
-                    border: art.id.startsWith("real-")
-                      ? "1px solid rgba(99, 102, 241, 0.4)"
-                      : "1px solid var(--border)",
-                    position: "relative",
-                    overflow: "hidden"
-                  }}
-                  className="premium-card"
-                >
-                  {art.id.startsWith("real-") && (
-                    <div style={{
-                      position: "absolute",
-                      top: 0,
-                      right: 0,
-                      backgroundColor: "#4f46e5",
-                      color: "#ffffff",
-                      fontSize: "0.6rem",
-                      fontWeight: 800,
-                      padding: "3px 8px",
-                      borderBottomLeftRadius: "var(--radius-sm)"
-                    }}>
-                      실시간 정책
+            <>
+              {/* Top Unified 3-Article Summary Box (첫 3개 박스를 하나로 합쳐 최대 3개 기사 요약 및 스크롤) */}
+              {filteredArticles.slice(0, 3).length > 0 && (
+                <div style={styles.topSummaryBox} className="premium-card">
+                  <div style={styles.topSummaryHeader}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "1.2rem" }}>⚡</span>
+                      <span style={styles.topSummaryBadge}>
+                        오늘의 연금 주요 뉴스 핵심 브리핑 (주요 뉴스 TOP {Math.min(3, filteredArticles.length)})
+                      </span>
                     </div>
-                  )}
-                  <div style={styles.cardHeader}>
-                    <span style={styles.cardImage}>{art.image}</span>
-                    <span style={{
-                      ...styles.cardBadge,
-                      color: art.id.startsWith("real-") ? "#a5b4fc" : "var(--primary-light)",
-                      backgroundColor: art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.08)" : "rgba(99,102,241,0.08)",
-                      borderColor: art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.2)" : "rgba(99,102,241,0.15)"
-                    }}>{art.category}</span>
+                    <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                      * 기사를 클릭하면 전체 화면 원문 뷰어로 열립니다
+                    </span>
                   </div>
-                  <h3 style={styles.cardTitle}>{art.title}</h3>
-                  <p style={styles.cardSummary}>{art.summary}</p>
-                  <div style={styles.cardFooter}>
-                    <span style={styles.cardAuthor}>{art.author}</span>
-                    <span style={styles.cardDate}>{art.date}</span>
+
+                  <div style={styles.topSummaryContent}>
+                    {filteredArticles.slice(0, 3).map((art, idx) => (
+                      <div
+                        key={art.id}
+                        onClick={() => handleArticleClick(art)}
+                        style={styles.topSummaryItem}
+                        className="top-summary-item-hover"
+                      >
+                        <div style={styles.topSummaryItemHeader}>
+                          <span style={styles.topSummaryIndex}>{idx + 1}</span>
+                          <span style={styles.cardBadge}>{art.category}</span>
+                          <span style={styles.topSummaryItemTitle}>{art.title}</span>
+                          <span style={styles.topSummaryItemMeta}>{art.author} • {art.date}</span>
+                        </div>
+                        <p style={styles.topSummaryItemText}>{art.summary}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              );
-            })
+              )}
+
+              {/* Remaining News Cards (첫 3개 이후 기사 목록) */}
+              {filteredArticles.slice(3).map((art) => {
+                return (
+                  <div
+                    key={art.id}
+                    onClick={() => handleArticleClick(art)}
+                    style={{
+                      ...styles.newsCard,
+                      border: art.id.startsWith("real-")
+                        ? "1px solid rgba(99, 102, 241, 0.4)"
+                        : "1px solid var(--border)",
+                      position: "relative",
+                      overflow: "hidden"
+                    }}
+                    className="premium-card"
+                  >
+                    {art.id.startsWith("real-") && (
+                      <div style={{
+                        position: "absolute",
+                        top: 0,
+                        right: 0,
+                        backgroundColor: "#4f46e5",
+                        color: "#ffffff",
+                        fontSize: "0.6rem",
+                        fontWeight: 800,
+                        padding: "3px 8px",
+                        borderBottomLeftRadius: "var(--radius-sm)"
+                      }}>
+                        실시간 정책
+                      </div>
+                    )}
+                    <div style={styles.cardHeader}>
+                      <span style={styles.cardImage}>{art.image}</span>
+                      <span style={{
+                        ...styles.cardBadge,
+                        color: art.id.startsWith("real-") ? "#a5b4fc" : "var(--primary-light)",
+                        backgroundColor: art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.08)" : "rgba(99,102,241,0.08)",
+                        borderColor: art.id.startsWith("real-") ? "rgba(99, 102, 241, 0.2)" : "rgba(99,102,241,0.15)"
+                      }}>{art.category}</span>
+                    </div>
+                    <h3 style={styles.cardTitle}>{art.title}</h3>
+                    <p style={styles.cardSummary}>{art.summary}</p>
+                    <div style={styles.cardFooter}>
+                      <span style={styles.cardAuthor}>{art.author}</span>
+                      <span style={styles.cardDate}>{art.date}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
           )}
         </section>
       </div>
@@ -557,6 +596,89 @@ const styles: { [key: string]: React.CSSProperties } = {
     gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
     gap: "24px",
     width: "100%",
+  },
+  topSummaryBox: {
+    gridColumn: "1 / -1",
+    backgroundColor: "var(--surface)",
+    border: "1.5px solid rgba(99, 102, 241, 0.35)",
+    borderRadius: "var(--radius-md)",
+    padding: "20px 24px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+    maxHeight: "340px",
+    overflowY: "auto",
+    boxShadow: "var(--shadow-premium)",
+    position: "relative",
+  },
+  topSummaryHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottom: "1px solid var(--border)",
+    paddingBottom: "12px",
+    flexShrink: 0,
+    flexWrap: "wrap",
+    gap: "8px",
+  },
+  topSummaryBadge: {
+    fontSize: "0.95rem",
+    fontWeight: 800,
+    color: "var(--primary-light)",
+    letterSpacing: "-0.2px",
+  },
+  topSummaryContent: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  topSummaryItem: {
+    padding: "12px 16px",
+    borderRadius: "var(--radius-sm)",
+    backgroundColor: "rgba(99, 102, 241, 0.03)",
+    border: "1px solid rgba(99, 102, 241, 0.12)",
+    cursor: "pointer",
+    transition: "all var(--transition-fast)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  },
+  topSummaryItemHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
+  topSummaryIndex: {
+    width: "22px",
+    height: "22px",
+    borderRadius: "50%",
+    backgroundColor: "var(--primary)",
+    color: "#ffffff",
+    fontSize: "0.75rem",
+    fontWeight: 800,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  topSummaryItemTitle: {
+    fontSize: "0.98rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    flex: 1,
+    minWidth: "220px",
+  },
+  topSummaryItemMeta: {
+    fontSize: "0.78rem",
+    color: "var(--text-muted)",
+    flexShrink: 0,
+  },
+  topSummaryItemText: {
+    fontSize: "0.86rem",
+    color: "var(--text-secondary)",
+    lineHeight: 1.55,
+    margin: 0,
   },
   newsCard: {
     padding: "24px",

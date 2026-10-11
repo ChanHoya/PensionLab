@@ -146,6 +146,18 @@
   1) Google News RSS 리다이렉트 URL batchexecute 실시간 디코딩 및 언론사 원본 웹사이트 페칭 서버리스 프록시(`src/app/api/news/proxy/route.ts`) 구축
   2) `X-Frame-Options: ALLOWALL` 및 `frame-ancestors *` 헤더 우회, 상대 경로 리소스 대응 `<base href="...">` 자동 주입, Frame-busting 스크립트 중화
   3) 브라우저 화면 공간을 시원하게 채우는 98vw/94vh 와이드 팝업 모달, 기사 원문 사이트 실시간 렌더링, 상단 툴바(카테고리, 언론사, 일자, 제목, 새 창에서 원문 보기 ↗, 닫기) 탑재 (Sprint 39, Story S39-3)
+- **[FEAT-052] 뉴스 상단 3개 통합 요약 브리핑 박스 & 유튜브 플레이어 좌측 정렬 및 우측 동일 세로높이 요약 패널 (2열 모달)**:
+  1) 관련 뉴스 (`src/app/news/page.tsx`):
+     - 뉴스 카드 그리드의 첫 3개 슬롯을 하나로 합친 와이드 브리핑 박스(`topSummaryBox`, `gridColumn: "1 / -1"`) 신설
+     - 당일 연금 관련 핵심 뉴스 상위 3건을 인덱스 배지(1, 2, 3), 카테고리 태그, 제목, 언론사, 일자, 요약 텍스트와 함께 일목요연하게 표시
+     - 박스 높이 초과 시 내부 세로 스크롤(`maxHeight: 340px`, `overflowY: "auto"`) 및 개별 항목 클릭 시 기사 원문 iframe 모달 연동
+  2) 유튜브 추천 영상 (`src/app/youtube/page.tsx`, `src/app/globals.css`):
+     - 페이지 헤더 타이틀을 "연금 전문 유튜버 추천 영상"으로 직관화
+     - 비디오 플레이어 모달을 2열 레이아웃(`modalBodyRow`)으로 전면 개편
+     - 좌측 열(`modalVideoCol`): 16:9 비율의 동영상 플레이어를 화면 왼쪽 끝으로 정렬 배치
+     - 우측 열(`modalSummaryCol`): 영상과 동일한 세로 높이(Equal Height)를 유지하며 영상의 핵심 개요 및 시청 포인트(연금 맞춤 전략, 절세/건보료, 실전 실행 팁)를 제공하고, 내용이 넘칠 경우 내부 세로 스크롤(`overflowY: "auto"`) 지원
+     - 모바일 뷰포트(900px 이하) 반응형 세로 배치(`flex-direction: column`) 지원 완료
+
 
 
 

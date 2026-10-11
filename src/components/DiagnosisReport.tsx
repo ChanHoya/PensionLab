@@ -944,6 +944,8 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
               priorityBadge = "💎 세액공제 300만";
             } else if (tid === "REVERSE_MORTGAGE") {
               priorityBadge = "🏠 종신 비과세";
+            } else if (tid === "PORTFOLIO_BACKTEST") {
+              priorityBadge = "📈 10년 복리 검증";
             }
 
             return (
@@ -952,7 +954,7 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
                 style={{
                   ...S.toolkitCard,
                   borderColor: isUrgent ? "rgba(239, 68, 68, 0.4)" : "var(--border)",
-                  background: isUrgent ? "rgba(239, 68, 68, 0.04)" : "var(--card-bg, rgba(30, 41, 59, 0.4))",
+                  background: isUrgent ? "rgba(239, 68, 68, 0.04)" : "var(--surface, #ffffff)",
                   padding: isPrintMode ? "12px 14px" : "16px",
                   cursor: isPrintMode ? "default" : "pointer",
                 }}

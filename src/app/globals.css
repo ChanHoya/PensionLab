@@ -823,4 +823,69 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   color: var(--text-primary) !important;
 }
 
+/* ================================================================
+   9. Mobile Responsive & Touch Gesture / Accessibility (a11y) Polish
+   ================================================================ */
+
+/* Mobile Touch Target Standards (WCAG 2.1 AA 44x44px min tap target) */
+@media (max-width: 768px) {
+  /* 모달 패딩 및 풀스크린 반응형 */
+  .t-modal-spring {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 96vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin-top: auto !important;
+  }
+
+  /* 터치 슬라이더 터치 조작감 향상 */
+  input[type="range"] {
+    height: 28px !important;
+    touch-action: pan-x !important;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  /* 테이블 가로 스크롤 관성 터치 */
+  div[style*="overflow-x: auto"],
+  div[style*="overflowX: auto"],
+  div[style*="overflow-x:auto"],
+  div[style*="overflowX:auto"],
+  .t-scroll-touch {
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: contain !important;
+  }
+
+  /* 모바일 버튼 탭 하이라이트 투명화 및 터치 반응 */
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* 슬라이딩 탭 모바일 가로 스크롤 */
+  .t-sliding-nav {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .t-sliding-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+}
+
+/* Accessibility Focus Visible Ring */
+:focus-visible {
+  outline: 2px solid var(--primary-500) !important;
+  outline-offset: 2px !important;
+}
+
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none !important;
+}
+
+
 

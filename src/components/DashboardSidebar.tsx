@@ -28,6 +28,7 @@ interface Props {
   onOpenSurvivorCareModal?: () => void;
   onOpenIsaTransferModal?: () => void;
   onOpenDividendStrategyModal?: () => void;
+  onOpenPortfolioBacktestModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -439,6 +440,39 @@ export default function DashboardSidebar(props: Props) {
               <span>배당금 투자 전략 추천</span>
             </span>
             <span style={{ fontSize: "0.7rem", color: "var(--text-accent)" }}>가이드 ➔</span>
+          </button>
+        )}
+
+        {props.onOpenPortfolioBacktestModal && (
+          <button
+            type="button"
+            onClick={props.onOpenPortfolioBacktestModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "7px 10px",
+              fontSize: "0.76rem",
+              fontWeight: 700,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "6px",
+              borderColor: "rgba(16, 185, 129, 0.4)",
+              color: "var(--success-light, #10b981)",
+              background: "rgba(16, 185, 129, 0.1)",
+              borderRadius: "6px",
+              marginTop: "4px",
+              marginBottom: "10px",
+              cursor: "pointer",
+            }}
+            title="은퇴 자산 포트폴리오의 10년 시장 시나리오 백테스트 및 배당 복리 효과 검증"
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>📊</span>
+              <span>포트폴리오 10년 백테스트</span>
+            </span>
+            <span style={{ fontSize: "0.7rem", color: "var(--success-light, #10b981)" }}>시뮬레이션 ➔</span>
           </button>
         )}
 

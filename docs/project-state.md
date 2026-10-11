@@ -112,19 +112,24 @@
 - **[Completed]** Story S37-4: 온보딩 슬라이딩 탭 및 랜딩 페이지 3D 틸트/글로시 CTA 비주얼 업그레이드 (`onboarding/page.tsx` Step 0 `SlidingTabs`, `page.tsx` 히어로 `t-btn-glossy`, 벤치마킹 카드 `CardTilt` 및 모달 `t-modal-spring` 연동 완료)
 - **[Completed]** 전체 모달 컴포넌트 다크/라이트 테마 일관성 일원화: `globals.css` 모달 토큰 확장 및 11개 전문 팝업 모달 하드코딩 다크 스타일 제거, 라이트모드 텍스트 묻힘 해결 및 테마 동기화 완료
 - **[Completed]** AI 종합 진단 PDF 빈 화면(Blank Page) 출력 버그 수정: 오프스크린 인쇄 전용 컨테이너(`#ai-prescription-pdf-root`)의 `opacity: 0`을 `1`로 정상화하고 `exportPdf.ts`에 일시적 opacity 안전 복구 및 캔버스 크기 검증 로직 추가 (FP-030)
+- **[Completed]** Story S38-1: 은퇴 자산 포트폴리오 시장 시나리오 백테스트 & 배당 복리 시뮬레이터 (`portfolioBacktest.ts`, `PortfolioBacktestModal.tsx`, 대시보드 툴바/사이드바 및 AI 진단 툴킷 연동)
+- **[Completed]** Story S38-2: 모바일 뷰포트 터치 제스처 & 접근성(a11y) 세부 폴리싱 (`globals.css` 768px 미디어 쿼리, 바텀시트 모달 래퍼, 터치 슬라이더, 관성 스크롤, 대화상자 WAI-ARIA role/label/focus 링)
 
 ## Active Sprint / Story
-- **Sprint 37** (완료): transitions.dev 기반 UI/UX 모션 고도화 및 인터랙티브 인터페이스 확립
-- **Hotfix** (완료): AI 종합 진단 리포트 PDF 빈 화면 출력 결함 수정 (FP-030)
+- **Sprint 38** (완료): 포트폴리오 시장 시나리오 백테스팅 및 모바일/a11y 고도화
+  - **Story S38-1 (완료)**: 은퇴 자산 포트폴리오 시장 시나리오 백테스트 & 배당 복리 시뮬레이터 구축
+  - **Story S38-2 (완료)**: 모바일 뷰포트 터치 제스처 & 접근성(a11y) 세부 폴리싱
 
-## Session Handoff (PDF 빈 화면 결함 수정 완료)
+## Session Handoff (Sprint 38 완료)
 - **주요 수정 내역**:
-  1. `src/app/dashboard/ai-advisor/page.tsx`:
-     - 오프스크린 인쇄 컨테이너(`#ai-prescription-pdf-root`)의 불필요한 `opacity: 0`을 `1`로 수정 (이미 `position: fixed; left: -9999px; pointerEvents: none`으로 화면 밖 숨김 처리되어 있어 투명도 0은 html2canvas에 투명 캔버스만 생성하는 원인이었음).
-  2. `src/utils/exportPdf.ts`:
-     - 캡처 대상 엘리먼트의 `style.opacity === "0"` 감지 시 html2canvas 캡처 동안 일시적으로 1로 복구하는 방어 로직 추가.
-     - 캔버스 너비/높이 0 검증 및 안전한 배경색 fallback 처리.
-- **검증 상태**: `npm run build` 성공(0 errors), Chrome 브라우저 실제 PDF 다운로드 트리거 및 html2canvas 캔버스 픽셀 렌더링(480만+ 유효 픽셀) 검증 완료.
+  1. `src/services/portfolioBacktest.ts` & `src/components/PortfolioBacktestModal.tsx`:
+     - 과거 10개년 실전 시장(2015~2024), 복합 위기 스트레스, 횡보 인컴장 시나리오 기반 5대 자산군 비중 시뮬레이션
+     - 배당 전액 재투자(스노우볼) vs 현금 인출(소비형) 비교 및 CAGR, 최대 낙폭(MDD), 누적 배당금 산출
+     - Recharts 복합 차트, KPI 카드, 상세 연도별 테이블, 대시보드 툴바/사이드바 및 AI 진단 툴킷 연동 완료.
+  2. 모바일 반응형 및 접근성 고도화:
+     - 768px 미디어 쿼리 최적화: 모바일 바텀시트 모달 래퍼, 슬라이더 터치 조작감 향상(22px thumb), 관성 터치 스크롤(`-webkit-overflow-scrolling: touch`), 슬라이딩 탭 스크롤
+     - WAI-ARIA 접근성 속성(`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-label="닫기"`) 및 `:focus-visible` 포커스 링 탑재.
+- **검증 상태**: `npm run build` 성공(0 errors), 단위 테스트(`scratch/validatePortfolioBacktest.ts`) 통과, 데스크톱 및 모바일(390px) 뷰포트 브라우저 화면 렌더링 검증 완료.
 
 
 

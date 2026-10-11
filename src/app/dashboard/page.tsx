@@ -28,6 +28,7 @@ import { SavingsPlanModal } from "@/components/SavingsPlanModal";
 import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 import { DividendStrategyModal } from "@/components/DividendStrategyModal";
+import PortfolioBacktestModal from "@/components/PortfolioBacktestModal";
 import { SlidingTabs, NumberPopIn } from "@/components/motion";
 
 // Import Recharts components
@@ -231,6 +232,8 @@ export default function DashboardPage() {
 
   // 대표 연금 배당 투자 포트폴리오 가이드 모달 열림 상태
   const [dividendStrategyModalOpen, setDividendStrategyModalOpen] = useState(false);
+  // 은퇴 자산 포트폴리오 백테스트 모달 열림 상태
+  const [portfolioBacktestModalOpen, setPortfolioBacktestModalOpen] = useState(false);
 
   const handleExportData = () => {
     const data = {
@@ -533,6 +536,27 @@ export default function DashboardPage() {
         title="대표적인 연금 배당 투자 포트폴리오 4선 추천 및 분배율 원클릭 적용"
       >
         <span>💡 배당금 투자 전략</span>
+      </button>
+      <button
+        id="btn-portfolio-backtest-actions"
+        onClick={() => setPortfolioBacktestModalOpen(true)}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(16, 185, 129, 0.4)",
+          color: "var(--success-light, #10b981)",
+          background: "rgba(16, 185, 129, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="은퇴 자산 포트폴리오 10년 시장 시나리오 백테스트 및 배당 복리 검증"
+      >
+        <span>📊 포트폴리오 백테스트</span>
       </button>
     </div>
   );
@@ -914,6 +938,7 @@ export default function DashboardPage() {
             onOpenSurvivorCareModal={() => setSurvivorCareModalOpen(true)}
             onOpenIsaTransferModal={() => setIsaTransferModalOpen(true)}
             onOpenDividendStrategyModal={() => setDividendStrategyModalOpen(true)}
+            onOpenPortfolioBacktestModal={() => setPortfolioBacktestModalOpen(true)}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
@@ -1549,6 +1574,11 @@ export default function DashboardPage() {
         currentInvestmentManwon={store.simulationParams.coveredCallAsset || 40000}
         currentDividendRate={store.simulationParams.coveredCallDividendRate || 9.0}
         onApplyRate={(rate) => store.setSimulationParams({ coveredCallDividendRate: rate })}
+      />
+      <PortfolioBacktestModal
+        isOpen={portfolioBacktestModalOpen}
+        onClose={() => setPortfolioBacktestModalOpen(false)}
+        defaultCapital={store.simulationParams.coveredCallAsset || 40000}
       />
     </main>
   );

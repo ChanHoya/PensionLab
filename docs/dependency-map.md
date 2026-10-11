@@ -106,6 +106,12 @@ graph TD
   Landing --> Motion
   OnboardingUI --> Motion
   AIAdvisor --> Motion
+
+  %% Portfolio Backtest (Sprint 38)
+  Dashboard --> PortfolioBacktestModal[src/components/PortfolioBacktestModal.tsx]
+  AIAdvisor --> PortfolioBacktestModal
+  PortfolioBacktestModal --> PortfolioBacktestCalc[src/services/portfolioBacktest.ts]
+  PortfolioBacktestModal --> Motion
 ```
 
 

@@ -17,7 +17,8 @@ export type ToolId =
   | "INCOME_BRIDGE"
   | "SURVIVOR_CARE"
   | "ISA_TRANSFER"
-  | "REVERSE_MORTGAGE";
+  | "REVERSE_MORTGAGE"
+  | "PORTFOLIO_BACKTEST";
 
 export const TOOL_IDS: ToolId[] = [
   "SAVINGS_PLAN",
@@ -28,6 +29,7 @@ export const TOOL_IDS: ToolId[] = [
   "SURVIVOR_CARE",
   "ISA_TRANSFER",
   "REVERSE_MORTGAGE",
+  "PORTFOLIO_BACKTEST",
 ];
 
 export interface ToolMeta {
@@ -49,6 +51,12 @@ export const TOOL_META_MAP: Record<ToolId, ToolMeta> = {
     name: "배당 투자 전략 추천",
     badge: "💡 배당 포트폴리오",
     description: "국내 상장 ETF 10선, IRP 30% 룰, 격주 배당 캘린더를 활용한 실전 배당 포트폴리오를 설계합니다.",
+  },
+  PORTFOLIO_BACKTEST: {
+    id: "PORTFOLIO_BACKTEST",
+    name: "포트폴리오 시장 백테스트",
+    badge: "📊 10년 백테스트",
+    description: "과거 10년 실전 시장 및 위기 스트레스 시나리오에서 배당 재투자 복리 효과와 최대 낙폭(MDD)을 검증합니다.",
   },
   NPS_BEP: {
     id: "NPS_BEP",

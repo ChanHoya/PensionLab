@@ -18,6 +18,7 @@ import { IncomeBridgeModal } from "@/components/IncomeBridgeModal";
 import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
+import PortfolioBacktestModal from "@/components/PortfolioBacktestModal";
 import { AiThinkingStream } from "@/components/motion";
 
 const emptySubscribe = () => () => {};
@@ -391,6 +392,12 @@ export default function AiAdvisorPage() {
       <ReverseMortgageModal
         isOpen={activeTool === "REVERSE_MORTGAGE"}
         onClose={() => setActiveTool(null)}
+      />
+
+      <PortfolioBacktestModal
+        isOpen={activeTool === "PORTFOLIO_BACKTEST"}
+        onClose={() => setActiveTool(null)}
+        defaultCapital={store.simulationParams.coveredCallAsset || 40000}
       />
     </main>
   );

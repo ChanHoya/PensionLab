@@ -112,6 +112,12 @@ graph TD
   AIAdvisor --> PortfolioBacktestModal
   PortfolioBacktestModal --> PortfolioBacktestCalc[src/services/portfolioBacktest.ts]
   PortfolioBacktestModal --> Motion
+
+  %% News & Media (Sprint 39)
+  News[src/app/news/page.tsx] --> NewsAPI[src/app/api/news/route.ts]
+  News --> NewsProxyAPI[src/app/api/news/proxy/route.ts]
+  YouTube[src/app/youtube/page.tsx] --> YouTubeAPI[src/app/api/youtube/route.ts]
 ```
+
 
 

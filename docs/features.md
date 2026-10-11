@@ -142,6 +142,11 @@
      - 박곰희TV(`UCr7XsrSrvAn_WcU4kF99bbQ`), 연금박사 이영주(`UCD9mxN8o9qLei1MbzroeP_A`), 연금이야기(`UCXRlkKtaSUSAiZXQrpOFwaA`) 공식 Channel RSS 피드 파싱 전용 API 라우트 신설
      - API Key 소진 없는 2026년 최신 발행 영상 실시간 수집, 카테고리 자동 판정 및 네트워크 장애 시 기존 시드 안전 Fallback 보장
      - 유튜브 추천 영상 페이지 상단에 `🔄 최신 영상 새로고침` 버튼 및 최근 갱신 시각 탑재, 채널 필터 및 검색과 완벽 연동 (Sprint 39, Story S39-2)
+- **[FEAT-051] 뉴스 기사 상세 원문 뷰어(Iframe 프록시 & 와이드 모달)**:
+  1) Google News RSS 리다이렉트 URL batchexecute 실시간 디코딩 및 언론사 원본 웹사이트 페칭 서버리스 프록시(`src/app/api/news/proxy/route.ts`) 구축
+  2) `X-Frame-Options: ALLOWALL` 및 `frame-ancestors *` 헤더 우회, 상대 경로 리소스 대응 `<base href="...">` 자동 주입, Frame-busting 스크립트 중화
+  3) 브라우저 화면 공간을 시원하게 채우는 98vw/94vh 와이드 팝업 모달, 기사 원문 사이트 실시간 렌더링, 상단 툴바(카테고리, 언론사, 일자, 제목, 새 창에서 원문 보기 ↗, 닫기) 탑재 (Sprint 39, Story S39-3)
+
 
 
 

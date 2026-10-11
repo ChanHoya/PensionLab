@@ -319,27 +319,27 @@ export default function PolicyNewsPage() {
             })
           )}
         </section>
+      </div>
 
-        {/* Article Detail Modal */}
-        {selectedArticle && (
-          <div style={styles.modalOverlay} onClick={() => setSelectedArticle(null)}>
-            <div style={styles.modalContent} onClick={(e) => e.stopPropagation()} className="premium-card">
-              <div style={styles.modalHeader}>
+      {/* Article Detail Full-Width Iframe Modal */}
+      {selectedArticle && (
+        <div style={styles.modalOverlay} onClick={() => setSelectedArticle(null)}>
+          <div style={styles.modalContentWide} onClick={(e) => e.stopPropagation()} className="premium-card">
+            {/* Modal Top Header */}
+            <div style={styles.modalHeaderWide}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", flex: 1, minWidth: 0 }}>
                 <span style={styles.modalBadge}>{selectedArticle.category}</span>
-                <button style={styles.closeButton} onClick={() => setSelectedArticle(null)}>✕</button>
+                <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                  {selectedArticle.author}
+                </span>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>• {selectedArticle.date}</span>
+                <span style={{ color: "var(--border)" }}>|</span>
+                <h3 style={styles.modalTitleInline} title={selectedArticle.title}>
+                  {selectedArticle.title}
+                </h3>
               </div>
-              <h2 style={styles.modalTitle}>{selectedArticle.title}</h2>
-              <div style={styles.modalMeta}>
-                <span>작성: {selectedArticle.author}</span>
-                <span>•</span>
-                <span>등록일: {selectedArticle.date}</span>
-              </div>
-              <div style={styles.modalBody}>
-                {selectedArticle.content.split("\n\n").map((para, pIdx) => (
-                  <p key={pIdx} style={styles.modalParagraph}>{para}</p>
-                ))}
-              </div>
-              <div style={styles.modalFooter}>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
                 {(selectedArticle.id.startsWith("real-") || (selectedArticle as any).link) && (
                   <a
                     href={(selectedArticle as any).link}
@@ -347,30 +347,72 @@ export default function PolicyNewsPage() {
                     rel="noopener noreferrer"
                     className="premium-button-secondary"
                     style={{
-                      padding: "8px 16px",
+                      padding: "7px 14px",
                       textDecoration: "none",
-                      marginRight: "10px",
-                      fontSize: "0.85rem",
+                      fontSize: "0.82rem",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "4px"
+                      gap: "6px"
                     }}
+                    id="btn-open-external-article"
+                    title="새 창에서 원본 기사 웹사이트를 엽니다"
                   >
-                    📰 정책 원문 보기 ➔
+                    <span>🌐</span>
+                    <span>새 창에서 원문 보기 ↗</span>
                   </a>
                 )}
                 <button
-                  className="premium-button"
+                  style={styles.closeButtonWide}
                   onClick={() => setSelectedArticle(null)}
-                  style={{ padding: "8px 24px" }}
+                  aria-label="닫기"
+                  id="btn-close-article-modal"
+                  title="닫기"
                 >
-                  닫기
+                  ✕
                 </button>
               </div>
             </div>
+
+            {/* Iframe Notice & Toolbar */}
+            {(selectedArticle.id.startsWith("real-") || (selectedArticle as any).link) && (
+              <div style={styles.iframeNoticeBar}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span>📰</span>
+                  <span style={{ fontWeight: 600 }}>실시간 기사 원문 뷰어:</span>
+                  <span style={{ color: "var(--text-muted)" }}>
+                    {(selectedArticle as any).link}
+                  </span>
+                </div>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", flexShrink: 0 }}>
+                  * 일부 언론사의 보안 차단 시 우측 상단 [새 창에서 원문 보기]를 이용해 주세요.
+                </span>
+              </div>
+            )}
+
+            {/* Modal Body: Full-height Iframe */}
+            <div style={styles.modalBodyIframe}>
+              {(selectedArticle.id.startsWith("real-") || (selectedArticle as any).link) ? (
+                <iframe
+                  src={`/api/news/proxy?url=${encodeURIComponent((selectedArticle as any).link)}`}
+                  title={selectedArticle.title}
+                  style={styles.iframe}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              ) : (
+                <div style={styles.modalTextBody}>
+                  <h2 style={{ fontSize: "1.4rem", fontWeight: 800, marginBottom: "16px", color: "var(--text-primary)" }}>
+                    {selectedArticle.title}
+                  </h2>
+                  {selectedArticle.content.split("\n\n").map((para, pIdx) => (
+                    <p key={pIdx} style={styles.modalParagraph}>{para}</p>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -576,13 +618,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: 0,
     width: "100%",
     height: "100%",
-    backgroundColor: "rgba(13,14,28,0.75)",
-    backdropFilter: "blur(4px)",
+    backgroundColor: "rgba(13,14,28,0.8)",
+    backdropFilter: "blur(6px)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 1000,
-    padding: "20px",
+    zIndex: 9999,
+    padding: "16px",
   },
   modalContent: {
     backgroundColor: "var(--surface)",
@@ -595,6 +637,86 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: "16px",
     boxShadow: "var(--shadow-premium)",
+  },
+  modalContentWide: {
+    backgroundColor: "var(--surface)",
+    width: "98vw",
+    maxWidth: "1680px",
+    height: "94vh",
+    maxHeight: "95vh",
+    display: "flex",
+    flexDirection: "column",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+    borderRadius: "14px",
+    border: "1px solid var(--border)",
+    overflow: "hidden",
+    position: "relative",
+  },
+  modalHeaderWide: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "14px 24px",
+    borderBottom: "1px solid var(--border)",
+    backgroundColor: "var(--surface)",
+    gap: "16px",
+    flexShrink: 0,
+  },
+  modalTitleInline: {
+    fontSize: "1.05rem",
+    fontWeight: 700,
+    color: "var(--text-primary)",
+    margin: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    maxWidth: "650px",
+  },
+  closeButtonWide: {
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "8px",
+    width: "36px",
+    height: "36px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "1.1rem",
+    color: "var(--text-secondary)",
+    cursor: "pointer",
+    transition: "all var(--transition-fast)",
+  },
+  iframeNoticeBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "8px 24px",
+    backgroundColor: "rgba(99, 102, 241, 0.05)",
+    borderBottom: "1px solid var(--border)",
+    fontSize: "0.8rem",
+    color: "var(--text-secondary)",
+    gap: "12px",
+    flexShrink: 0,
+  },
+  modalBodyIframe: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    position: "relative",
+    backgroundColor: "#ffffff",
+    overflow: "hidden",
+  },
+  iframe: {
+    width: "100%",
+    height: "100%",
+    border: "none",
+    display: "block",
+  },
+  modalTextBody: {
+    padding: "32px",
+    overflowY: "auto",
+    height: "100%",
+    backgroundColor: "var(--surface)",
   },
   modalHeader: {
     display: "flex",

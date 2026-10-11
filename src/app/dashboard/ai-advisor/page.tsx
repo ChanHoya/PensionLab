@@ -327,7 +327,7 @@ export default function AiAdvisorPage() {
                 backgroundColor: "var(--background)",
                 color: "var(--text-primary)",
                 zIndex: -100,
-                opacity: 0,
+                opacity: 1, // html2canvas는 opacity가 0이면 투명하게 렌더링하므로 1로 유지 (left: -9999px로 화면 밖 유지)
                 pointerEvents: "none",
               }}
             >

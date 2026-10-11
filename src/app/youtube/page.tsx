@@ -285,7 +285,7 @@ export default function YoutubeHubPage() {
         {/* Title and Intro */}
         <section style={styles.titleSection} className="animate-fade-in">
           <span style={styles.badge}>EXPERT YOUTUBE CURATION</span>
-          <h2 style={styles.pageTitle}>연금 전문가 추천 영상 허브</h2>
+          <h2 style={styles.pageTitle}>연금 전문 유튜버 추천 영상</h2>
           <p style={styles.pageSubtitle}>
             대한민국 대표 연금/은퇴 자산관리 전문가들의 핵심 노하우 영상을 채널별로 모아 제공합니다. 
             원하는 주제를 검색하거나 채널 탭을 눌러 원하는 강의를 바로 시청해보세요.
@@ -1100,22 +1100,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     left: 0,
     width: "100vw",
     height: "100vh",
-    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    backgroundColor: "rgba(15, 23, 42, 0.75)",
     backdropFilter: "blur(8px)",
     WebkitBackdropFilter: "blur(8px)",
     zIndex: 9999,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "20px",
+    padding: "16px",
   },
   modalContent: {
-    width: "100%",
-    maxWidth: "800px",
+    width: "min(94vw, calc((92vh - 65px) * 16 / 9), 1280px)",
     backgroundColor: "var(--surface)",
     border: "1px solid var(--border)",
-    borderRadius: "var(--radius-md)",
-    boxShadow: "var(--shadow-premium)",
+    borderRadius: "16px",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
@@ -1124,12 +1123,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "16px 20px",
+    padding: "14px 22px",
     borderBottom: "1px solid var(--border)",
-    backgroundColor: "rgba(255, 255, 255, 0.03)",
+    backgroundColor: "var(--surface)",
   },
   modalTitle: {
-    fontSize: "1rem",
+    fontSize: "1.05rem",
     fontWeight: 700,
     color: "var(--text-primary)",
     whiteSpace: "nowrap",
@@ -1137,19 +1136,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     textOverflow: "ellipsis",
     marginRight: "16px",
     margin: 0,
+    flex: 1,
   },
   modalCloseButton: {
-    background: "none",
-    border: "none",
-    fontSize: "1.25rem",
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+    borderRadius: "8px",
+    width: "36px",
+    height: "36px",
+    fontSize: "1.1rem",
     color: "var(--text-secondary)",
     cursor: "pointer",
-    padding: "4px 8px",
-    borderRadius: "var(--radius-sm)",
     transition: "all var(--transition-fast)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
   },
   videoWrapper: {
     position: "relative",

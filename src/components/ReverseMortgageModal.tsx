@@ -69,6 +69,7 @@ export function ReverseMortgageModal({ isOpen, onClose }: ReverseMortgageModalPr
       onClick={onClose}
     >
       <div
+        className="t-modal-spring"
         style={{
           width: "100%",
           maxWidth: "880px",

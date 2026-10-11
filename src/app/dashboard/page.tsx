@@ -28,6 +28,7 @@ import { SavingsPlanModal } from "@/components/SavingsPlanModal";
 import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 import { DividendStrategyModal } from "@/components/DividendStrategyModal";
+import { SlidingTabs, NumberPopIn } from "@/components/motion";
 
 // Import Recharts components
 import {
@@ -1061,7 +1062,14 @@ export default function DashboardPage() {
                     추천 절세 전략: <span className="gradient-text">{bestStrategy.strategyName}</span>
                   </h4>
                   <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px", lineHeight: 1.5 }}>
-                    이 시나리오 적용 시 생애 총 세후 수령액은 약 <strong>{bestStrategy.lifetimeTotalPostTax.toLocaleString()}만원</strong>
+                    이 시나리오 적용 시 생애 총 세후 수령액은 약{" "}
+                    <strong>
+                      <NumberPopIn
+                        value={bestStrategy.lifetimeTotalPostTax}
+                        suffix="만원"
+                        formatter={(v) => Number(v).toLocaleString()}
+                      />
+                    </strong>
                     {isRealValue ? " (실질 구매력)" : " (명목 금액)"}으로, 
                     기존 계획 대비 세후 소득을 극대화할 수 있습니다. 
                   </p>
@@ -1090,12 +1098,22 @@ export default function DashboardPage() {
                     <div style={{ ...styles.divider, margin: "6px 0" }} />
                     <div style={styles.compareValueRow}>
                       <span style={styles.compareLabel}>{hasSpouse ? "가구 " : ""}생애 총 수령액 (세후)</span>
-                      <span style={styles.compareVal}>{strat.lifetimeTotalPostTax.toLocaleString()} 만원</span>
+                      <span style={styles.compareVal}>
+                        <NumberPopIn
+                          value={strat.lifetimeTotalPostTax}
+                          suffix=" 만원"
+                          formatter={(v) => Number(v).toLocaleString()}
+                        />
+                      </span>
                     </div>
                     <div style={styles.compareValueRow}>
                       <span style={styles.compareLabel}>총 납부 세금 & 건보</span>
                       <span style={{ ...styles.compareVal, color: "var(--warning)" }}>
-                        {strat.lifetimeTotalTaxAndHI.toLocaleString()} 만원
+                        <NumberPopIn
+                          value={strat.lifetimeTotalTaxAndHI}
+                          suffix=" 만원"
+                          formatter={(v) => Number(v).toLocaleString()}
+                        />
                       </span>
                     </div>
                     <div style={styles.compareValueRow}>
@@ -1308,21 +1326,16 @@ export default function DashboardPage() {
               {/* 탭 버튼 */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
                 <h3 style={{ ...styles.chartTitle, marginBottom: 0 }}>인출 최적화 처방 조언</h3>
-                <div style={{ ...styles.tabBar, borderBottom: "none", paddingBottom: 0, flexShrink: 0 }} className="no-print">
-                  {strategies.map((s) => (
-                    <button
-                      key={s.strategyId}
-                      onClick={() => setActiveTab(s.strategyId as ScenarioTab)}
-                      style={{
-                        ...styles.tabButton,
-                        backgroundColor: activeTab === s.strategyId ? "var(--primary)" : "transparent",
-                        color: activeTab === s.strategyId ? "#fff" : "var(--text-secondary)",
-                        border: activeTab === s.strategyId ? "1px solid var(--primary)" : "1px solid var(--border)"
-                      }}
-                    >
-                      {s.strategyName}
-                    </button>
-                  ))}
+                <div className="no-print">
+                  <SlidingTabs
+                    tabs={strategies.map((s) => ({
+                      id: s.strategyId,
+                      label: s.strategyName,
+                    }))}
+                    activeTabId={activeTab}
+                    onChange={(id) => setActiveTab(id as ScenarioTab)}
+                    size="sm"
+                  />
                 </div>
               </div>
               <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6, marginTop: "10px" }}>

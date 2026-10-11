@@ -99,7 +99,7 @@ export function SavingsPlanModal({ isOpen, onClose }: Props) {
 
   return (
     <div role="dialog" aria-modal="true" style={S.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="glass-card" style={S.panel}>
+      <div className="glass-card t-modal-spring" style={S.panel}>
         <div style={S.header}>
           <div>
             <h3 style={S.title}>🎯 부족액 역산 적립 플랜</h3>

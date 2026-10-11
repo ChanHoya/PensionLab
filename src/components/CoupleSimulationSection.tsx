@@ -23,6 +23,7 @@ import { PENSION_SERIES, SURVIVOR_FILL, emphasisProps, pensionSeriesValues } fro
 import { buildSpendingCurve } from "@/services/spendingCurve";
 import { usePensionStore } from "@/store/usePensionStore";
 import NpsEarlyDeferralModal from "@/components/NpsEarlyDeferralModal";
+import { NumberPopIn } from "@/components/motion";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const WHO_LABEL = { SELF: "본인", SPOUSE: "배우자" } as const;
@@ -319,7 +320,9 @@ export default function CoupleSimulationSection({
       <div style={styles.kpiGrid}>
         <div style={styles.kpi}>
           <div style={styles.kpiLabel}>은퇴 후 가구 평균 월 연금액</div>
-          <div style={styles.kpiValue}>월 {fmt(avgMonthlyPension)}만원</div>
+          <div style={styles.kpiValue}>
+            <NumberPopIn value={Math.round(avgMonthlyPension)} prefix="월 " suffix="만원" formatter={(v) => fmt(Number(v))} />
+          </div>
           <div style={styles.kpiHint}>
             {simulationParams.retirementAge || 60}세 은퇴 후 {isRealValue ? "실질 구매력 평균" : "명목 수령 평균"}
           </div>
@@ -328,7 +331,7 @@ export default function CoupleSimulationSection({
         <div style={styles.kpi}>
           <div style={styles.kpiLabel}>생애 총 수령 연금액 (가구)</div>
           <div style={styles.kpiValue}>
-            {fmt(totalLifetimePension)}만원
+            <NumberPopIn value={Math.round(totalLifetimePension)} suffix="만원" formatter={(v) => fmt(Number(v))} />
             <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "var(--text-muted)", marginLeft: 6 }}>
               (약 {(totalLifetimePension / 10000).toFixed(1)}억원)
             </span>
@@ -342,7 +345,9 @@ export default function CoupleSimulationSection({
           <div style={styles.kpi}>
             <div style={styles.kpiLabel}>첫 사망 전 → 후 가구 월 연금</div>
             <div style={styles.kpiValue}>
-              {fmt(beforeDeathHousehold)} → {fmt(afterDeathHousehold)}만원
+              <NumberPopIn value={Math.round(beforeDeathHousehold)} formatter={(v) => fmt(Number(v))} />
+              {" → "}
+              <NumberPopIn value={Math.round(afterDeathHousehold)} suffix="만원" formatter={(v) => fmt(Number(v))} />
             </div>
             <div style={styles.kpiHint}>
               {firstDeath ? `${WHO_LABEL[firstDeath.who]} 기대수명 이후 (${firstDeath.year}년)` : "유족연금 전환"}
@@ -351,7 +356,9 @@ export default function CoupleSimulationSection({
         ) : (
           <div style={styles.kpi}>
             <div style={styles.kpiLabel}>말년 5년 평균 월 연금액</div>
-            <div style={styles.kpiValue}>월 {fmt(lateMonthlyPension)}만원</div>
+            <div style={styles.kpiValue}>
+              <NumberPopIn value={Math.round(lateMonthlyPension)} prefix="월 " suffix="만원" formatter={(v) => fmt(Number(v))} />
+            </div>
             <div style={styles.kpiHint}>생애 마지막 5년 평균 수령액</div>
           </div>
         )}
@@ -359,7 +366,9 @@ export default function CoupleSimulationSection({
         {hasSpouse && bothReceiving ? (
           <div style={styles.kpi}>
             <div style={styles.kpiLabel}>부부 모두 수령 시 가구 월 연금</div>
-            <div style={styles.kpiValue}>월 {fmt(bothReceivingMonthly)}만원</div>
+            <div style={styles.kpiValue}>
+              <NumberPopIn value={Math.round(bothReceivingMonthly)} prefix="월 " suffix="만원" formatter={(v) => fmt(Number(v))} />
+            </div>
             <div style={styles.kpiHint}>
               {bothReceiving.year}년 (본인 {bothReceiving.self.age}세 / 배우자 {bothReceiving.spouse!.age}세)
             </div>
@@ -368,7 +377,12 @@ export default function CoupleSimulationSection({
           <div style={styles.kpi}>
             <div style={styles.kpiLabel}>국민연금 개시 시 월 연금</div>
             <div style={styles.kpiValue}>
-              월 {fmt(rows.find((r) => r.self.national > 0)?.self.national ?? 0)}만원
+              <NumberPopIn
+                value={Math.round(rows.find((r) => r.self.national > 0)?.self.national ?? 0)}
+                prefix="월 "
+                suffix="만원"
+                formatter={(v) => fmt(Number(v))}
+              />
             </div>
             <div style={styles.kpiHint}>{selfStartAge}세 국민연금 최초 개시</div>
           </div>

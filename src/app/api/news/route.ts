@@ -1,16 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const isRefresh = searchParams.get("refresh") === "true";
+
     const query = "국민연금 OR 퇴직연금 OR 개인연금저축 OR 연금 세액공제 OR IRP 리밸런싱";
     const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
     
-    const response = await fetch(url, {
-      next: { revalidate: 1800 }, // Cache for 30 minutes
+    const fetchOptions: RequestInit = {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      }
-    });
+      },
+      ...(isRefresh
+        ? { cache: "no-store", next: { revalidate: 0 } }
+        : { next: { revalidate: 1800 } }), // Cache for 30 minutes in normal mode
+    };
+
+    const response = await fetch(url, fetchOptions);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch Google News RSS. Status: ${response.status}`);
@@ -24,7 +31,7 @@ export async function GET() {
       for (const itemXml of itemMatches) {
         const fullTitle = parseXmlField(itemXml, "title");
         const link = parseXmlField(itemXml, "link");
-        const description = parseXmlField(itemXml, "description");
+        const rawDescription = parseXmlField(itemXml, "description");
         const pubDateStr = parseXmlField(itemXml, "pubDate");
         
         if (!fullTitle || !link) continue;
@@ -120,7 +127,7 @@ export async function GET() {
           continue; // Skip commercial and advertisement news
         }
         
-        const combinedText = (title + " " + description).toLowerCase();
+        const combinedText = (title + " " + rawDescription).toLowerCase();
         let category: "국민·기초연금" | "퇴직·개인연금" | "자산관리" = "자산관리";
         
         if (
@@ -154,23 +161,13 @@ export async function GET() {
           }
         } catch (_) {}
         
-        // Clean description for summary, bypassing first HTML link element in Google News RSS description
-        let summaryCleaned = description;
-        const lastBrIndex = description.lastIndexOf("<br/>");
-        if (lastBrIndex !== -1) {
-          summaryCleaned = description.substring(lastBrIndex + 5);
-        }
+        // Clean description for summary: Decode entities FIRST then strip HTML tags completely
+        let summaryCleaned = sanitizeHtmlText(rawDescription);
         
-        summaryCleaned = summaryCleaned
-          .replace(/<[^>]*>?/gm, "") // Strip any HTML tags completely
-          .replace(/&nbsp;/g, " ")
-          .replace(/&lt;/g, "<")
-          .replace(/&gt;/g, ">")
-          .replace(/&amp;/g, "&")
-          .replace(/&quot;/g, '"')
-          .replace(/&#39;/g, "'")
-          .replace(/\s+/g, " ")
-          .trim();
+        // If the summary is identical or empty, produce a sensible fallback summary
+        if (!summaryCleaned || summaryCleaned === title) {
+          summaryCleaned = `${title}에 대한 실시간 연금 정책 보도 및 상세 내용입니다.`;
+        }
           
         const imageEmoji = category === "국민·기초연금" ? "📊" : category === "퇴직·개인연금" ? "💵" : "📈";
         
@@ -191,11 +188,42 @@ export async function GET() {
     // Sort by date desc
     items.sort((a, b) => b.date.localeCompare(a.date));
     
-    return NextResponse.json(items.slice(0, 12));
+    return NextResponse.json(items.slice(0, 15), {
+      headers: {
+        "Cache-Control": isRefresh
+          ? "no-cache, no-store, must-revalidate"
+          : "public, s-maxage=1800, stale-while-revalidate=300",
+      },
+    });
   } catch (error) {
     console.error("Error in Google News Feed API:", error);
     return NextResponse.json([]);
   }
+}
+
+function decodeHtmlEntities(str: string): string {
+  let result = str;
+  // Handle double or single escaped entities
+  for (let i = 0; i < 2; i++) {
+    result = result
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&amp;/gi, "&");
+  }
+  return result;
+}
+
+function sanitizeHtmlText(html: string): string {
+  if (!html) return "";
+  // 1. First decode entities so any escaped tags become readable
+  const decoded = decodeHtmlEntities(html);
+  // 2. Remove all HTML tags
+  const stripped = decoded.replace(/<[^>]*>/g, " ");
+  // 3. Normalize whitespaces and trim
+  return stripped.replace(/\s+/g, " ").trim();
 }
 
 function parseXmlField(itemXml: string, fieldName: string): string {
@@ -206,7 +234,7 @@ function parseXmlField(itemXml: string, fieldName: string): string {
   const tagReg = new RegExp(`<${fieldName}>([\\s\\S]*?)</${fieldName}>`, "i");
   const tagMatch = itemXml.match(tagReg);
   if (tagMatch) {
-    return tagMatch[1].replace(/<[^>]*>?/gm, "").trim();
+    return tagMatch[1].trim();
   }
   return "";
 }

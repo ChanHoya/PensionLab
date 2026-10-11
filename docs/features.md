@@ -133,6 +133,15 @@
   1) 모바일 뷰포트(768px 이하) 바텀시트형 모달 래퍼, 슬라이더 터치 타겟(22px thumb) 및 `-webkit-tap-highlight-color: transparent` 터치 제스처 최적화
   2) 모바일 테이블 가로 스크롤 관성 터치(`-webkit-overflow-scrolling: touch`), 슬라이딩 탭 스크롤 최적화
   3) 모달 대화상자 접근성 표준 준수 (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, 닫기 버튼 `aria-label="닫기"`, `:focus-visible` 포커스 링) (Sprint 38, Story S38-2)
+- **[FEAT-050] 관련 뉴스 및 유튜브 전문가 추천 영상 실시간 최신화 & 새로고침 파이프라인**:
+  1) 실시간 정책 뉴스 갱신 및 HTML 태그 정제 (`src/app/api/news/route.ts`, `src/app/news/page.tsx`):
+     - `?refresh=true` 쿼리 파라미터 시 Next.js Data Cache 우회(`cache: "no-store"`) 및 Google News RSS 원본 피드 즉시 재페칭
+     - Google News description의 이스케이프된 HTML 엔티티(`&lt;a href...&gt;`) 누출 결함 수정 및 순수 요약 텍스트 정제
+     - 뉴스 페이지 상단에 `🔄 최신 뉴스 새로고침` 버튼, 로딩 스핀 애니메이션, 최종 갱신 시각 타임스탬프 인디케이터 탑재 (Sprint 39, Story S39-1)
+  2) 3대 연금 채널 공식 YouTube RSS 실시간 수집 및 추천 영상 새로고침 (`src/app/api/youtube/route.ts`, `src/app/youtube/page.tsx`):
+     - 박곰희TV(`UCr7XsrSrvAn_WcU4kF99bbQ`), 연금박사 이영주(`UCD9mxN8o9qLei1MbzroeP_A`), 연금이야기(`UCXRlkKtaSUSAiZXQrpOFwaA`) 공식 Channel RSS 피드 파싱 전용 API 라우트 신설
+     - API Key 소진 없는 2026년 최신 발행 영상 실시간 수집, 카테고리 자동 판정 및 네트워크 장애 시 기존 시드 안전 Fallback 보장
+     - 유튜브 추천 영상 페이지 상단에 `🔄 최신 영상 새로고침` 버튼 및 최근 갱신 시각 탑재, 채널 필터 및 검색과 완벽 연동 (Sprint 39, Story S39-2)
 
 
 

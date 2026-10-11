@@ -114,22 +114,28 @@
 - **[Completed]** AI 종합 진단 PDF 빈 화면(Blank Page) 출력 버그 수정: 오프스크린 인쇄 전용 컨테이너(`#ai-prescription-pdf-root`)의 `opacity: 0`을 `1`로 정상화하고 `exportPdf.ts`에 일시적 opacity 안전 복구 및 캔버스 크기 검증 로직 추가 (FP-030)
 - **[Completed]** Story S38-1: 은퇴 자산 포트폴리오 시장 시나리오 백테스트 & 배당 복리 시뮬레이터 (`portfolioBacktest.ts`, `PortfolioBacktestModal.tsx`, 대시보드 툴바/사이드바 및 AI 진단 툴킷 연동)
 - **[Completed]** Story S38-2: 모바일 뷰포트 터치 제스처 & 접근성(a11y) 세부 폴리싱 (`globals.css` 768px 미디어 쿼리, 바텀시트 모달 래퍼, 터치 슬라이더, 관성 스크롤, 대화상자 WAI-ARIA role/label/focus 링)
+- **[Completed]** Sprint 39: 관련 뉴스 및 유튜브 전문가 추천 영상 실시간 최신화 & 새로고침 기능 탑재
+  - Story S39-1: 실시간 정책 뉴스 갱신 API 캐시 무효화 및 본문 HTML 태그/엔티티 정제, 새로고침 UI 연동 (`/api/news`, `/news/page.tsx`)
+  - Story S39-2: 3대 연금 채널 공식 YouTube RSS 실시간 수집 API 구축, 추천 영상 새로고침 UI 연동 (`/api/youtube`, `/youtube/page.tsx`)
+  - Story S39-3: 기능 동작 테스트, 브라우저 화면 렌더링 검증, 프로덕션 빌드 통과 및 PR 머지
 
 ## Active Sprint / Story
-- **Sprint 38** (완료): 포트폴리오 시장 시나리오 백테스팅 및 모바일/a11y 고도화
-  - **Story S38-1 (완료)**: 은퇴 자산 포트폴리오 시장 시나리오 백테스트 & 배당 복리 시뮬레이터 구축
-  - **Story S38-2 (완료)**: 모바일 뷰포트 터치 제스처 & 접근성(a11y) 세부 폴리싱
+- **Sprint 39** (완료): 관련 뉴스 및 추천 영상 실시간 최신화 & 새로고침 기능
+  - **Story S39-1 (완료)**: 실시간 정책 뉴스 캐시 무효화(`?refresh=true`), HTML 링크 누출 버그 완전 정제 및 새로고침 버튼/타임스탬프 탑재
+  - **Story S39-2 (완료)**: 3대 연금 채널(박곰희TV, 연금박사, 연금이야기) 공식 YouTube RSS 실시간 피드 API 신설 및 추천 영상 새로고침 UI 연동
+  - **Story S39-3 (완료)**: `npm run build` 프로덕션 빌드, 브라우저 subagent 실화면 렌더링 검증 및 Git 커밋/푸시/PR 머지
 
-## Session Handoff (Sprint 38 완료)
+## Session Handoff (Sprint 39 완료)
 - **주요 수정 내역**:
-  1. `src/services/portfolioBacktest.ts` & `src/components/PortfolioBacktestModal.tsx`:
-     - 최신 10개년 실전 시장(2016~2025), 복합 위기 스트레스, 횡보 인컴장 시나리오 기반 5대 자산군 비중 시뮬레이션
-     - 배당 전액 재투자(스노우볼) vs 현금 인출(소비형) 비교 및 CAGR, 최대 낙폭(MDD), 누적 배당금 산출
-     - Recharts 복합 차트, KPI 카드, 상세 연도별 테이블, 대시보드 툴바/사이드바 및 AI 진단 툴킷 연동 완료.
-  2. 모바일 반응형 및 접근성 고도화:
-     - 768px 미디어 쿼리 최적화: 모바일 바텀시트 모달 래퍼, 슬라이더 터치 조작감 향상(22px thumb), 관성 터치 스크롤(`-webkit-overflow-scrolling: touch`), 슬라이딩 탭 스크롤
-     - WAI-ARIA 접근성 속성(`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-label="닫기"`) 및 `:focus-visible` 포커스 링 탑재.
-- **검증 상태**: `npm run build` 성공(0 errors), 단위 테스트(`scratch/validatePortfolioBacktest.ts`) 통과, 데스크톱 및 모바일(390px) 뷰포트 브라우저 화면 렌더링 검증 완료.
+  1. `src/app/api/news/route.ts` & `src/app/news/page.tsx`:
+     - `?refresh=true` 쿼리 파라미터 시 Data Cache 우회(`cache: "no-store"`) 및 Google News RSS 원본 피드 즉각 재페칭
+     - Google News RSS의 이스케이프된 HTML 엔티티(`&lt;a href...&gt;`) 누출 결함 완전 해결 (`sanitizeHtmlText`, `decodeHtmlEntities`)
+     - 뉴스 필터 바 우측에 `🔄 최신 뉴스 새로고침` 버튼, 로딩 스피너 애니메이션, 최근 갱신 시각 타임스탬프 인디케이터 탑재
+  2. `src/app/api/youtube/route.ts` & `src/app/youtube/page.tsx`:
+     - 박곰희TV(`UCr7XsrSrvAn_WcU4kF99bbQ`), 연금박사 이영주(`UCD9mxN8o9qLei1MbzroeP_A`), 연금이야기(`UCXRlkKtaSUSAiZXQrpOFwaA`) 공식 YouTube RSS 실시간 페칭 API 신설
+     - API Key 소진 없는 2026년 최신 발행 영상 실시간 수집, 카테고리 자동 판정 및 네트워크 장애 시 기존 시드 안전 Fallback 보장
+     - 영상 허브 상단에 `🔄 최신 영상 새로고침` 버튼 및 최근 갱신 시각 탑재, 채널 필터 및 검색과 완벽 연동
+- **검증 상태**: `npm run build` 성공(0 errors), 브라우저 subagent를 통한 뉴스/유튜브 페이지 실화면 렌더링 및 새로고침 버튼 상호작용 검증 완료.
 
 
 

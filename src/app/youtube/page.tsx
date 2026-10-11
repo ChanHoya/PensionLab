@@ -152,6 +152,12 @@ export default function YoutubeHubPage() {
   const router = useRouter();
   const store = usePensionStore();
 
+  // Video List States
+  const [videos, setVideos] = useState<Video[]>(SEED_VIDEOS);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+
   // AI Chat States
   const [question, setQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "assistant"; content: string; sources?: any[] }[]>([]);
@@ -161,8 +167,37 @@ export default function YoutubeHubPage() {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
 
+  const fetchVideos = async (refresh: boolean = false) => {
+    if (refresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const res = await fetch(`/api/youtube${refresh ? "?refresh=true" : ""}`, {
+        cache: refresh ? "no-store" : "default",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setVideos(data);
+          const now = new Date();
+          const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+          setLastUpdated(timeStr);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load real-time youtube videos, using seed fallback:", err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     setIsMounted(true);
+    fetchVideos(false);
   }, []);
 
   if (!isMounted) {
@@ -207,7 +242,7 @@ export default function YoutubeHubPage() {
   };
 
   // Filter videos based on selected channel tab and search query
-  const filteredVideos = SEED_VIDEOS.filter((video) => {
+  const filteredVideos = videos.filter((video) => {
     const matchesChannel =
       selectedChannel === "ALL" || video.channelHandle === selectedChannel;
       
@@ -259,32 +294,69 @@ export default function YoutubeHubPage() {
 
         {/* Filter and Search Controls */}
         <section style={styles.controlSection} className="animate-fade-in">
-          {/* Channel Tabs */}
+          {/* Channel Tabs & Refresh Toolbar */}
           <div style={styles.tabRow}>
-            {[
-              { label: "전체 영상", handle: "ALL" },
-              { label: "연금박사 이영주", handle: "@pension500" },
-              { label: "박곰희TV", handle: "@gomhee" },
-              { label: "연금이야기", handle: "@PensionStory" }
-            ].map((tab) => (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
+              {[
+                { label: "전체 영상", handle: "ALL" },
+                { label: "연금박사 이영주", handle: "@pension500" },
+                { label: "박곰희TV", handle: "@gomhee" },
+                { label: "연금이야기", handle: "@PensionStory" }
+              ].map((tab) => (
+                <button
+                  key={tab.handle}
+                  onClick={() => setSelectedChannel(tab.handle)}
+                  className={selectedChannel === tab.handle ? "nav-tab active" : "nav-tab"}
+                  style={{
+                    fontSize: "0.85rem",
+                    padding: "10px 18px",
+                    border: "none",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                    fontWeight: selectedChannel === tab.handle ? 700 : 500,
+                    color: selectedChannel === tab.handle ? "#ffffff" : "var(--text-secondary)",
+                    transition: "all var(--transition-fast)"
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {lastUpdated && (
+                <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+                  최근 갱신 {lastUpdated}
+                </span>
+              )}
               <button
-                key={tab.handle}
-                onClick={() => setSelectedChannel(tab.handle)}
-                className={selectedChannel === tab.handle ? "nav-tab active" : "nav-tab"}
+                id="btn-refresh-youtube"
+                onClick={() => fetchVideos(true)}
+                disabled={isRefreshing || loading}
+                className="premium-button-secondary"
                 style={{
-                  fontSize: "0.85rem",
-                  padding: "10px 18px",
-                  border: "none",
-                  borderRadius: "var(--radius-sm)",
-                  cursor: "pointer",
-                  fontWeight: selectedChannel === tab.handle ? 700 : 500,
-                  color: selectedChannel === tab.handle ? "#ffffff" : "var(--text-secondary)",
-                  transition: "all var(--transition-fast)"
+                  fontSize: "0.82rem",
+                  padding: "8px 16px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: isRefreshing || loading ? "not-allowed" : "pointer",
+                  opacity: isRefreshing || loading ? 0.7 : 1,
                 }}
+                title="3대 연금 전문가 채널의 최신 영상을 실시간으로 갱신합니다"
               >
-                {tab.label}
+                <span
+                  style={{
+                    display: "inline-block",
+                    animation: isRefreshing ? "spin 1s infinite linear" : "none",
+                    fontSize: "0.95rem"
+                  }}
+                >
+                  🔄
+                </span>
+                <span>{isRefreshing ? "갱신 중..." : "최신 영상 새로고침"}</span>
               </button>
-            ))}
+            </div>
           </div>
 
           {/* Search Box */}
@@ -368,7 +440,12 @@ export default function YoutubeHubPage() {
 
         {/* Videos Grid */}
         <section style={styles.gridSection} className="animate-fade-in">
-          {filteredVideos.length === 0 ? (
+          {loading ? (
+            <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "60px 20px", color: "var(--text-muted)" }}>
+              <div style={{ ...styles.spinner, margin: "0 auto 16px auto", width: 44, height: 44 }} />
+              <p style={{ fontWeight: 600 }}>최신 전문가 추천 영상을 실시간으로 불러오는 중입니다...</p>
+            </div>
+          ) : filteredVideos.length === 0 ? (
             <div style={styles.emptyContainer}>
               <span style={{ fontSize: "2.5rem" }}>📭</span>
               <p style={{ marginTop: 12, fontWeight: 600 }}>검색 결과와 일치하는 전문가 추천 영상이 없습니다.</p>
@@ -701,9 +778,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   tabRow: {
     display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "12px",
     flexWrap: "wrap",
-    gap: "8px",
-    borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+    borderBottom: "1.5px solid var(--border)",
     paddingBottom: "16px",
   },
   searchContainer: {

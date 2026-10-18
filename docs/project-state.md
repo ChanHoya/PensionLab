@@ -114,26 +114,31 @@
 - **[Completed]** AI 종합 진단 PDF 빈 화면(Blank Page) 출력 버그 수정: 오프스크린 인쇄 전용 컨테이너(`#ai-prescription-pdf-root`)의 `opacity: 0`을 `1`로 정상화하고 `exportPdf.ts`에 일시적 opacity 안전 복구 및 캔버스 크기 검증 로직 추가 (FP-030)
 - **[Completed]** Story S38-1: 은퇴 자산 포트폴리오 시장 시나리오 백테스트 & 배당 복리 시뮬레이터 (`portfolioBacktest.ts`, `PortfolioBacktestModal.tsx`, 대시보드 툴바/사이드바 및 AI 진단 툴킷 연동)
 - **[Completed]** Story S38-2: 모바일 뷰포트 터치 제스처 & 접근성(a11y) 세부 폴리싱 (`globals.css` 768px 미디어 쿼리, 바텀시트 모달 래퍼, 터치 슬라이더, 관성 스크롤, 대화상자 WAI-ARIA role/label/focus 링)
-- **[Completed]** Sprint 39: 관련 뉴스 및 유튜브 전문가 추천 영상 실시간 최신화 & 새로고침 기능 탑재
-  - Story S39-1: 실시간 정책 뉴스 갱신 API 캐시 무효화 및 본문 HTML 태그/엔티티 정제, 새로고침 UI 연동 (`/api/news`, `/news/page.tsx`)
-  - Story S39-2: 3대 연금 채널 공식 YouTube RSS 실시간 수집 API 구축, 추천 영상 새로고침 UI 연동 (`/api/youtube`, `/youtube/page.tsx`)
-  - Story S39-3: 기능 동작 테스트, 브라우저 화면 렌더링 검증, 프로덕션 빌드 통과 및 PR 머지
+- **[Completed]** Sprint 40: 초심자 친화적 UX 고도화 (30초 퀵 간편 진단 Easy Mode & 스마트 금융/연금 용어사전 툴팁 시스템) 및 대시보드 모달/툴바 리팩토링
+  - Story S40-1: 스마트 금융/연금 용어사전 DB(`src/config/glossary.ts`) 및 인라인 툴팁 컴포넌트(`src/components/GlossaryTooltip.tsx`) 구현 (14대 핵심 전문 용어에 대한 1줄 쉬운 일상 비유, 상세 원리, 실전 꿀팁 및 관련 모달 바로가기 연동)
+  - Story S40-2: 초심자를 위한 30초 퀵 간편 진단 엔진(`src/services/quickDiagnosis.ts`) 및 인터랙티브 모달(`src/components/QuickDiagnosisModal.tsx`) 개발 (4개 질문으로 대한민국 평균 통계 기반 은퇴 월 연금·부족액·준비율·A~E등급 즉시 산출 및 "🚀 이 결과로 대시보드 바로 체험하기" 원클릭 이동 지원)
+  - Story S40-3: `src/app/dashboard/page.tsx` 대규모 모달 상태 단일화(`activeModal: DashboardModalType`), `DashboardToolbar.tsx` 및 `DashboardModalManager.tsx` 분리 리팩토링 완료
+  - Story S40-4: 프로덕션 빌드(`npm run build`), 브라우저 서브에이전트 실화면 렌더링 검증, Git 커밋/푸시
 
 ## Active Sprint / Story
-- **Sprint 39** (완료): 관련 뉴스 및 추천 영상 실시간 최신화 & 새로고침 기능
-  - **Story S39-1 (완료)**: 실시간 정책 뉴스 캐시 무효화(`?refresh=true`), HTML 링크 누출 버그 완전 정제 및 새로고침 버튼/타임스탬프 탑재
-  - **Story S39-2 (완료)**: 3대 연금 채널(박곰희TV, 연금박사, 연금이야기) 공식 YouTube RSS 실시간 피드 API 신설 및 추천 영상 새로고침 UI 연동
-  - **Story S39-3 (완료)**: `npm run build` 프로덕션 빌드, 브라우저 subagent 실화면 렌더링 검증 및 Git 커밋/푸시/PR 머지
+- **Sprint 40** (완료): 초심자 친화적 UX 고도화 (30초 퀵 간편 진단 Easy Mode & 스마트 용어사전 툴팁 시스템) 및 대시보드 리팩토링
+  - **Story S40-1 (완료)**: 스마트 금융/연금 용어사전 및 인라인 호버 툴팁 시스템 구현
+  - **Story S40-2 (완료)**: 초심자를 위한 30초 퀵 간편 진단 엔진 및 모달(랜딩·온보딩·대시보드 글로벌 진입) 연동
+  - **Story S40-3 (완료)**: 대시보드 모달 상태 단일화(`activeModal`) 및 툴바 컴포넌트 분리 리팩토링
+  - **Story S40-4 (완료)**: `npm run build` 프로덕션 빌드 성공, Chrome 브라우저 실화면 렌더링 검증 및 Git 커밋/푸시
 
-## Session Handoff (뉴스 기사별 5줄+ 펼치기/접히기 스크롤 & 유튜브 요약 전면확장 및 단일 박스 핵심 메시지)
-- **주요 수정 내역**:
-  1. `src/app/news/page.tsx`:
-     - 상단 주요 뉴스 TOP 3 브리핑 박스에서 개별 기사 클릭(또는 `펼치기 ▾` 버튼) 시, 해당 기사 박스가 **5줄 이상 본문이 넉넉히 보이는 높이로 확장(`expandedArticleBox`)**되고 내부 세로 스크롤(`overflowY: "auto"`)로 상세 기사 내용을 끝까지 읽을 수 있도록 구현.
-     - `내용 접히기 ▴` 클릭 시 즉시 1~2줄 컴팩트 요약으로 복귀, 펼쳐진 상태에서 `🌐 원문 기사 뷰어로 크게 보기 ↗` 원클릭 연동.
-  2. `src/app/youtube/page.tsx`:
-     - `📌 영상 요약`: 우측 패널 상단의 남은 세로 공간 전체(`flex: 1`, `minHeight: 160px`)를 시원하게 채우며 말줄임표 없이 전체 요약문 렌더링 및 스크롤 지원.
-     - `🎯 핵심 메시지`: 빈 공간 낭비를 없애기 위해 개별 카드 분할 대신 **단일 박스(`singleCoreMessageBox`)** 내에서 텍스트 줄간([1]~[4])으로 콤팩트하게 분리하여 표시.
-- **검증 상태**: `npm run build` 프로덕션 빌드 성공(0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`news_article_expanded_1791724282244.png`, `youtube_modal_refined_1791724311151.png`).
+## Session Handoff (30초 퀵 간편 진단 Easy Mode & 스마트 용어사전 툴팁 시스템 및 대시보드 리팩토링)
+- **주요 산출물**:
+  1. `src/config/glossary.ts` & `src/components/GlossaryTooltip.tsx`:
+     - 소득 크레바스, 피부양자 탈락, 사적연금 1500만 한도, A값/B값, 조기노령 BEP, 추납, 과세이연, 임의계속가입, 주택연금 연소자 기준 등 14개 핵심 용어의 쉬운 비유 및 실전 꿀팁 제공
+     - 점선 밑줄 및 ⓘ 아이콘 호버/터치 시 부드러운 스프링 팝오버 노출
+  2. `src/services/quickDiagnosis.ts` & `src/components/QuickDiagnosisModal.tsx`:
+     - 나이, 은퇴나이, 월소득, 가구형태(부부/1인) 4개 슬라이더 조작으로 실시간 은퇴 월 연금, 부족액, 3층 연금 구성 바, A~E등급 산출
+     - "🚀 이 결과로 대시보드 바로 체험하기" 원클릭 스토어 바인딩 및 대시보드 즉시 이동
+     - 랜딩(`/`), 온보딩(`/onboarding`), 대시보드(`/dashboard`) 상단에 `⚡ 30초 퀵 진단` 글로벌 버튼 연동
+  3. 대시보드 리팩토링 (`src/components/DashboardToolbar.tsx`, `src/components/DashboardModalManager.tsx`, `src/app/dashboard/page.tsx`):
+     - 12개의 boolean useState를 `activeModal: DashboardModalType`으로 단일화하고 약 200줄의 툴바 JSX를 독립 컴포넌트로 분리
+- **검증 상태**: `npm run build` 프로덕션 빌드 성공 (0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`quick_diagnosis_modal_1792366688269.png`, `dashboard_toolbar_tooltip_1792366710930.png`).
 
 
 

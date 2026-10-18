@@ -156,6 +156,19 @@
      - `📌 영상 요약`: 상단 우측 패널의 남은 세로 공간 전체(`flex: 1`, `minHeight: 160px`)를 시원하게 채우며 말줄임 없는 풀 텍스트와 스크롤 지원
      - `🎯 핵심 메시지`: 빈 공간 낭비가 없도록 개별 카드 분할 대신 **단일 박스(`singleCoreMessageBox`)** 내에서 텍스트 줄간([1]~[4])으로 콤팩트하게 분리하여 깔끔하게 제공
 
+- **[FEAT-053] 초심자 친화적 UX 고도화 (30초 퀵 간편 진단 & 스마트 금융/연금 용어사전 툴팁) 및 대시보드 리팩토링**:
+  1) 초심자를 위한 30초 퀵 간편 진단 (Easy Mode, `src/services/quickDiagnosis.ts`, `src/components/QuickDiagnosisModal.tsx`):
+     - 현재 나이, 은퇴 나이, 월 소득, 가구 형태(부부/1인) 4가지 입력만으로 통계청/국민연금공단 평균 모델을 기반으로 은퇴 후 예상 월 연금, 목표 생활비 대비 부족액, 준비율(%) 및 A~E 등급 실시간 도출
+     - "🚀 이 결과로 대시보드 바로 체험하기" 원클릭 지원으로 초보자의 복잡한 온보딩 입력 장벽을 획기적으로 완화
+     - 랜딩 페이지(`/`), 온보딩 페이지(`/onboarding`), 대시보드(`/dashboard`) 상단 헤더에 `⚡ 30초 퀵 진단` 글로벌 진입 버튼 탑재
+  2) 스마트 금융/연금 용어사전 및 인라인 툴팁 시스템 (`src/config/glossary.ts`, `src/components/GlossaryTooltip.tsx`):
+     - 14개 핵심 전문 용어(소득 크레바스, 피부양자 탈락, 사적연금 1500만 한도, A값/B값, 조기노령 BEP, 추납, 과세이연, 임의계속가입, 주택연금 연소자 기준, ISA 전환 등)에 대한 초등/중학생 눈높이 1줄 쉬운 비유와 실전 꿀팁 제공
+     - 점선 밑줄(`borderBottom: dashed`) 및 ⓘ 아이콘, 호버/터치 시 부드러운 스프링 모달 팝오버, 관련 계산기 모달 원클릭 바로가기 버튼 연동
+  3) 대시보드 모달 상태 단일화 및 컴포넌트 모듈화 리팩토링 (`src/components/DashboardToolbar.tsx`, `src/components/DashboardModalManager.tsx`, `src/app/dashboard/page.tsx`):
+     - 12개의 boolean useState 상태를 `activeModal: DashboardModalType`으로 단일화하고 `DashboardModalManager`로 일괄 분리
+     - 약 200줄에 달하던 툴바 액션 JSX를 `DashboardToolbar`로 컴포넌트화하여 코드 가독성과 유지보수성 대폭 향상 (Sprint 40)
+
+
 
 
 

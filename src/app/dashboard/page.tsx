@@ -17,18 +17,9 @@ import AiHelper from "@/components/AiHelper";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import PersonaPresetModal from "@/components/PersonaPresetModal";
-import NpsEarlyDeferralModal from "@/components/NpsEarlyDeferralModal";
-import { PrivatePensionTaxModal } from "@/components/PrivatePensionTaxModal";
-import { HealthInsuranceBillModal } from "@/components/HealthInsuranceBillModal";
-import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
-import { IncomeBridgeModal } from "@/components/IncomeBridgeModal";
-import { NpsBoostRoadmapModal } from "@/components/NpsBoostRoadmapModal";
-import { SavingsPlanModal } from "@/components/SavingsPlanModal";
-import { SurvivorCareModal } from "@/components/SurvivorCareModal";
-import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
-import { DividendStrategyModal } from "@/components/DividendStrategyModal";
-import PortfolioBacktestModal from "@/components/PortfolioBacktestModal";
+import DashboardToolbar, { DashboardModalType } from "@/components/DashboardToolbar";
+import DashboardModalManager from "@/components/DashboardModalManager";
+import GlossaryTooltip from "@/components/GlossaryTooltip";
 import { SlidingTabs, NumberPopIn } from "@/components/motion";
 
 // Import Recharts components
@@ -200,40 +191,8 @@ export default function DashboardPage() {
   // 현재가치(실질 구매력) vs 명목 금액 토글 (부부 통합 시뮬레이션 및 인출전략 공유)
   const [isRealValue, setIsRealValue] = useState(true);
 
-  // 대표 가구 페르소나 모달 열림 상태
-  const [personaModalOpen, setPersonaModalOpen] = useState(false);
-
-  // 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 모달 열림 상태
-  const [bepModalOpen, setBepModalOpen] = useState(false);
-
-  // 사적연금 1,500만원 절세 한도 최적화 모달 열림 상태
-  const [tax15ModalOpen, setTax15ModalOpen] = useState(false);
-
-  // 은퇴 후 지역건강보험료 모의 고지서 모달 열림 상태
-  const [healthBillModalOpen, setHealthBillModalOpen] = useState(false);
-
-  // 주택연금(역모기지) 결합 모달 열림 상태
-  const [reverseMortgageModalOpen, setReverseMortgageModalOpen] = useState(false);
-
-  // 소득 공백기(크레바스) 브릿지 플래너 모달 열림 상태
-  const [incomeBridgeModalOpen, setIncomeBridgeModalOpen] = useState(false);
-
-  // 국민연금 증액 로드맵(반납→추납→임의계속가입→연기) 모달 열림 상태
-  const [npsBoostModalOpen, setNpsBoostModalOpen] = useState(false);
-
-  // 부족액 역산 적립 플랜 모달 열림 상태
-  const [savingsPlanModalOpen, setSavingsPlanModalOpen] = useState(false);
-
-  // 홀로 남은 배우자(1인 가구) 생애 케어 모달 열림 상태
-  const [survivorCareModalOpen, setSurvivorCareModalOpen] = useState(false);
-
-  // ISA 만기 자금 연금계좌 전환 모달 열림 상태
-  const [isaTransferModalOpen, setIsaTransferModalOpen] = useState(false);
-
-  // 대표 연금 배당 투자 포트폴리오 가이드 모달 열림 상태
-  const [dividendStrategyModalOpen, setDividendStrategyModalOpen] = useState(false);
-  // 은퇴 자산 포트폴리오 백테스트 모달 열림 상태
-  const [portfolioBacktestModalOpen, setPortfolioBacktestModalOpen] = useState(false);
+  // 단일 활성 모달 상태 관리 (S40-3 리팩토링)
+  const [activeModal, setActiveModal] = useState<DashboardModalType>(null);
 
   const handleExportData = () => {
     const data = {
@@ -363,203 +322,8 @@ export default function DashboardPage() {
     </div>
   );
 
-  // 대시보드 퀵 기능 액션 툴바 (증액, 적립, 절세, 건보료, 주택연금, 공백기, 유족, ISA, 조기vs정상vs연기 BEP)
-  const dataActions = (
-    <div className="data-actions-bar" style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap", width: "100%" }}>
-      <button
-        id="btn-nps-boost-actions"
-        onClick={() => setNpsBoostModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(245, 158, 11, 0.4)",
-          color: "#f59e0b",
-          background: "rgba(245, 158, 11, 0.08)",
-        }}
-        title="국민연금 증액 로드맵: 반납 → 추납 → 임의계속가입 → 연기연금"
-      >
-        🪜 연금 증액
-      </button>
-      <button
-        id="btn-savings-plan-actions"
-        onClick={() => setSavingsPlanModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(56, 189, 248, 0.4)",
-          color: "#38bdf8",
-          background: "rgba(56, 189, 248, 0.08)",
-        }}
-        title="부족액 역산 적립 플랜: 매월 얼마를 몇 년 넣어야 노후 부족액을 메우는지"
-      >
-        🎯 적립 플랜
-      </button>
-      <button
-        id="btn-tax15-actions"
-        onClick={() => setTax15ModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(56, 189, 248, 0.4)",
-          color: "#38bdf8",
-          background: "rgba(56, 189, 248, 0.08)",
-        }}
-        title="사적연금 1,500만원 절세 한도 최적화기"
-      >
-        ⚖️ 절세(1,500만)
-      </button>
-      <button
-        id="btn-health-bill-actions"
-        onClick={() => setHealthBillModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(16, 185, 129, 0.4)",
-          color: "#34d399",
-          background: "rgba(16, 185, 129, 0.08)",
-        }}
-        title="은퇴 후 지역건강보험료 모의 고지서 및 임의계속가입(36개월) 계산기"
-      >
-        🏥 지역건보료
-      </button>
-      <button
-        id="btn-reverse-mortgage-actions"
-        onClick={() => setReverseMortgageModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(251, 191, 36, 0.4)",
-          color: "#fbbf24",
-          background: "rgba(251, 191, 36, 0.08)",
-        }}
-        title="한국주택금융공사 주택연금(역모기지) 결합 시뮬레이터"
-      >
-        🏠 주택연금
-      </button>
-      <button
-        id="btn-income-bridge-actions"
-        onClick={() => setIncomeBridgeModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(56, 189, 248, 0.4)",
-          color: "#38bdf8",
-          background: "rgba(56, 189, 248, 0.08)",
-        }}
-        title="은퇴 소득 공백기(소득 크레바스) 브릿지 집중 플래너"
-      >
-        🌉 소득공백기
-      </button>
-      <button
-        id="btn-survivor-care-actions"
-        onClick={() => setSurvivorCareModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(244, 63, 94, 0.4)",
-          color: "#fb7185",
-          background: "rgba(244, 63, 94, 0.08)",
-        }}
-        title="홀로 남은 배우자(1인 가구) 생애 케어 시뮬레이터"
-      >
-        🕊️ 유족케어
-      </button>
-      <button
-        id="btn-isa-transfer-actions"
-        onClick={() => setIsaTransferModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(168, 85, 247, 0.4)",
-          color: "#c084fc",
-          background: "rgba(168, 85, 247, 0.08)",
-        }}
-        title="ISA 만기 자금 연금계좌 전환 및 3년 풍차돌리기 절세 플래너"
-      >
-        💎 ISA전환
-      </button>
-      <button
-        id="btn-nps-bep-toolbar"
-        onClick={() => setBepModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(249, 115, 22, 0.4)",
-          color: "#f97316",
-          background: "rgba(249, 115, 22, 0.08)",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-        title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기"
-      >
-        <span>⚖️ 조기 vs 정상 vs 연기 손익분기(BEP)</span>
-        <span style={{ fontSize: "0.75rem", color: "#f97316" }}>⚡</span>
-      </button>
-      <button
-        id="btn-dividend-strategy-actions"
-        onClick={() => setDividendStrategyModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(99, 102, 241, 0.4)",
-          color: "#a5b4fc",
-          background: "rgba(99, 102, 241, 0.08)",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-        title="대표적인 연금 배당 투자 포트폴리오 4선 추천 및 분배율 원클릭 적용"
-      >
-        <span>💡 배당금 투자 전략</span>
-      </button>
-      <button
-        id="btn-portfolio-backtest-actions"
-        onClick={() => setPortfolioBacktestModalOpen(true)}
-        className="premium-button-secondary"
-        style={{
-          fontSize: "0.75rem",
-          padding: "6px 12px",
-          fontWeight: 700,
-          borderColor: "rgba(16, 185, 129, 0.4)",
-          color: "var(--success-light, #10b981)",
-          background: "rgba(16, 185, 129, 0.08)",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "4px",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-        title="은퇴 자산 포트폴리오 10년 시장 시나리오 백테스트 및 배당 복리 검증"
-      >
-        <span>📊 포트폴리오 백테스트</span>
-      </button>
-    </div>
-  );
+  // 대시보드 퀵 기능 액션 툴바 (S40-3 리팩토링: DashboardToolbar 분리)
+  const dataActions = <DashboardToolbar onOpenModal={setActiveModal} />;
 
   // 반납·추납 「대시보드 반영」이 켜진 것만 적용한 국민연금 (본인·배우자)
   const selfApplied = applyNpsOptions(store.nationalPension, store.additionalPayment, store.returnRepayment, store.simulationParams);
@@ -875,7 +639,24 @@ export default function DashboardPage() {
               buttonStyle={{ padding: "8px 16px" }}
             />
             <button
-              onClick={() => setPersonaModalOpen(true)}
+              onClick={() => setActiveModal("quickDiagnosis")}
+              className="premium-button"
+              style={{
+                padding: "8px 14px",
+                background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontWeight: 700,
+                border: "none",
+              }}
+              id="btn-header-quick-diagnosis"
+              title="초심자를 위한 30초 퀵 간편 진단 (Easy Mode)"
+            >
+              <span>⚡ 30초 퀵 진단</span>
+            </button>
+            <button
+              onClick={() => setActiveModal("persona")}
               className="premium-button"
               style={{
                 padding: "8px 16px",
@@ -929,16 +710,16 @@ export default function DashboardPage() {
             setS3StartAges={setS3StartAges}
             s3Periods={s3Periods}
             setS3Periods={setS3Periods}
-            onOpenTax15Modal={() => setTax15ModalOpen(true)}
-            onOpenHealthBillModal={() => setHealthBillModalOpen(true)}
-            onOpenReverseMortgageModal={() => setReverseMortgageModalOpen(true)}
-            onOpenIncomeBridgeModal={() => setIncomeBridgeModalOpen(true)}
-            onOpenNpsBoostModal={() => setNpsBoostModalOpen(true)}
-            onOpenSavingsPlanModal={() => setSavingsPlanModalOpen(true)}
-            onOpenSurvivorCareModal={() => setSurvivorCareModalOpen(true)}
-            onOpenIsaTransferModal={() => setIsaTransferModalOpen(true)}
-            onOpenDividendStrategyModal={() => setDividendStrategyModalOpen(true)}
-            onOpenPortfolioBacktestModal={() => setPortfolioBacktestModalOpen(true)}
+            onOpenTax15Modal={() => setActiveModal("tax15")}
+            onOpenHealthBillModal={() => setActiveModal("healthBill")}
+            onOpenReverseMortgageModal={() => setActiveModal("reverseMortgage")}
+            onOpenIncomeBridgeModal={() => setActiveModal("incomeBridge")}
+            onOpenNpsBoostModal={() => setActiveModal("npsBoost")}
+            onOpenSavingsPlanModal={() => setActiveModal("savingsPlan")}
+            onOpenSurvivorCareModal={() => setActiveModal("survivorCare")}
+            onOpenIsaTransferModal={() => setActiveModal("isaTransfer")}
+            onOpenDividendStrategyModal={() => setActiveModal("dividendStrategy")}
+            onOpenPortfolioBacktestModal={() => setActiveModal("portfolioBacktest")}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
@@ -964,7 +745,15 @@ export default function DashboardPage() {
                 AI 종합 진단 & 10대 핵심 리밸런싱 리포트
               </div>
               <div style={{ fontSize: "0.76rem", color: "var(--text-secondary)" }}>
-                가구 현금흐름 결손 분석, 소득 공백기 방어, 8대 솔루션 툴킷 처방을 확인하세요.
+                가구 현금흐름 결손 분석,{" "}
+                <GlossaryTooltip termId="INCOME_CREVASSE" onOpenModal={(m) => setActiveModal(m as DashboardModalType)}>
+                  소득 공백기
+                </GlossaryTooltip>{" "}
+                방어,{" "}
+                <GlossaryTooltip termId="DEPENDENT_DISQUALIFICATION" onOpenModal={(m) => setActiveModal(m as DashboardModalType)}>
+                  건보료 피부양자
+                </GlossaryTooltip>{" "}
+                보존 처방을 확인하세요.
               </div>
             </div>
           </div>
@@ -1018,7 +807,7 @@ export default function DashboardPage() {
             actions={dataActions}
             backupActions={backupActions}
             paid={{ self: selfPaid, spouse: spousePaid }}
-            onOpenBepModal={() => setBepModalOpen(true)}
+            onOpenBepModal={() => setActiveModal("bep")}
             isRealValue={isRealValue}
             onToggleRealValue={setIsRealValue}
           />
@@ -1534,51 +1323,12 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      <PersonaPresetModal
-        isOpen={personaModalOpen}
-        onClose={() => setPersonaModalOpen(false)}
-      />
-      <NpsEarlyDeferralModal
-        isOpen={bepModalOpen}
-        onClose={() => setBepModalOpen(false)}
-      />
-      <PrivatePensionTaxModal
-        isOpen={tax15ModalOpen}
-        onClose={() => setTax15ModalOpen(false)}
-      />
-      <HealthInsuranceBillModal
-        isOpen={healthBillModalOpen}
-        onClose={() => setHealthBillModalOpen(false)}
-      />
-      <ReverseMortgageModal
-        isOpen={reverseMortgageModalOpen}
-        onClose={() => setReverseMortgageModalOpen(false)}
-      />
-      <IncomeBridgeModal
-        isOpen={incomeBridgeModalOpen}
-        onClose={() => setIncomeBridgeModalOpen(false)}
-      />
-      <NpsBoostRoadmapModal isOpen={npsBoostModalOpen} onClose={() => setNpsBoostModalOpen(false)} />
-      <SavingsPlanModal isOpen={savingsPlanModalOpen} onClose={() => setSavingsPlanModalOpen(false)} />
-      <SurvivorCareModal
-        isOpen={survivorCareModalOpen}
-        onClose={() => setSurvivorCareModalOpen(false)}
-      />
-      <IsaPensionTransferModal
-        isOpen={isaTransferModalOpen}
-        onClose={() => setIsaTransferModalOpen(false)}
-      />
-      <DividendStrategyModal
-        isOpen={dividendStrategyModalOpen}
-        onClose={() => setDividendStrategyModalOpen(false)}
-        currentInvestmentManwon={store.simulationParams.coveredCallAsset || 40000}
-        currentDividendRate={store.simulationParams.coveredCallDividendRate || 9.0}
-        onApplyRate={(rate) => store.setSimulationParams({ coveredCallDividendRate: rate })}
-      />
-      <PortfolioBacktestModal
-        isOpen={portfolioBacktestModalOpen}
-        onClose={() => setPortfolioBacktestModalOpen(false)}
-        defaultCapital={store.simulationParams.coveredCallAsset || 40000}
+      <DashboardModalManager
+        activeModal={activeModal}
+        onClose={() => setActiveModal(null)}
+        coveredCallAsset={store.simulationParams.coveredCallAsset || 40000}
+        coveredCallDividendRate={store.simulationParams.coveredCallDividendRate || 9.0}
+        onApplyDividendRate={(rate) => store.setSimulationParams({ coveredCallDividendRate: rate })}
       />
     </main>
   );

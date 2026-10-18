@@ -15,6 +15,8 @@ import { extractPdfText } from "@/utils/pdfText";
 import FssUploadPanel, { FSS_SLOTS, emptyFssFiles, type FssFiles, type FssSlot } from "@/components/FssUploadPanel";
 import PensionStructureSummary from "@/components/PensionStructureSummary";
 import PersonaPresetModal from "@/components/PersonaPresetModal";
+import QuickDiagnosisModal from "@/components/QuickDiagnosisModal";
+import GlossaryTooltip from "@/components/GlossaryTooltip";
 import { SlidingTabs } from "@/components/motion";
 
 type StepKind = "INFO" | "GOAL" | "FSS" | "NATIONAL" | "BASIC" | "RETIREMENT" | "PERSONAL" | "SUMMARY";
@@ -145,6 +147,7 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [personaModalOpen, setPersonaModalOpen] = useState(false);
+  const [quickDiagnosisOpen, setQuickDiagnosisOpen] = useState(false);
 
   // PDF 파싱 관련 상태 변수들
   // 금감원 통합연금 PDF (사람별·항목별). 「다음 단계」에서 한 번에 분석
@@ -683,6 +686,20 @@ export default function OnboardingPage() {
               ]}
               buttonStyle={styles.saveBtn}
             />
+            <button
+              type="button"
+              onClick={() => setQuickDiagnosisOpen(true)}
+              style={{
+                ...styles.saveBtn,
+                background: "linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(99, 102, 241, 0.2) 100%)",
+                borderColor: "rgba(14, 165, 233, 0.4)",
+                color: "#38bdf8",
+                fontWeight: 700,
+              }}
+              title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
+            >
+              ⚡ 30초 퀵 진단
+            </button>
             <button
               type="button"
               onClick={() => setPersonaModalOpen(true)}
@@ -2314,6 +2331,10 @@ export default function OnboardingPage() {
           localStorage.setItem("pensionlab_user_id", `persona_${preset.id}`);
           router.push("/dashboard");
         }}
+      />
+      <QuickDiagnosisModal
+        isOpen={quickDiagnosisOpen}
+        onClose={() => setQuickDiagnosisOpen(false)}
       />
     </main>
   );

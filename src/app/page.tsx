@@ -5,6 +5,7 @@ import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import dynamic from "next/dynamic";
 import { CardTilt } from "@/components/motion";
+import QuickDiagnosisModal from "@/components/QuickDiagnosisModal";
 
 const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
   ssr: false,
@@ -80,6 +81,7 @@ export default function LandingPage() {
   const [activeMenu, setActiveMenu] = useState<"service-intro" | "pension-library" | "reference-services" | null>(null);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
+  const [quickDiagnosisOpen, setQuickDiagnosisOpen] = useState(false);
 
   const getNavStyle = (menuId: "service-intro" | "pension-library" | "reference-services") => {
     return {
@@ -135,6 +137,27 @@ export default function LandingPage() {
               style={getNavStyle("reference-services")}
             >
               참고 서비스
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickDiagnosisOpen(true)}
+              className="premium-button"
+              style={{
+                padding: "8px 16px",
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
+                border: "none",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "#ffffff",
+              }}
+              id="btn-header-quick-diag"
+              title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
+            >
+              <span>⚡ 30초 퀵 진단</span>
             </button>
             <Link 
               href="/onboarding" 
@@ -268,6 +291,10 @@ export default function LandingPage() {
       pdfUrl={pdfConfig.url}
       title={pdfConfig.title}
       defaultFullscreen={true}
+    />
+    <QuickDiagnosisModal
+      isOpen={quickDiagnosisOpen}
+      onClose={() => setQuickDiagnosisOpen(false)}
     />
     </>
   );

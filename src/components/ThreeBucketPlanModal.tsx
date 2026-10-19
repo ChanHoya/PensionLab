@@ -1,25 +1,21 @@
-"use client";
+// 은퇴자 맞춤 3-Bucket 현금 버퍼 플래너 모달 컴포넌트
+'use client';
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo } from 'react';
 import {
   calculateThreeBucketPlan,
   ThreeBucketInput,
-} from "../services/threeBucketCalculator";
-import { NumberPopIn } from "@/components/motion";
-import GlossaryTooltip from "./GlossaryTooltip";
+} from '../services/threeBucketCalculator';
+import { NumberPopIn } from '@/components/motion';
+import GlossaryTooltip from './GlossaryTooltip';
 import {
   ShieldCheck,
   TrendingUp,
-  Wallet,
   Clock,
-  AlertTriangle,
   RefreshCw,
-  HelpCircle,
   X,
-  Sparkles,
-  ChevronRight,
   Info,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface ThreeBucketPlanModalProps {
   isOpen: boolean;
@@ -54,92 +50,207 @@ export default function ThreeBucketPlanModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl shadow-indigo-950/40 text-slate-100 overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4.5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <span className="text-xl">🪣</span>
-            </div>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(15, 23, 42, 0.72)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        padding: '16px',
+        overflowY: 'auto',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '1020px',
+          maxHeight: '92vh',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'var(--surface, #ffffff)',
+          borderRadius: '20px',
+          border: '1px solid var(--border, rgba(226, 232, 240, 0.8))',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          overflow: 'hidden',
+          color: 'var(--text-primary, #0f172a)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* 헤더 */}
+        <div
+          style={{
+            padding: '20px 24px',
+            borderBottom: '1px solid var(--border, #e2e8f0)',
+            background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <span
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #06b6d4, #2563eb)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.4rem',
+                boxShadow: '0 6px 16px rgba(6, 182, 212, 0.3)',
+                flexShrink: 0,
+              }}
+            >
+              🪣
+            </span>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white tracking-tight">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-primary, #0f172a)' }}>
                   은퇴자 맞춤 3-Bucket 현금 버퍼 플래너
                 </h2>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-medium border border-cyan-500/30">
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    padding: '2px 8px',
+                    borderRadius: '20px',
+                    backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                    color: '#0891b2',
+                    border: '1px solid rgba(6, 182, 212, 0.3)',
+                  }}
+                >
                   폭락장 방패 설계
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #64748b)', margin: '4px 0 0 0' }}>
                 주식 시장이 30% 폭락해도 생활비를 헐값에 매도하지 않고 안전하게 인출하는 자산 배분 전략
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
+              border: '1px solid var(--border, #e2e8f0)',
+              backgroundColor: 'var(--surface-2, #f8fafc)',
+              color: 'var(--text-muted, #64748b)',
+              fontSize: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+            title="닫기"
           >
-            <X className="w-5 h-5" />
+            ✕
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-          {/* Top Key Defense Banner */}
-          <div className="p-4.5 rounded-xl bg-gradient-to-r from-cyan-950/50 via-slate-800/80 to-blue-950/40 border border-cyan-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <div className="p-2.5 rounded-lg bg-cyan-500/20 text-cyan-300 shrink-0 mt-0.5">
-                <ShieldCheck className="w-6 h-6" />
+        {/* 바디 콘텐츠 */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* 상단 안전 런웨이 방패 배너 */}
+          <div
+            style={{
+              padding: '20px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
+              border: '1.5px solid rgba(6, 182, 212, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '20px',
+              flexWrap: 'wrap',
+              boxShadow: '0 4px 16px rgba(6, 182, 212, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+              <div
+                style={{
+                  padding: '10px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(6, 182, 212, 0.15)',
+                  color: '#0891b2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <ShieldCheck style={{ width: '28px', height: '28px' }} />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-cyan-300 tracking-wider uppercase">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#0891b2', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Safety Runway
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)' }}>
                     (시장 폭락 시 주식 매도 0원 방어 기간)
                   </span>
                 </div>
-                <div className="text-xl sm:text-2xl font-black text-white mt-0.5">
-                  최대{" "}
-                  <span className="text-cyan-300 underline decoration-cyan-500/50 underline-offset-4">
-                    {result.safeRunwayYears}년 동안
-                  </span>{" "}
-                  주식을 안 팔고 생활비를 씁니다
+                <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--text-primary, #0f172a)' }}>
+                  최대 <span style={{ color: '#0891b2' }}>{result.safeRunwayYears}년 동안</span> 주식을 안 팔고 생활비를 씁니다
                 </div>
-                <p className="text-xs text-slate-300 mt-1">
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #475569)', margin: '2px 0 0 0' }}>
                   {result.crisisDefenseScenario}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0 bg-slate-900/80 px-4 py-3 rounded-lg border border-slate-700/60">
-              <div className="text-right">
-                <div className="text-xs text-slate-400">연간 총 예상 배당·이자</div>
-                <div className="text-lg font-bold text-emerald-400">
-                  <NumberPopIn
-                    value={result.overallAnnualIncome}
-                    formatter={(v) => `+${v.toLocaleString()}만원/년`}
-                  />
-                </div>
-                <div className="text-[11px] text-slate-400">
-                  월 약 {Math.round(result.overallAnnualIncome / 12).toLocaleString()}만원 인컴
-                </div>
+            <div
+              style={{
+                backgroundColor: 'var(--surface, #ffffff)',
+                padding: '12px 18px',
+                borderRadius: '12px',
+                border: '1px solid var(--border, #e2e8f0)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                textAlign: 'right',
+                minWidth: '180px',
+              }}
+            >
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)' }}>연간 총 예상 배당·이자</div>
+              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#059669' }}>
+                <NumberPopIn value={result.overallAnnualIncome} formatter={(v) => `+${v.toLocaleString()}만원/년`} />
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted, #64748b)' }}>
+                월 약 {Math.round(result.overallAnnualIncome / 12).toLocaleString()}만원 인컴
               </div>
             </div>
           </div>
 
-          {/* Controls: Sliders */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
+          {/* 슬라이더 컨트롤 패널 */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '16px',
+              backgroundColor: 'var(--surface-2, #f8fafc)',
+              padding: '18px',
+              borderRadius: '14px',
+              border: '1px solid var(--border, #e2e8f0)',
+            }}
+          >
+            {/* 총 은퇴 준비 자산 */}
             <div>
-              <div className="flex justify-between text-xs text-slate-300 mb-1">
-                <span className="font-medium flex items-center gap-1">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   총 은퇴 준비 자산
                   <GlossaryTooltip termId="PENSION_ACCOUNT_TRANSFER" />
                 </span>
-                <span className="font-bold text-white">
-                  {(inputs.totalRetirementAssets).toLocaleString()}만원
+                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+                  {inputs.totalRetirementAssets.toLocaleString()}만원
                 </span>
               </div>
               <input
@@ -148,22 +259,21 @@ export default function ThreeBucketPlanModal({
                 max={150000}
                 step={2000}
                 value={inputs.totalRetirementAssets}
-                onChange={(e) =>
-                  setInputs({ ...inputs, totalRetirementAssets: Number(e.target.value) })
-                }
-                className="w-full accent-cyan-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
+                onChange={(e) => setInputs({ ...inputs, totalRetirementAssets: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: '#06b6d4', cursor: 'pointer' }}
               />
-              <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
                 <span>1억원</span>
                 <span>7억원</span>
                 <span>15억원</span>
               </div>
             </div>
 
+            {/* 월 목표 은퇴 생활비 */}
             <div>
-              <div className="flex justify-between text-xs text-slate-300 mb-1">
-                <span className="font-medium">월 목표 은퇴 생활비</span>
-                <span className="font-bold text-white">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)' }}>월 목표 은퇴 생활비</span>
+                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
                   {inputs.targetMonthlySpending.toLocaleString()}만원
                 </span>
               </div>
@@ -173,25 +283,24 @@ export default function ThreeBucketPlanModal({
                 max={800}
                 step={20}
                 value={inputs.targetMonthlySpending}
-                onChange={(e) =>
-                  setInputs({ ...inputs, targetMonthlySpending: Number(e.target.value) })
-                }
-                className="w-full accent-cyan-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
+                onChange={(e) => setInputs({ ...inputs, targetMonthlySpending: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: '#06b6d4', cursor: 'pointer' }}
               />
-              <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
                 <span>150만원</span>
                 <span>400만원</span>
                 <span>800만원</span>
               </div>
             </div>
 
+            {/* 확정 공적연금 */}
             <div>
-              <div className="flex justify-between text-xs text-slate-300 mb-1">
-                <span className="font-medium flex items-center gap-1">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   확정 공적연금(국민/기초)
                   <GlossaryTooltip termId="NPS_BEP" />
                 </span>
-                <span className="font-bold text-emerald-400">
+                <span style={{ fontWeight: 800, color: '#059669' }}>
                   {inputs.guaranteedMonthlyPension.toLocaleString()}만원
                 </span>
               </div>
@@ -201,12 +310,10 @@ export default function ThreeBucketPlanModal({
                 max={300}
                 step={10}
                 value={inputs.guaranteedMonthlyPension}
-                onChange={(e) =>
-                  setInputs({ ...inputs, guaranteedMonthlyPension: Number(e.target.value) })
-                }
-                className="w-full accent-emerald-400 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
+                onChange={(e) => setInputs({ ...inputs, guaranteedMonthlyPension: Number(e.target.value) })}
+                style={{ width: '100%', accentColor: '#10b981', cursor: 'pointer' }}
               />
-              <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
                 <span>0원</span>
                 <span>150만원</span>
                 <span>300만원</span>
@@ -214,93 +321,108 @@ export default function ThreeBucketPlanModal({
             </div>
           </div>
 
-          {/* Allocation Bar */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-slate-300">
-                포트폴리오 자산 배분 비중 (전체 가중수익률: {result.overallExpectedReturnRate}%/년)
+          {/* 포트폴리오 자산 배분 비중 바 */}
+          <div
+            style={{
+              padding: '16px 18px',
+              borderRadius: '14px',
+              backgroundColor: 'var(--surface, #ffffff)',
+              border: '1px solid var(--border, #e2e8f0)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+              <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+                포트폴리오 자산 배분 비중 (전체 가중수익률: {result.overallExpectedReturnRate.toFixed(2)}%/년)
               </span>
-              <span className="text-slate-400 text-[11px]">
-                순 인출 필요액: 월 {result.monthlyNetDeficit.toLocaleString()}만원 (연 {result.annualNetDeficit.toLocaleString()}만원)
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)' }}>
+                순 인출 필요액: 월 {result.monthlyNetDeficit}만원 (연 {(result.annualNetDeficit || result.monthlyNetDeficit * 12).toLocaleString()}만원)
               </span>
             </div>
-            <div className="h-4 w-full rounded-full bg-slate-800 flex overflow-hidden p-0.5 gap-0.5 border border-slate-700">
-              <div
-                style={{ width: `${result.buckets.bucket1.percentage}%` }}
-                className="bg-cyan-500 rounded-l-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-slate-950"
-                title={`Bucket 1: ${result.buckets.bucket1.percentage}%`}
-              >
-                {result.buckets.bucket1.percentage >= 10 && `${result.buckets.bucket1.percentage}%`}
-              </div>
-              <div
-                style={{ width: `${result.buckets.bucket2.percentage}%` }}
-                className="bg-indigo-500 transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-white"
-                title={`Bucket 2: ${result.buckets.bucket2.percentage}%`}
-              >
-                {result.buckets.bucket2.percentage >= 10 && `${result.buckets.bucket2.percentage}%`}
-              </div>
-              <div
-                style={{ width: `${result.buckets.bucket3.percentage}%` }}
-                className="bg-emerald-500 rounded-r-full transition-all duration-300 flex items-center justify-center text-[10px] font-bold text-slate-950"
-                title={`Bucket 3: ${result.buckets.bucket3.percentage}%`}
-              >
-                {result.buckets.bucket3.percentage >= 10 && `${result.buckets.bucket3.percentage}%`}
-              </div>
+
+            <div style={{ width: '100%', height: '14px', backgroundColor: 'var(--border, #e2e8f0)', borderRadius: '999px', overflow: 'hidden', display: 'flex' }}>
+              <div style={{ width: `${result.buckets.bucket1.percentage}%`, backgroundColor: '#06b6d4', transition: 'width 0.3s ease' }} title={`Bucket 1: ${result.buckets.bucket1.percentage}%`} />
+              <div style={{ width: `${result.buckets.bucket2.percentage}%`, backgroundColor: '#6366f1', transition: 'width 0.3s ease' }} title={`Bucket 2: ${result.buckets.bucket2.percentage}%`} />
+              <div style={{ width: `${result.buckets.bucket3.percentage}%`, backgroundColor: '#10b981', transition: 'width 0.3s ease' }} title={`Bucket 3: ${result.buckets.bucket3.percentage}%`} />
             </div>
-            <div className="flex items-center justify-center gap-6 text-xs text-slate-400 pt-1">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block" />
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary, #64748b)', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#06b6d4' }} />
                 Bucket 1: 단기 안심 현금 ({result.buckets.bucket1.percentage}%)
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block" />
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#6366f1' }} />
                 Bucket 2: 중기 인컴·배당 ({result.buckets.bucket2.percentage}%)
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
                 Bucket 3: 장기 복리 성장 ({result.buckets.bucket3.percentage}%)
               </span>
             </div>
           </div>
 
-          {/* 3 Buckets Detailed Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 3대 버킷 카드 그리드 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '16px' }}>
             {/* Bucket 1 */}
-            <div className="p-4.5 rounded-xl bg-slate-800/70 border border-cyan-500/30 flex flex-col justify-between hover:border-cyan-400/50 transition">
+            <div
+              style={{
+                borderRadius: '16px',
+                padding: '20px',
+                backgroundColor: 'rgba(6, 182, 212, 0.04)',
+                border: '1.5px solid rgba(6, 182, 212, 0.3)',
+                boxShadow: '0 4px 16px rgba(6, 182, 212, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(6, 182, 212, 0.15)', color: '#0891b2' }}>
                     {result.buckets.bucket1.horizonYears}
                   </span>
-                  <span className="text-xs text-slate-400">수익률 연 {result.buckets.bucket1.expectedReturnRate}%</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted, #64748b)' }}>
+                    수익률 연 {result.buckets.bucket1.expectedReturnRate}%
+                  </span>
                 </div>
-                <h3 className="text-base font-bold text-white mt-2 flex items-center gap-1.5">
-                  <Wallet className="w-4 h-4 text-cyan-400" />
-                  {result.buckets.bucket1.name}
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🛡️</span>
+                  <span>{result.buckets.bucket1.name}</span>
                 </h3>
-                <div className="mt-3">
-                  <div className="text-2xl font-black text-cyan-300">
-                    <NumberPopIn
-                      value={result.buckets.bucket1.allocatedAmount}
-                      formatter={(v) => `${v.toLocaleString()}만원`}
-                    />
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0891b2' }}>
+                    <NumberPopIn value={result.buckets.bucket1.allocatedAmount} formatter={(v) => `${v.toLocaleString()}만원`} />
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
                     연간 예상 이자: 약 {result.buckets.bucket1.annualExpectedIncome.toLocaleString()}만원
                   </div>
                 </div>
-                <p className="text-xs text-slate-300 mt-3 leading-relaxed">
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #475569)', lineHeight: 1.45, margin: 0 }}>
                   {result.buckets.bucket1.roleDescription}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-700/60">
-                <div className="text-[11px] font-semibold text-slate-400 mb-1.5">추천 포트폴리오</div>
-                <div className="flex flex-wrap gap-1">
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(6, 182, 212, 0.2)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted, #64748b)', marginBottom: '6px' }}>
+                  추천 포트폴리오
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {result.buckets.bucket1.recommendedAssets.map((asset, i) => (
                     <span
                       key={i}
-                      className="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700"
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--surface, #ffffff)',
+                        color: '#0891b2',
+                        border: '1px solid rgba(6, 182, 212, 0.3)',
+                      }}
                     >
                       {asset}
                     </span>
@@ -310,41 +432,61 @@ export default function ThreeBucketPlanModal({
             </div>
 
             {/* Bucket 2 */}
-            <div className="p-4.5 rounded-xl bg-slate-800/70 border border-indigo-500/30 flex flex-col justify-between hover:border-indigo-400/50 transition">
+            <div
+              style={{
+                borderRadius: '16px',
+                padding: '20px',
+                backgroundColor: 'rgba(99, 102, 241, 0.04)',
+                border: '1.5px solid rgba(99, 102, 241, 0.3)',
+                boxShadow: '0 4px 16px rgba(99, 102, 241, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(99, 102, 241, 0.15)', color: '#4f46e5' }}>
                     {result.buckets.bucket2.horizonYears}
                   </span>
-                  <span className="text-xs text-slate-400">수익률 연 {result.buckets.bucket2.expectedReturnRate}%</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted, #64748b)' }}>
+                    수익률 연 {result.buckets.bucket2.expectedReturnRate}%
+                  </span>
                 </div>
-                <h3 className="text-base font-bold text-white mt-2 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-indigo-400" />
-                  {result.buckets.bucket2.name}
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock style={{ width: '18px', height: '18px', color: '#6366f1' }} />
+                  <span>{result.buckets.bucket2.name}</span>
                 </h3>
-                <div className="mt-3">
-                  <div className="text-2xl font-black text-indigo-300">
-                    <NumberPopIn
-                      value={result.buckets.bucket2.allocatedAmount}
-                      formatter={(v) => `${v.toLocaleString()}만원`}
-                    />
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#4f46e5' }}>
+                    <NumberPopIn value={result.buckets.bucket2.allocatedAmount} formatter={(v) => `${v.toLocaleString()}만원`} />
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
                     연간 예상 배당·이자: 약 {result.buckets.bucket2.annualExpectedIncome.toLocaleString()}만원
                   </div>
                 </div>
-                <p className="text-xs text-slate-300 mt-3 leading-relaxed">
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #475569)', lineHeight: 1.45, margin: 0 }}>
                   {result.buckets.bucket2.roleDescription}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-700/60">
-                <div className="text-[11px] font-semibold text-slate-400 mb-1.5">추천 포트폴리오</div>
-                <div className="flex flex-wrap gap-1">
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted, #64748b)', marginBottom: '6px' }}>
+                  추천 포트폴리오
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {result.buckets.bucket2.recommendedAssets.map((asset, i) => (
                     <span
                       key={i}
-                      className="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700"
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--surface, #ffffff)',
+                        color: '#4f46e5',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                      }}
                     >
                       {asset}
                     </span>
@@ -354,41 +496,61 @@ export default function ThreeBucketPlanModal({
             </div>
 
             {/* Bucket 3 */}
-            <div className="p-4.5 rounded-xl bg-slate-800/70 border border-emerald-500/30 flex flex-col justify-between hover:border-emerald-400/50 transition">
+            <div
+              style={{
+                borderRadius: '16px',
+                padding: '20px',
+                backgroundColor: 'rgba(16, 185, 129, 0.04)',
+                border: '1.5px solid rgba(16, 185, 129, 0.3)',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
               <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#059669' }}>
                     {result.buckets.bucket3.horizonYears}
                   </span>
-                  <span className="text-xs text-slate-400">수익률 연 {result.buckets.bucket3.expectedReturnRate}%</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted, #64748b)' }}>
+                    수익률 연 {result.buckets.bucket3.expectedReturnRate}%
+                  </span>
                 </div>
-                <h3 className="text-base font-bold text-white mt-2 flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  {result.buckets.bucket3.name}
+                <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary, #0f172a)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <TrendingUp style={{ width: '18px', height: '18px', color: '#10b981' }} />
+                  <span>{result.buckets.bucket3.name}</span>
                 </h3>
-                <div className="mt-3">
-                  <div className="text-2xl font-black text-emerald-300">
-                    <NumberPopIn
-                      value={result.buckets.bucket3.allocatedAmount}
-                      formatter={(v) => `${v.toLocaleString()}만원`}
-                    />
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#059669' }}>
+                    <NumberPopIn value={result.buckets.bucket3.allocatedAmount} formatter={(v) => `${v.toLocaleString()}만원`} />
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
                     연간 예상 복리성장: 약 {result.buckets.bucket3.annualExpectedIncome.toLocaleString()}만원
                   </div>
                 </div>
-                <p className="text-xs text-slate-300 mt-3 leading-relaxed">
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #475569)', lineHeight: 1.45, margin: 0 }}>
                   {result.buckets.bucket3.roleDescription}
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-700/60">
-                <div className="text-[11px] font-semibold text-slate-400 mb-1.5">추천 포트폴리오</div>
-                <div className="flex flex-wrap gap-1">
+              <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted, #64748b)', marginBottom: '6px' }}>
+                  추천 포트폴리오
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {result.buckets.bucket3.recommendedAssets.map((asset, i) => (
                     <span
                       key={i}
-                      className="text-[10px] px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700"
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: 'var(--surface, #ffffff)',
+                        color: '#059669',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                      }}
                     >
                       {asset}
                     </span>
@@ -398,21 +560,57 @@ export default function ThreeBucketPlanModal({
             </div>
           </div>
 
-          {/* Rebalancing Rules Guide */}
-          <div className="p-4 rounded-xl bg-slate-850 border border-slate-700/70">
-            <div className="flex items-center gap-2 mb-3">
-              <RefreshCw className="w-4 h-4 text-indigo-400" />
-              <h4 className="text-sm font-bold text-white">
+          {/* 3대 리밸런싱 행동 원칙 콜아웃 박스 */}
+          <div
+            style={{
+              padding: '18px',
+              borderRadius: '14px',
+              backgroundColor: 'var(--surface-2, #f8fafc)',
+              border: '1px solid var(--border, #e2e8f0)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <RefreshCw style={{ width: '16px', height: '16px', color: '#6366f1' }} />
+              <h4 style={{ fontSize: '0.88rem', fontWeight: 800, margin: 0, color: 'var(--text-primary, #0f172a)' }}>
                 3-Bucket 성공을 위한 3대 리밸런싱 행동 원칙
               </h4>
             </div>
-            <div className="space-y-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {result.rebalancingRules.map((rule, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-lg border border-slate-800"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    fontSize: '0.8rem',
+                    color: 'var(--text-secondary, #475569)',
+                    backgroundColor: 'var(--surface, #ffffff)',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border, #e2e8f0)',
+                    lineHeight: 1.45,
+                  }}
                 >
-                  <span className="w-4 h-4 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5">
+                  <span
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                      color: '#4f46e5',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      marginTop: '1px',
+                    }}
+                  >
                     {idx + 1}
                   </span>
                   <span>{rule}</span>
@@ -422,17 +620,39 @@ export default function ThreeBucketPlanModal({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-3.5 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <Info className="w-3.5 h-3.5 text-slate-400" />
+        {/* 푸터 */}
+        <div
+          style={{
+            padding: '14px 24px',
+            backgroundColor: 'var(--surface-2, #f8fafc)',
+            borderTop: '1px solid var(--border, #e2e8f0)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted, #64748b)' }}>
+            <Info style={{ width: '14px', height: '14px' }} />
             <span>수익률 및 배당률은 시장 상황과 선택 상품에 따라 변동될 수 있습니다.</span>
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition shadow"
+            style={{
+              padding: '8px 20px',
+              borderRadius: '10px',
+              backgroundColor: '#06b6d4',
+              color: '#ffffff',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(6, 182, 212, 0.25)',
+              transition: 'all 0.15s ease',
+            }}
           >
-            확인 완료
+            확인 및 닫기
           </button>
         </div>
       </div>

@@ -123,11 +123,19 @@
   - 사용자 피드백 반영: 랜딩 페이지 하단의 '직장인·은퇴자가 가장 많이 놓치는 3대 핵심 기회' 8개 카드 및 미사용 모달 전면 삭제.
   - 대시보드/AI Advisor/사이드바에 이미 존재하는 전문 기능들이 랜딩 페이지에 과도하게 노출되어 레이아웃을 해치던 문제를 해결하고, 3층 연금 블록 구조도 및 헤더 CTA(`⚡ 30초 퀵 간편 진단`, `진단 시작하기 🚀`) 중심의 깔끔한 원스크린 히어로 화면으로 복원.
 
+- **[Completed]** Sprint 46: 5대 핵심 팝업 모달 프리미엄 UI/UX 완성 (다크/라이트 모드 최적화, 세련된 카드 레이아웃, 컬러 팔레트 및 타이포그래피 계층화):
+  1. 2026 절세 계좌 4총사(ISA·연금저축·IRP·일반) 자산배분 매트릭스 (`AccountTaxMatrixModal.tsx`) - 청록/시안 계열 테마, 4대 자산군 선택 카드, 세후 수익률 비교 및 절세 룰셋 시각화.
+  2. 복수 은퇴 시나리오 비교함 (A vs B vs C) (`ScenarioComparisonModal.tsx`) - 인디고(A안: 기준), 불꽃 오렌지(B안: 조기은퇴), 에메랄드(C안: 연기연금) 컬러 테마 분리, 100세+ 종신 안심/경고 배지, 핵심 장점/주의점 리스트 및 원클릭 대시보드 반영.
+  3. 은퇴 생애 D-Day 타임라인 & 실행 체크리스트 (`RetirementRoadmapModal.tsx`) - 상단 3대 D-Day 지표 + 프로그레스 바, 연령대별 마일스톤 사이드바, 체크 시 실시간 저장 및 연관 분석 도구 바로가기 연동.
+  4. 개인연금(IRP/연금저축) 금융사 갈아타기 실익 분석기 (`PensionTransferBenefitModal.tsx`) - 상단 에메랄드 히어로 카드(+6,533만원 추가 확보), 4대 파라미터 슬라이더, 기존 유지 vs 갈아타기 비교 카드, 연도별 복리 성장 차트.
+  5. 은퇴자 맞춤 3-Bucket 현금 버퍼 플래너 (`ThreeBucketPlanModal.tsx`) - Safety Runway 방어 배너(최대 7년 방어), 3색 자산배분 바(시안/인디고/에메랄드), 3대 버킷 카드(단기현금/중기인컴/장기성장) 및 3단계 리밸런싱 가이드.
+
 ## Active Sprint / Story
-- **Sprint 45 (진행 완료)**: 대시보드 및 랜딩 페이지 UI 정리 & 중복 요소 일원화
-  - 랜딩 페이지 8대 배너 카드 및 미사용 모달 12종 상태 제거 (`src/app/page.tsx`)
-  - 부부 시뮬레이션 카드 중복 툴바 제거 및 사이드바 버튼 정비
-  - 모바일 하단 네비게이션 텍스트 노출 및 바디 스크롤 락 수정
+- **Sprint 47 (대기 / 준비 중)**: Agent Definition.md 4단계 계층(Agent 1~4) 기반 코드베이스 점검 및 리팩토링/신규 기능 확장
+  - [Agent 1] 데이터 수집 및 정제 (Pension Data Harvester)
+  - [Agent 2] 수리·세무 계산 엔진 (Actuarial & Tax Specialist)
+  - [Agent 3] 은퇴 전략 및 리스크 진단 (Retirement Strategy Analyzer)
+  - [Agent 4] AI 종합 리포트 및 처방 (AI Diagnostic Advisor)
 
 
 ## Session Handoff (Sprint 44 완료 및 Vercel Production 실배포 정상 가동)

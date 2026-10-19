@@ -16,6 +16,9 @@ import FssUploadPanel, { FSS_SLOTS, emptyFssFiles, type FssFiles, type FssSlot }
 import PensionStructureSummary from "@/components/PensionStructureSummary";
 import PersonaPresetModal from "@/components/PersonaPresetModal";
 import QuickDiagnosisModal from "@/components/QuickDiagnosisModal";
+import DbDcTransitionModal from "@/components/DbDcTransitionModal";
+import ThreeBucketPlanModal from "@/components/ThreeBucketPlanModal";
+import PensionTransferBenefitModal from "@/components/PensionTransferBenefitModal";
 import GlossaryTooltip from "@/components/GlossaryTooltip";
 import { SlidingTabs } from "@/components/motion";
 
@@ -148,6 +151,9 @@ export default function OnboardingPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [personaModalOpen, setPersonaModalOpen] = useState(false);
   const [quickDiagnosisOpen, setQuickDiagnosisOpen] = useState(false);
+  const [dbDcModalOpen, setDbDcModalOpen] = useState(false);
+  const [threeBucketModalOpen, setThreeBucketModalOpen] = useState(false);
+  const [pensionTransferModalOpen, setPensionTransferModalOpen] = useState(false);
 
   // PDF 파싱 관련 상태 변수들
   // 금감원 통합연금 PDF (사람별·항목별). 「다음 단계」에서 한 번에 분석
@@ -1517,6 +1523,16 @@ export default function OnboardingPage() {
                       🏢 회사에서 근로자에게 제공하는 2층 퇴직연금 정보입니다. 여러 개 직장/계좌를 추가할 수 있습니다.
                     </div>
 
+                    <div style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", gap: "8px" }}>
+                      <div>
+                        <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#f59e0b" }}>⚖️ DB형 vs DC형 어떤 것이 유리할까요?</span>
+                        <p style={{ fontSize: "0.72rem", color: "var(--text-secondary)", margin: 0 }}>임금피크제 도입 전 DC 전환 타이밍과 평생 퇴직금 삭감 방어 시뮬레이션</p>
+                      </div>
+                      <button type="button" onClick={() => setDbDcModalOpen(true)} className="premium-button-secondary" style={{ fontSize: "0.75rem", padding: "4px 10px", borderColor: "#f59e0b", color: "#f59e0b", whiteSpace: "nowrap" }}>
+                        전환 비교기 ➔
+                      </button>
+                    </div>
+
                     {/* Added Pensions List */}
                     {person.retirementPensions.length > 0 ? (
                       <div style={{ ...styles.addedList, maxHeight: "none" }}>
@@ -1880,6 +1896,16 @@ export default function OnboardingPage() {
                   <>
                     <div style={styles.infoAlert}>
                       💰 개인이 추가 가입한 3층 연금입니다. 세액공제형 연금저축과 비과세형 연금보험을 구분하여 등록합니다.
+                    </div>
+
+                    <div style={{ padding: "10px 14px", borderRadius: "8px", background: "rgba(16, 185, 129, 0.08)", border: "1px solid rgba(16, 185, 129, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", gap: "8px" }}>
+                      <div>
+                        <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#10b981" }}>🔄 기존 은행·보험 연금 수익률이 1~2%대에 머물고 있나요?</span>
+                        <p style={{ fontSize: "0.72rem", color: "var(--text-secondary)", margin: 0 }}>세금 불이익 0원으로 증권사 ETF/TDF로 갈아탈 때의 복리 수령액 차이를 계산해 보세요</p>
+                      </div>
+                      <button type="button" onClick={() => setPensionTransferModalOpen(true)} className="premium-button-secondary" style={{ fontSize: "0.75rem", padding: "4px 10px", borderColor: "#10b981", color: "#10b981", whiteSpace: "nowrap" }}>
+                        갈아타기 실익 ➔
+                      </button>
                     </div>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -2263,12 +2289,23 @@ export default function OnboardingPage() {
 
             {/* 4단계: 전체 연금 내역 (3층 구조 도식) */}
             {step.kind === "SUMMARY" && (
-              <PensionStructureSummary
-                self={pensionsOf(store, "SELF")}
-                spouse={store.simulationParams.hasSpouse ? pensionsOf(store, "SPOUSE") : null}
-                basic={store.basicPension}
-                params={store.simulationParams}
-              />
+              <>
+                <div style={{ padding: "12px 16px", borderRadius: "8px", background: "rgba(6, 182, 212, 0.08)", border: "1px solid rgba(6, 182, 212, 0.3)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", gap: "10px" }}>
+                  <div>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#06b6d4" }}>🪣 하락장에도 주식을 팔지 않는 3-Bucket 현금 버퍼 설계</span>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", margin: 0 }}>입력하신 총 연금 자산으로 1~2년 안심 현금과 안전 런웨이(N년)를 미리 설계해 보세요</p>
+                  </div>
+                  <button type="button" onClick={() => setThreeBucketModalOpen(true)} className="premium-button-secondary" style={{ fontSize: "0.75rem", padding: "6px 12px", borderColor: "#06b6d4", color: "#06b6d4", whiteSpace: "nowrap" }}>
+                    버퍼 플랜 ➔
+                  </button>
+                </div>
+                <PensionStructureSummary
+                  self={pensionsOf(store, "SELF")}
+                  spouse={store.simulationParams.hasSpouse ? pensionsOf(store, "SPOUSE") : null}
+                  basic={store.basicPension}
+                  params={store.simulationParams}
+                />
+              </>
             )}
           </div>
 
@@ -2335,6 +2372,28 @@ export default function OnboardingPage() {
       <QuickDiagnosisModal
         isOpen={quickDiagnosisOpen}
         onClose={() => setQuickDiagnosisOpen(false)}
+      />
+      <DbDcTransitionModal
+        isOpen={dbDcModalOpen}
+        onClose={() => setDbDcModalOpen(false)}
+        defaultAge={store.simulationParams.currentAge || 45}
+        defaultRetireAge={store.simulationParams.retirementAge || 60}
+      />
+      <ThreeBucketPlanModal
+        isOpen={threeBucketModalOpen}
+        onClose={() => setThreeBucketModalOpen(false)}
+        initialTotalAssets={
+          (store.retirementPensions?.reduce((sum, p) => sum + (p.expectedLumpSum || p.totalAccumulated || 0), 0) || 15000) +
+          (store.personalPensions?.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) || 10000) +
+          (store.simulationParams?.nonPensionAssets || 15000)
+        }
+        initialTargetSpending={store.simulationParams?.targetMonthlySpending || 300}
+        initialPension={store.nationalPension?.expectedMonthlyPension || 120}
+      />
+      <PensionTransferBenefitModal
+        isOpen={pensionTransferModalOpen}
+        onClose={() => setPensionTransferModalOpen(false)}
+        initialBalance={store.personalPensions?.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) || 3000}
       />
     </main>
   );

@@ -194,11 +194,16 @@
   2) 모달 UI (`src/components/PensionTransferBenefitModal.tsx`):
      - Recharts 복리 격차 라인 차트, 비대면 3분 원스톱 계좌이체 3단계 신청 가이드, 이전 전 확인 체크리스트(보험 해약환급금 확인 등) 탑재 (Sprint 41, Story S41-3)
 
-
-
-
-
-
+- **[FEAT-057] 3대 킬러 기능 전사 생태계(온보딩/랜딩/AI 어드바이저) 유기적 통합**:
+  1) 온보딩 마법사 단계별 인라인 배너 (`src/app/onboarding/page.tsx`):
+     - Step 2(퇴직연금): '⚖️ DB vs DC 전환 골든타임 & 임금피크제 계산기' 바로가기 배너
+     - Step 3(개인연금): '🔄 연 1~2%대 은행·보험사 연금, 증권사 갈아타기 실익 분석' 바로가기 배너
+     - Step 4(최종 확인): '🪣 은퇴 후 하락장 방패! 3-Bucket 현금 버퍼 플래너' 바로가기 배너
+  2) 메인 랜딩 페이지 히어로 솔루션 그리드 (`src/app/page.tsx`):
+     - 히어로 섹션 바로 아래에 "🔥 3대 실전 연금 최적화 솔루션" 프리뷰 카드 3종 및 원클릭 모달 연동
+  3) AI 진단 종합 리포트 및 AI Advisor 통합 (`src/app/dashboard/ai-advisor/page.tsx`, `src/services/reportNarrative.ts`, `src/app/api/ai/advisor/route.ts`):
+     - 섹션 10 툴킷 카드 배지 및 클릭 시 3대 모달 즉시 호출 연동
+     - Gemini 3.8 Flash 시스템 프롬프트 및 fallbackNarrative에 3대 도구 매핑 및 처방 narrative 강화 (Sprint 41, Story S41-4/S41-5)
 
 
 

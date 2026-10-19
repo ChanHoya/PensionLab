@@ -6,6 +6,9 @@ import ThemeToggle from "@/components/ThemeToggle";
 import dynamic from "next/dynamic";
 import { CardTilt } from "@/components/motion";
 import QuickDiagnosisModal from "@/components/QuickDiagnosisModal";
+import DbDcTransitionModal from "@/components/DbDcTransitionModal";
+import ThreeBucketPlanModal from "@/components/ThreeBucketPlanModal";
+import PensionTransferBenefitModal from "@/components/PensionTransferBenefitModal";
 
 const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
   ssr: false,
@@ -82,6 +85,9 @@ export default function LandingPage() {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
   const [quickDiagnosisOpen, setQuickDiagnosisOpen] = useState(false);
+  const [dbDcModalOpen, setDbDcModalOpen] = useState(false);
+  const [threeBucketModalOpen, setThreeBucketModalOpen] = useState(false);
+  const [pensionTransferModalOpen, setPensionTransferModalOpen] = useState(false);
 
   const getNavStyle = (menuId: "service-intro" | "pension-library" | "reference-services") => {
     return {
@@ -191,6 +197,95 @@ export default function LandingPage() {
           style={styles.diagramImage}
         />
       </div>
+
+      {/* 3대 핵심 킬러 솔루션 체험 배너 카드 */}
+      <section style={{ maxWidth: "1080px", margin: "28px auto 40px", padding: "0 20px", width: "100%" }}>
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <span style={{ fontSize: "0.75rem", padding: "4px 10px", borderRadius: "20px", background: "rgba(99, 102, 241, 0.15)", color: "var(--text-accent)", fontWeight: 700 }}>
+            🔥 3대 실전 연금 최적화 솔루션
+          </span>
+          <h3 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--text-primary)", marginTop: "8px" }}>
+            직장인·은퇴자가 가장 많이 놓치는 3대 핵심 기회
+          </h3>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "4px" }}>
+            복잡한 계산 없이 클릭 한 번으로 나의 잠재 혜택과 방어 전략을 바로 확인해 보세요
+          </p>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
+          {/* 카드 1: DB/DC 전환 */}
+          <div
+            id="landing-card-db-dc"
+            onClick={() => setDbDcModalOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(245, 158, 11, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>⚖️</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(245, 158, 11, 0.15)", color: "#f59e0b", fontWeight: 700 }}>
+                임금피크 방어
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              퇴직연금 DB vs DC 전환 시뮬레이터
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              임금피크제로 월급이 깎이면 퇴직금도 함께 깎입니다. 피크 직전 최고 연봉일 때 DC로 전환해 퇴직금을 지키는 골든 타임을 찾아보세요.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#f59e0b", fontWeight: 700 }}>
+              체험해보기 ➔
+            </div>
+          </div>
+
+          {/* 카드 2: 3-Bucket 현금 버퍼 */}
+          <div
+            id="landing-card-three-bucket"
+            onClick={() => setThreeBucketModalOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(6, 182, 212, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>🪣</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(6, 182, 212, 0.15)", color: "#06b6d4", fontWeight: 700 }}>
+                폭락장 방패 설계
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              3-Bucket 현금 버퍼 플래너
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              시장 폭락 시 주식을 헐값에 매도하지 않고 1~2년 안심 현금과 3~7년 배당 인컴으로 최장 N년 동안 버텨내는 안전 런웨이를 설계합니다.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#06b6d4", fontWeight: 700 }}>
+              체험해보기 ➔
+            </div>
+          </div>
+
+          {/* 카드 3: 연금 갈아타기 실익 */}
+          <div
+            id="landing-card-pension-transfer"
+            onClick={() => setPensionTransferModalOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(16, 185, 129, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>🔄</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", fontWeight: 700 }}>
+                세금 0원 원스톱 이전
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              개인연금(IRP) 금융사 갈아타기 실익
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              과거 가입한 연 1~2%대 저수익 은행신탁·보험을 증권사 글로벌 ETF/TDF로 이전할 때의 만기 수령액 격차(수천만원)를 역산해 드립니다.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#10b981", fontWeight: 700 }}>
+              체험해보기 ➔
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
 
     {/* 참고 서비스 모달 */}
@@ -295,6 +390,18 @@ export default function LandingPage() {
     <QuickDiagnosisModal
       isOpen={quickDiagnosisOpen}
       onClose={() => setQuickDiagnosisOpen(false)}
+    />
+    <DbDcTransitionModal
+      isOpen={dbDcModalOpen}
+      onClose={() => setDbDcModalOpen(false)}
+    />
+    <ThreeBucketPlanModal
+      isOpen={threeBucketModalOpen}
+      onClose={() => setThreeBucketModalOpen(false)}
+    />
+    <PensionTransferBenefitModal
+      isOpen={pensionTransferModalOpen}
+      onClose={() => setPensionTransferModalOpen(false)}
     />
     </>
   );

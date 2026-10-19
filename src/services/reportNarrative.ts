@@ -18,7 +18,10 @@ export type ToolId =
   | "SURVIVOR_CARE"
   | "ISA_TRANSFER"
   | "REVERSE_MORTGAGE"
-  | "PORTFOLIO_BACKTEST";
+  | "PORTFOLIO_BACKTEST"
+  | "DB_DC_TRANSITION"
+  | "THREE_BUCKET_PLAN"
+  | "PENSION_TRANSFER";
 
 export const TOOL_IDS: ToolId[] = [
   "SAVINGS_PLAN",
@@ -30,6 +33,9 @@ export const TOOL_IDS: ToolId[] = [
   "ISA_TRANSFER",
   "REVERSE_MORTGAGE",
   "PORTFOLIO_BACKTEST",
+  "DB_DC_TRANSITION",
+  "THREE_BUCKET_PLAN",
+  "PENSION_TRANSFER",
 ];
 
 export interface ToolMeta {
@@ -93,6 +99,24 @@ export const TOOL_META_MAP: Record<ToolId, ToolMeta> = {
     name: "주택연금(역모기지) 결합",
     badge: "🏠 주택연금",
     description: "내 집을 담보로 평생 비과세 종신 월지급금을 수령하여 초고령기 생활비 결손을 방어합니다.",
+  },
+  DB_DC_TRANSITION: {
+    id: "DB_DC_TRANSITION",
+    name: "퇴직연금 DB/DC 전환·임금피크 타이밍",
+    badge: "⚖️ DB/DC 전환",
+    description: "임금피크제 삭감 전 최고 연봉 시점에 DC로 전환하여 퇴직금을 보존하고 복리 증식을 극대화합니다.",
+  },
+  THREE_BUCKET_PLAN: {
+    id: "THREE_BUCKET_PLAN",
+    name: "3-Bucket 현금 버퍼 플래너",
+    badge: "🪣 3-Bucket",
+    description: "1~2년 안심현금, 3~7년 중기인컴, 8년+ 성장자산으로 나누어 폭락장에도 주식을 안 파는 안전 런웨이를 확보합니다.",
+  },
+  PENSION_TRANSFER: {
+    id: "PENSION_TRANSFER",
+    name: "개인연금(IRP) 금융사 갈아타기 실익",
+    badge: "🔄 연금 갈아타기",
+    description: "저수익 은행 신탁·보험을 세금 불이익 0원으로 증권사 ETF/TDF로 이전할 때의 복리 수령액 증가분을 계산합니다.",
   },
 };
 
@@ -555,6 +579,34 @@ export function fallbackNarrative(r: HouseholdReport): ReportNarrative {
       toolId: "REVERSE_MORTGAGE",
     });
   }
+
+  // 3대 킬러 기능 액션 추천
+  actions.push({
+    title: "퇴직연금 DB/DC 전환 및 임금피크제 방어",
+    detail: "임금피크제로 월급이 삭감되면 DB형 퇴직금도 깎입니다. 피크 직전 최고 연봉일 때 DC형으로 전환하여 퇴직금을 보존하고 우량 ETF로 복리 운용합니다.",
+    timing: "은퇴 전",
+    priority: "높음",
+    effect: "퇴직금 수천만원 삭감 방어 및 자산 증식",
+    toolId: "DB_DC_TRANSITION",
+  });
+
+  actions.push({
+    title: "3-Bucket 현금 버퍼 플랜 (하락장 방패 구축)",
+    detail: "1~2년 안심현금(CMA), 3~7년 중기인컴(배당/채권), 8년+ 성장자산(S&P500)으로 3개 바구니를 나누어 시장 폭락 시에도 주식 매도 없이 생활비를 인출합니다.",
+    timing: "은퇴 시점",
+    priority: "높음",
+    effect: "약세장 5~7년 이상 주식 매도 0원 방어",
+    toolId: "THREE_BUCKET_PLAN",
+  });
+
+  actions.push({
+    title: "개인연금(IRP/연금저축) 금융사 갈아타기 실익 점검",
+    detail: "과거 가입한 은행 신탁이나 보험사 연금보험(1~2%대)을 세금 불이익 0원으로 증권사 ETF/TDF로 이전하여 복리 수령액을 극대화합니다.",
+    timing: "즉시",
+    priority: "중간",
+    effect: "만기 은퇴 자산 및 월 수령액 30~50% 증대",
+    toolId: "PENSION_TRANSFER",
+  });
 
   actions.push({
     title: "매년 연금 정보 갱신",

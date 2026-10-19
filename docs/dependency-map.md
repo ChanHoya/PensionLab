@@ -117,6 +117,30 @@ graph TD
   News[src/app/news/page.tsx] --> NewsAPI[src/app/api/news/route.ts]
   News --> NewsProxyAPI[src/app/api/news/proxy/route.ts]
   YouTube[src/app/youtube/page.tsx] --> YouTubeAPI[src/app/api/youtube/route.ts]
+
+  %% Sprint 41 Additions (3 Killer Features: DB/DC Transition, 3-Bucket, Pension Transfer)
+  DbDcModal[src/components/DbDcTransitionModal.tsx] --> DbDcCalc[src/services/dbDcTransitionCalculator.ts]
+  ThreeBucketModal[src/components/ThreeBucketPlanModal.tsx] --> ThreeBucketCalc[src/services/threeBucketCalculator.ts]
+  TransferBenefitModal[src/components/PensionTransferBenefitModal.tsx] --> TransferBenefitCalc[src/services/pensionTransferCalculator.ts]
+
+  Dashboard --> DbDcModal
+  Dashboard --> ThreeBucketModal
+  Dashboard --> TransferBenefitModal
+
+  Landing --> DbDcModal
+  Landing --> ThreeBucketModal
+  Landing --> TransferBenefitModal
+
+  OnboardingUI --> DbDcModal
+  OnboardingUI --> ThreeBucketModal
+  OnboardingUI --> TransferBenefitModal
+
+  AIAdvisor --> DbDcModal
+  AIAdvisor --> ThreeBucketModal
+  AIAdvisor --> TransferBenefitModal
+  DiagnosisReport --> DbDcModal
+  DiagnosisReport --> ThreeBucketModal
+  DiagnosisReport --> TransferBenefitModal
 ```
 
 

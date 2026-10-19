@@ -19,6 +19,9 @@ import { SurvivorCareModal } from "@/components/SurvivorCareModal";
 import { IsaPensionTransferModal } from "@/components/IsaPensionTransferModal";
 import { ReverseMortgageModal } from "@/components/ReverseMortgageModal";
 import PortfolioBacktestModal from "@/components/PortfolioBacktestModal";
+import DbDcTransitionModal from "@/components/DbDcTransitionModal";
+import ThreeBucketPlanModal from "@/components/ThreeBucketPlanModal";
+import PensionTransferBenefitModal from "@/components/PensionTransferBenefitModal";
 import { AiThinkingStream } from "@/components/motion";
 
 const emptySubscribe = () => () => {};
@@ -398,6 +401,31 @@ export default function AiAdvisorPage() {
         isOpen={activeTool === "PORTFOLIO_BACKTEST"}
         onClose={() => setActiveTool(null)}
         defaultCapital={store.simulationParams.coveredCallAsset || 40000}
+      />
+
+      <DbDcTransitionModal
+        isOpen={activeTool === "DB_DC_TRANSITION"}
+        onClose={() => setActiveTool(null)}
+        defaultAge={store.simulationParams.currentAge || 45}
+        defaultRetireAge={store.simulationParams.retirementAge || 60}
+      />
+
+      <ThreeBucketPlanModal
+        isOpen={activeTool === "THREE_BUCKET_PLAN"}
+        onClose={() => setActiveTool(null)}
+        initialTotalAssets={
+          (store.retirementPensions?.reduce((sum, p) => sum + (p.expectedLumpSum || p.totalAccumulated || 0), 0) || 15000) +
+          (store.personalPensions?.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) || 10000) +
+          (store.simulationParams?.nonPensionAssets || 15000)
+        }
+        initialTargetSpending={store.simulationParams?.targetMonthlySpending || 300}
+        initialPension={store.nationalPension?.expectedMonthlyPension || 120}
+      />
+
+      <PensionTransferBenefitModal
+        isOpen={activeTool === "PENSION_TRANSFER"}
+        onClose={() => setActiveTool(null)}
+        initialBalance={store.personalPensions?.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) || 3000}
       />
     </main>
   );

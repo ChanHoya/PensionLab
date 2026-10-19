@@ -946,6 +946,12 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
               priorityBadge = "🏠 종신 비과세";
             } else if (tid === "PORTFOLIO_BACKTEST") {
               priorityBadge = "📈 10년 복리 검증";
+            } else if (tid === "DB_DC_TRANSITION") {
+              priorityBadge = "⚖️ 임금피크 방어";
+            } else if (tid === "THREE_BUCKET_PLAN") {
+              priorityBadge = "🛡️ 안전 런웨이 설계";
+            } else if (tid === "PENSION_TRANSFER") {
+              priorityBadge = "🔄 수수료 절감·수령액 증대";
             }
 
             return (

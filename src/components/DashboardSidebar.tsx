@@ -35,6 +35,8 @@ interface Props {
   onOpenRetirementRoadmapModal?: () => void;
   onOpenScenarioComparisonModal?: () => void;
   onOpenAccountTaxMatrixModal?: () => void;
+  onOpenCashflowTrackerModal?: () => void;
+  onOpenInteractiveAdvisorModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -521,6 +523,52 @@ export default function DashboardSidebar(props: Props) {
           >
             <span>📑</span>
             <span>2026 절세 계좌 4총사 자산배분 매트릭스</span>
+          </button>
+        )}
+        {props.onOpenCashflowTrackerModal && (
+          <button
+            type="button"
+            onClick={props.onOpenCashflowTrackerModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(59, 130, 246, 0.4)",
+              color: "#60a5fa",
+              background: "rgba(59, 130, 246, 0.08)",
+            }}
+          >
+            <span>💳</span>
+            <span>실전 은퇴 가계부 & 런웨이 트래커</span>
+          </button>
+        )}
+        {props.onOpenInteractiveAdvisorModal && (
+          <button
+            type="button"
+            onClick={props.onOpenInteractiveAdvisorModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(168, 85, 247, 0.4)",
+              color: "#c084fc",
+              background: "rgba(168, 85, 247, 0.08)",
+            }}
+          >
+            <span>🤖</span>
+            <span>1:1 대화형 AI 인터랙티브 은퇴 상담</span>
           </button>
         )}
       </details>

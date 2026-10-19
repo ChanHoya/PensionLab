@@ -221,6 +221,23 @@
   1) 모바일 바텀 네비 (`src/components/MobileBottomNav.tsx`): 스마트폰(md 미만) 화면 하단 고정 탭 바 (홈/대시보드/AI진단/인출전략/연금뉴스)
   2) PWA 설치 배너 (`src/components/PwaInstallBanner.tsx`): beforeinstallprompt 이벤트 감지 A2HS 설치 안내 배너 및 7일 쿨다운 제어 (Sprint 42, Story S42-4)
 
+- **[FEAT-062] 실전 은퇴 가계부 & 연금 인출 트래커**:
+  1) 계산 엔진 (`src/services/cashflowTrackerService.ts`): 은퇴 후 4대 필수 지출(주거/식비/의료/생활) 및 4대 수입(공적/사적/금융/기타) 모델링, 목표 생활비 대비 괴리율(Gap) 및 수지차 연산, 비연금 자산 소진 런웨이(Runway) 및 재무 건전성 점수(100점 만점), 12개월 월별 추이 로컬스토리지 저장
+  2) 모달 UI (`src/components/CashflowTrackerModal.tsx`): 진단 KPI 카드, 지출/수입 상세 내역 입력 탭, 12개월 Recharts 영역 차트 및 맞춤형 재무 처방 가이드 탑재 (Sprint 43, Story S43-1)
+
+- **[FEAT-063] 1:1 대화형 AI 인터랙티브 은퇴 어드바이저**:
+  1) 백엔드 & 컨텍스트 엔진 (`src/app/api/ai/interactive-advisor/route.ts`, `src/services/interactiveAdvisorService.ts`): 사용자 맞춤형 은퇴 나이/연금/자산 컨텍스트 주입, Gemini API 및 규칙 기반 지능형 fallback, 전문 시뮬레이터(DB/DC, 3-Bucket, 계좌이전, 조기/연기 손익분기 등) 매핑
+  2) 모달 UI (`src/components/InteractiveChatAdvisorModal.tsx`): 실시간 1:1 대화형 인터페이스, 5대 대표 고민 추천 질문 칩, 연계 시뮬레이터 원클릭 바로가기 버튼 탑재 (Sprint 43, Story S43-2)
+
+- **[FEAT-064] 금융감독원 통합연금포털 엑셀(XLSX/CSV) 데이터 업로드 파서**:
+  1) 파서 엔진 (`src/services/fssExcelParser.ts`): 금감원 엑셀/CSV 데이터에서 국민연금, 퇴직연금, 개인연금 계약 정보, 납입원금, 예상수령액 및 개시나이 자동 추출
+  2) 온보딩 연동 (`src/components/FssUploadPanel.tsx`, `src/app/onboarding/page.tsx`): PDF 외 CSV/Excel 확장자 수용 안내 및 파싱 데이터 스토어 즉시 적용 (Sprint 43, Story S43-3)
+
+- **[FEAT-065] 번들 사이즈 최적화(코드 분할) & PWA 오프라인 캐싱 강화**:
+  1) 번들 분할 (`src/components/DashboardModalManager.tsx`): 18개 전문 모달 전체를 `next/dynamic` (`ssr: false`) 분할 로딩으로 전환하여 초기 페이지 번들 용량 대폭 경감
+  2) PWA 오프라인 캐싱 (`public/sw.js`, `src/app/manifest.ts`, `src/components/PwaInstallBanner.tsx`): 서비스 워커 등록, 정적 자산 프리캐싱 및 오프라인 네트워크 복원력 확보 (Sprint 43, Story S43-4)
+
+
 
 
 

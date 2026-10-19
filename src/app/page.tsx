@@ -13,6 +13,9 @@ import RetirementRoadmapModal from "@/components/RetirementRoadmapModal";
 import ScenarioComparisonModal from "@/components/ScenarioComparisonModal";
 import AccountTaxMatrixModal from "@/components/AccountTaxMatrixModal";
 
+const CashflowTrackerModal = dynamic(() => import("@/components/CashflowTrackerModal"), { ssr: false });
+const InteractiveChatAdvisorModal = dynamic(() => import("@/components/InteractiveChatAdvisorModal"), { ssr: false });
+
 const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
   ssr: false,
 });
@@ -94,6 +97,8 @@ export default function LandingPage() {
   const [retirementRoadmapOpen, setRetirementRoadmapOpen] = useState(false);
   const [scenarioComparisonOpen, setScenarioComparisonOpen] = useState(false);
   const [accountTaxMatrixOpen, setAccountTaxMatrixOpen] = useState(false);
+  const [cashflowTrackerOpen, setCashflowTrackerOpen] = useState(false);
+  const [interactiveAdvisorOpen, setInteractiveAdvisorOpen] = useState(false);
 
   const getNavStyle = (menuId: "service-intro" | "pension-library" | "reference-services") => {
     return {
@@ -362,6 +367,54 @@ export default function LandingPage() {
               체험해보기 ➔
             </div>
           </div>
+
+          {/* 솔루션 7: 실전 은퇴 가계부 & 런웨이 트래커 */}
+          <div
+            id="card-cashflow-tracker"
+            onClick={() => setCashflowTrackerOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(59, 130, 246, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>💳</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(59, 130, 246, 0.15)", color: "#60a5fa", fontWeight: 700 }}>
+                런웨이 진단
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              실전 은퇴 가계부 & 런웨이 트래커
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              은퇴 후 실제 월별 지출과 연금 수입을 기록하고, 당초 목표 생활비 대비 괴리율과 비연금 비상금의 고갈 시점(Runway)을 실시간 모니터링합니다.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#60a5fa", fontWeight: 700 }}>
+              체험해보기 ➔
+            </div>
+          </div>
+
+          {/* 솔루션 8: 1:1 대화형 AI 인터랙티브 은퇴 어드바이저 */}
+          <div
+            id="card-interactive-advisor"
+            onClick={() => setInteractiveAdvisorOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(168, 85, 247, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>🤖</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", fontWeight: 700 }}>
+                LIVE CFP
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              1:1 대화형 AI 인터랙티브 은퇴 상담
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              나의 실제 연금 자산과 결손액 데이터를 바탕으로, "ISA를 먼저 깰지, IRP를 깰지" 등 세무·인출 전략을 1:1 대화형으로 처방받으세요.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#c084fc", fontWeight: 700 }}>
+              상담 시작하기 ➔
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -492,6 +545,39 @@ export default function LandingPage() {
     <AccountTaxMatrixModal
       isOpen={accountTaxMatrixOpen}
       onClose={() => setAccountTaxMatrixOpen(false)}
+    />
+    <CashflowTrackerModal
+      isOpen={cashflowTrackerOpen}
+      onClose={() => setCashflowTrackerOpen(false)}
+      targetMonthlySpending={350}
+      liquidAssets={15000}
+    />
+    <InteractiveChatAdvisorModal
+      isOpen={interactiveAdvisorOpen}
+      onClose={() => setInteractiveAdvisorOpen(false)}
+      context={{
+        currentAge: 55,
+        retirementAge: 60,
+        yearsToRetirement: 5,
+        targetMonthlySpending: 350,
+        minMonthlySpending: 250,
+        monthlyNationalPension: 140,
+        retirementPensionSavings: 25000,
+        personalPensionSavings: 15000,
+        liquidAssets: 15000,
+        realEstateAssets: 50000,
+        hasSpouse: true,
+        selectedStrategy: "S4 하이브리드 배당",
+      }}
+      onOpenTool={(toolId) => {
+        if (toolId === "DB_DC_TRANSITION") setDbDcModalOpen(true);
+        else if (toolId === "THREE_BUCKET_PLAN" || toolId === "THREE_BUCKET") setThreeBucketModalOpen(true);
+        else if (toolId === "PENSION_TRANSFER") setPensionTransferModalOpen(true);
+        else if (toolId === "RETIREMENT_ROADMAP") setRetirementRoadmapOpen(true);
+        else if (toolId === "SCENARIO_COMPARISON") setScenarioComparisonOpen(true);
+        else if (toolId === "ACCOUNT_TAX_MATRIX") setAccountTaxMatrixOpen(true);
+        else if (toolId === "CASHFLOW_TRACKER") setCashflowTrackerOpen(true);
+      }}
     />
     </>
   );

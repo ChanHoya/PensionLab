@@ -12,6 +12,7 @@ import { statutoryPensionStartAge, estimateBasicPensionAmount, NPS_RULES } from 
 import AdditionalPaymentPanel from "@/components/AdditionalPaymentPanel";
 import BasicPensionForm from "@/components/BasicPensionForm";
 import { extractPdfText } from "@/utils/pdfText";
+import { parseFssExcelOrCsvText } from "@/services/fssExcelParser";
 import FssUploadPanel, { FSS_SLOTS, emptyFssFiles, type FssFiles, type FssSlot } from "@/components/FssUploadPanel";
 import PensionStructureSummary from "@/components/PensionStructureSummary";
 import PersonaPresetModal from "@/components/PersonaPresetModal";
@@ -304,32 +305,38 @@ export default function OnboardingPage() {
         const parts: string[] = [];
         for (const slot of FSS_SLOTS) {
           for (const file of fssFiles[target][slot.key]) {
-            const text = await extractPdfText(file);
-            if (!text) {
-              throw new Error(`「${file.name}」에서 텍스트를 추출할 수 없습니다. 보안 비밀번호가 해제된 PDF 파일인지 확인해 주세요.`);
+            const fileName = file.name.toLowerCase();
+            if (fileName.endsWith(".pdf")) {
+              const text = await extractPdfText(file);
+              if (!text) {
+                throw new Error(`「${file.name}」에서 텍스트를 추출할 수 없습니다. 보안 비밀번호가 해제된 PDF 파일인지 확인해 주세요.`);
+              }
+              parts.push(`=== [${slot.label}] ${file.name} ===\n${text}`);
+            } else if (fileName.endsWith(".csv") || fileName.endsWith(".txt") || fileName.endsWith(".tsv") || fileName.endsWith(".xlsx")) {
+              const parsedCsv = await parseFssExcelOrCsvText(file);
+              applyParsedFss(parsedCsv, target);
             }
-            parts.push(`=== [${slot.label}] ${file.name} ===\n${text}`);
           }
         }
-        if (parts.length === 0) continue;
-
-        const res = await fetch("/api/pension/pdf-parse", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pdfText: parts.join("\n\n") }),
-        });
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(errorData.error || "AI 분석 도중 오류가 발생했습니다.");
+        if (parts.length > 0) {
+          const res = await fetch("/api/pension/pdf-parse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pdfText: parts.join("\n\n") }),
+          });
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || "AI 분석 도중 오류가 발생했습니다.");
+          }
+          applyParsedFss(await res.json(), target);
         }
-        applyParsedFss(await res.json(), target);
         // 분석이 끝난 사람의 파일은 비워 두어, 다시 「다음 단계」를 눌러도 직접 고친 값을 덮어쓰지 않게 한다
         setFssFiles((prev) => ({ ...prev, [target]: emptyFssFiles() }));
       }
       return true;
     } catch (err) {
       console.error(err);
-      setFssError(err instanceof Error ? err.message : "PDF 파일을 분석하는 중 예기치 못한 에러가 발생했습니다.");
+      setFssError(err instanceof Error ? err.message : "파일을 분석하는 중 예기치 못한 에러가 발생했습니다.");
       return false;
     } finally {
       setFssAnalyzing(false);

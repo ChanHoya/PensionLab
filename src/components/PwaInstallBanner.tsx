@@ -16,6 +16,13 @@ export default function PwaInstallBanner() {
       }
     }
 
+    // Register service worker if supported
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.warn('PWA ServiceWorker registration failed:', err);
+      });
+    }
+
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);

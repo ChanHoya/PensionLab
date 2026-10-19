@@ -22,6 +22,8 @@ export type DashboardModalType =
   | "retirementRoadmap"
   | "scenarioComparison"
   | "accountTaxMatrix"
+  | "cashflowTracker"
+  | "interactiveAdvisor"
   | null;
 
 interface DashboardToolbarProps {
@@ -106,6 +108,41 @@ export default function DashboardToolbar({ onOpenModal }: DashboardToolbarProps)
         title="2026 절세 계좌 4총사(ISA/연금저축/IRP/일반계좌) 최적 자산배분 매트릭스"
       >
         📑 절세 매트릭스
+      </button>
+
+      {/* Sprint 43: 실전 은퇴 가계부 & 1:1 대화형 AI 어드바이저 */}
+      <button
+        id="btn-cashflow-tracker-actions"
+        onClick={() => onOpenModal("cashflowTracker")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(59, 130, 246, 0.5)",
+          color: "#60a5fa",
+          background: "rgba(59, 130, 246, 0.12)",
+        }}
+        title="은퇴 후 실제 월별 지출·수입 기록 및 자산 소진 런웨이(Runway) 진단"
+      >
+        💳 가계부·런웨이
+      </button>
+
+      <button
+        id="btn-interactive-advisor-actions"
+        onClick={() => onOpenModal("interactiveAdvisor")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(168, 85, 247, 0.5)",
+          color: "#c084fc",
+          background: "rgba(168, 85, 247, 0.12)",
+        }}
+        title="내 연금 자산 실시간 기반 1:1 대화형 AI 인터랙티브 은퇴 상담"
+      >
+        🤖 1:1 AI 상담
       </button>
 
       {/* 3대 신규 킬러 기능 버튼 */}

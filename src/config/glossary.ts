@@ -255,6 +255,30 @@ export const GLOSSARY_TERMS: Record<string, GlossaryTerm> = {
     relatedModal: "accountTaxMatrix",
     relatedToolLabel: "📑 절세 매트릭스 열기",
   },
+  CASHFLOW_RUNWAY: {
+    id: "CASHFLOW_RUNWAY",
+    term: "실전 은퇴 가계부 & 런웨이 (Runway)",
+    aliases: ["은퇴 가계부", "런웨이", "자산 소진 속도", "Cashflow Runway"],
+    category: "general",
+    categoryLabel: "은퇴 가계부",
+    shortDefinition: "은퇴 후 매달 실제로 쓰는 돈과 들어오는 연금을 비교하여, 비연금 비상금이 몇 년 몇 개월 동안 버텨줄 수 있는지(활주로) 계산하는 지표입니다.",
+    detailExplanation: "당초 설계한 목표 생활비 대비 실제 소비 괴리율(%)과 당월 수지차(흑자/적자)를 측정하고, 적자 지속 시 현재 소비 속도로 비연금 금융자산이 완전히 고갈되는 예상 개월 수를 도출합니다.",
+    actionTip: "특별 지출(경조사, 가족 모임)을 평월 생활비와 분리하고, 런웨이가 5년 미만으로 좁혀지면 변동 생활비를 15% 슬림화해야 합니다.",
+    relatedModal: "cashflowTracker",
+    relatedToolLabel: "💳 가계부·런웨이 열기",
+  },
+  INTERACTIVE_ADVISOR: {
+    id: "INTERACTIVE_ADVISOR",
+    term: "1:1 대화형 AI 인터랙티브 은퇴 어드바이저",
+    aliases: ["대화형 AI", "인터랙티브 어드바이저", "1:1 AI 상담"],
+    category: "general",
+    categoryLabel: "AI 상담",
+    shortDefinition: "나의 실제 연금 자산과 결손액 데이터를 실시간으로 파악하여, 맞춤형 인출 순서와 절세 팁을 대화형으로 처방해 주는 AI 비서입니다.",
+    detailExplanation: "2026년 개정 세법과 국민연금·건보료 룰셋을 바탕으로 'ISA를 먼저 깰지, IRP를 깰지', '조기 vs 연기 선택' 등 복잡한 질문에 명쾌한 3단계 답변과 연계 시뮬레이터를 즉각 연결합니다.",
+    actionTip: "대시보드 상단의 [1:1 AI 상담] 버튼을 눌러 평소 궁금했던 은퇴 세무 및 인출 고민을 자유롭게 질문해 보세요.",
+    relatedModal: "interactiveAdvisor",
+    relatedToolLabel: "🤖 1:1 AI 상담 열기",
+  },
 };
 
 /**

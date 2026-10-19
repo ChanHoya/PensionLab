@@ -726,6 +726,8 @@ export default function DashboardPage() {
             onOpenRetirementRoadmapModal={() => setActiveModal("retirementRoadmap")}
             onOpenScenarioComparisonModal={() => setActiveModal("scenarioComparison")}
             onOpenAccountTaxMatrixModal={() => setActiveModal("accountTaxMatrix")}
+            onOpenCashflowTrackerModal={() => setActiveModal("cashflowTracker")}
+            onOpenInteractiveAdvisorModal={() => setActiveModal("interactiveAdvisor")}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">

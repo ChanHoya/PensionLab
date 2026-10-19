@@ -172,6 +172,20 @@
      - 연령대별 생활비 기본값-곡선 일치화, 툴팁 연금 순합계 버그 수정, 인출전략 차트 목표/최저 생활비선 추가
 - **검증 상태**: `npm run build` 성공(0 errors), git commit & push 완료.
 
+- **[Completed]** Sprint 43: 실전 은퇴 가계부 & 런웨이 트래커, 1:1 대화형 AI 어드바이저, 금감원 엑셀/CSV 파서, 모달 번들 분할 & PWA 오프라인 캐싱
+  1. 실전 은퇴 가계부 & 연금 인출 트래커 (`CashflowTrackerModal.tsx`, `cashflowTrackerService.ts`):
+     - 은퇴 후 4대 지출(주거/식비/의료/생활) 및 4대 수입(공적/사적/금융/기타) 모델링
+     - 목표 대비 괴리율(Gap), 수지차, 런웨이(Runway), 재무건전성 점수, 12개월 추이 차트 제공
+  2. 1:1 대화형 AI 인터랙티브 은퇴 어드바이저 (`InteractiveChatAdvisorModal.tsx`, `interactiveAdvisorService.ts`, API route):
+     - 사용자 연금 자산 컨텍스트 실시간 주입, Gemini API 연동 및 지능형 폴백, 5대 추천 질문 칩, 연계 전문 시뮬레이터 원클릭 바로가기 지원
+  3. 금융감독원 통합연금포털 엑셀(XLSX/CSV) 데이터 업로드 파서 (`fssExcelParser.ts`, `FssUploadPanel.tsx`, `onboarding/page.tsx`):
+     - 금감원 통합연금포털 CSV/Excel 데이터 파싱 엔진 구축 및 온보딩 Step 0 업로드 지원
+  4. 번들 사이즈 최적화 & PWA 오프라인 캐싱 강화 (`DashboardModalManager.tsx`, `manifest.ts`, `sw.js`):
+     - 18개 모달 전체 `next/dynamic` 분할 로딩 적용으로 초기 페이지 번들 최적화
+     - Service Worker 캐싱 및 PWA 오프라인 복원력 확보
+- **검증 상태**: `npm run build` 성공(0 errors), Playwright/Chrome 브라우저 화면 렌더링 검증 완료.
+
+
 
 
 

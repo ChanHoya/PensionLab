@@ -164,6 +164,17 @@ graph TD
   AIAdvisor --> ScenarioModal
   AIAdvisor --> TaxMatrixModal
   DiagnosisReport --> RoadmapModal
+
+  %% Sprint 43 Additions (Cashflow Tracker, Interactive Advisor, FSS Excel Parser, Dynamic Modal Manager)
+  CashflowModal[src/components/CashflowTrackerModal.tsx] --> CashflowCalc[src/services/cashflowTrackerService.ts]
+  InteractiveAdvisorModal[src/components/InteractiveChatAdvisorModal.tsx] --> InteractiveAdvisorCalc[src/services/interactiveAdvisorService.ts]
+  InteractiveAdvisorModal --> InteractiveAdvisorAPI[src/app/api/ai/interactive-advisor/route.ts]
+  FssUploadPanel[src/components/FssUploadPanel.tsx] --> FssExcelParser[src/services/fssExcelParser.ts]
+  ModalManager[src/components/DashboardModalManager.tsx] --> CashflowModal
+  ModalManager --> InteractiveAdvisorModal
+  Dashboard --> ModalManager
+  Landing --> CashflowModal
+  Landing --> InteractiveAdvisorModal
 ```
 
 

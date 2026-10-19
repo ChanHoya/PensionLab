@@ -660,41 +660,6 @@ export default function DashboardPage() {
               buttonClassName="premium-button-secondary"
               buttonStyle={{ padding: "8px 16px" }}
             />
-            <button
-              onClick={() => setActiveModal("quickDiagnosis")}
-              className="premium-button"
-              style={{
-                padding: "8px 14px",
-                background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                fontWeight: 700,
-                border: "none",
-              }}
-              id="btn-header-quick-diagnosis"
-              title="초심자를 위한 30초 퀵 간편 진단 (Easy Mode)"
-            >
-              <span>⚡ 30초 퀵 진단</span>
-            </button>
-            <button
-              onClick={() => setActiveModal("persona")}
-              className="premium-button"
-              style={{
-                padding: "8px 16px",
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                fontWeight: 700,
-                border: "none",
-              }}
-              id="btn-header-persona"
-              title="대표 가구 페르소나 데이터 불러오기"
-            >
-              <span>👫</span>
-              <span>페르소나 체험</span>
-            </button>
             <Link href="/onboarding" className="premium-button-secondary" style={{ padding: "8px 16px" }} id="btn-re-onboard">
               정보 재입력
             </Link>
@@ -733,6 +698,7 @@ export default function DashboardPage() {
             s3Periods={s3Periods}
             setS3Periods={setS3Periods}
             onOpenQuickDiagnosisModal={() => setActiveModal("quickDiagnosis")}
+            onOpenPersonaModal={() => setActiveModal("persona")}
             onOpenBepModal={() => setActiveModal("bep")}
             onOpenTax15Modal={() => setActiveModal("tax15")}
             onOpenHealthBillModal={() => setActiveModal("healthBill")}
@@ -813,28 +779,6 @@ export default function DashboardPage() {
             <span>↗</span>
           </Link>
         </div>
-
-        {/* Local Security & Caching Banner */}
-        <div style={styles.topSecurityBanner} className="premium-card animate-fade-in">
-          <span>🔒 <strong>개인정보 안심 보장</strong>: 본 서비스는 이름, 주민번호, 금융계좌 등 개인식별정보(PII)를 일체 요구하거나 저장하지 않습니다. 회원님의 연금 시뮬레이션 설정은 브라우저(LocalStorage)에 안전하게 보관되니 유출 걱정 없이 안심하고 이용해 주세요.</span>
-        </div>
-
-        {/* 추납 반영 배지: 추가납부 탭에서 대시보드 반영을 켠 경우에만 표시 */}
-        {nationalForSim !== store.nationalPension && (
-          <div style={{
-            display: "inline-flex",
-            alignItems: "center",
-            width: "fit-content",
-            padding: "6px 14px",
-            borderRadius: "var(--radius-full)",
-            backgroundColor: "rgba(99, 102, 241, 0.1)",
-            color: "var(--text-accent)",
-            fontSize: "0.8rem",
-            fontWeight: 600,
-          }} className="animate-fade-in">
-            🔁 {[selfApplied.addedMonths > 0 && `추납 ${selfApplied.addedMonths}개월`, selfApplied.restoredMonths > 0 && `반납 ${selfApplied.restoredMonths}개월`].filter(Boolean).join(" · ")} 반영 (추정치 · 정확한 금액은 국민연금공단 1355 확인)
-          </div>
-        )}
 
         {/* ① 부부 통합 연금 시뮬레이션 (배우자 있을 때만). 없으면 백업·복원 버튼만 따로 둔다 */}
         {hasSpouse ? (

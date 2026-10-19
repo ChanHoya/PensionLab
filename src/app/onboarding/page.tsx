@@ -1011,7 +1011,7 @@ export default function OnboardingPage() {
                   <span style={{ fontSize: "1.8rem" }}>⚡</span>
                   <div style={{ textAlign: "left" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <strong style={{ fontSize: "0.95rem", color: "var(--foreground, #ffffff)" }}>
+                      <strong style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
                         3초 원스톱 인스턴트 온보딩 (금감원 파일 드롭존)
                       </strong>
                       <span

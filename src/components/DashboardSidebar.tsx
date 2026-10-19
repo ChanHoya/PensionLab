@@ -20,6 +20,7 @@ interface Props {
   s3Periods: Record<string, number>;
   setS3Periods: (v: Record<string, number>) => void;
   onOpenQuickDiagnosisModal?: () => void;
+  onOpenPersonaModal?: () => void;
   onOpenBepModal?: () => void;
   onOpenTax15Modal?: () => void;
   onOpenHealthBillModal?: () => void;
@@ -148,7 +149,7 @@ export default function DashboardSidebar(props: Props) {
             padding: "8px 12px",
             fontSize: "0.8rem",
             fontWeight: 800,
-            background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+            background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
             color: "#ffffff",
             display: "flex",
             alignItems: "center",
@@ -158,12 +159,42 @@ export default function DashboardSidebar(props: Props) {
             border: "none",
             borderRadius: "var(--radius-sm, 8px)",
             cursor: "pointer",
-            marginBottom: "4px",
+            marginBottom: "6px",
           }}
           title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
         >
           <span>⚡</span>
           <span>30초 퀵 간편 진단</span>
+        </button>
+      )}
+
+      {props.onOpenPersonaModal && (
+        <button
+          type="button"
+          id="sidebar-btn-persona"
+          onClick={props.onOpenPersonaModal}
+          className="premium-button"
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            fontSize: "0.8rem",
+            fontWeight: 800,
+            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            boxShadow: "0 2px 8px rgba(139, 92, 246, 0.35)",
+            border: "none",
+            borderRadius: "var(--radius-sm, 8px)",
+            cursor: "pointer",
+            marginBottom: "8px",
+          }}
+          title="대표 가구 페르소나 데이터 불러오기"
+        >
+          <span>👥</span>
+          <span>페르소나 체험</span>
         </button>
       )}
 

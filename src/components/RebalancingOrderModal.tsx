@@ -91,7 +91,7 @@ export default function RebalancingOrderModal({
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          color: "var(--foreground, #f8fafc)",
+          color: "var(--text-primary)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -99,17 +99,17 @@ export default function RebalancingOrderModal({
         <div
           style={{
             padding: "20px 24px",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)",
+            background: "linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(16, 185, 129, 0.06) 100%)",
           }}
         >
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span style={{ fontSize: "1.4rem" }}>📊</span>
-              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700 }}>
+              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 은퇴 자산 포트폴리오 리밸런싱 주문 가이드
               </h2>
               <span
@@ -117,8 +117,8 @@ export default function RebalancingOrderModal({
                   fontSize: "0.75rem",
                   padding: "2px 8px",
                   borderRadius: "9999px",
-                  background: "rgba(59, 130, 246, 0.2)",
-                  color: "#60a5fa",
+                  background: "rgba(59, 130, 246, 0.15)",
+                  color: "var(--text-accent, #3b82f6)",
                   fontWeight: 600,
                   border: "1px solid rgba(59, 130, 246, 0.3)",
                 }}
@@ -126,7 +126,7 @@ export default function RebalancingOrderModal({
                 MTS/HTS 1초 주문표
               </span>
             </div>
-            <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "var(--muted-foreground, #94a3b8)" }}>
+            <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
               현재 보유 자산의 목표 비중 괴리율을 자동 분석하고, IRP 30% 안전자산 규제를 준수한 실제 매수·매도 주문표를 생성합니다.
             </p>
           </div>
@@ -137,7 +137,7 @@ export default function RebalancingOrderModal({
               border: "none",
               fontSize: "1.5rem",
               cursor: "pointer",
-              color: "var(--muted-foreground, #94a3b8)",
+              color: "var(--text-muted)",
               padding: "4px 8px",
               borderRadius: "8px",
             }}
@@ -156,14 +156,14 @@ export default function RebalancingOrderModal({
               alignItems: "center",
               flexWrap: "wrap",
               gap: "12px",
-              background: "rgba(255, 255, 255, 0.03)",
+              background: "var(--modal-subbox-bg, var(--surface-2))",
               padding: "14px 16px",
               borderRadius: "12px",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
+              border: "1px solid var(--modal-subbox-border, var(--border))",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>계좌 바구니:</span>
+              <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>계좌 바구니:</span>
               <div style={{ display: "flex", gap: "6px" }}>
                 {(["IRP", "PENSION_SAVINGS", "ISA", "TAXABLE"] as const).map((type) => (
                   <button
@@ -175,9 +175,9 @@ export default function RebalancingOrderModal({
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",
-                      border: accountType === type ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.1)",
-                      background: accountType === type ? "rgba(59, 130, 246, 0.2)" : "rgba(255,255,255,0.02)",
-                      color: accountType === type ? "#60a5fa" : "#94a3b8",
+                      border: accountType === type ? "1px solid #3b82f6" : "1px solid var(--border)",
+                      background: accountType === type ? "rgba(59, 130, 246, 0.15)" : "var(--surface)",
+                      color: accountType === type ? "var(--text-accent, #3b82f6)" : "var(--text-secondary)",
                     }}
                   >
                     {type === "IRP" ? "개인형 IRP" : type === "PENSION_SAVINGS" ? "연금저축" : type === "ISA" ? "ISA" : "일반위탁"}
@@ -198,7 +198,7 @@ export default function RebalancingOrderModal({
                   borderRadius: "8px",
                   background: report.irpCompliance.isCompliant ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
                   border: report.irpCompliance.isCompliant ? "1px solid rgba(16, 185, 129, 0.3)" : "1px solid rgba(239, 68, 68, 0.3)",
-                  color: report.irpCompliance.isCompliant ? "#34d399" : "#f87171",
+                  color: report.irpCompliance.isCompliant ? "#10b981" : "#ef4444",
                   fontWeight: 600,
                 }}
               >
@@ -211,18 +211,18 @@ export default function RebalancingOrderModal({
           {/* Allocation Sliders */}
           <div
             style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
+              background: "var(--modal-subbox-bg, var(--surface-2))",
+              border: "1px solid var(--modal-subbox-border, var(--border))",
               borderRadius: "12px",
               padding: "16px",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
+              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 🎯 목표 배분 비중 조절 (합계: {totalTargetPercent}%)
               </h3>
               {totalTargetPercent !== 100 && (
-                <span style={{ fontSize: "0.75rem", color: "#f87171" }}>
+                <span style={{ fontSize: "0.75rem", color: "var(--danger, #ef4444)", fontWeight: 600 }}>
                   비중 합계가 100%가 되도록 슬라이더를 맞춰주세요.
                 </span>
               )}
@@ -232,10 +232,10 @@ export default function RebalancingOrderModal({
               {holdings.map((h) => (
                 <div key={h.id}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "4px" }}>
-                    <span style={{ fontWeight: 600, color: h.isSafeAssetForIrp ? "#34d399" : "#f1f5f9" }}>
+                    <span style={{ fontWeight: 600, color: h.isSafeAssetForIrp ? "var(--success, #10b981)" : "var(--text-primary)" }}>
                       {h.name} {h.isSafeAssetForIrp ? "(안전)" : ""}
                     </span>
-                    <span style={{ fontWeight: 700, color: "#60a5fa" }}>{h.targetWeightPercent}%</span>
+                    <span style={{ fontWeight: 700, color: "var(--text-accent, #3b82f6)" }}>{h.targetWeightPercent}%</span>
                   </div>
                   <input
                     type="range"
@@ -254,8 +254,8 @@ export default function RebalancingOrderModal({
           {/* Rebalancing Order Slip Table */}
           <div
             style={{
-              background: "rgba(15, 23, 42, 0.6)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
               overflow: "hidden",
             }}
@@ -263,16 +263,16 @@ export default function RebalancingOrderModal({
             <div
               style={{
                 padding: "12px 16px",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                borderBottom: "1px solid var(--border)",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                background: "rgba(255, 255, 255, 0.03)",
+                background: "var(--modal-table-th, var(--surface-2))",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "1rem" }}>📝</span>
-                <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>증권사 MTS 즉시 주문표 (Order Slip)</span>
+                <span style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>증권사 MTS 즉시 주문표 (Order Slip)</span>
               </div>
               <button
                 onClick={handleCopySlip}
@@ -281,8 +281,8 @@ export default function RebalancingOrderModal({
                   borderRadius: "6px",
                   fontSize: "0.75rem",
                   fontWeight: 600,
-                  background: copied ? "#10b981" : "rgba(59, 130, 246, 0.2)",
-                  color: copied ? "#fff" : "#60a5fa",
+                  background: copied ? "#10b981" : "rgba(59, 130, 246, 0.15)",
+                  color: copied ? "#fff" : "var(--text-accent, #3b82f6)",
                   border: copied ? "none" : "1px solid rgba(59, 130, 246, 0.3)",
                   cursor: "pointer",
                 }}
@@ -294,7 +294,7 @@ export default function RebalancingOrderModal({
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)", textAlign: "left", color: "#94a3b8" }}>
+                  <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left", color: "var(--text-secondary)", background: "var(--modal-table-th, var(--surface-2))" }}>
                     <th style={{ padding: "10px 14px" }}>구분</th>
                     <th style={{ padding: "10px 14px" }}>대표 종목(ETF)</th>
                     <th style={{ padding: "10px 14px" }}>현재 비중</th>
@@ -310,16 +310,16 @@ export default function RebalancingOrderModal({
                     const isBuy = o.action === "BUY";
                     const isSell = o.action === "SELL";
                     return (
-                      <tr key={o.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                        <td style={{ padding: "10px 14px", fontWeight: 600 }}>{o.name}</td>
-                        <td style={{ padding: "10px 14px", color: "#60a5fa" }}>{o.ticker}</td>
-                        <td style={{ padding: "10px 14px" }}>{o.currentWeightPercent}%</td>
-                        <td style={{ padding: "10px 14px" }}>{o.targetWeightPercent}%</td>
+                      <tr key={o.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                        <td style={{ padding: "10px 14px", fontWeight: 600, color: "var(--text-primary)" }}>{o.name}</td>
+                        <td style={{ padding: "10px 14px", color: "var(--text-accent, #3b82f6)", fontWeight: 600 }}>{o.ticker}</td>
+                        <td style={{ padding: "10px 14px", color: "var(--text-secondary)" }}>{o.currentWeightPercent}%</td>
+                        <td style={{ padding: "10px 14px", color: "var(--text-secondary)" }}>{o.targetWeightPercent}%</td>
                         <td
                           style={{
                             padding: "10px 14px",
-                            color: o.driftPercent > 0 ? "#f87171" : o.driftPercent < 0 ? "#34d399" : "#94a3b8",
-                            fontWeight: 600,
+                            color: o.driftPercent > 0 ? "var(--danger, #ef4444)" : o.driftPercent < 0 ? "var(--success, #10b981)" : "var(--text-muted)",
+                            fontWeight: 700,
                           }}
                         >
                           {o.driftPercent > 0 ? `+${o.driftPercent}%p` : `${o.driftPercent}%p`}
@@ -332,20 +332,20 @@ export default function RebalancingOrderModal({
                               fontSize: "0.75rem",
                               fontWeight: 700,
                               background: isBuy
-                                ? "rgba(16, 185, 129, 0.2)"
+                                ? "rgba(16, 185, 129, 0.15)"
                                 : isSell
-                                ? "rgba(239, 68, 68, 0.2)"
-                                : "rgba(255, 255, 255, 0.05)",
-                              color: isBuy ? "#34d399" : isSell ? "#f87171" : "#94a3b8",
+                                ? "rgba(239, 68, 68, 0.15)"
+                                : "var(--surface-2)",
+                              color: isBuy ? "#10b981" : isSell ? "#ef4444" : "var(--text-secondary)",
                             }}
                           >
                             {isBuy ? "매수 🟢" : isSell ? "매도 🔴" : "유지 ⚪"}
                           </span>
                         </td>
-                        <td style={{ padding: "10px 14px", fontWeight: 700 }}>
+                        <td style={{ padding: "10px 14px", fontWeight: 700, color: "var(--text-primary)" }}>
                           {o.tradeShares > 0 ? `${o.tradeShares.toLocaleString()}주` : "-"}
                         </td>
-                        <td style={{ padding: "10px 14px", fontWeight: 700 }}>
+                        <td style={{ padding: "10px 14px", fontWeight: 700, color: "var(--text-primary)" }}>
                           {o.tradeAmountWon > 0 ? `${(o.tradeAmountWon / 10000).toLocaleString()}만원` : "-"}
                         </td>
                       </tr>
@@ -359,18 +359,19 @@ export default function RebalancingOrderModal({
             <div
               style={{
                 padding: "12px 16px",
-                borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                borderTop: "1px solid var(--border)",
                 display: "flex",
                 justifyContent: "space-between",
                 fontSize: "0.8rem",
-                color: "#94a3b8",
+                color: "var(--text-secondary)",
+                background: "var(--modal-subbox-bg, var(--surface-2))",
               }}
             >
               <span>
-                총 매수 예정: <strong style={{ color: "#34d399" }}>{(report.totalBuyWon / 10000).toLocaleString()}만원</strong>
+                총 매수 예정: <strong style={{ color: "var(--success, #10b981)" }}>{(report.totalBuyWon / 10000).toLocaleString()}만원</strong>
               </span>
               <span>
-                총 매도 예정: <strong style={{ color: "#f87171" }}>{(report.totalSellWon / 10000).toLocaleString()}만원</strong>
+                총 매도 예정: <strong style={{ color: "var(--danger, #ef4444)" }}>{(report.totalSellWon / 10000).toLocaleString()}만원</strong>
               </span>
             </div>
           </div>
@@ -380,10 +381,10 @@ export default function RebalancingOrderModal({
         <div
           style={{
             padding: "16px 24px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            borderTop: "1px solid var(--border)",
             display: "flex",
             justifyContent: "flex-end",
-            background: "rgba(0, 0, 0, 0.2)",
+            background: "var(--modal-header-bg, var(--surface))",
           }}
         >
           <button

@@ -94,17 +94,18 @@ export default function ScenarioComparisonModal({ isOpen, onClose }: ScenarioCom
                       : 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/80 hover:border-slate-600'
                   }`}
                 >
-                  {sc.isRecommended && (
-                    <div className="absolute -top-3 right-4 px-2.5 py-0.5 rounded-full bg-indigo-500 text-[11px] font-bold text-white shadow">
-                      현재 설정
-                    </div>
-                  )}
-
                   <div className="space-y-3">
-                    <div>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${sc.badgeColor}`}>
                         {sc.badge}
                       </span>
+                      {sc.isRecommended && (
+                        <span className="px-2.5 py-0.5 rounded-full bg-indigo-500 text-[11px] font-bold text-white shadow">
+                          현재 설정
+                        </span>
+                      )}
+                    </div>
+                    <div>
                       <h3 className="text-base sm:text-lg font-bold text-white mt-1.5">{sc.name}</h3>
                       <p className="text-xs text-slate-400 leading-relaxed mt-1">{sc.tagline}</p>
                     </div>

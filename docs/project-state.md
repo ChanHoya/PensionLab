@@ -119,15 +119,16 @@
   - Story S40-2: 초심자를 위한 30초 퀵 간편 진단 엔진(`src/services/quickDiagnosis.ts`) 및 인터랙티브 모달(`src/components/QuickDiagnosisModal.tsx`) 개발 (4개 질문으로 대한민국 평균 통계 기반 은퇴 월 연금·부족액·준비율·A~E등급 즉시 산출 및 "🚀 이 결과로 대시보드 바로 체험하기" 원클릭 이동 지원)
   - Story S40-3: `src/app/dashboard/page.tsx` 대규모 모달 상태 단일화(`activeModal: DashboardModalType`), `DashboardToolbar.tsx` 및 `DashboardModalManager.tsx` 분리 리팩토링 완료
   - Story S40-4: 프로덕션 빌드(`npm run build`), 브라우저 서브에이전트 실화면 렌더링 검증, Git 커밋/푸시
+- **[Completed]** 랜딩 페이지 UI 최적화 & 중복 8대 배너 카드 전면 제거:
+  - 사용자 피드백 반영: 랜딩 페이지 하단의 '직장인·은퇴자가 가장 많이 놓치는 3대 핵심 기회' 8개 카드 및 미사용 모달 전면 삭제.
+  - 대시보드/AI Advisor/사이드바에 이미 존재하는 전문 기능들이 랜딩 페이지에 과도하게 노출되어 레이아웃을 해치던 문제를 해결하고, 3층 연금 블록 구조도 및 헤더 CTA(`⚡ 30초 퀵 간편 진단`, `진단 시작하기 🚀`) 중심의 깔끔한 원스크린 히어로 화면으로 복원.
 
 ## Active Sprint / Story
-- **Sprint 44** (개발, 코드리뷰, 검증, Git Push, Vercel 배포 완료): 은퇴 세무·건보 통합 A4 명세서, 월별 배당 인컴 캘린더, 가족 공유 스냅샷, 3중 복합 위기 스트레스 테스트 2.0
-  - **Story S44-1 (완료)**: 은퇴 세금 & 건강보험료 모의 고지서 통합 A4 명세서 (`TaxAndHealthStatementModal.tsx`, `taxAndHealthStatementService.ts`)
-  - **Story S44-2 (완료)**: 월별 배당 인컴 캘린더 & 연금 인출 스케줄러 (`DividendCalendarModal.tsx`, `dividendCalendarService.ts`)
-  - **Story S44-3 (완료)**: 은퇴 시뮬레이션 부부·가족 공유 스냅샷 (`ShareSnapshotModal.tsx`, `shareSnapshotService.ts`, `dashboard/page.tsx`)
-  - **Story S44-4 (완료)**: 3중 복합 위기 스트레스 테스트 매트릭스 2.0 (`StressTestModal.tsx`, `stressTestEngine.ts`)
-  - **Story S44-5 (완료)**: 전사 생태계 연동 (대시보드 툴바 4대 버튼, 사이드바 버튼, dynamic 모달 매니저 번들 분할, 용어 사전 3대 용어 등록, 랜딩 페이지 모달 연동)
-  - **Story S44-6 (완료)**: 프로덕션 빌드(`npm run build`), Playwright 브라우저 화면 검증, Git 커밋/main 병합/푸시, Vercel 프로덕션 배포 완료 (Ready ✅)
+- **Sprint 45 (진행 완료)**: 대시보드 및 랜딩 페이지 UI 정리 & 중복 요소 일원화
+  - 랜딩 페이지 8대 배너 카드 및 미사용 모달 12종 상태 제거 (`src/app/page.tsx`)
+  - 부부 시뮬레이션 카드 중복 툴바 제거 및 사이드바 버튼 정비
+  - 모바일 하단 네비게이션 텍스트 노출 및 바디 스크롤 락 수정
+
 
 ## Session Handoff (Sprint 44 완료 및 Vercel Production 실배포 정상 가동)
 - **주요 산출물**:

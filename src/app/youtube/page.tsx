@@ -18,131 +18,146 @@ interface Video {
 }
 
 const SEED_VIDEOS: Video[] = [
-  // 연금박사 이영주 (@pension500) — 실제 채널에서 수집한 유효 영상 ID
   {
-    id: "v-yt-1",
-    videoId: "4YCIkuKDE3E",
-    channelName: "연금박사 이영주",
-    channelHandle: "@pension500",
-    title: "내 연금 금융소득종합과세 될 수 있습니다 — 지금 확인해보세요",
-    summary: "사적연금 수령액이 연 1,500만 원을 초과할 때 발생하는 분리과세와 종합과세 선택 팁, 그리고 건강보험료 부과 여부를 상세 분석합니다.",
-    publishDate: "2025-12-15",
-    category: "절세"
-  },
-  {
-    id: "v-yt-2",
-    videoId: "nNSMLrJOdVQ",
-    channelName: "연금박사 이영주",
-    channelHandle: "@pension500",
-    title: "연금 가입자만 건강보험료 이중부과되는 불편한 진실",
-    summary: "퇴직 후 국민연금 수령 시 건강보험료가 이중으로 부과되는 구조적 문제를 분석하고, 합법적으로 건보료 부담을 줄이는 실전 절세 전략을 공유합니다.",
-    publishDate: "2025-11-22",
-    category: "건강보험"
-  },
-  {
-    id: "v-yt-3",
-    videoId: "ESO-lkX6vi8",
-    channelName: "연금박사 이영주",
-    channelHandle: "@pension500",
-    title: "은퇴가 코앞인데 연금이 없다고요? 5년만 내고 10년 뒤 바로 받는 연금 2가지",
-    summary: "늦은 나이에 연금을 준비하는 분들을 위한 국민연금 임의가입 및 주택연금 활용법. 최소 납입 기간으로 최대 수급을 끌어내는 전략을 안내합니다.",
-    publishDate: "2025-10-10",
-    category: "국민연금"
-  },
-  {
-    id: "v-yt-4",
-    videoId: "s3en3zxbY5k",
-    channelName: "연금박사 이영주",
-    channelHandle: "@pension500",
-    title: "연금 받다 사망해도 100% 다 받는 연금이 있다?",
-    summary: "종신형 연금 vs 확정 기간형 연금의 차이점을 분석하고, 유족에게 100% 상속 가능한 연금 상품의 구조를 쉽게 설명합니다.",
-    publishDate: "2025-09-05",
-    category: "연금저축"
-  },
-
-  // 박곰희TV (@gomhee) — 실제 채널에서 수집한 유효 영상 ID
-  {
-    id: "v-yt-5",
-    videoId: "91GRhqMQRdE",
+    id: "v-yt-2026-1",
+    videoId: "VfbHDWcmji8",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "과연 국민연금만으로 충분할까? — 박곰희 연금부자수업",
-    summary: "국민연금 예상 수령액과 실제 은퇴 후 필요 생활비를 비교 분석하여, 부족분을 채우기 위한 사적연금 설계 방법을 제안합니다.",
-    publishDate: "2026-03-10",
-    category: "국민연금"
+    title: "미국 ETF를 할까? 국내상장 ETF를 할까? | ETF비교",
+    summary: "미국 직투 ETF와 국내 상장 미국 ETF의 양도소득세 22% vs 배당소득세(15.4%/종합과세), 연금저축/IRP/ISA 계좌에서의 절세 실익을 비교 분석합니다.",
+    publishDate: "2026-10-18",
+    category: "자산배분",
   },
   {
-    id: "v-yt-6",
-    videoId: "WJYWW_XXbSM",
+    id: "v-yt-2026-2",
+    videoId: "Do7D0F-4L6M",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "초보투자자의 목돈 1억 투자하기 — 한방에 할까요, 적립식으로 할까요?",
-    summary: "퇴직금 등 목돈을 일시에 투자할지, 분할 매수로 나눌지의 판단 기준과 연금저축/IRP 내에서 효율적으로 배분하는 실전 포트폴리오 가이드.",
-    publishDate: "2025-11-28",
-    category: "자산배분"
+    title: "자녀에게 세금 없이 적립식 증여하고, 증여세 셀프신고하기 | 증여스케줄 | 유기정기금",
+    summary: "미성년 자녀 10년 2천만원 공제 한도를 활용한 유기정기금 적립식 증여 신고 방법과 연금 자산 증식 노하우를 전달합니다.",
+    publishDate: "2026-10-16",
+    category: "절세",
   },
   {
-    id: "v-yt-7",
-    videoId: "sYybI-K5o0o",
+    id: "v-yt-2026-3",
+    videoId: "po9BdLIptUc",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "일 안해도 월급만큼 받고 싶어요! 현실적인 FIRE 하는 방법",
-    summary: "경제적 자유(FIRE)를 달성하기 위한 현실적인 자산 규모 계산법과 연금·배당·임대소득 등 월 현금흐름 구축 전략을 공유합니다.",
-    publishDate: "2026-01-15",
-    category: "은퇴설계"
+    title: "달러투자 방법 총정리 | 달러RP/달러발행어음/달러ETF/미국단기채 | ver.2026",
+    summary: "2026년 환율 변동성에 대응하는 안전자산 달러 투자법과 연금 포트폴리오 내 달러 자산 배분 비중을 정리합니다.",
+    publishDate: "2026-10-11",
+    category: "자산배분",
   },
   {
-    id: "v-yt-8",
-    videoId: "Gk3-ZC9W3vw",
+    id: "v-yt-2026-4",
+    videoId: "9miUBl3tBN4",
+    channelName: "연금박사 이영주",
+    channelHandle: "@pension500",
+    title: "'1억 넣으면 18억된다' 자녀에게 꼭 사줘야할 ETF 1가지",
+    summary: "복리 효과를 극대화하는 장기 투자 ETF 선정 기준과 자녀 및 은퇴 준비자를 위한 적립식 연금 배분 전략을 제시합니다.",
+    publishDate: "2026-10-10",
+    category: "자산배분",
+  },
+  {
+    id: "v-yt-2026-5",
+    videoId: "5aLljhJuZE4",
+    channelName: "연금박사 이영주",
+    channelHandle: "@pension500",
+    title: "\"연 17% 배당\" 월 50만원 받던 배당금, 2년 만에 720만원 받게 된 비결",
+    summary: "고배당 ETF 및 커버드콜 투자 시 유의할 원금 삭감 리스크와 연금계좌에서 안전하게 배당 현금흐름을 늘리는 방법을 설명합니다.",
+    publishDate: "2026-10-09",
+    category: "연금저축",
+  },
+  {
+    id: "v-yt-2026-6",
+    videoId: "Q9wpeP1eSng",
     channelName: "박곰희TV",
     channelHandle: "@gomhee",
-    title: "ISA에서 미국배당주 사면 손해인가요? 그럼에도 ISA를 해야 하는 이유",
-    summary: "ISA 계좌에서 해외 ETF/배당주 투자 시 외국납부세액공제 이슈와 절세 효율을 분석하고, 연금저축/IRP 조합의 최적 운용 전략을 제시합니다.",
-    publishDate: "2026-04-18",
-    category: "절세"
-  },
-
-  // 연금이야기 (@PensionStory) — 실제 채널에서 수집한 유효 영상 ID
-  {
-    id: "v-yt-9",
-    videoId: "AvLkWZKp8Fs",
-    channelName: "연금이야기",
-    channelHandle: "@PensionStory",
-    title: "퇴직금, 개인연금 언제, 어떤 것부터 얼마나 인출하지? 인출 순서",
-    summary: "퇴직연금(IRP)과 개인연금(연금저축) 중 어떤 것을 먼저 인출해야 세금을 최소화할 수 있는지, 연금 개시 시점의 세제 효율 극대화 순서를 제안합니다.",
-    publishDate: "2025-08-20",
-    category: "퇴직연금"
+    title: "배당금이 더 나왔어요! 월배당 포트폴리오 성과 점검",
+    summary: "미국 배당성장 ETF와 커버드콜 상품을 조합한 월배당 연금 현금흐름 포트폴리오의 실전 운용 성과를 점검합니다.",
+    publishDate: "2026-10-08",
+    category: "자산배분",
   },
   {
-    id: "v-yt-10",
-    videoId: "owgSmNbhyqE",
-    channelName: "연금이야기",
-    channelHandle: "@PensionStory",
-    title: "연금저축·IRP vs 노란우산·공제회 — 나에게 어떤 게 유리?",
-    summary: "자영업자·프리랜서를 위한 절세 수단 비교: 연금저축/IRP와 노란우산공제, 공제회 상품의 세액공제 한도, 수령 조건, 중도 해지 시 불이익을 비교 분석합니다.",
-    publishDate: "2025-07-12",
-    category: "절세"
+    id: "v-yt-2026-7",
+    videoId: "GBf6sppGNOo",
+    channelName: "연금박사 이영주",
+    channelHandle: "@pension500",
+    title: "2030이 연금 가입하면 손해인 이유 3가지",
+    summary: "국민연금 개혁안에 따른 세대별 수령액 격차와 2030세대가 준비해야 할 사적연금(IRP, 개인연금)의 현실적 대안을 분석합니다.",
+    publishDate: "2026-10-08",
+    category: "국민연금",
   },
   {
-    id: "v-yt-11",
-    videoId: "oJZddfxuIgg",
+    id: "v-yt-2026-8",
+    videoId: "lgNU_QVSG2o",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
-    title: "5060 초보, 연금저축·IRP·ISA 지금 시작해도 되나요?",
-    summary: "50~60대 은퇴 임박자를 위한 절세계좌 3종(ISA, 연금저축, IRP) 입문 가이드. 늦게 시작해도 효과적인 납입 전략과 세금 혜택 활용법을 안내합니다.",
-    publishDate: "2025-05-30",
-    category: "연금저축"
+    title: "공무원 자산관리 / 공제회vs연금, ISA계좌 비중, 건보료 대책",
+    summary: "공무원 및 직장인을 위한 교직원/행정공제회와 연금저축, IRP, ISA 간의 자산 배분 비율 및 퇴직 후 건강보험료 대비 전략을 제시합니다.",
+    publishDate: "2026-10-07",
+    category: "퇴직연금",
   },
   {
-    id: "v-yt-12",
-    videoId: "pVwzL_19qk8",
+    id: "v-yt-2026-9",
+    videoId: "X1O4PTOK4yo",
+    channelName: "연금박사 이영주",
+    channelHandle: "@pension500",
+    title: "99%가 모르는 연기비율선택제도",
+    summary: "국민연금을 전부 연기하지 않고 일부(50~90%)만 연기하여 가산 이율(연 7.2%)을 챙기면서 생활비를 충당하는 핵심 꿀팁을 공개합니다.",
+    publishDate: "2026-10-06",
+    category: "국민연금",
+  },
+  {
+    id: "v-yt-2026-10",
+    videoId: "sz5N9WJS310",
+    channelName: "박곰희TV",
+    channelHandle: "@gomhee",
+    title: "세공? 안세공? 연금수령 1500만원 건강보험료 영향 총정리",
+    summary: "세액공제 받은 원금과 안 받은 원금의 인출 우선순위, 사적연금 연 1,500만원 분리과세 기준과 건강보험료 영향을 명쾌하게 정리합니다.",
+    publishDate: "2026-10-05",
+    category: "절세",
+  },
+  {
+    id: "v-yt-2026-11",
+    videoId: "htMolTaKYPA",
     channelName: "연금이야기",
     channelHandle: "@PensionStory",
-    title: "ISA 한도 3억, 소득·세액공제 + 5.5% 분리과세 (법개정 발의안)",
-    summary: "ISA 계좌의 납입 한도 확대 및 세제 혜택 변경 법안을 분석하고, 연금계좌로의 이전 시 추가 세액공제를 받는 절세 전략을 설명합니다.",
-    publishDate: "2025-06-03",
-    category: "절세"
-  }
+    title: "기초연금 부부감액 축소 공무원연금 수급자도 기초연금 받는다",
+    summary: "기초연금 40만원 인상 법안 및 부부감액 20% 축소 논의, 직역연금(공무원/군인/사학) 연계 이슈를 심층 해설합니다.",
+    publishDate: "2026-10-04",
+    category: "국민연금",
+  },
+  {
+    id: "v-yt-2026-12",
+    videoId: "KePrOe1mH78",
+    channelName: "연금이야기",
+    channelHandle: "@PensionStory",
+    title: "국민연금 논란 총 정리 / 조기, 연기연금, 추납, 가입기간 효과",
+    summary: "손해연금이라 불리는 조기노령연금과 연기연금의 손익분기점 나이, 추후납부(추납) 및 임의계속가입의 수익비 분석을 총정리합니다.",
+    publishDate: "2026-10-01",
+    category: "국민연금",
+  },
+  {
+    id: "v-yt-2026-13",
+    videoId: "XZ8_bQoywG0",
+    channelName: "연금박사 이영주",
+    channelHandle: "@pension500",
+    title: "[표] 국민/퇴직/개인연금 건강보험료 부과기준",
+    summary: "국민연금, 공무원연금 등 공적연금과 퇴직연금(IRP), 개인연금의 건강보험료 부과 차이와 피부양자 탈락 방지 기준을 총정리합니다.",
+    publishDate: "2026-09-29",
+    category: "건강보험",
+  },
+  {
+    id: "v-yt-2026-14",
+    videoId: "xjeTH0NA-KA",
+    channelName: "연금이야기",
+    channelHandle: "@PensionStory",
+    title: "퇴직금 인출 전략 / 공제회, 연금계좌, ISA 비중과 건보료 대비",
+    summary: "퇴직연금 일시금 vs 연금 수령의 퇴직소득세 감면(30~40%) 혜택 비교 및 절세계좌 인출 순서를 가이드합니다.",
+    publishDate: "2026-09-28",
+    category: "퇴직연금",
+  },
 ];
 
 function getKeyMessages(video: Video | null): string[] {
@@ -231,12 +246,13 @@ export default function YoutubeHubPage() {
 
     try {
       const res = await fetch(`/api/youtube${refresh ? "?refresh=true" : ""}`, {
-        cache: refresh ? "no-store" : "default",
+        cache: "no-store",
       });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setVideos(data);
+          const sorted = [...data].sort((a, b) => b.publishDate.localeCompare(a.publishDate));
+          setVideos(sorted);
           const now = new Date();
           const timeStr = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
           setLastUpdated(timeStr);
@@ -296,18 +312,20 @@ export default function YoutubeHubPage() {
     }
   };
 
-  // Filter videos based on selected channel tab and search query
-  const filteredVideos = videos.filter((video) => {
-    const matchesChannel =
-      selectedChannel === "ALL" || video.channelHandle === selectedChannel;
-      
-    const matchesSearch =
-      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      video.category.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter videos based on selected channel tab and search query, always sorted by latest publish date
+  const filteredVideos = videos
+    .filter((video) => {
+      const matchesChannel =
+        selectedChannel === "ALL" || video.channelHandle === selectedChannel;
+        
+      const matchesSearch =
+        video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        video.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        video.category.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesChannel && matchesSearch;
-  });
+      return matchesChannel && matchesSearch;
+    })
+    .sort((a, b) => b.publishDate.localeCompare(a.publishDate));
 
   return (
     <main style={styles.container}>

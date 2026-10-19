@@ -19,6 +19,9 @@ export type DashboardModalType =
   | "dbDcTransition"
   | "threeBucket"
   | "pensionTransfer"
+  | "retirementRoadmap"
+  | "scenarioComparison"
+  | "accountTaxMatrix"
   | null;
 
 interface DashboardToolbarProps {
@@ -51,6 +54,58 @@ export default function DashboardToolbar({ onOpenModal }: DashboardToolbarProps)
         title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
       >
         ⚡ 30초 퀵 진단
+      </button>
+
+      {/* Sprint 42: 생애 D-Day 로드맵 & 시나리오 비교 & 절세계좌 매트릭스 */}
+      <button
+        id="btn-retirement-roadmap-actions"
+        onClick={() => onOpenModal("retirementRoadmap")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(99, 102, 241, 0.5)",
+          color: "#818cf8",
+          background: "rgba(99, 102, 241, 0.12)",
+        }}
+        title="은퇴 생애 D-Day 타임라인 및 연령대별 필수 실행 체크리스트"
+      >
+        🧭 D-Day 로드맵
+      </button>
+
+      <button
+        id="btn-scenario-comparison-actions"
+        onClick={() => onOpenModal("scenarioComparison")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(168, 85, 247, 0.5)",
+          color: "#c084fc",
+          background: "rgba(168, 85, 247, 0.12)",
+        }}
+        title="복수 은퇴 시나리오 비교함 (A안 기준 vs B안 조기 vs C안 연기)"
+      >
+        📊 시나리오 비교
+      </button>
+
+      <button
+        id="btn-account-tax-matrix-actions"
+        onClick={() => onOpenModal("accountTaxMatrix")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(20, 184, 166, 0.5)",
+          color: "#2dd4bf",
+          background: "rgba(20, 184, 166, 0.12)",
+        }}
+        title="2026 절세 계좌 4총사(ISA/연금저축/IRP/일반계좌) 최적 자산배분 매트릭스"
+      >
+        📑 절세 매트릭스
       </button>
 
       {/* 3대 신규 킬러 기능 버튼 */}

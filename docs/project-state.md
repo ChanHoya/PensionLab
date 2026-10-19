@@ -121,32 +121,30 @@
   - Story S40-4: 프로덕션 빌드(`npm run build`), 브라우저 서브에이전트 실화면 렌더링 검증, Git 커밋/푸시
 
 ## Active Sprint / Story
-- **Sprint 41** (개발, 검증, Git Push 완료): 3대 고도화 킬러 기능 및 전사 생태계 유기적 통합
-  - **Story S41-1 (완료)**: 퇴직연금 DB vs DC 전환 및 임금피크제(10~30% 삭감) 최적 타이밍 시뮬레이터 (`src/services/dbDcTransitionCalculator.ts`, `src/components/DbDcTransitionModal.tsx`)
-  - **Story S41-2 (완료)**: 은퇴자 맞춤 3-Bucket 현금 버퍼 플래너 및 하락장 안전 런웨이(N년) 설계기 (`src/services/threeBucketCalculator.ts`, `src/components/ThreeBucketPlanModal.tsx`)
-  - **Story S41-3 (완료)**: 개인연금(IRP/연금저축) 금융사 갈아타기(계좌이체) 실익 분석기 (`src/services/pensionTransferCalculator.ts`, `src/components/PensionTransferBenefitModal.tsx`)
-  - **Story S41-4 (완료)**: 대시보드 상단 툴바, 사이드바, 단일 모달 매니저 연동 및 스마트 용어사전 3대 신규 용어 보강
-  - **Story S41-5 (완료)**: 전사 생태계 통합 (온보딩 Step 2/3/4 인라인 배너, 랜딩 페이지 히어로 3대 카드, AI 진단 리포트 섹션 10 툴킷 & AI Advisor 시스템 프롬프트 연동)
-  - **Story S41-6 (완료)**: `npm run build` 프로덕션 빌드 성공 (21/21 static pages), Chrome 브라우저 서브에이전트 실화면 렌더링 및 모달 인터랙션 4개 핵심 페이지 전수 검증, 원격 Git Push 완료
+- **Sprint 42** (개발, 코드리뷰, 검증, Git Push 완료): 4대 은퇴 실행력 & 사용자 경험 극대화 종합 패키지
+  - **Story S42-1 (완료)**: 은퇴 생애 D-Day 로드맵 & 실행 체크리스트 (`src/services/retirementRoadmapService.ts`, `src/components/RetirementRoadmapModal.tsx`)
+  - **Story S42-2 (완료)**: 복수 은퇴 시나리오 비교함 (A안 기준 vs B안 조기 vs C안 연기연금 Side-by-Side) (`src/services/scenarioComparisonService.ts`, `src/components/ScenarioComparisonModal.tsx`)
+  - **Story S42-3 (완료)**: 2026 절세 계좌 4총사(ISA/연금저축/IRP/일반) 자산배분 최적화 매트릭스 (`src/services/accountTaxMatrixService.ts`, `src/components/AccountTaxMatrixModal.tsx`)
+  - **Story S42-4 (완료)**: 모바일 전용 바텀 네비게이션(Bottom Tab Bar) & 스마트 PWA 설치 안내 배너 (`src/components/MobileBottomNav.tsx`, `src/components/PwaInstallBanner.tsx`)
+  - **Story S42-5 (완료)**: 전사 생태계 연동 (대시보드 툴바/사이드바/모달매니저, 랜딩 6대 솔루션 그리드, AI 진단 섹션 07 로드맵 버튼, 스마트 용어사전 3대 신규 용어)
+  - **Story S42-6 (완료)**: 프로덕션 빌드(`npm run build`) 성공 (21/21 routes), Chrome 브라우저 실화면 렌더링 검증, 코드 리뷰 통과, GitHub 원격 저장소(`main`) Push 완료
 
-## Session Handoff (Sprint 41 3대 킬러 기능 개발 및 배포 완료)
+## Session Handoff (Sprint 42 4대 패키지 개발 및 배포 완료)
 - **주요 산출물**:
-  1. `src/services/dbDcTransitionCalculator.ts` & `src/components/DbDcTransitionModal.tsx`:
-     - 임금피크제로 인한 퇴직금 삭감 방어 및 DB vs 피크 직전 DC vs 즉시 DC 3대 전략 비교
-     - Recharts 성장 궤적, 수천만원 자산 격차, 연도별 상세 테이블 제공
-  2. `src/services/threeBucketCalculator.ts` & `src/components/ThreeBucketPlanModal.tsx`:
-     - 1~2년 안심 현금(Bucket 1) + 3~7년 중기 인컴(Bucket 2) + 8년+ 복리 성장(Bucket 3) 최적 자산배분
-     - 주식 시장 30% 폭락 시 주식 매도 없이 버티는 안전 런웨이(N년) 배너 및 강세/약세장 리밸런싱 원칙
-  3. `src/services/pensionTransferCalculator.ts` & `src/components/PensionTransferBenefitModal.tsx`:
-     - 기존 은행 신탁/보험사 연금보험(1~2%대) vs 증권사 글로벌 ETF/TDF(5~7%대) 복리 격차 역산
-     - 세금 불이익 0원 원스톱 계좌이체 3단계 가이드 및 유의사항 체크리스트
-  4. 전사 생태계 통합:
-     - 대시보드: `DashboardToolbar.tsx`, `DashboardModalManager.tsx`, `DashboardSidebar.tsx` 연동
-     - 용어사전: `src/config/glossary.ts` 3대 신규 용어 (`WAGE_PEAK_DB_DC`, `THREE_BUCKET_STRATEGY`, `PENSION_ACCOUNT_TRANSFER`)
-     - AI 어드바이저: `DiagnosisReport.tsx` 섹션 10 툴킷 카드 배지 연동, `ai-advisor/page.tsx` 모달 3종 마운트, `reportNarrative.ts` 및 `api/ai/advisor/route.ts` 추천 로직 탑재
-     - 랜딩 페이지: `page.tsx` 히어로 직하단 3대 실전 솔루션 그리드 및 모달 팝업 연동
-     - 온보딩 마법사: `onboarding/page.tsx` Step 2(퇴직연금), Step 3(개인연금), Step 4(전체확인) 단계별 인라인 배너 및 모달 연동
-- **검증 상태**: `npm run build` 통과 (21/21 routes), Chrome 브라우저 서브에이전트 4개 페이지(대시보드/AI어드바이저/랜딩/온보딩) 실화면 렌더링 및 모달 인터랙션 검증 완료, GitHub 원격 저장소(`main`) Push 완료.
+  1. `RetirementRoadmapModal.tsx` & `retirementRoadmapService.ts`:
+     - 나이대별 D-Day 타임라인, localStorage 영구 저장 체크리스트, 연계 도구 스마트 링크
+  2. `ScenarioComparisonModal.tsx` & `scenarioComparisonService.ts`:
+     - 기준 플랜 vs 조기 은퇴 vs 연기연금 3열 카드 비교 및 원클릭 대시보드 변수 즉시 적용
+  3. `AccountTaxMatrixModal.tsx` & `accountTaxMatrixService.ts`:
+     - 2026 개정 세법 기준 4계좌 세제 룰 비교표 및 자산군(미국배당/지수/채권/국내주식)별 최적 바구니 추천
+  4. `MobileBottomNav.tsx` & `PwaInstallBanner.tsx`:
+     - 스마트폰 환경 하단 고정 5버튼 네비게이션 및 7일 쿨다운 A2HS 홈 화면 설치 배너
+  5. 전사 생태계 통합:
+     - 대시보드 상단 툴바 3대 버튼 (`🧭 D-Day 로드맵`, `📊 시나리오 비교`, `📑 절세 매트릭스`), 사이드바 바로가기, 모달 매니저 통합
+     - 메인 랜딩 페이지 6대 실전 솔루션 그리드
+     - AI 종합 진단 리포트 섹션 07 로드맵 액션 버튼 및 AI 어드바이저 시스템 프롬프트 반영
+     - 스마트 용어사전 3대 신규 용어 (`RETIREMENT_ROADMAP`, `SCENARIO_COMPARISON`, `ACCOUNT_TAX_MATRIX`)
+- **검증 상태**: `npm run build` 성공 (0 errors), Chrome 브라우저 실화면 렌더링 검증 통과, 코드 리뷰 완료, GitHub 원격 저장소(`main`) Push 완료.
 
 
 

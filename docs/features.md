@@ -205,5 +205,22 @@
      - 섹션 10 툴킷 카드 배지 및 클릭 시 3대 모달 즉시 호출 연동
      - Gemini 3.8 Flash 시스템 프롬프트 및 fallbackNarrative에 3대 도구 매핑 및 처방 narrative 강화 (Sprint 41, Story S41-4/S41-5)
 
+- **[FEAT-058] 은퇴 생애 D-Day 로드맵 & 실행 체크리스트**:
+  1) 계산 서비스 (`src/services/retirementRoadmapService.ts`): 현재 나이부터 80세 초고령기까지 연령대별 법정 절세/인출 D-Day 마일스톤 생성
+  2) 인터랙티브 모달 (`src/components/RetirementRoadmapModal.tsx`): 타임라인 네비게이션, localStorage 영구 저장 체크리스트, 연계 도구 바로가기 스마트 링크 지원 (Sprint 42, Story S42-1)
+
+- **[FEAT-059] 복수 은퇴 시나리오 비교함 (A vs B vs C Side-by-Side)**:
+  1) 시나리오 엔진 (`src/services/scenarioComparisonService.ts`): A안(기준 플랜) vs B안(55세 조기 은퇴) vs C안(65세 완주 & 연기연금) 월 수령액·고갈나이·생애총액·안전런웨이 연산
+  2) 비교 모달 (`src/components/ScenarioComparisonModal.tsx`): 3열 Side-by-Side 카드 및 원클릭 대시보드 변수 즉시 적용 (Sprint 42, Story S42-2)
+
+- **[FEAT-060] 2026 절세 계좌 4총사(ISA/연금저축/IRP/일반계좌) 자산배분 매트릭스**:
+  1) 세제 룰 매트릭스 (`src/services/accountTaxMatrixService.ts`): 금융투자소득세 폐지 및 2026 세법 개정 기준 4계좌 세제 혜택 및 자산군(미국배당/해외지수/채권/국내주식)별 세후 실질 수익률 역산
+  2) 매트릭스 모달 (`src/components/AccountTaxMatrixModal.tsx`): 자산군별 최적 추천 계좌 패널 및 4계좌 가로 비교표 제공 (Sprint 42, Story S42-3)
+
+- **[FEAT-061] 모바일 전용 바텀 네비게이션(Bottom Tab Bar) & 스마트 PWA 설치 배너**:
+  1) 모바일 바텀 네비 (`src/components/MobileBottomNav.tsx`): 스마트폰(md 미만) 화면 하단 고정 탭 바 (홈/대시보드/AI진단/인출전략/연금뉴스)
+  2) PWA 설치 배너 (`src/components/PwaInstallBanner.tsx`): beforeinstallprompt 이벤트 감지 A2HS 설치 안내 배너 및 7일 쿨다운 제어 (Sprint 42, Story S42-4)
+
+
 
 

@@ -32,6 +32,9 @@ interface Props {
   onOpenDbDcModal?: () => void;
   onOpenThreeBucketModal?: () => void;
   onOpenPensionTransferModal?: () => void;
+  onOpenRetirementRoadmapModal?: () => void;
+  onOpenScenarioComparisonModal?: () => void;
+  onOpenAccountTaxMatrixModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -449,6 +452,75 @@ export default function DashboardSidebar(props: Props) {
           >
             <span>🔄</span>
             <span>개인연금(IRP) 금융사 갈아타기 실익</span>
+          </button>
+        )}
+        {props.onOpenRetirementRoadmapModal && (
+          <button
+            type="button"
+            onClick={props.onOpenRetirementRoadmapModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(99, 102, 241, 0.4)",
+              color: "#818cf8",
+              background: "rgba(99, 102, 241, 0.08)",
+            }}
+          >
+            <span>🧭</span>
+            <span>은퇴 생애 D-Day 로드맵 & 체크리스트</span>
+          </button>
+        )}
+        {props.onOpenScenarioComparisonModal && (
+          <button
+            type="button"
+            onClick={props.onOpenScenarioComparisonModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(168, 85, 247, 0.4)",
+              color: "#c084fc",
+              background: "rgba(168, 85, 247, 0.08)",
+            }}
+          >
+            <span>📊</span>
+            <span>복수 은퇴 시나리오 비교함 (A vs B vs C)</span>
+          </button>
+        )}
+        {props.onOpenAccountTaxMatrixModal && (
+          <button
+            type="button"
+            onClick={props.onOpenAccountTaxMatrixModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(20, 184, 166, 0.4)",
+              color: "#2dd4bf",
+              background: "rgba(20, 184, 166, 0.08)",
+            }}
+          >
+            <span>📑</span>
+            <span>2026 절세 계좌 4총사 자산배분 매트릭스</span>
           </button>
         )}
       </details>

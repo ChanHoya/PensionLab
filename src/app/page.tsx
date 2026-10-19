@@ -9,6 +9,9 @@ import QuickDiagnosisModal from "@/components/QuickDiagnosisModal";
 import DbDcTransitionModal from "@/components/DbDcTransitionModal";
 import ThreeBucketPlanModal from "@/components/ThreeBucketPlanModal";
 import PensionTransferBenefitModal from "@/components/PensionTransferBenefitModal";
+import RetirementRoadmapModal from "@/components/RetirementRoadmapModal";
+import ScenarioComparisonModal from "@/components/ScenarioComparisonModal";
+import AccountTaxMatrixModal from "@/components/AccountTaxMatrixModal";
 
 const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
   ssr: false,
@@ -88,6 +91,9 @@ export default function LandingPage() {
   const [dbDcModalOpen, setDbDcModalOpen] = useState(false);
   const [threeBucketModalOpen, setThreeBucketModalOpen] = useState(false);
   const [pensionTransferModalOpen, setPensionTransferModalOpen] = useState(false);
+  const [retirementRoadmapOpen, setRetirementRoadmapOpen] = useState(false);
+  const [scenarioComparisonOpen, setScenarioComparisonOpen] = useState(false);
+  const [accountTaxMatrixOpen, setAccountTaxMatrixOpen] = useState(false);
 
   const getNavStyle = (menuId: "service-intro" | "pension-library" | "reference-services") => {
     return {
@@ -284,6 +290,78 @@ export default function LandingPage() {
               체험해보기 ➔
             </div>
           </div>
+
+          {/* 카드 4: 은퇴 D-Day 로드맵 */}
+          <div
+            id="landing-card-retirement-roadmap"
+            onClick={() => setRetirementRoadmapOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(99, 102, 241, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>🧭</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(99, 102, 241, 0.15)", color: "#818cf8", fontWeight: 700 }}>
+                생애 실행 지도
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              은퇴 D-Day 로드맵 & 체크리스트
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              현재 나이부터 55세 사적연금, 60세 퇴직금, 65세 국민연금, 70세 주택연금까지 연령대별 필수 실행 과제와 체크리스트를 점검합니다.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#818cf8", fontWeight: 700 }}>
+              체험해보기 ➔
+            </div>
+          </div>
+
+          {/* 카드 5: 복수 시나리오 비교 */}
+          <div
+            id="landing-card-scenario-comparison"
+            onClick={() => setScenarioComparisonOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(168, 85, 247, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>📊</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(168, 85, 247, 0.15)", color: "#c084fc", fontWeight: 700 }}>
+                Side-by-Side 비교
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              복수 은퇴 시나리오 비교함 (A vs B vs C)
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              기준 플랜, 55세 조기 퇴직(파이어), 65세 완주 & 연기연금 극대화 등 3대 시나리오의 월 수령액과 고갈 나이를 나란히 비교합니다.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#c084fc", fontWeight: 700 }}>
+              체험해보기 ➔
+            </div>
+          </div>
+
+          {/* 카드 6: 절세 계좌 매트릭스 */}
+          <div
+            id="landing-card-account-tax-matrix"
+            onClick={() => setAccountTaxMatrixOpen(true)}
+            className="premium-card"
+            style={{ padding: "20px", borderRadius: "14px", border: "1px solid rgba(20, 184, 166, 0.3)", cursor: "pointer", background: "var(--surface)" }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+              <span style={{ fontSize: "1.5rem" }}>📑</span>
+              <span style={{ fontSize: "0.7rem", padding: "3px 8px", borderRadius: "6px", background: "rgba(20, 184, 166, 0.15)", color: "#2dd4bf", fontWeight: 700 }}>
+                2026 개정 세법
+              </span>
+            </div>
+            <h4 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", marginBottom: "6px" }}>
+              절세 계좌 4총사 자산배분 매트릭스
+            </h4>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: "12px" }}>
+              미국 배당주, 해외 지수 ETF, 채권, 국내 주식을 ISA·연금저축·IRP·일반계좌 중 어느 바구니에 담아야 세후 복리가 극대화될지 알려드립니다.
+            </p>
+            <div style={{ fontSize: "0.75rem", color: "#2dd4bf", fontWeight: 700 }}>
+              체험해보기 ➔
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -402,6 +480,18 @@ export default function LandingPage() {
     <PensionTransferBenefitModal
       isOpen={pensionTransferModalOpen}
       onClose={() => setPensionTransferModalOpen(false)}
+    />
+    <RetirementRoadmapModal
+      isOpen={retirementRoadmapOpen}
+      onClose={() => setRetirementRoadmapOpen(false)}
+    />
+    <ScenarioComparisonModal
+      isOpen={scenarioComparisonOpen}
+      onClose={() => setScenarioComparisonOpen(false)}
+    />
+    <AccountTaxMatrixModal
+      isOpen={accountTaxMatrixOpen}
+      onClose={() => setAccountTaxMatrixOpen(false)}
     />
     </>
   );

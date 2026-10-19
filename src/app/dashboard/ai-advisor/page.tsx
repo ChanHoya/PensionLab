@@ -22,6 +22,9 @@ import PortfolioBacktestModal from "@/components/PortfolioBacktestModal";
 import DbDcTransitionModal from "@/components/DbDcTransitionModal";
 import ThreeBucketPlanModal from "@/components/ThreeBucketPlanModal";
 import PensionTransferBenefitModal from "@/components/PensionTransferBenefitModal";
+import RetirementRoadmapModal from "@/components/RetirementRoadmapModal";
+import ScenarioComparisonModal from "@/components/ScenarioComparisonModal";
+import AccountTaxMatrixModal from "@/components/AccountTaxMatrixModal";
 import { AiThinkingStream } from "@/components/motion";
 
 const emptySubscribe = () => () => {};
@@ -426,6 +429,22 @@ export default function AiAdvisorPage() {
         isOpen={activeTool === "PENSION_TRANSFER"}
         onClose={() => setActiveTool(null)}
         initialBalance={store.personalPensions?.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) || 3000}
+      />
+
+      <RetirementRoadmapModal
+        isOpen={activeTool === "RETIREMENT_ROADMAP"}
+        onClose={() => setActiveTool(null)}
+        onOpenTool={(toolId) => setActiveTool(toolId as ToolId)}
+      />
+
+      <ScenarioComparisonModal
+        isOpen={activeTool === "SCENARIO_COMPARISON"}
+        onClose={() => setActiveTool(null)}
+      />
+
+      <AccountTaxMatrixModal
+        isOpen={activeTool === "ACCOUNT_TAX_MATRIX"}
+        onClose={() => setActiveTool(null)}
       />
     </main>
   );

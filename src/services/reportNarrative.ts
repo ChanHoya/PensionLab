@@ -21,7 +21,10 @@ export type ToolId =
   | "PORTFOLIO_BACKTEST"
   | "DB_DC_TRANSITION"
   | "THREE_BUCKET_PLAN"
-  | "PENSION_TRANSFER";
+  | "PENSION_TRANSFER"
+  | "RETIREMENT_ROADMAP"
+  | "SCENARIO_COMPARISON"
+  | "ACCOUNT_TAX_MATRIX";
 
 export const TOOL_IDS: ToolId[] = [
   "SAVINGS_PLAN",
@@ -36,6 +39,9 @@ export const TOOL_IDS: ToolId[] = [
   "DB_DC_TRANSITION",
   "THREE_BUCKET_PLAN",
   "PENSION_TRANSFER",
+  "RETIREMENT_ROADMAP",
+  "SCENARIO_COMPARISON",
+  "ACCOUNT_TAX_MATRIX",
 ];
 
 export interface ToolMeta {
@@ -117,6 +123,24 @@ export const TOOL_META_MAP: Record<ToolId, ToolMeta> = {
     name: "개인연금(IRP) 금융사 갈아타기 실익",
     badge: "🔄 연금 갈아타기",
     description: "저수익 은행 신탁·보험을 세금 불이익 0원으로 증권사 ETF/TDF로 이전할 때의 복리 수령액 증가분을 계산합니다.",
+  },
+  RETIREMENT_ROADMAP: {
+    id: "RETIREMENT_ROADMAP",
+    name: "은퇴 생애 D-Day 로드맵 & 실행 체크리스트",
+    badge: "🧭 D-Day 로드맵",
+    description: "내 나이부터 80세 초고령기까지 연령대별 필수 실행 과제와 D-Day 체크리스트를 점검합니다.",
+  },
+  SCENARIO_COMPARISON: {
+    id: "SCENARIO_COMPARISON",
+    name: "복수 은퇴 시나리오 비교함 (A vs B vs C)",
+    badge: "📊 시나리오 비교",
+    description: "기준 플랜, 조기 은퇴(파이어), 정년 완주 & 연기연금 3대 시나리오를 Side-by-Side로 비교합니다.",
+  },
+  ACCOUNT_TAX_MATRIX: {
+    id: "ACCOUNT_TAX_MATRIX",
+    name: "2026 절세 계좌 4총사 자산배분 매트릭스",
+    badge: "📑 절세 매트릭스",
+    description: "자산군(미국배당/지수/채권/국내주식)별로 일반/ISA/연금저축/IRP 중 최적의 바구니를 추천합니다.",
   },
 };
 

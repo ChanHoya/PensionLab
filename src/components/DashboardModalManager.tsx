@@ -18,10 +18,14 @@ import PortfolioBacktestModal from "./PortfolioBacktestModal";
 import DbDcTransitionModal from "./DbDcTransitionModal";
 import ThreeBucketPlanModal from "./ThreeBucketPlanModal";
 import PensionTransferBenefitModal from "./PensionTransferBenefitModal";
+import RetirementRoadmapModal from "./RetirementRoadmapModal";
+import ScenarioComparisonModal from "./ScenarioComparisonModal";
+import AccountTaxMatrixModal from "./AccountTaxMatrixModal";
 
 interface DashboardModalManagerProps {
   activeModal: DashboardModalType;
   onClose: () => void;
+  onOpenModal?: (modal: DashboardModalType) => void;
   coveredCallAsset: number;
   coveredCallDividendRate: number;
   onApplyDividendRate: (rate: number) => void;
@@ -34,6 +38,7 @@ interface DashboardModalManagerProps {
 export default function DashboardModalManager({
   activeModal,
   onClose,
+  onOpenModal,
   coveredCallAsset,
   coveredCallDividendRate,
   onApplyDividendRate,
@@ -113,6 +118,33 @@ export default function DashboardModalManager({
         isOpen={activeModal === "portfolioBacktest"}
         onClose={onClose}
         defaultCapital={coveredCallAsset}
+      />
+      <RetirementRoadmapModal
+        isOpen={activeModal === "retirementRoadmap"}
+        onClose={onClose}
+        onOpenTool={(toolId) => {
+          if (!onOpenModal) return;
+          if (toolId === "DB_DC_TRANSITION") onOpenModal("dbDcTransition");
+          else if (toolId === "THREE_BUCKET_PLAN") onOpenModal("threeBucket");
+          else if (toolId === "PENSION_TRANSFER") onOpenModal("pensionTransfer");
+          else if (toolId === "NPS_BEP") onOpenModal("bep");
+          else if (toolId === "NPS_BOOST") onOpenModal("npsBoost");
+          else if (toolId === "SAVINGS_PLAN") onOpenModal("tax15");
+          else if (toolId === "HEALTH_BILL") onOpenModal("healthBill");
+          else if (toolId === "REVERSE_MORTGAGE") onOpenModal("reverseMortgage");
+          else if (toolId === "INCOME_BRIDGE") onOpenModal("incomeBridge");
+          else if (toolId === "SURVIVOR_CARE") onOpenModal("survivorCare");
+          else if (toolId === "ISA_TRANSFER") onOpenModal("isaTransfer");
+          else if (toolId === "DIVIDEND_STRATEGY") onOpenModal("dividendStrategy");
+        }}
+      />
+      <ScenarioComparisonModal
+        isOpen={activeModal === "scenarioComparison"}
+        onClose={onClose}
+      />
+      <AccountTaxMatrixModal
+        isOpen={activeModal === "accountTaxMatrix"}
+        onClose={onClose}
       />
     </>
   );

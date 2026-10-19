@@ -141,6 +141,29 @@ graph TD
   DiagnosisReport --> DbDcModal
   DiagnosisReport --> ThreeBucketModal
   DiagnosisReport --> TransferBenefitModal
+
+  %% Sprint 42 Additions (Roadmap, Scenario Comparison, Account Tax Matrix, Mobile Bottom Nav, PWA Banner)
+  RoadmapModal[src/components/RetirementRoadmapModal.tsx] --> RoadmapCalc[src/services/retirementRoadmapService.ts]
+  ScenarioModal[src/components/ScenarioComparisonModal.tsx] --> ScenarioCalc[src/services/scenarioComparisonService.ts]
+  TaxMatrixModal[src/components/AccountTaxMatrixModal.tsx] --> TaxMatrixCalc[src/services/accountTaxMatrixService.ts]
+  MobileNav[src/components/MobileBottomNav.tsx]
+  PwaBanner[src/components/PwaInstallBanner.tsx]
+
+  RootLayout[src/app/layout.tsx] --> MobileNav
+  RootLayout[src/app/layout.tsx] --> PwaBanner
+
+  Dashboard --> RoadmapModal
+  Dashboard --> ScenarioModal
+  Dashboard --> TaxMatrixModal
+
+  Landing --> RoadmapModal
+  Landing --> ScenarioModal
+  Landing --> TaxMatrixModal
+
+  AIAdvisor --> RoadmapModal
+  AIAdvisor --> ScenarioModal
+  AIAdvisor --> TaxMatrixModal
+  DiagnosisReport --> RoadmapModal
 ```
 
 

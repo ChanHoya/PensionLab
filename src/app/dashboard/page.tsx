@@ -723,6 +723,9 @@ export default function DashboardPage() {
             onOpenDbDcModal={() => setActiveModal("dbDcTransition")}
             onOpenThreeBucketModal={() => setActiveModal("threeBucket")}
             onOpenPensionTransferModal={() => setActiveModal("pensionTransfer")}
+            onOpenRetirementRoadmapModal={() => setActiveModal("retirementRoadmap")}
+            onOpenScenarioComparisonModal={() => setActiveModal("scenarioComparison")}
+            onOpenAccountTaxMatrixModal={() => setActiveModal("accountTaxMatrix")}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
@@ -1329,6 +1332,7 @@ export default function DashboardPage() {
       <DashboardModalManager
         activeModal={activeModal}
         onClose={() => setActiveModal(null)}
+        onOpenModal={(modal) => setActiveModal(modal)}
         coveredCallAsset={store.simulationParams.coveredCallAsset || 40000}
         coveredCallDividendRate={store.simulationParams.coveredCallDividendRate || 9.0}
         onApplyDividendRate={(rate) => store.setSimulationParams({ coveredCallDividendRate: rate })}

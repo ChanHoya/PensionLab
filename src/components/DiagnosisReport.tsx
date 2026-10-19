@@ -780,7 +780,35 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
       </Section>
 
       {/* 07 실행 로드맵 */}
-      <Section no="07" title="실행 로드맵" sub="시점별 실행 과제 · 우선순위와 기대 효과">
+      <Section
+        no="07"
+        title="실행 로드맵"
+        sub="시점별 실행 과제 · 우선순위와 기대 효과"
+        action={
+          !isPrintMode && onOpenTool ? (
+            <button
+              onClick={() => onOpenTool("RETIREMENT_ROADMAP")}
+              className="premium-button"
+              style={{
+                fontSize: "0.75rem",
+                padding: "6px 12px",
+                background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                fontWeight: 700,
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+              }}
+            >
+              <span>🧭</span>
+              <span>D-Day 로드맵 & 체크리스트 열기</span>
+            </button>
+          ) : undefined
+        }
+      >
         <div className="rpt-roadmap">
           {TIMINGS.map((t, i) => {
             const items = n.actions.filter((a) => a.timing === t);

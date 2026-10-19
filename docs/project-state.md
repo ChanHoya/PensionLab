@@ -214,8 +214,11 @@
   4. 3초 원스톱 인스턴트 온보딩 드롭존 (`onboarding/page.tsx`):
      - 온보딩 상단 대형 드래그앤드롭 존 배치, 엑셀/CSV/PDF 파일 드롭 시 1/2/3층 연금 자동 파싱 후 3초 만에 대시보드 직행 연동
   5. 전사 생태계 연동:
-     - `DashboardToolbar.tsx`, `DashboardSidebar.tsx`, `DashboardModalManager.tsx`에 신규 모달 타입 등록 및 `next/dynamic` 분할 로딩 연결
-- **검증 상태**: `npm run build` 성공(0 errors), browser_subagent 화면 렌더링 및 모달 인터랙션 검증 통과.
+- **[Hotfix] 랜딩 페이지 스크롤 차단 복구 및 하단 미스타일 네비게이션 텍스트 제거**:
+  1. 랜딩 페이지(`src/app/page.tsx`): 과거 단일 화면 맞춤 설정으로 남아있던 `styles.container`의 `height: 100vh` 및 `overflow: hidden`을 `minHeight: 100vh`와 `overflowX: hidden`으로 정상화하여 8대 킬러 솔루션 카드 그리드 및 하단 섹션으로의 자연스러운 스크롤 완전 복구. `diagramContainer` 및 `diagramImage` 크기 반응형 자동 최적화.
+  2. 하단 텍스트 메뉴 제거(`src/app/layout.tsx`): Vanilla CSS 프로젝트에 잘못 삽입되어 데스크톱 및 모든 화면 좌하단에 날것의 텍스트(`🏠홈 📊대시보드 ...`)로 노출되던 Tailwind 기반 `MobileBottomNav` 제거 및 `body` 클래스 정리.
+  3. 빌드 안정화: `package.json`의 build 스크립트에 `next build --webpack`을 지정하여 Next 16 Turbopack 폰트 해석 버그 차단 및 프로덕션 빌드(22/22 routes) 100% 성공 검증 완료.
+
 
 
 

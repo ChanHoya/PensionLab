@@ -217,9 +217,9 @@
   1) 세제 룰 매트릭스 (`src/services/accountTaxMatrixService.ts`): 금융투자소득세 폐지 및 2026 세법 개정 기준 4계좌 세제 혜택 및 자산군(미국배당/해외지수/채권/국내주식)별 세후 실질 수익률 역산
   2) 매트릭스 모달 (`src/components/AccountTaxMatrixModal.tsx`): 자산군별 최적 추천 계좌 패널 및 4계좌 가로 비교표 제공 (Sprint 42, Story S42-3)
 
-- **[FEAT-061] 모바일 전용 바텀 네비게이션(Bottom Tab Bar) & 스마트 PWA 설치 배너**:
-  1) 모바일 바텀 네비 (`src/components/MobileBottomNav.tsx`): 스마트폰(md 미만) 화면 하단 고정 탭 바 (홈/대시보드/AI진단/인출전략/연금뉴스)
-  2) PWA 설치 배너 (`src/components/PwaInstallBanner.tsx`): beforeinstallprompt 이벤트 감지 A2HS 설치 안내 배너 및 7일 쿨다운 제어 (Sprint 42, Story S42-4)
+- **[FEAT-061] 스마트 PWA 홈 화면 추가 지원**:
+  1) 모바일 바텀 네비: Vanilla CSS 환경과의 클래스 충돌 및 데스크톱 날것 텍스트 노출 문제로 제거 및 헤더/사이드바 네비게이션으로 일원화
+  2) PWA 설치 지원: PWA 매니페스트 및 서비스워커 기반 오프라인 캐싱 및 모바일 독립형(standalone) 실행 지원
 
 - **[FEAT-062] 실전 은퇴 가계부 & 연금 인출 트래커**:
   1) 계산 엔진 (`src/services/cashflowTrackerService.ts`): 은퇴 후 4대 필수 지출(주거/식비/의료/생활) 및 4대 수입(공적/사적/금융/기타) 모델링, 목표 생활비 대비 괴리율(Gap) 및 수지차 연산, 비연금 자산 소진 런웨이(Runway) 및 재무 건전성 점수(100점 만점), 12개월 월별 추이 로컬스토리지 저장

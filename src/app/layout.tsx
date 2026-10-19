@@ -28,9 +28,6 @@ const darkModeScript = `
 })();
 `;
 
-import MobileBottomNav from "@/components/MobileBottomNav";
-import PwaInstallBanner from "@/components/PwaInstallBanner";
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -41,10 +38,8 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: darkModeScript }} />
       </head>
-      <body id="pensionlab-root" className="pb-14 md:pb-0">
+      <body id="pensionlab-root">
         {children}
-        <MobileBottomNav />
-        <PwaInstallBanner />
       </body>
     </html>
   );

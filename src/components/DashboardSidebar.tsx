@@ -29,6 +29,9 @@ interface Props {
   onOpenIsaTransferModal?: () => void;
   onOpenDividendStrategyModal?: () => void;
   onOpenPortfolioBacktestModal?: () => void;
+  onOpenDbDcModal?: () => void;
+  onOpenThreeBucketModal?: () => void;
+  onOpenPensionTransferModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -370,10 +373,82 @@ export default function DashboardSidebar(props: Props) {
               borderColor: "rgba(56, 189, 248, 0.4)",
               color: "#38bdf8",
               background: "rgba(56, 189, 248, 0.06)",
+              marginBottom: "4px",
             }}
           >
             <span>🎯</span>
             <span>부족액 역산 적립 플랜</span>
+          </button>
+        )}
+        {props.onOpenDbDcModal && (
+          <button
+            type="button"
+            onClick={props.onOpenDbDcModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(245, 158, 11, 0.4)",
+              color: "#f59e0b",
+              background: "rgba(245, 158, 11, 0.08)",
+              marginBottom: "4px",
+            }}
+          >
+            <span>⚖️</span>
+            <span>퇴직연금 DB/DC 전환·임금피크 타이밍</span>
+          </button>
+        )}
+        {props.onOpenThreeBucketModal && (
+          <button
+            type="button"
+            onClick={props.onOpenThreeBucketModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(6, 182, 212, 0.4)",
+              color: "#06b6d4",
+              background: "rgba(6, 182, 212, 0.08)",
+              marginBottom: "4px",
+            }}
+          >
+            <span>🪣</span>
+            <span>3-Bucket 현금 버퍼 플래너</span>
+          </button>
+        )}
+        {props.onOpenPensionTransferModal && (
+          <button
+            type="button"
+            onClick={props.onOpenPensionTransferModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(16, 185, 129, 0.4)",
+              color: "#10b981",
+              background: "rgba(16, 185, 129, 0.08)",
+            }}
+          >
+            <span>🔄</span>
+            <span>개인연금(IRP) 금융사 갈아타기 실익</span>
           </button>
         )}
       </details>

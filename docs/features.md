@@ -168,6 +168,32 @@
      - 12개의 boolean useState 상태를 `activeModal: DashboardModalType`으로 단일화하고 `DashboardModalManager`로 일괄 분리
      - 약 200줄에 달하던 툴바 액션 JSX를 `DashboardToolbar`로 컴포넌트화하여 코드 가독성과 유지보수성 대폭 향상 (Sprint 40)
 
+- **[FEAT-054] 퇴직연금 DB vs DC 전환 및 임금피크제 최적 타이밍 시뮬레이터**:
+  1) 계산 엔진 (`src/services/dbDcTransitionCalculator.ts`):
+     - 임금상승률과 DC 기대수익률 간의 크로스오버 분석을 통한 황금 타이밍(Golden Time) 자동 산출
+     - 임금피크제(피크 시작 나이, 연차별 임금 삭감률 10~30%) 적용 시 평생 퇴직금 삭감 방어 전략 역산
+     - 3대 시나리오 비교: [전략 A: DB 유지] vs [전략 B: 임금피크 직전 DC 전환] vs [전략 C: 즉시 DC 전환]
+  2) 모달 UI (`src/components/DbDcTransitionModal.tsx`):
+     - 현재 나이, 은퇴 나이, 근속연수, 월 급여, 임금상승률, DC 수익률, 임금피크제 옵션 슬라이더
+     - 3대 전략 카드 및 은퇴 시점 퇴직급여 격차(수천만원), Recharts 누적 성장 곡선, 연도별 상세 테이블 제공 (Sprint 41, Story S41-1)
+
+- **[FEAT-055] 은퇴자 맞춤 3-Bucket 현금 버퍼 플래너 (하락장 방패 설계)**:
+  1) 계산 엔진 (`src/services/threeBucketCalculator.ts`):
+     - Bucket 1 (1~2년 안심 현금: CMA/예금/단기채) + Bucket 2 (3~7년 중기 인컴: 배당성장 ETF/만기매칭 채권/리츠) + Bucket 3 (8년+ 장기 복리 성장: S&P500/나스닥100/TDF) 최적 자산배분
+     - 시장 폭락(약세장) 발생 시 주식을 1주도 팔지 않고 은퇴 생활비를 전액 인출할 수 있는 안전 런웨이(Safety Runway, N년) 산출
+     - 강세장/약세장 리밸런싱 행동 원칙 및 연간 예상 배당·이자 인컴 도출
+  2) 모달 UI (`src/components/ThreeBucketPlanModal.tsx`):
+     - 총 은퇴자산, 목표 생활비, 확정 공적연금 인터랙티브 슬라이더 및 자산배분 프로그레스 바
+     - 3대 버킷 상세 카드, 추천 포트폴리오 자산군, 리밸런싱 가이드라인 제공 (Sprint 41, Story S41-2)
+
+- **[FEAT-056] 개인연금(IRP/연금저축) 금융사 갈아타기(계좌이체) 실익 분석기**:
+  1) 계산 엔진 (`src/services/pensionTransferCalculator.ts`):
+     - 세금 불이익(기타소득세 16.5% 해지세) 0원 및 기존 세액공제·가입기간 100% 승계하는 '연금계좌 계약이전 제도' 기반
+     - 기존 금융사(은행 신탁, 보험사 연금보험 연 1.5~2.5%) vs 증권사 포트폴리오(ETF/TDF 연 5~7%) 복리 격차 역산
+     - 은퇴 시점 만기 자산 격차, 20년 월 수령액 증가분, 누적 수수료 절감액, 연도별 복리 성장 궤적 산출
+  2) 모달 UI (`src/components/PensionTransferBenefitModal.tsx`):
+     - Recharts 복리 격차 라인 차트, 비대면 3분 원스톱 계좌이체 3단계 신청 가이드, 이전 전 확인 체크리스트(보험 해약환급금 확인 등) 탑재 (Sprint 41, Story S41-3)
+
 
 
 

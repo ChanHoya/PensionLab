@@ -121,24 +121,29 @@
   - Story S40-4: 프로덕션 빌드(`npm run build`), 브라우저 서브에이전트 실화면 렌더링 검증, Git 커밋/푸시
 
 ## Active Sprint / Story
-- **Sprint 40** (완료): 초심자 친화적 UX 고도화 (30초 퀵 간편 진단 Easy Mode & 스마트 용어사전 툴팁 시스템) 및 대시보드 리팩토링
-  - **Story S40-1 (완료)**: 스마트 금융/연금 용어사전 및 인라인 호버 툴팁 시스템 구현
-  - **Story S40-2 (완료)**: 초심자를 위한 30초 퀵 간편 진단 엔진 및 모달(랜딩·온보딩·대시보드 글로벌 진입) 연동
-  - **Story S40-3 (완료)**: 대시보드 모달 상태 단일화(`activeModal`) 및 툴바 컴포넌트 분리 리팩토링
-  - **Story S40-4 (완료)**: `npm run build` 프로덕션 빌드 성공, Chrome 브라우저 실화면 렌더링 검증 및 Git 커밋/푸시
+- **Sprint 41** (개발/테스트 완료 - ZTNA VPN 환경으로 푸시 대기): 3대 고도화 킬러 기능 (퇴직연금 DB/DC 전환 및 임금피크제 시뮬레이터, 3-Bucket 현금 버퍼 플래너, 개인연금 금융사 갈아타기 실익 분석기)
+  - **Story S41-1 (완료)**: 퇴직연금 DB vs DC 전환 및 임금피크제(10~30% 삭감) 최적 타이밍 시뮬레이터 (`src/services/dbDcTransitionCalculator.ts`, `src/components/DbDcTransitionModal.tsx`)
+  - **Story S41-2 (완료)**: 은퇴자 맞춤 3-Bucket 현금 버퍼 플래너 및 하락장 안전 런웨이(N년) 설계기 (`src/services/threeBucketCalculator.ts`, `src/components/ThreeBucketPlanModal.tsx`)
+  - **Story S41-3 (완료)**: 개인연금(IRP/연금저축) 금융사 갈아타기(계좌이체) 실익 분석기 (`src/services/pensionTransferCalculator.ts`, `src/components/PensionTransferBenefitModal.tsx`)
+  - **Story S41-4 (완료)**: 대시보드 상단 툴바, 사이드바, 단일 모달 매니저 연동 및 스마트 용어사전 3대 신규 용어 보강
+  - **Story S41-5 (완료)**: `npm run build` 프로덕션 빌드 성공 (21/21 static pages), Chrome 브라우저 서브에이전트 실화면 렌더링 및 모달 인터랙션 검증 완료
 
-## Session Handoff (30초 퀵 간편 진단 Easy Mode & 스마트 용어사전 툴팁 시스템 및 대시보드 리팩토링)
+## Session Handoff (Sprint 41 3대 킬러 기능 개발 및 테스트 완료)
 - **주요 산출물**:
-  1. `src/config/glossary.ts` & `src/components/GlossaryTooltip.tsx`:
-     - 소득 크레바스, 피부양자 탈락, 사적연금 1500만 한도, A값/B값, 조기노령 BEP, 추납, 과세이연, 임의계속가입, 주택연금 연소자 기준 등 14개 핵심 용어의 쉬운 비유 및 실전 꿀팁 제공
-     - 점선 밑줄 및 ⓘ 아이콘 호버/터치 시 부드러운 스프링 팝오버 노출
-  2. `src/services/quickDiagnosis.ts` & `src/components/QuickDiagnosisModal.tsx`:
-     - 나이, 은퇴나이, 월소득, 가구형태(부부/1인) 4개 슬라이더 조작으로 실시간 은퇴 월 연금, 부족액, 3층 연금 구성 바, A~E등급 산출
-     - "🚀 이 결과로 대시보드 바로 체험하기" 원클릭 스토어 바인딩 및 대시보드 즉시 이동
-     - 랜딩(`/`), 온보딩(`/onboarding`), 대시보드(`/dashboard`) 상단에 `⚡ 30초 퀵 진단` 글로벌 버튼 연동
-  3. 대시보드 리팩토링 (`src/components/DashboardToolbar.tsx`, `src/components/DashboardModalManager.tsx`, `src/app/dashboard/page.tsx`):
-     - 12개의 boolean useState를 `activeModal: DashboardModalType`으로 단일화하고 약 200줄의 툴바 JSX를 독립 컴포넌트로 분리
-- **검증 상태**: `npm run build` 프로덕션 빌드 성공 (0 errors), Chrome 브라우저 서브에이전트 검증 완료 (`quick_diagnosis_modal_1792366688269.png`, `dashboard_toolbar_tooltip_1792366710930.png`).
+  1. `src/services/dbDcTransitionCalculator.ts` & `src/components/DbDcTransitionModal.tsx`:
+     - 임금피크제로 인한 퇴직금 삭감 방어 및 DB vs 피크 직전 DC vs 즉시 DC 3대 전략 비교
+     - Recharts 성장 궤적, 수천만원 자산 격차, 연도별 상세 테이블 제공
+  2. `src/services/threeBucketCalculator.ts` & `src/components/ThreeBucketPlanModal.tsx`:
+     - 1~2년 안심 현금(Bucket 1) + 3~7년 중기 인컴(Bucket 2) + 8년+ 복리 성장(Bucket 3) 최적 자산배분
+     - 주식 시장 30% 폭락 시 주식 매도 없이 버티는 안전 런웨이(N년) 배너 및 강세/약세장 리밸런싱 원칙
+  3. `src/services/pensionTransferCalculator.ts` & `src/components/PensionTransferBenefitModal.tsx`:
+     - 기존 은행 신탁/보험사 연금보험(1~2%대) vs 증권사 글로벌 ETF/TDF(5~7%대) 복리 격차 역산
+     - 세금 불이익 0원 원스톱 계좌이체 3단계 가이드 및 유의사항 체크리스트
+  4. 대시보드 통합:
+     - `DashboardToolbar.tsx`에 `⚖️ DB/DC 전환`, `🪣 3-Bucket 플랜`, `🔄 연금 갈아타기` 3대 퀵 버튼 탑재
+     - `DashboardModalManager.tsx`에 신규 모달 3종 등록 및 사용자 자산/생활비 실시간 연동
+     - `DashboardSidebar.tsx` 내 바로가기 버튼 추가 및 `src/config/glossary.ts` 신규 3대 전문용어 추가
+- **검증 상태**: `npm run build` 통과 (21/21 routes), Chrome 브라우저 서브에이전트 3대 모달 UI 렌더링/인터랙션 완벽 검증 완료. (ZTNA VPN 환경 제약으로 원격 푸시는 제외하고 로컬 커밋 상태 유지)
 
 
 

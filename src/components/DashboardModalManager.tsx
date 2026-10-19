@@ -15,6 +15,9 @@ import { SurvivorCareModal } from "./SurvivorCareModal";
 import { IsaPensionTransferModal } from "./IsaPensionTransferModal";
 import { DividendStrategyModal } from "./DividendStrategyModal";
 import PortfolioBacktestModal from "./PortfolioBacktestModal";
+import DbDcTransitionModal from "./DbDcTransitionModal";
+import ThreeBucketPlanModal from "./ThreeBucketPlanModal";
+import PensionTransferBenefitModal from "./PensionTransferBenefitModal";
 
 interface DashboardModalManagerProps {
   activeModal: DashboardModalType;
@@ -22,6 +25,10 @@ interface DashboardModalManagerProps {
   coveredCallAsset: number;
   coveredCallDividendRate: number;
   onApplyDividendRate: (rate: number) => void;
+  // 은퇴 자산 및 월 생활비 컨텍스트 (3-Bucket 및 갈아타기 연동용)
+  totalRetirementAssets?: number;
+  targetMonthlySpending?: number;
+  guaranteedMonthlyPension?: number;
 }
 
 export default function DashboardModalManager({
@@ -30,11 +37,29 @@ export default function DashboardModalManager({
   coveredCallAsset,
   coveredCallDividendRate,
   onApplyDividendRate,
+  totalRetirementAssets = 40000,
+  targetMonthlySpending = 300,
+  guaranteedMonthlyPension = 120,
 }: DashboardModalManagerProps) {
   return (
     <>
       <QuickDiagnosisModal
         isOpen={activeModal === "quickDiagnosis"}
+        onClose={onClose}
+      />
+      <DbDcTransitionModal
+        isOpen={activeModal === "dbDcTransition"}
+        onClose={onClose}
+      />
+      <ThreeBucketPlanModal
+        isOpen={activeModal === "threeBucket"}
+        onClose={onClose}
+        initialTotalAssets={totalRetirementAssets}
+        initialTargetSpending={targetMonthlySpending}
+        initialPension={guaranteedMonthlyPension}
+      />
+      <PensionTransferBenefitModal
+        isOpen={activeModal === "pensionTransfer"}
         onClose={onClose}
       />
       <PersonaPresetModal

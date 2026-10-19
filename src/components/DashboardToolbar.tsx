@@ -16,6 +16,9 @@ export type DashboardModalType =
   | "isaTransfer"
   | "dividendStrategy"
   | "portfolioBacktest"
+  | "dbDcTransition"
+  | "threeBucket"
+  | "pensionTransfer"
   | null;
 
 interface DashboardToolbarProps {
@@ -48,6 +51,58 @@ export default function DashboardToolbar({ onOpenModal }: DashboardToolbarProps)
         title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
       >
         ⚡ 30초 퀵 진단
+      </button>
+
+      {/* 3대 신규 킬러 기능 버튼 */}
+      <button
+        id="btn-db-dc-transition-actions"
+        onClick={() => onOpenModal("dbDcTransition")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(245, 158, 11, 0.5)",
+          color: "#f59e0b",
+          background: "rgba(245, 158, 11, 0.1)",
+        }}
+        title="퇴직연금 DB vs DC 전환 및 임금피크제 최적 타이밍 시뮬레이터"
+      >
+        ⚖️ DB/DC 전환
+      </button>
+
+      <button
+        id="btn-three-bucket-actions"
+        onClick={() => onOpenModal("threeBucket")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(6, 182, 212, 0.5)",
+          color: "#06b6d4",
+          background: "rgba(6, 182, 212, 0.1)",
+        }}
+        title="은퇴자 맞춤 3-Bucket 현금 버퍼 플래너 (하락장 방패 설계)"
+      >
+        🪣 3-Bucket 플랜
+      </button>
+
+      <button
+        id="btn-pension-transfer-actions"
+        onClick={() => onOpenModal("pensionTransfer")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(16, 185, 129, 0.5)",
+          color: "#10b981",
+          background: "rgba(16, 185, 129, 0.1)",
+        }}
+        title="개인연금(IRP/연금저축) 금융사 갈아타기(계좌이체) 실익 분석기"
+      >
+        🔄 연금 갈아타기
       </button>
 
       <button

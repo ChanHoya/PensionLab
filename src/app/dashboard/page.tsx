@@ -720,6 +720,9 @@ export default function DashboardPage() {
             onOpenIsaTransferModal={() => setActiveModal("isaTransfer")}
             onOpenDividendStrategyModal={() => setActiveModal("dividendStrategy")}
             onOpenPortfolioBacktestModal={() => setActiveModal("portfolioBacktest")}
+            onOpenDbDcModal={() => setActiveModal("dbDcTransition")}
+            onOpenThreeBucketModal={() => setActiveModal("threeBucket")}
+            onOpenPensionTransferModal={() => setActiveModal("pensionTransfer")}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
@@ -1329,6 +1332,13 @@ export default function DashboardPage() {
         coveredCallAsset={store.simulationParams.coveredCallAsset || 40000}
         coveredCallDividendRate={store.simulationParams.coveredCallDividendRate || 9.0}
         onApplyDividendRate={(rate) => store.setSimulationParams({ coveredCallDividendRate: rate })}
+        totalRetirementAssets={
+          (store.retirementPensions?.reduce((sum, p) => sum + (p.expectedLumpSum || p.totalAccumulated || 0), 0) || 15000) +
+          (store.personalPensions?.reduce((sum, p) => sum + (p.totalAccumulated || 0), 0) || 10000) +
+          (store.simulationParams?.nonPensionAssets || 15000)
+        }
+        targetMonthlySpending={store.simulationParams?.targetMonthlySpending || 300}
+        guaranteedMonthlyPension={store.nationalPension?.expectedMonthlyPension || 120}
       />
     </main>
   );

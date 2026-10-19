@@ -48,6 +48,7 @@ When the user provides a feature request or development goal in their prompt:
 1. Read `docs/project-state.md` to determine current project state
 2. Route to the appropriate pipeline:
    - State files empty → Start 🟢 Pipeline from Step 1 (`bootstrap`)
+   - Large-scale development (전체 코드 분석 전면 개발, 대규모 리팩토링, 전수 조사 기반 개편) → Activate `gemini-context-caching` skill + `planner` (32K+ 컨텍스트 및 도구 스키마 캐시 선적재로 80~95% 비용 절감)
    - State files exist + new feature request → Start 🟢 or 🔵 Pipeline from `planner`
    - Bug report or error → Start 🔴 Pipeline from `investigate`
    - Structural/design change → Run `architect` first, then `planner`
@@ -113,3 +114,19 @@ These laws are enforced across all skills and agents. Violations should be flagg
 8. **Session Handoff**: At session end, update project-state.md Quick Summary so the next session has context.
 9. **Common First**: All features must work at Common level (🟢🔵🔴) without crew dependency. Crew-specific logic must be inside crew marker blocks only. Never add crew-only code to Common paths.
 10. **Review & Test Before Commit**: 각 Step에 대한 개발 완료 후 반드시 [코드 리뷰] > [테스트(기능 동작 및 브라우저 화면 렌더링 검증)]까지 수행하여 이상이 없을 때만 커밋 및 푸시를 진행하고 세션을 마무리한다.
+11. **Context Caching on Large-Scale Tasks**: 전체 코드 분석, 대규모 리팩토링, 전수 조사 및 장기 에이전트 궤적 실행 시 `gemini-context-caching`을 활성화하여 정적 컨텍스트 및 도구 스키마를 동결(Freeze)함으로써 토큰 비용을 80~95% 절감하고 `AgentGuardrail` 무한 루프 방지를 적용한다.
+
+## Code & Communication Rules
+
+1. **한국어 문장에 콜론(:) 종결 금지**:
+   - 한국어 문장 종결부는 콜론(`:`)이 아닌 마침표(`.`), 물음표(`?`), 느낌표(`!`) 중 하나여야 한다.
+   - 다음 줄이 목록이나 예시여도 문장을 `:`로 끝내지 않는다. (단, 코드 내부, 라벨, 키-값 쌍의 콜론은 허용)
+2. **새 소스 파일 첫 줄에 한국어 헤더 주석**:
+   - 새 소스 파일 생성 시 첫 줄(또는 지시자 바로 아래)에 해당 파일의 역할을 명확한 한 줄 한국어 주석으로 기재한다.
+   - 예: `// 다층 연금 시뮬레이션 결과와 인출 흐름을 관리하는 Zustand Store`
+3. **플랜 + 체크리스트 + 컨텍스트 노트**:
+   - 중대 기능 구현이나 아키텍처 개편 시 작업 시작 전 목표 플랜, 구체적 체크리스트(`checklist.md`), 의사결정 기록(`context-notes.md`) 산출물을 정의하여 세션 간 연속성을 유지한다.
+4. **시맨틱 커밋 (Semantic Commit)**:
+   - 하나의 논리적 변경 단위가 완료되면 지체 없이 커밋한다. "이 커밋을 한 문장으로 명확히 설명할 수 있는가?"를 기준으로 삼는다.
+5. **에러를 읽어라, 추측하지 마라**:
+   - 오류 발생 시 기억이나 어설픈 추측으로 수정을 시도하지 않고, 실제 터미널 출력/브라우저 콘솔의 전체 스택 트레이스를 정밀 확인한 후 근본 원인을 교정한다.

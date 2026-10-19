@@ -232,6 +232,20 @@
      - `ThreeBucketPlanModal`: 추천 포트폴리오 태그 flex-wrap 처리로 세로 글자 깨짐 해결.
   5. 검증 완료: `npm run build` 성공 (22/22 정적 페이지 빌드 0 errors), 브라우저 화면 검증 및 라이트/다크모드 캡처 확인 완료.
 
+- **[개발원칙 및 에이전트 체계 고도화] etf-lens 핵심 개발원칙 동기화 및 4단계 전문 에이전트 세부 명세서(Agent Definition.md) 구축**:
+  1. ETF-Lens 개발원칙 동기화 (`GEMINI.md`, `AGENTS.md`):
+     - `Iron Law 11 (Context Caching on Large-Scale Tasks)` 신설: 전체 코드 분석, 대규모 리팩토링, 전수 조사 시 `gemini-context-caching` 활성화로 토큰 비용 80~95% 절감 및 `AgentGuardrail` 무한 루프 방지 강제화.
+     - `Code & Communication Rules` 도입: 한국어 문장 콜론(:) 종결 금지, 새 파일 첫 줄 1줄 한국어 헤더 주석 강제, 시맨틱 커밋, 에러 추측 금지(실제 로그 분석).
+  2. 4단계 전문 에이전트 세부 명세서 (`Agent Definition.md`):
+     - `[Agent 1]` 데이터 수집 및 정제 (Pension Data Harvester & Normalizer) - 3층 연금 원천 데이터 파싱, PII 100% 차단, 만원 단위 정규화.
+     - `[Agent 2]` 수리·세무 계산 엔진 (Actuarial & Tax Specialist) - 2026 연금개혁, 지출곡선, 부부/유족연금, 건보료/절세 정밀 연산.
+     - `[Agent 3]` 은퇴 전략 및 리스크 진단 (Retirement Strategy Analyzer) - S0~S4 인출 전략, 3-Bucket 현금버퍼, 3중 복합위기 스트레스 테스트, MTS 주문표 생성.
+     - `[Agent 4]` AI 종합 리포트 및 처방 (AI Diagnostic Advisor) - Gemini Flash 구조화 JSON 진단(A~E 등급), CFP 전문가 처방 내러티브 및 A4 PDF 리포트 발행.
+  3. 잠재적 비효율 요인 진단 및 방어 대책 수립:
+     - 물리적 마이크로서비스 분리로 인한 통신 지연(16ms 반응형 UI 훼손) 방지 → 단일 Next.js 런타임 내 계층화(Service Layer Boundary) 원칙 적용.
+     - 수리/세제 계산의 LLM 환각 및 지연 방지 → 100% 순수 TypeScript 결정론적 엔진 처리 및 LLM의 서술/진단 한정 투입.
+     - 에이전트 간 데이터 불일치 방지 → `usePensionStore` 단일 진실 공급원(Single Source of Truth) 원칙 고정.
+
 
 
 

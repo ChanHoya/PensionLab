@@ -265,8 +265,10 @@
   1) 리밸런싱 엔진 (`src/services/rebalancingOrderService.ts`): 현재 보유액 vs 목표 비중 괴리율 분석, 매수/매도 필요 금액 및 주문 주수 산출, IRP 30% 안전자산 규제 준수 체크
   2) 모달 UI (`src/components/RebalancingOrderModal.tsx`): 증권사 MTS 즉시 주문표(Order Slip) 테이블 및 원클릭 주문 텍스트 복사 (Sprint 45, Story S45-3)
 
-- **[FEAT-073] 3초 원스톱 인스턴트 온보딩 (금감원 파일 드롭존)**:
-  1) 인스턴트 파싱 & 이동 (`src/app/onboarding/page.tsx`): 온보딩 상단 대형 드래그앤드롭 존 배치, 엑셀/CSV/PDF 드롭 시 1/2/3층 연금 자동 파싱, 스토어 바인딩 및 3초 대시보드 직행 지원 (Sprint 45, Story S45-4)
+- **[FEAT-074] 4단계 전문 에이전트 체계 (Agent Definition) 및 개발 원칙 동기화**:
+  1) 4단계 에이전트 명세서 (`Agent Definition.md`): Agent 1(연금 데이터 수집·정제) -> Agent 2(다층 연금 수리·세제 엔진) -> Agent 3(은퇴 전략 및 리스크 진단) -> Agent 4(AI 종합 진단 및 처방) 역할 및 입출력 인터페이스 정립
+  2) 개발 효율성 최적화 지침: 물리적 마이크로서비스 통신 오버헤드 방지(단일 런타임 내 계층 분리), 결정론적 수리 엔진과 LLM 서술의 명확한 역할 분리, Zustand 단일 진실 공급원 유지
+  3) 개발 원칙 동기화 (`GEMINI.md`, `AGENTS.md`): Context Caching on Large-Scale Tasks 원칙 탑재, 한국어 문장 콜론(:) 종결 금지, 새 파일 1줄 한국어 주석, 시맨틱 커밋, 에러 추측 금지 규칙 적용
 
 
 

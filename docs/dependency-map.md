@@ -201,6 +201,20 @@ graph TD
   DashboardSidebar[src/components/DashboardSidebar.tsx] --> NpsRecoveryModal
   DashboardSidebar --> RebalancingOrderModal
   OnboardingUI --> FssExcelParser
+
+  %% 4-Stage Agent Architecture (Agent Definition.md)
+  subgraph AgentPipeline [4단계 전문 에이전트 파이프라인]
+    Agent1[Agent 1: Pension Data Harvester] -->|NormalizedProfile| Agent2[Agent 2: Actuarial & Tax Specialist]
+    Agent2 -->|SimulationResult| Agent3[Agent 3: Retirement Strategy Analyzer]
+    Agent3 -->|StrategyDiagnosis| Agent4[Agent 4: AI Diagnostic Advisor]
+  end
+  Agent1 -.-> OnboardingUI
+  Agent1 -.-> Store
+  Agent2 -.-> Calculator
+  Agent2 -.-> TaxHealthCalc
+  Agent3 -.-> RebalancingOrderService
+  Agent3 -.-> StressTestCalc
+  Agent4 -.-> AIAdvisor
 ```
 
 

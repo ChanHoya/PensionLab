@@ -237,6 +237,23 @@
   1) 번들 분할 (`src/components/DashboardModalManager.tsx`): 18개 전문 모달 전체를 `next/dynamic` (`ssr: false`) 분할 로딩으로 전환하여 초기 페이지 번들 용량 대폭 경감
   2) PWA 오프라인 캐싱 (`public/sw.js`, `src/app/manifest.ts`, `src/components/PwaInstallBanner.tsx`): 서비스 워커 등록, 정적 자산 프리캐싱 및 오프라인 네트워크 복원력 확보 (Sprint 43, Story S43-4)
 
+- **[FEAT-066] 은퇴 세금 & 건강보험료 모의 고지서 통합 A4 명세서**:
+  1) 계산 서비스 (`src/services/taxAndHealthStatementService.ts`): 소득세법(공적연금 간이세율, 사적연금 1500만 이하 3.3~5.5% vs 초과 16.5% 분리과세, 금융소득세)과 국민건강보험법(재산과표 1억 공제 후 1~60등급, 공적연금 50% 인정, 금융소득 1000만 초과 전액) 결합 연산
+  2) 모달 UI (`src/components/TaxAndHealthStatementModal.tsx`): 국세청/건보공단 스타일 모의 고지서 양식, 실수령액(Net) 산출, 피부양자 자격 유지 여부, A4 표준 인쇄(window.print) 지원 (Sprint 44, Story S44-1)
+
+- **[FEAT-067] 월별 배당 인컴 캘린더 & 연금 인출 스케줄러**:
+  1) 스케줄링 서비스 (`src/services/dividendCalendarService.ts`): 1월~12월 월배당/격주배당 ETF 분배금 입금일(15일/28일), 국민연금 입금일(25일), 생활비 인출일(1일) 매핑 및 월별 수지차(잉여/적자) 연산
+  2) 모달 UI (`src/components/DividendCalendarModal.tsx`): 1월~12월 탭 및 일자별 캐시플로우 타임라인, 격주 분배 포트폴리오 토글, 현금 유동성 방어 가이드 탑재 (Sprint 44, Story S44-2)
+
+- **[FEAT-068] 은퇴 시뮬레이션 부부·가족 공유 스냅샷 (Shareable URL)**:
+  1) 인코딩/디코딩 서비스 (`src/services/shareSnapshotService.ts`): 나이, 목표생활비, 3층 연금 및 부동산 자산 파라미터를 URL-safe Base64로 압축 인코딩 및 카카오톡 요약문 생성
+  2) 모달 UI & 라우트 (`src/components/ShareSnapshotModal.tsx`, `src/app/dashboard/page.tsx`): 단축 링크 원클릭 복사, URL `?snapshot=` 감지 시 브라우저 자동 스토어 복원(Hydration) 지원 (Sprint 44, Story S44-3)
+
+- **[FEAT-069] 3중 복합 위기 스트레스 테스트 매트릭스 2.0**:
+  1) 위기 시뮬레이션 엔진 (`src/services/stressTestEngine.ts`): 고물가 4.5% + 국민연금 68세 순연 + 시장 -30% 폭락 3대 위기별 자산 고갈 나이, 런웨이 단축 연수, 생애 총 부족액 및 내구성 A~D등급 판정
+  2) 모달 UI (`src/components/StressTestModal.tsx`): 5대 시나리오 비교 매트릭스 테이블 및 3대 긴급 방어 처방전(생활비 긴급 축소, 주택연금 조기 결합, 3-Bucket 현금 버퍼) 탑재 (Sprint 44, Story S44-4)
+
+
 
 
 

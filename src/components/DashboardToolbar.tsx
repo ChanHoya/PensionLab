@@ -24,6 +24,10 @@ export type DashboardModalType =
   | "accountTaxMatrix"
   | "cashflowTracker"
   | "interactiveAdvisor"
+  | "taxAndHealthStatement"
+  | "dividendCalendar"
+  | "shareSnapshot"
+  | "stressTest"
   | null;
 
 interface DashboardToolbarProps {
@@ -381,6 +385,95 @@ export default function DashboardToolbar({ onOpenModal }: DashboardToolbarProps)
         title="은퇴 자산 포트폴리오 10년 시장 시나리오 백테스트 및 배당 복리 검증"
       >
         <span>📊 포트폴리오 백테스트</span>
+      </button>
+
+      {/* Sprint 44: 신규 전문 분석 및 공유 도구 4종 */}
+      <button
+        id="btn-tax-health-statement-actions"
+        onClick={() => onOpenModal("taxAndHealthStatement")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(16, 185, 129, 0.4)",
+          color: "#10b981",
+          background: "rgba(16, 185, 129, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="은퇴 세금 & 건강보험료 모의 고지서 통합 A4 명세서 및 인쇄"
+      >
+        <span>📑 세무·건보 고지서</span>
+      </button>
+
+      <button
+        id="btn-dividend-calendar-actions"
+        onClick={() => onOpenModal("dividendCalendar")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(99, 102, 241, 0.4)",
+          color: "#818cf8",
+          background: "rgba(99, 102, 241, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="월별 배당 인컴 캘린더 & 연금 인출 스케줄러"
+      >
+        <span>📅 배당 캘린더</span>
+      </button>
+
+      <button
+        id="btn-stress-test-actions"
+        onClick={() => onOpenModal("stressTest")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(239, 68, 68, 0.4)",
+          color: "#f87171",
+          background: "rgba(239, 68, 68, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="고물가 4.5% + 연금개시 68세 + 시장 -30% 폭락 3중 복합 위기 스트레스 테스트"
+      >
+        <span>⚡ 스트레스 테스트</span>
+      </button>
+
+      <button
+        id="btn-share-snapshot-actions"
+        onClick={() => onOpenModal("shareSnapshot")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(14, 165, 233, 0.4)",
+          color: "#38bdf8",
+          background: "rgba(14, 165, 233, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="은퇴 시뮬레이션 부부·가족 공유 스냅샷 링크 및 요약 문구 생성"
+      >
+        <span>🔗 가족 공유</span>
       </button>
     </div>
   );

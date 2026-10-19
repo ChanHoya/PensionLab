@@ -37,6 +37,10 @@ interface Props {
   onOpenAccountTaxMatrixModal?: () => void;
   onOpenCashflowTrackerModal?: () => void;
   onOpenInteractiveAdvisorModal?: () => void;
+  onOpenTaxAndHealthStatementModal?: () => void;
+  onOpenDividendCalendarModal?: () => void;
+  onOpenStressTestModal?: () => void;
+  onOpenShareSnapshotModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -569,6 +573,98 @@ export default function DashboardSidebar(props: Props) {
           >
             <span>🤖</span>
             <span>1:1 대화형 AI 인터랙티브 은퇴 상담</span>
+          </button>
+        )}
+        {props.onOpenTaxAndHealthStatementModal && (
+          <button
+            type="button"
+            onClick={props.onOpenTaxAndHealthStatementModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(16, 185, 129, 0.4)",
+              color: "#34d399",
+              background: "rgba(16, 185, 129, 0.08)",
+            }}
+          >
+            <span>📑</span>
+            <span>은퇴 세무·건보 통합 A4 명세서</span>
+          </button>
+        )}
+        {props.onOpenDividendCalendarModal && (
+          <button
+            type="button"
+            onClick={props.onOpenDividendCalendarModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(99, 102, 241, 0.4)",
+              color: "#a5b4fc",
+              background: "rgba(99, 102, 241, 0.08)",
+            }}
+          >
+            <span>📅</span>
+            <span>월별 배당 캘린더 & 인출 스케줄러</span>
+          </button>
+        )}
+        {props.onOpenStressTestModal && (
+          <button
+            type="button"
+            onClick={props.onOpenStressTestModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(239, 68, 68, 0.4)",
+              color: "#f87171",
+              background: "rgba(239, 68, 68, 0.08)",
+            }}
+          >
+            <span>⚡</span>
+            <span>3중 복합 위기 스트레스 테스트</span>
+          </button>
+        )}
+        {props.onOpenShareSnapshotModal && (
+          <button
+            type="button"
+            onClick={props.onOpenShareSnapshotModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(14, 165, 233, 0.4)",
+              color: "#38bdf8",
+              background: "rgba(14, 165, 233, 0.08)",
+            }}
+          >
+            <span>🔗</span>
+            <span>부부·가족 시뮬레이션 공유 스냅샷</span>
           </button>
         )}
       </details>

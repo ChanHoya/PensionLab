@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import type { DashboardModalType } from "./DashboardToolbar";
 import { usePensionStore } from "@/store/usePensionStore";
 import type { UserPensionContextBrief } from "@/services/interactiveAdvisorService";
+import type { ShareableSnapshotData } from "@/services/shareSnapshotService";
 
 // Dynamic imports with ssr: false for optimal bundle splitting & performance
 const QuickDiagnosisModal = dynamic(() => import("./QuickDiagnosisModal"), { ssr: false });
@@ -30,6 +31,12 @@ const AccountTaxMatrixModal = dynamic(() => import("./AccountTaxMatrixModal"), {
 // Sprint 43: 실전 은퇴 가계부 & 1:1 대화형 AI 어드바이저
 const CashflowTrackerModal = dynamic(() => import("./CashflowTrackerModal"), { ssr: false });
 const InteractiveChatAdvisorModal = dynamic(() => import("./InteractiveChatAdvisorModal"), { ssr: false });
+
+// Sprint 44: 세무/건보 고지서, 배당 캘린더, 가족 공유, 스트레스 테스트
+const TaxAndHealthStatementModal = dynamic(() => import("./TaxAndHealthStatementModal"), { ssr: false });
+const DividendCalendarModal = dynamic(() => import("./DividendCalendarModal"), { ssr: false });
+const ShareSnapshotModal = dynamic(() => import("./ShareSnapshotModal"), { ssr: false });
+const StressTestModal = dynamic(() => import("./StressTestModal"), { ssr: false });
 
 interface DashboardModalManagerProps {
   activeModal: DashboardModalType;
@@ -190,6 +197,66 @@ export default function DashboardModalManager({
         onClose={onClose}
         context={userContext}
         onOpenTool={handleToolNavigation}
+      />
+
+      {/* Sprint 44: 신규 모달 4종 */}
+      <TaxAndHealthStatementModal
+        isOpen={activeModal === "taxAndHealthStatement"}
+        onClose={onClose}
+        age={store.simulationParams.currentAge || 60}
+        hasSpouse={store.simulationParams.hasSpouse ?? true}
+        spouseAge={store.simulationParams.spouseAge || 58}
+        retirementAge={store.simulationParams.retirementAge || 60}
+        annualNationalPensionWon={(guaranteedMonthlyPension || 120) * 12 * 10000}
+        annualRetirementPensionWon={Math.round(totalRetirementAssets * 0.6 * 0.05 * 10000)}
+        annualPersonalPensionWon={Math.round(totalRetirementAssets * 0.4 * 0.05 * 10000)}
+        annualFinancialWon={(store.simulationParams.financialIncome || 800) * 10000}
+        propertyTaxBaseWon={(store.simulationParams.propertyTaxBase || 35000) * 10000}
+      />
+
+      <DividendCalendarModal
+        isOpen={activeModal === "dividendCalendar"}
+        onClose={onClose}
+        coveredCallAssetManwon={coveredCallAsset}
+        annualDividendRate={coveredCallDividendRate}
+        targetMonthlyExpenseWon={targetMonthlySpending * 10000}
+        monthlyNationalPensionWon={(guaranteedMonthlyPension || 120) * 10000}
+        monthlyPrivatePensionWon={Math.round((totalRetirementAssets * 0.05 * 10000) / 12)}
+      />
+
+      <ShareSnapshotModal
+        isOpen={activeModal === "shareSnapshot"}
+        onClose={onClose}
+        snapshotData={{
+          v: 1,
+          ts: Date.now(),
+          ca: store.simulationParams.currentAge || 55,
+          ra: store.simulationParams.retirementAge || 60,
+          le: store.simulationParams.expectedLifeExpectancy || 90,
+          hs: store.simulationParams.hasSpouse ?? true,
+          sa: store.simulationParams.spouseAge,
+          ms: targetMonthlySpending,
+          np: guaranteedMonthlyPension,
+          rp: Math.round(totalRetirementAssets * 0.6),
+          pp: Math.round(totalRetirementAssets * 0.4),
+          na: store.simulationParams.nonPensionAssets || 15000,
+          re: store.simulationParams.propertyTaxBase || 50000,
+          cca: coveredCallAsset,
+          ccr: coveredCallDividendRate,
+        }}
+      />
+
+      <StressTestModal
+        isOpen={activeModal === "stressTest"}
+        onClose={onClose}
+        currentAge={store.simulationParams.currentAge || 55}
+        retirementAge={store.simulationParams.retirementAge || 60}
+        expectedLifeExpectancy={store.simulationParams.expectedLifeExpectancy || 90}
+        targetMonthlySpendingWon={targetMonthlySpending * 10000}
+        monthlyNationalPensionWon={(guaranteedMonthlyPension || 120) * 10000}
+        totalLiquidAssetsWon={((store.simulationParams.nonPensionAssets || 15000) + totalRetirementAssets) * 10000}
+        baseInflationRate={store.simulationParams.inflationRate || 2.5}
+        baseNpsStartAge={store.simulationParams.nationalPensionStartAge || 65}
       />
     </>
   );

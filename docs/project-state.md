@@ -185,6 +185,20 @@
      - Service Worker 캐싱 및 PWA 오프라인 복원력 확보
 - **검증 상태**: `npm run build` 성공(0 errors), Playwright/Chrome 브라우저 화면 렌더링 검증 완료.
 
+- **[Completed]** Sprint 44: 은퇴 세무·건보 통합 A4 명세서, 월별 배당 인컴 캘린더, 가족 공유 스냅샷, 3중 복합 위기 스트레스 테스트 2.0
+  1. 은퇴 세무 & 건강보험료 모의 고지서 통합 A4 명세서 (`TaxAndHealthStatementModal.tsx`, `taxAndHealthStatementService.ts`):
+     - 공적연금 소득세, 사적연금 원천징수세(저율분리 vs 16.5%), 금융소득세 및 지역건보료(재산/소득/장기요양) 결합
+     - A4 인쇄 친화적 국세청/건보공단 고지서 스타일 명세표 및 실수령액 산출
+  2. 월별 배당 인컴 캘린더 & 연금 인출 스케줄러 (`DividendCalendarModal.tsx`, `dividendCalendarService.ts`):
+     - 1~12월 배당금 입금일(15일/28일), 국민연금 입금일(25일), 생활비 인출일(1일) 매핑
+     - 월별 수지차(잉여/적자) 및 격주 분배 포트폴리오 토글 지원
+  3. 은퇴 시뮬레이션 부부·가족 공유 스냅샷 (`ShareSnapshotModal.tsx`, `shareSnapshotService.ts`, `dashboard/page.tsx`):
+     - 시뮬레이션 파라미터를 URL-safe Base64로 압축 인코딩, 카카오톡/문자 전송용 요약문 및 URL `?snapshot=` 복원(Hydration) 연동
+  4. 3중 복합 위기 스트레스 테스트 매트릭스 2.0 (`StressTestModal.tsx`, `stressTestEngine.ts`):
+     - 고물가 4.5% + 국민연금 68세 순연 + 시장 -30% 폭락 3대 위기별 자산 고갈 나이, 런웨이 단축 연수 및 3대 긴급 방어 처방전 제시
+- **검증 상태**: `npm run build` 성공(0 errors), 브라우저 화면 렌더링 검증 완료.
+
+
 
 
 

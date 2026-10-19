@@ -15,6 +15,10 @@ import AccountTaxMatrixModal from "@/components/AccountTaxMatrixModal";
 
 const CashflowTrackerModal = dynamic(() => import("@/components/CashflowTrackerModal"), { ssr: false });
 const InteractiveChatAdvisorModal = dynamic(() => import("@/components/InteractiveChatAdvisorModal"), { ssr: false });
+const TaxAndHealthStatementModal = dynamic(() => import("@/components/TaxAndHealthStatementModal"), { ssr: false });
+const DividendCalendarModal = dynamic(() => import("@/components/DividendCalendarModal"), { ssr: false });
+const StressTestModal = dynamic(() => import("@/components/StressTestModal"), { ssr: false });
+const ShareSnapshotModal = dynamic(() => import("@/components/ShareSnapshotModal"), { ssr: false });
 
 const PdfViewerModal = dynamic(() => import("@/components/PdfViewerModal"), {
   ssr: false,
@@ -99,6 +103,10 @@ export default function LandingPage() {
   const [accountTaxMatrixOpen, setAccountTaxMatrixOpen] = useState(false);
   const [cashflowTrackerOpen, setCashflowTrackerOpen] = useState(false);
   const [interactiveAdvisorOpen, setInteractiveAdvisorOpen] = useState(false);
+  const [taxHealthStatementOpen, setTaxHealthStatementOpen] = useState(false);
+  const [dividendCalendarOpen, setDividendCalendarOpen] = useState(false);
+  const [stressTestOpen, setStressTestOpen] = useState(false);
+  const [shareSnapshotOpen, setShareSnapshotOpen] = useState(false);
 
   const getNavStyle = (menuId: "service-intro" | "pension-library" | "reference-services") => {
     return {
@@ -577,6 +585,37 @@ export default function LandingPage() {
         else if (toolId === "SCENARIO_COMPARISON") setScenarioComparisonOpen(true);
         else if (toolId === "ACCOUNT_TAX_MATRIX") setAccountTaxMatrixOpen(true);
         else if (toolId === "CASHFLOW_TRACKER") setCashflowTrackerOpen(true);
+      }}
+    />
+    <TaxAndHealthStatementModal
+      isOpen={taxHealthStatementOpen}
+      onClose={() => setTaxHealthStatementOpen(false)}
+    />
+    <DividendCalendarModal
+      isOpen={dividendCalendarOpen}
+      onClose={() => setDividendCalendarOpen(false)}
+    />
+    <StressTestModal
+      isOpen={stressTestOpen}
+      onClose={() => setStressTestOpen(false)}
+    />
+    <ShareSnapshotModal
+      isOpen={shareSnapshotOpen}
+      onClose={() => setShareSnapshotOpen(false)}
+      snapshotData={{
+        v: 1,
+        ts: Date.now(),
+        ca: 55,
+        ra: 60,
+        le: 90,
+        hs: true,
+        sa: 53,
+        ms: 350,
+        np: 140,
+        rp: 25000,
+        pp: 15000,
+        na: 15000,
+        re: 50000,
       }}
     />
     </>

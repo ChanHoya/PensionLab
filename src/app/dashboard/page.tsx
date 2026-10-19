@@ -21,6 +21,7 @@ import DashboardToolbar, { DashboardModalType } from "@/components/DashboardTool
 import DashboardModalManager from "@/components/DashboardModalManager";
 import GlossaryTooltip from "@/components/GlossaryTooltip";
 import { SlidingTabs, NumberPopIn } from "@/components/motion";
+import { decodeSnapshot } from "@/services/shareSnapshotService";
 
 // Import Recharts components
 import {
@@ -242,9 +243,33 @@ export default function DashboardPage() {
     }
   };
 
-  // Load from localStorage on mount
+  // Load from localStorage or snapshot URL on mount
   useEffect(() => {
     setIsMounted(true);
+
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const snapshotEncoded = urlParams.get("snapshot");
+      if (snapshotEncoded) {
+        const decoded = decodeSnapshot(snapshotEncoded);
+        if (decoded) {
+          store.setSimulationParams({
+            currentAge: decoded.ca,
+            retirementAge: decoded.ra,
+            expectedLifeExpectancy: decoded.le,
+            hasSpouse: decoded.hs,
+            spouseAge: decoded.sa,
+            targetMonthlySpending: decoded.ms,
+            nonPensionAssets: decoded.na,
+            propertyTaxBase: decoded.re,
+            coveredCallAsset: decoded.cca ?? store.simulationParams.coveredCallAsset,
+            coveredCallDividendRate: decoded.ccr ?? store.simulationParams.coveredCallDividendRate,
+          });
+          return;
+        }
+      }
+    }
+
     const savedUserId = localStorage.getItem("pensionlab_user_id");
     if (!savedUserId && store.nationalPension.contributionMonths === 0) {
       router.push("/onboarding");
@@ -728,6 +753,10 @@ export default function DashboardPage() {
             onOpenAccountTaxMatrixModal={() => setActiveModal("accountTaxMatrix")}
             onOpenCashflowTrackerModal={() => setActiveModal("cashflowTracker")}
             onOpenInteractiveAdvisorModal={() => setActiveModal("interactiveAdvisor")}
+            onOpenTaxAndHealthStatementModal={() => setActiveModal("taxAndHealthStatement")}
+            onOpenDividendCalendarModal={() => setActiveModal("dividendCalendar")}
+            onOpenStressTestModal={() => setActiveModal("stressTest")}
+            onOpenShareSnapshotModal={() => setActiveModal("shareSnapshot")}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">

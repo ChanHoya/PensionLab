@@ -175,6 +175,22 @@ graph TD
   Dashboard --> ModalManager
   Landing --> CashflowModal
   Landing --> InteractiveAdvisorModal
+
+  %% Sprint 44 Additions (Tax/Health Statement, Dividend Calendar, Share Snapshot, Stress Test)
+  TaxHealthModal[src/components/TaxAndHealthStatementModal.tsx] --> TaxHealthCalc[src/services/taxAndHealthStatementService.ts]
+  DividendCalModal[src/components/DividendCalendarModal.tsx] --> DividendCalCalc[src/services/dividendCalendarService.ts]
+  ShareSnapshotModal[src/components/ShareSnapshotModal.tsx] --> ShareSnapshotService[src/services/shareSnapshotService.ts]
+  StressTestModal[src/components/StressTestModal.tsx] --> StressTestCalc[src/services/stressTestEngine.ts]
+
+  ModalManager --> TaxHealthModal
+  ModalManager --> DividendCalModal
+  ModalManager --> ShareSnapshotModal
+  ModalManager --> StressTestModal
+
+  Landing --> TaxHealthModal
+  Landing --> DividendCalModal
+  Landing --> ShareSnapshotModal
+  Landing --> StressTestModal
 ```
 
 

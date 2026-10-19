@@ -17,7 +17,7 @@ import AiHelper from "@/components/AiHelper";
 import CoupleSimulationSection from "@/components/CoupleSimulationSection";
 import { paidTotalsOf } from "@/services/paidTotals";
 import DashboardSidebar from "@/components/DashboardSidebar";
-import DashboardToolbar, { DashboardModalType } from "@/components/DashboardToolbar";
+import type { DashboardModalType } from "@/components/DashboardToolbar";
 import DashboardModalManager from "@/components/DashboardModalManager";
 import GlossaryTooltip from "@/components/GlossaryTooltip";
 import { SlidingTabs, NumberPopIn } from "@/components/motion";
@@ -346,9 +346,6 @@ export default function DashboardPage() {
       <input type="file" id="input-file-import" accept=".json" onChange={handleImportData} style={{ display: "none" }} />
     </div>
   );
-
-  // 대시보드 퀵 기능 액션 툴바 (S40-3 리팩토링: DashboardToolbar 분리)
-  const dataActions = <DashboardToolbar onOpenModal={setActiveModal} />;
 
   // 반납·추납 「대시보드 반영」이 켜진 것만 적용한 국민연금 (본인·배우자)
   const selfApplied = applyNpsOptions(store.nationalPension, store.additionalPayment, store.returnRepayment, store.simulationParams);
@@ -735,6 +732,8 @@ export default function DashboardPage() {
             setS3StartAges={setS3StartAges}
             s3Periods={s3Periods}
             setS3Periods={setS3Periods}
+            onOpenQuickDiagnosisModal={() => setActiveModal("quickDiagnosis")}
+            onOpenBepModal={() => setActiveModal("bep")}
             onOpenTax15Modal={() => setActiveModal("tax15")}
             onOpenHealthBillModal={() => setActiveModal("healthBill")}
             onOpenReverseMortgageModal={() => setActiveModal("reverseMortgage")}
@@ -843,7 +842,6 @@ export default function DashboardPage() {
             result={coupleResult}
             selfStartAge={store.simulationParams.nationalPensionStartAge + deferYearsOf(store.simulationParams)}
             spouseStartAge={store.simulationParams.spouseNationalPensionStartAge + deferYearsOf(personParams(store.simulationParams, "SPOUSE"))}
-            actions={dataActions}
             backupActions={backupActions}
             paid={{ self: selfPaid, spouse: spousePaid }}
             onOpenBepModal={() => setActiveModal("bep")}
@@ -851,10 +849,7 @@ export default function DashboardPage() {
             onToggleRealValue={setIsRealValue}
           />
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>{backupActions}</div>
-            <div>{dataActions}</div>
-          </div>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>{backupActions}</div>
         )}
 
         {/* ② 인출전략 시나리오 비교 (세후) */}

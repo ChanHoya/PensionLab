@@ -214,10 +214,10 @@
   4. 3초 원스톱 인스턴트 온보딩 드롭존 (`onboarding/page.tsx`):
      - 온보딩 상단 대형 드래그앤드롭 존 배치, 엑셀/CSV/PDF 파일 드롭 시 1/2/3층 연금 자동 파싱 후 3초 만에 대시보드 직행 연동
   5. 전사 생태계 연동:
-- **[Hotfix] 랜딩 페이지 스크롤 차단 복구 및 하단 미스타일 네비게이션 텍스트 제거**:
-  1. 랜딩 페이지(`src/app/page.tsx`): 과거 단일 화면 맞춤 설정으로 남아있던 `styles.container`의 `height: 100vh` 및 `overflow: hidden`을 `minHeight: 100vh`와 `overflowX: hidden`으로 정상화하여 8대 킬러 솔루션 카드 그리드 및 하단 섹션으로의 자연스러운 스크롤 완전 복구. `diagramContainer` 및 `diagramImage` 크기 반응형 자동 최적화.
-  2. 하단 텍스트 메뉴 제거(`src/app/layout.tsx`): Vanilla CSS 프로젝트에 잘못 삽입되어 데스크톱 및 모든 화면 좌하단에 날것의 텍스트(`🏠홈 📊대시보드 ...`)로 노출되던 Tailwind 기반 `MobileBottomNav` 제거 및 `body` 클래스 정리.
-  3. 빌드 안정화: `package.json`의 build 스크립트에 `next build --webpack`을 지정하여 Next 16 Turbopack 폰트 해석 버그 차단 및 프로덕션 빌드(22/22 routes) 100% 성공 검증 완료.
+- **[UI 개선] 부부 통합 연금 시뮬레이션 중복 툴바 제거 및 좌측 사이드바 기능 일원화**:
+  1. 부부 통합 연금 시뮬레이션 창(`CoupleSimulationSection.tsx` & `dashboard/page.tsx`): 창 상단에 중복 배치되어 있던 3열 25개 부가 기능 툴바(`actions={dataActions}`)를 제거하여 시뮬레이션 카드 헤더를 깔끔한 여백과 핵심 수치 위주로 간소화.
+  2. 좌측 메뉴바(`DashboardSidebar.tsx`): 툴바에만 존재하고 사이드바에 누락되어 있던 `⚡ 30초 퀵 간편 진단`(최상단) 및 `⚖️ 조기 vs 정상 vs 연기 손익분기(BEP) ⚡`(국민연금 섹션) 버튼을 신규 탑재하여 25개 전체 전문 시뮬레이션 도구를 왼쪽 사이드바에서 일관되게 접근 가능하도록 일원화 완료.
+
 
 
 

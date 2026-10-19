@@ -32,7 +32,6 @@ interface Props {
   result: CoupleSimulationResult;
   selfStartAge: number; // 본인 국민연금 개시 나이
   spouseStartAge: number; // 배우자 국민연금 개시 나이 (연기 반영)
-  actions?: React.ReactNode; // 툴바 기능 버튼들 (페르소나, BEP, 절세, 건보, 주택, 공백, 유족, ISA)
   backupActions?: React.ReactNode; // 창 제목과 같은 줄 제일 오른쪽 버튼 (백업·복원)
   paid: { self: PaidTotals; spouse: PaidTotals | null }; // 그래프 안 (납부총액/지급총액) 표기용
   onOpenBepModal?: () => void; // 국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 모달 열기 핸들러
@@ -66,7 +65,6 @@ export default function CoupleSimulationSection({
   result,
   selfStartAge,
   spouseStartAge,
-  actions,
   backupActions,
   paid,
   onOpenBepModal,
@@ -299,12 +297,6 @@ export default function CoupleSimulationSection({
         </div>
       </div>
 
-      {/* 대시보드 퀵 기능 액션 툴바 (페르소나, BEP, 절세, 건보료, 주택연금, 공백기, 유족, ISA) */}
-      {actions && (
-        <div data-html2canvas-ignore style={{ marginTop: "-2px", marginBottom: "2px" }}>
-          {actions}
-        </div>
-      )}
 
       {/* 부제목 */}
       <div style={{ marginTop: "4px", marginBottom: "10px" }}>

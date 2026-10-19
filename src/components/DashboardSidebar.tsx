@@ -19,6 +19,8 @@ interface Props {
   setS3StartAges: (v: Record<string, number>) => void;
   s3Periods: Record<string, number>;
   setS3Periods: (v: Record<string, number>) => void;
+  onOpenQuickDiagnosisModal?: () => void;
+  onOpenBepModal?: () => void;
   onOpenTax15Modal?: () => void;
   onOpenHealthBillModal?: () => void;
   onOpenReverseMortgageModal?: () => void;
@@ -135,6 +137,36 @@ export default function DashboardSidebar(props: Props) {
         </button>
       </div>
 
+      {props.onOpenQuickDiagnosisModal && (
+        <button
+          type="button"
+          id="sidebar-btn-quick-diagnosis"
+          onClick={props.onOpenQuickDiagnosisModal}
+          className="premium-button"
+          style={{
+            width: "100%",
+            padding: "8px 12px",
+            fontSize: "0.8rem",
+            fontWeight: 800,
+            background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "6px",
+            boxShadow: "0 2px 8px rgba(99, 102, 241, 0.35)",
+            border: "none",
+            borderRadius: "var(--radius-sm, 8px)",
+            cursor: "pointer",
+            marginBottom: "4px",
+          }}
+          title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
+        >
+          <span>⚡</span>
+          <span>30초 퀵 간편 진단</span>
+        </button>
+      )}
+
       <details open style={styles.group}>
         <summary style={styles.summary}>기본</summary>
         {slider("본인 기대수명", params.expectedLifeExpectancy, "세", 75, 105, 1, (v) => setParam({ expectedLifeExpectancy: v }))}
@@ -175,10 +207,36 @@ export default function DashboardSidebar(props: Props) {
               borderColor: "rgba(245, 158, 11, 0.4)",
               color: "#f59e0b",
               background: "rgba(245, 158, 11, 0.06)",
+              marginBottom: "4px",
             }}
           >
             <span>🪜</span>
             <span>국민연금 증액 로드맵 (반납·추납·임의계속·연기)</span>
+          </button>
+        )}
+        {props.onOpenBepModal && (
+          <button
+            type="button"
+            id="sidebar-btn-nps-bep"
+            onClick={props.onOpenBepModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(249, 115, 22, 0.4)",
+              color: "#f97316",
+              background: "rgba(249, 115, 22, 0.06)",
+            }}
+            title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기"
+          >
+            <span>⚖️</span>
+            <span>조기 vs 정상 vs 연기 손익분기(BEP) ⚡</span>
           </button>
         )}
       </details>

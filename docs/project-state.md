@@ -201,6 +201,23 @@
      - 고물가 4.5% + 국민연금 68세 순연 + 시장 -30% 폭락 3대 위기별 자산 고갈 나이, 런웨이 단축 연수 및 3대 긴급 방어 처방전 제시
 - **검증 상태**: `npm run build` 성공(0 errors), 브라우저 화면 렌더링 검증 완료.
 
+- **[Completed]** Sprint 45: AI 진단 리포트 2.0 고도화, 국민연금 추납 vs 반납 실익 역산기, 포트폴리오 리밸런싱 주문 가이드, 3초 인스턴트 온보딩
+  1. AI 종합 진단 리포트 2.0 고도화 & 4대 신규 도구 심층 연계 (`reportNarrative.ts`, `DiagnosisReport.tsx`, `ai-advisor/page.tsx`):
+     - Section 10 툴킷 카드 배지 판정 로직에 4개 도구(`TAX_HEALTH_STATEMENT`, `DIVIDEND_CALENDAR`, `STRESS_TEST`, `SHARE_SNAPSHOT`) 뱃지 추가 및 모달 트리거 실시간 연동
+     - AI 어드바이저 시스템 프롬프트 업데이트
+  2. 국민연금 납부이력 기반 추납 vs 반납 실익 역산기 (`npsRecoveryCalculator.ts`, `NpsRecoveryModal.tsx`):
+     - 미납 1~119개월 추납 총비용, 월 수령 증가액, 원금 회수 나이(골든크로스) 산출
+     - 1998년 이전 70% 소득대체율 반납 실익 비교, IRR 연산 및 Recharts 골든크로스 곡선 차트 탑재
+  3. 은퇴 자산 포트폴리오 리밸런싱 주문 가이드 (`rebalancingOrderService.ts`, `RebalancingOrderModal.tsx`):
+     - 현재 보유액 vs 목표 비중 괴리율 분석, 매수/매도 필요 금액 및 주문 주수 산출
+     - IRP 30% 안전자산 규제 준수 체크, 증권사 MTS 즉시 주문표(Order Slip) 테이블 및 원클릭 복사 탑재
+  4. 3초 원스톱 인스턴트 온보딩 드롭존 (`onboarding/page.tsx`):
+     - 온보딩 상단 대형 드래그앤드롭 존 배치, 엑셀/CSV/PDF 파일 드롭 시 1/2/3층 연금 자동 파싱 후 3초 만에 대시보드 직행 연동
+  5. 전사 생태계 연동:
+     - `DashboardToolbar.tsx`, `DashboardSidebar.tsx`, `DashboardModalManager.tsx`에 신규 모달 타입 등록 및 `next/dynamic` 분할 로딩 연결
+- **검증 상태**: `npm run build` 성공(0 errors), browser_subagent 화면 렌더링 및 모달 인터랙션 검증 통과.
+
+
 
 
 

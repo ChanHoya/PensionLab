@@ -28,6 +28,8 @@ export type DashboardModalType =
   | "dividendCalendar"
   | "shareSnapshot"
   | "stressTest"
+  | "npsRecovery"
+  | "rebalancingOrder"
   | null;
 
 interface DashboardToolbarProps {
@@ -474,6 +476,52 @@ export default function DashboardToolbar({ onOpenModal }: DashboardToolbarProps)
         title="은퇴 시뮬레이션 부부·가족 공유 스냅샷 링크 및 요약 문구 생성"
       >
         <span>🔗 가족 공유</span>
+      </button>
+
+      {/* Sprint 45: 국민연금 추납 vs 반납 실익 역산기 */}
+      <button
+        id="btn-nps-recovery-actions"
+        onClick={() => onOpenModal("npsRecovery")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(99, 102, 241, 0.4)",
+          color: "#818cf8",
+          background: "rgba(99, 102, 241, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="국민연금 미납·경단 추납 vs 1998년 이전 70% 반납 실익 및 원금 회수 나이(골든크로스) 역산기"
+      >
+        <span>⚖️ 추납·반납 실익</span>
+      </button>
+
+      {/* Sprint 45: 은퇴 자산 포트폴리오 리밸런싱 주문 가이드 */}
+      <button
+        id="btn-rebalancing-order-actions"
+        onClick={() => onOpenModal("rebalancingOrder")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(16, 185, 129, 0.4)",
+          color: "#34d399",
+          background: "rgba(16, 185, 129, 0.08)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "4px",
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+        title="목표 비중 괴리율 분석, IRP 30% 안전자산 룰 체크 및 증권사 MTS 즉시 주문표(Order Slip)"
+      >
+        <span>📊 리밸런싱 주문</span>
       </button>
     </div>
   );

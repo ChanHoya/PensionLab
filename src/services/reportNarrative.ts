@@ -24,7 +24,11 @@ export type ToolId =
   | "PENSION_TRANSFER"
   | "RETIREMENT_ROADMAP"
   | "SCENARIO_COMPARISON"
-  | "ACCOUNT_TAX_MATRIX";
+  | "ACCOUNT_TAX_MATRIX"
+  | "TAX_HEALTH_STATEMENT"
+  | "DIVIDEND_CALENDAR"
+  | "SHARE_SNAPSHOT"
+  | "STRESS_TEST";
 
 export const TOOL_IDS: ToolId[] = [
   "SAVINGS_PLAN",
@@ -42,6 +46,10 @@ export const TOOL_IDS: ToolId[] = [
   "RETIREMENT_ROADMAP",
   "SCENARIO_COMPARISON",
   "ACCOUNT_TAX_MATRIX",
+  "TAX_HEALTH_STATEMENT",
+  "DIVIDEND_CALENDAR",
+  "STRESS_TEST",
+  "SHARE_SNAPSHOT",
 ];
 
 export interface ToolMeta {
@@ -141,6 +149,30 @@ export const TOOL_META_MAP: Record<ToolId, ToolMeta> = {
     name: "2026 절세 계좌 4총사 자산배분 매트릭스",
     badge: "📑 절세 매트릭스",
     description: "자산군(미국배당/지수/채권/국내주식)별로 일반/ISA/연금저축/IRP 중 최적의 바구니를 추천합니다.",
+  },
+  TAX_HEALTH_STATEMENT: {
+    id: "TAX_HEALTH_STATEMENT",
+    name: "은퇴 세무 & 건강보험료 모의 고지서",
+    badge: "📑 세무·건보 고지서",
+    description: "공적·사적연금 소득세 및 지역건보료를 결합한 공식 국세청/건보공단 스타일 모의 고지서와 통장 실수령액을 제공합니다.",
+  },
+  DIVIDEND_CALENDAR: {
+    id: "DIVIDEND_CALENDAR",
+    name: "월별 배당 인컴 캘린더 & 인출 스케줄러",
+    badge: "📅 배당 캘린더",
+    description: "1~12월 배당금 입금일과 생활비 인출 시차를 맞춰 월별 현금흐름 펑크를 방어하고 수지차를 점검합니다.",
+  },
+  STRESS_TEST: {
+    id: "STRESS_TEST",
+    name: "3중 복합 위기 스트레스 테스트 매트릭스 2.0",
+    badge: "⚡ 스트레스 테스트",
+    description: "고물가 4.5% + 국민연금 68세 순연 + 시장 -30% 폭락 최악의 복합 충격 하에서 은퇴 런웨이 내구성을 검증합니다.",
+  },
+  SHARE_SNAPSHOT: {
+    id: "SHARE_SNAPSHOT",
+    name: "은퇴 시뮬레이션 부부·가족 공유 스냅샷",
+    badge: "🔗 가족 공유",
+    description: "설정한 은퇴 나이와 연금 자산 시뮬레이션을 암호화 단축 링크와 카카오톡 요약문으로 배우자에게 원클릭 전달합니다.",
   },
 };
 

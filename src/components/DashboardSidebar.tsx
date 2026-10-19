@@ -41,6 +41,8 @@ interface Props {
   onOpenDividendCalendarModal?: () => void;
   onOpenStressTestModal?: () => void;
   onOpenShareSnapshotModal?: () => void;
+  onOpenNpsRecoveryModal?: () => void;
+  onOpenRebalancingOrderModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -664,7 +666,53 @@ export default function DashboardSidebar(props: Props) {
             }}
           >
             <span>🔗</span>
-            <span>부부·가족 시뮬레이션 공유 스냅샷</span>
+            <span>은퇴 시뮬레이션 가족 공유 스냅샷</span>
+          </button>
+        )}
+        {props.onOpenNpsRecoveryModal && (
+          <button
+            type="button"
+            onClick={props.onOpenNpsRecoveryModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(99, 102, 241, 0.4)",
+              color: "#818cf8",
+              background: "rgba(99, 102, 241, 0.08)",
+            }}
+          >
+            <span>⚖️</span>
+            <span>국민연금 추납 vs 반납 실익 역산기</span>
+          </button>
+        )}
+        {props.onOpenRebalancingOrderModal && (
+          <button
+            type="button"
+            onClick={props.onOpenRebalancingOrderModal}
+            className="premium-button-secondary"
+            style={{
+              width: "100%",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textAlign: "left",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              borderColor: "rgba(16, 185, 129, 0.4)",
+              color: "#34d399",
+              background: "rgba(16, 185, 129, 0.08)",
+            }}
+          >
+            <span>📊</span>
+            <span>은퇴 자산 리밸런싱 주문 가이드</span>
           </button>
         )}
       </details>

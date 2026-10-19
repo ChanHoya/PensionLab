@@ -156,11 +156,67 @@ export default function OnboardingPage() {
   const [threeBucketModalOpen, setThreeBucketModalOpen] = useState(false);
   const [pensionTransferModalOpen, setPensionTransferModalOpen] = useState(false);
 
-  // PDF 파싱 관련 상태 변수들
   // 금감원 통합연금 PDF (사람별·항목별). 「다음 단계」에서 한 번에 분석
   const [fssFiles, setFssFiles] = useState<Record<Who, FssFiles>>({ SELF: emptyFssFiles(), SPOUSE: emptyFssFiles() });
   const [fssAnalyzing, setFssAnalyzing] = useState(false);
   const [fssError, setFssError] = useState("");
+
+  // Sprint 45: 원스톱 인스턴트 온보딩 상태
+  const [instantAnalyzing, setInstantAnalyzing] = useState(false);
+  const [instantSuccess, setInstantSuccess] = useState<string | null>(null);
+  const [instantError, setInstantError] = useState<string | null>(null);
+  const [isInstantDragging, setIsInstantDragging] = useState(false);
+
+  const handleInstantFileDrop = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    setInstantAnalyzing(true);
+    setInstantError(null);
+    setInstantSuccess(null);
+
+    try {
+      let appliedCount = 0;
+      for (const file of files) {
+        const name = file.name.toLowerCase();
+        if (name.endsWith(".xlsx") || name.endsWith(".csv") || name.endsWith(".txt") || name.endsWith(".tsv")) {
+          const parsed = await parseFssExcelOrCsvText(file);
+          applyParsedFss(parsed, "SELF");
+          appliedCount++;
+        } else if (name.endsWith(".pdf")) {
+          const text = await extractPdfText(file);
+          if (!text) throw new Error(`「${file.name}」에서 텍스트를 추출할 수 없습니다.`);
+          const res = await fetch("/api/pension/pdf-parse", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pdfText: text }),
+          });
+          if (!res.ok) throw new Error("PDF 분석 중 서버 오류가 발생했습니다.");
+          const parsedPdf = await res.json();
+          applyParsedFss(parsedPdf, "SELF");
+          appliedCount++;
+        }
+      }
+
+      if (appliedCount === 0) {
+        throw new Error("지원되는 형식(.xlsx, .csv, .txt, .pdf)의 금감원 통합연금포털 파일을 올려주세요.");
+      }
+
+      const generatedUserId = `instant_${Date.now()}`;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("pensionlab_user_id", generatedUserId);
+      }
+
+      setInstantSuccess("🎉 금감원 연금 데이터 자동 분석 완료! 3초 후 대시보드로 즉시 이동합니다...");
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 2500);
+    } catch (err: any) {
+      console.error("Instant onboarding error:", err);
+      setInstantError(err.message || "파일 분석 중 오류가 발생했습니다.");
+    } finally {
+      setInstantAnalyzing(false);
+    }
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -903,6 +959,101 @@ export default function OnboardingPage() {
 
           <div key={step.key} style={styles.formBody}>
             {/* STEP 0: 기본 정보 및 노후 재무 목표 */}
+            {step.kind === "INFO" && (
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsInstantDragging(true);
+                }}
+                onDragLeave={() => setIsInstantDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsInstantDragging(false);
+                  if (e.dataTransfer.files) {
+                    handleInstantFileDrop(e.dataTransfer.files);
+                  }
+                }}
+                onClick={() => {
+                  if (!instantAnalyzing) {
+                    document.getElementById("instant-fss-file-input")?.click();
+                  }
+                }}
+                style={{
+                  marginBottom: "20px",
+                  padding: "16px 20px",
+                  borderRadius: "14px",
+                  border: isInstantDragging
+                    ? "2px dashed #6366f1"
+                    : "1px dashed rgba(99, 102, 241, 0.4)",
+                  background: isInstantDragging
+                    ? "rgba(99, 102, 241, 0.12)"
+                    : "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.04) 100%)",
+                  cursor: instantAnalyzing ? "wait" : "pointer",
+                  transition: "all 0.2s ease",
+                  textAlign: "center",
+                }}
+                title="금감원 통합연금포털 엑셀(.xlsx), CSV, TXT 또는 PDF 파일을 드롭하면 3초 만에 대시보드로 직행합니다."
+              >
+                <input
+                  id="instant-fss-file-input"
+                  type="file"
+                  multiple
+                  accept=".xlsx,.csv,.txt,.tsv,.pdf"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleInstantFileDrop(e.target.files);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+                  <span style={{ fontSize: "1.8rem" }}>⚡</span>
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <strong style={{ fontSize: "0.95rem", color: "var(--foreground, #ffffff)" }}>
+                        3초 원스톱 인스턴트 온보딩 (금감원 파일 드롭존)
+                      </strong>
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          background: "#6366f1",
+                          color: "#fff",
+                          fontWeight: 700,
+                        }}
+                      >
+                        FAST PASS
+                      </span>
+                    </div>
+                    <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "var(--muted-foreground, #94a3b8)" }}>
+                      금감원 통합연금포털 엑셀(.xlsx), CSV, PDF 파일을 이곳에 끌어다 놓으세요. 3초 만에 1/2/3층 연금을 자동 파싱하고 대시보드로 직행합니다.
+                    </p>
+                  </div>
+                </div>
+
+                {instantAnalyzing && (
+                  <div style={{ marginTop: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#818cf8", fontSize: "0.85rem", fontWeight: 600 }}>
+                    <span style={{ display: "inline-block", width: "16px", height: "16px", border: "2px solid #818cf8", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }}></span>
+                    금감원 연금 데이터 고속 분석 중...
+                  </div>
+                )}
+
+                {instantSuccess && (
+                  <div style={{ marginTop: "12px", color: "#34d399", fontSize: "0.85rem", fontWeight: 700 }}>
+                    {instantSuccess}
+                  </div>
+                )}
+
+                {instantError && (
+                  <div style={{ marginTop: "12px", color: "#f87171", fontSize: "0.85rem", fontWeight: 600 }}>
+                    ⚠️ {instantError}
+                  </div>
+                )}
+              </div>
+            )}
+
             {step.kind === "INFO" && (
               <div style={styles.formGroupList} className="animate-fade-in">
                 <div

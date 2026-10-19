@@ -253,6 +253,22 @@
   1) 위기 시뮬레이션 엔진 (`src/services/stressTestEngine.ts`): 고물가 4.5% + 국민연금 68세 순연 + 시장 -30% 폭락 3대 위기별 자산 고갈 나이, 런웨이 단축 연수, 생애 총 부족액 및 내구성 A~D등급 판정
   2) 모달 UI (`src/components/StressTestModal.tsx`): 5대 시나리오 비교 매트릭스 테이블 및 3대 긴급 방어 처방전(생활비 긴급 축소, 주택연금 조기 결합, 3-Bucket 현금 버퍼) 탑재 (Sprint 44, Story S44-4)
 
+- **[FEAT-070] AI 포트폴리오 종합 진단 리포트 2.0 고도화 & 4대 신규 도구 심층 연계**:
+  1) 진단 엔진 & 프롬프트 (`src/services/reportNarrative.ts`, `src/app/api/ai/advisor/route.ts`): 4대 신규 도구(`TAX_HEALTH_STATEMENT`, `DIVIDEND_CALENDAR`, `STRESS_TEST`, `SHARE_SNAPSHOT`) 메타데이터, 우선순위 배지, 프롬프트 지침 추가
+  2) 리포트 UI & 모달 렌더링 (`src/components/DiagnosisReport.tsx`, `src/app/dashboard/ai-advisor/page.tsx`): Section 10 툴킷 카드 배지 판정 로직 반영 및 4대 신규 모달 실시간 호출 연동 (Sprint 45, Story S45-1)
+
+- **[FEAT-071] 국민연금 납부이력 기반 추납 vs 반납 실익 역산기**:
+  1) 역산 엔진 (`src/services/npsRecoveryCalculator.ts`): 미납 1~119개월 추납 총비용, 월 수령 증가액, 원금 회수 나이(골든크로스), 1998년 이전 70% 소득대체율 반납 실익 비교 및 IRR 연산
+  2) 모달 UI (`src/components/NpsRecoveryModal.tsx`): 인터랙티브 슬라이더, Recharts 골든크로스 곡선 차트, 비교표 및 공단 신청 가이드 탑재 (Sprint 45, Story S45-2)
+
+- **[FEAT-072] 은퇴 자산 포트폴리오 리밸런싱 주문 가이드**:
+  1) 리밸런싱 엔진 (`src/services/rebalancingOrderService.ts`): 현재 보유액 vs 목표 비중 괴리율 분석, 매수/매도 필요 금액 및 주문 주수 산출, IRP 30% 안전자산 규제 준수 체크
+  2) 모달 UI (`src/components/RebalancingOrderModal.tsx`): 증권사 MTS 즉시 주문표(Order Slip) 테이블 및 원클릭 주문 텍스트 복사 (Sprint 45, Story S45-3)
+
+- **[FEAT-073] 3초 원스톱 인스턴트 온보딩 (금감원 파일 드롭존)**:
+  1) 인스턴트 파싱 & 이동 (`src/app/onboarding/page.tsx`): 온보딩 상단 대형 드래그앤드롭 존 배치, 엑셀/CSV/PDF 드롭 시 1/2/3층 연금 자동 파싱, 스토어 바인딩 및 3초 대시보드 직행 지원 (Sprint 45, Story S45-4)
+
+
 
 
 

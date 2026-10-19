@@ -980,6 +980,16 @@ export default function DiagnosisReport({ report: r, narrative: n, source, model
               priorityBadge = "🛡️ 안전 런웨이 설계";
             } else if (tid === "PENSION_TRANSFER") {
               priorityBadge = "🔄 수수료 절감·수령액 증대";
+            } else if (tid === "ACCOUNT_TAX_MATRIX") {
+              priorityBadge = "📑 절세 계좌 최적화";
+            } else if (tid === "TAX_HEALTH_STATEMENT") {
+              priorityBadge = "📑 건보료·세금 고지서";
+            } else if (tid === "DIVIDEND_CALENDAR") {
+              priorityBadge = "📅 12개월 인컴 캘린더";
+            } else if (tid === "STRESS_TEST") {
+              priorityBadge = "⚡ 복합위기 내구성";
+            } else if (tid === "SHARE_SNAPSHOT") {
+              priorityBadge = "🔗 부부·가족 링크 공유";
             }
 
             return (

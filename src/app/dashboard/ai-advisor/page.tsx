@@ -25,6 +25,10 @@ import PensionTransferBenefitModal from "@/components/PensionTransferBenefitModa
 import RetirementRoadmapModal from "@/components/RetirementRoadmapModal";
 import ScenarioComparisonModal from "@/components/ScenarioComparisonModal";
 import AccountTaxMatrixModal from "@/components/AccountTaxMatrixModal";
+import TaxAndHealthStatementModal from "@/components/TaxAndHealthStatementModal";
+import DividendCalendarModal from "@/components/DividendCalendarModal";
+import StressTestModal from "@/components/StressTestModal";
+import ShareSnapshotModal from "@/components/ShareSnapshotModal";
 import { AiThinkingStream } from "@/components/motion";
 
 const emptySubscribe = () => () => {};
@@ -445,6 +449,87 @@ export default function AiAdvisorPage() {
       <AccountTaxMatrixModal
         isOpen={activeTool === "ACCOUNT_TAX_MATRIX"}
         onClose={() => setActiveTool(null)}
+      />
+
+      <TaxAndHealthStatementModal
+        isOpen={activeTool === "TAX_HEALTH_STATEMENT"}
+        onClose={() => setActiveTool(null)}
+        age={store.simulationParams.currentAge}
+        hasSpouse={store.simulationParams.hasSpouse}
+        spouseAge={store.simulationParams.spouseAge}
+        retirementAge={store.simulationParams.retirementAge}
+        annualNationalPensionWon={store.nationalPension.expectedMonthlyPension * 12 * 10000}
+        annualRetirementPensionWon={
+          Math.round(
+            (store.retirementPensions.reduce(
+              (sum, p) => sum + (p.totalAccumulated ? p.totalAccumulated / 240 : (p.expectedLumpSum ? p.expectedLumpSum / 240 : 0)),
+              0
+            ) || 100) * 12 * 10000
+          )
+        }
+        annualPersonalPensionWon={
+          (store.personalPensions.reduce((sum, p) => sum + (p.monthlyAnnualContribution || 0), 0) || 50) * 12 * 10000
+        }
+        annualFinancialWon={(store.simulationParams.financialIncome || 0) * 10000}
+        propertyTaxBaseWon={(store.simulationParams.propertyTaxBase || 0) * 10000}
+      />
+
+      <DividendCalendarModal
+        isOpen={activeTool === "DIVIDEND_CALENDAR"}
+        onClose={() => setActiveTool(null)}
+        coveredCallAssetManwon={5000}
+        annualDividendRate={9.0}
+        targetMonthlyExpenseWon={store.simulationParams.targetMonthlySpending * 10000}
+        monthlyNationalPensionWon={store.nationalPension.expectedMonthlyPension * 10000}
+        monthlyPrivatePensionWon={
+          Math.round(
+            (store.retirementPensions.reduce(
+              (sum, p) => sum + (p.totalAccumulated ? p.totalAccumulated / 240 : (p.expectedLumpSum ? p.expectedLumpSum / 240 : 0)),
+              0
+            ) +
+              store.personalPensions.reduce((sum, p) => sum + (p.monthlyAnnualContribution || 0), 0) ||
+              100) *
+              10000
+          )
+        }
+      />
+
+      <StressTestModal
+        isOpen={activeTool === "STRESS_TEST"}
+        onClose={() => setActiveTool(null)}
+        currentAge={store.simulationParams.currentAge}
+        retirementAge={store.simulationParams.retirementAge}
+        expectedLifeExpectancy={store.simulationParams.expectedLifeExpectancy}
+        targetMonthlySpendingWon={store.simulationParams.targetMonthlySpending * 10000}
+        monthlyNationalPensionWon={store.nationalPension.expectedMonthlyPension * 10000}
+        totalLiquidAssetsWon={
+          ((store.simulationParams.nonPensionAssets || 0) +
+            store.retirementPensions.reduce((s, p) => s + (p.totalAccumulated || 0), 0) +
+            store.personalPensions.reduce((s, p) => s + (p.totalAccumulated || 0), 0)) *
+          10000
+        }
+        baseInflationRate={store.simulationParams.inflationRate || 2.5}
+        baseNpsStartAge={store.simulationParams.nationalPensionStartAge || 65}
+      />
+
+      <ShareSnapshotModal
+        isOpen={activeTool === "SHARE_SNAPSHOT"}
+        onClose={() => setActiveTool(null)}
+        snapshotData={{
+          v: 1,
+          ts: Date.now(),
+          ca: store.simulationParams.currentAge,
+          ra: store.simulationParams.retirementAge,
+          le: store.simulationParams.expectedLifeExpectancy,
+          hs: store.simulationParams.hasSpouse,
+          sa: store.simulationParams.spouseAge,
+          ms: store.simulationParams.targetMonthlySpending,
+          np: store.nationalPension.expectedMonthlyPension,
+          rp: store.retirementPensions.reduce((s, p) => s + (p.totalAccumulated || 0), 0),
+          pp: store.personalPensions.reduce((s, p) => s + (p.totalAccumulated || 0), 0),
+          na: store.simulationParams.nonPensionAssets || 0,
+          re: store.simulationParams.propertyTaxBase || 0,
+        }}
       />
     </main>
   );

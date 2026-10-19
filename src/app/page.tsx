@@ -585,6 +585,10 @@ export default function LandingPage() {
         else if (toolId === "SCENARIO_COMPARISON") setScenarioComparisonOpen(true);
         else if (toolId === "ACCOUNT_TAX_MATRIX") setAccountTaxMatrixOpen(true);
         else if (toolId === "CASHFLOW_TRACKER") setCashflowTrackerOpen(true);
+        else if (toolId === "TAX_HEALTH_STATEMENT") setTaxHealthStatementOpen(true);
+        else if (toolId === "DIVIDEND_CALENDAR") setDividendCalendarOpen(true);
+        else if (toolId === "STRESS_TEST") setStressTestOpen(true);
+        else if (toolId === "SHARE_SNAPSHOT") setShareSnapshotOpen(true);
       }}
     />
     <TaxAndHealthStatementModal

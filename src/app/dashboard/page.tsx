@@ -757,6 +757,8 @@ export default function DashboardPage() {
             onOpenDividendCalendarModal={() => setActiveModal("dividendCalendar")}
             onOpenStressTestModal={() => setActiveModal("stressTest")}
             onOpenShareSnapshotModal={() => setActiveModal("shareSnapshot")}
+            onOpenNpsRecoveryModal={() => setActiveModal("npsRecovery")}
+            onOpenRebalancingOrderModal={() => setActiveModal("rebalancingOrder")}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">

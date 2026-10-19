@@ -191,6 +191,21 @@ graph TD
   Landing --> DividendCalModal
   Landing --> ShareSnapshotModal
   Landing --> StressTestModal
+
+  AIAdvisor --> TaxHealthModal
+  AIAdvisor --> DividendCalModal
+  AIAdvisor --> ShareSnapshotModal
+  AIAdvisor --> StressTestModal
+
+  %% Sprint 45 Additions (NPS Recovery, Rebalancing Orders, Instant Onboarding)
+  NpsRecoveryModal[src/components/NpsRecoveryModal.tsx] --> NpsRecoveryCalc[src/services/npsRecoveryCalculator.ts]
+  RebalancingOrderModal[src/components/RebalancingOrderModal.tsx] --> RebalancingOrderService[src/services/rebalancingOrderService.ts]
+
+  ModalManager --> NpsRecoveryModal
+  ModalManager --> RebalancingOrderModal
+  DashboardSidebar[src/components/DashboardSidebar.tsx] --> NpsRecoveryModal
+  DashboardSidebar --> RebalancingOrderModal
+  OnboardingUI --> FssExcelParser
 ```
 
 

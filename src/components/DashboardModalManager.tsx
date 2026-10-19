@@ -38,6 +38,10 @@ const DividendCalendarModal = dynamic(() => import("./DividendCalendarModal"), {
 const ShareSnapshotModal = dynamic(() => import("./ShareSnapshotModal"), { ssr: false });
 const StressTestModal = dynamic(() => import("./StressTestModal"), { ssr: false });
 
+// Sprint 45: 국민연금 추납 vs 반납 실익 역산기 & 은퇴 자산 포트폴리오 리밸런싱 주문 가이드
+const NpsRecoveryModal = dynamic(() => import("./NpsRecoveryModal"), { ssr: false });
+const RebalancingOrderModal = dynamic(() => import("./RebalancingOrderModal"), { ssr: false });
+
 interface DashboardModalManagerProps {
   activeModal: DashboardModalType;
   onClose: () => void;
@@ -96,6 +100,10 @@ export default function DashboardModalManager({
     else if (toolId === "SCENARIO_COMPARISON") onOpenModal("scenarioComparison");
     else if (toolId === "ACCOUNT_TAX_MATRIX") onOpenModal("accountTaxMatrix");
     else if (toolId === "CASHFLOW_TRACKER") onOpenModal("cashflowTracker");
+    else if (toolId === "TAX_HEALTH_STATEMENT") onOpenModal("taxAndHealthStatement");
+    else if (toolId === "DIVIDEND_CALENDAR") onOpenModal("dividendCalendar");
+    else if (toolId === "STRESS_TEST") onOpenModal("stressTest");
+    else if (toolId === "SHARE_SNAPSHOT") onOpenModal("shareSnapshot");
   };
 
   return (
@@ -257,6 +265,21 @@ export default function DashboardModalManager({
         totalLiquidAssetsWon={((store.simulationParams.nonPensionAssets || 15000) + totalRetirementAssets) * 10000}
         baseInflationRate={store.simulationParams.inflationRate || 2.5}
         baseNpsStartAge={store.simulationParams.nationalPensionStartAge || 65}
+      />
+
+      <NpsRecoveryModal
+        isOpen={activeModal === "npsRecovery"}
+        onClose={onClose}
+        currentAge={store.simulationParams.currentAge || 55}
+        npsStartAge={store.simulationParams.nationalPensionStartAge || 65}
+        expectedLifeExpectancy={store.simulationParams.expectedLifeExpectancy || 88}
+        currentMonthlyPensionWon={(guaranteedMonthlyPension || 120) * 10000}
+      />
+
+      <RebalancingOrderModal
+        isOpen={activeModal === "rebalancingOrder"}
+        onClose={onClose}
+        initialTotalAssetsWon={(totalRetirementAssets + (store.simulationParams.nonPensionAssets || 15000)) * 10000}
       />
     </>
   );

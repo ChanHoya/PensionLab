@@ -271,6 +271,20 @@
      - `index.ts`: 단일 Next.js 런타임 내 16ms 즉시 반응성을 보장하는 통합 파사드 진입점.
   3. 검증 완료: `npm run build` 정적 페이지 22/22 빌드 통과(0 errors), 브라우저 렌더링 검증 완료.
 
+- **[Completed]** Sprint 47: [Hotfix] 국민연금 연기연금(NPS Deferral) 연기 기간 소비자물가변동률 복리 연동 버그 수정 (FP-034):
+  1. 원인 진단:
+     - 국민연금법 제62조에 따르면 연금을 연기할 경우, 연기 기간 동안 매년 전년도 소비자물가변동률만큼 기본연금액이 인상(물가연동)된 후 연 7.2%(월 0.6%, 최대 +36%) 가산율이 적용되어야 함.
+     - 기존 `track()`(`coupleSimulation.ts`) 및 `withdrawalCalculator.ts`에서 연기 가산율(`1 + 0.072 * defer`)만 곱하고 연기 기간 동안의 물가상승률(`(1 + inflationRate)^defer`)을 누락하여, 70세 첫해 수령액이 157.7만원이 아닌 136.0만원으로 과소계산되는 문제 발생.
+     - 그 결과 5년간 미수령한 원금을 85세~90세까지 회수하지 못해 '연기할수록 생애 총 수령액이 줄어드는' 비정상적 역전 현상 발생.
+  2. 수정 조치:
+     - `src/services/coupleSimulation.ts`: `track()` 함수 내 `deferredNational` 계산 시 연기 기간 물가상승률 `Math.pow(1 + params.inflationRate / 100, defer)` 복리 반영.
+     - `src/services/withdrawalCalculator.ts`: `deferMultPort` 및 `deferMultiplier`에 `Math.pow(1 + inflationRate, deferYears)` 복리 반영.
+  3. 결과 검증:
+     - 기대수명 85세 기준 0년 연기 3.44억(명목) / 1.99억(실질) ➔ 5년 연기 3.81억(명목, +3,744만원) / 2.06억(실질, +731만원) 정상 증가 확인.
+     - 기대수명 90세 장수 시 0년 연기 4.63억(명목) ➔ 5년 연기 5.43억(명목, +7,990만원) 대폭 증대 정상 산출 확인.
+     - `npm run build` 빌드 성공 (0 errors).
+
+
 
 
 

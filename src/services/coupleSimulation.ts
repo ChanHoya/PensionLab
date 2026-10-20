@@ -300,8 +300,13 @@ export function deferYearsOf(params: SimulationParamsState): number {
 
 function track(p: PersonPensions, params: SimulationParamsState): Track {
   // 연기하면 개시 나이가 늦어지고 1년당 7.2% 가산. 유족연금은 가산 전 기본 연금으로 계산하므로 national은 원래 값을 둔다
+  // 국민연금법 제62조: 연기 기간 동안 매년 전년도 소비자물가변동률만큼 기본연금액이 인상된 후 연 7.2%(월 0.6%) 가산율 적용
   const defer = deferYearsOf(params);
-  const deferredNational = { ...p.national, expectedMonthlyPension: p.national.expectedMonthlyPension * (1 + NPS_RULES.deferralBonusPerYear * defer) };
+  const inflationBonus = defer > 0 ? Math.pow(1 + params.inflationRate / 100, defer) : 1;
+  const deferredNational = {
+    ...p.national,
+    expectedMonthlyPension: p.national.expectedMonthlyPension * (1 + NPS_RULES.deferralBonusPerYear * defer) * inflationBonus,
+  };
   // 기초연금은 가구 단위로 따로 계산하므로 개인 시뮬레이션에서는 0으로 둔다
   const sim = runPensionSimulation(
     deferredNational,

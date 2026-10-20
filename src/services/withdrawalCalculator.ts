@@ -764,7 +764,7 @@ export function runWithdrawalSimulation(
     // 완전한 계단식(우하향) 곡선을 보장. (모든 전략 공통)
     const deferYearsPort = strategyId === "S2" ? 5 : 0;
     const effectiveNatStartPort = simulationParams.nationalPensionStartAge + deferYearsPort;
-    const deferMultPort = 1 + deferYearsPort * 0.072;
+    const deferMultPort = (1 + deferYearsPort * 0.072) * Math.pow(1 + inflationRate, deferYearsPort);
 
     // 인출(감소) 시작 기준 연령: 은퇴나이. (계좌가 더 일찍 개시되면 그 시점)
     const minPayoutAge = accounts.length > 0
@@ -869,9 +869,9 @@ export function runWithdrawalSimulation(
         nationalPreTax = (publicByAge[age]?.national ?? 0) * 12 * 10000;
         basicPreTax = (publicByAge[age]?.basic ?? 0) * 12 * 10000;
       } else if (age >= nationalPensionStartAge) {
-        // 국민연금 연기 시 매년 +7.2% 증액 효과 반영
+        // 국민연금 연기 시 매년 +7.2% 증액 효과 및 연기 기간 물가변동률 반영 (국민연금법 제62조)
         const deferYears = Math.max(0, nationalPensionStartAge - simulationParams.nationalPensionStartAge);
-        const deferMultiplier = 1 + deferYears * 0.072;
+        const deferMultiplier = (1 + deferYears * 0.072) * Math.pow(1 + inflationRate, deferYears);
         // 국민연금은 매년 전년도 소비자물가변동률만큼 증액(물가연동) → 연령 증가에 따라 수령액 증가
         const indexation = Math.pow(1 + inflationRate, age - nationalPensionStartAge);
         // 국민연금 연액 계산 (만 원 -> 원)

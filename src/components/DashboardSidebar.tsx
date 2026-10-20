@@ -1,3 +1,4 @@
+// 대시보드 왼쪽 입력 옵션 및 4단계 전문 에이전트(Agent 1~4) 대응 도구 분류 사이드바
 "use client";
 
 import React, { useEffect } from "react";
@@ -5,7 +6,6 @@ import { usePensionStore, type SimulationParamsState, DEFAULT_AGE_BANDS } from "
 import { NPS_RULES } from "@/config/npsRules";
 import { statutoryStartAgeOf } from "@/services/coupleSimulation";
 
-// 대시보드 왼쪽 입력 열: 시뮬레이션·시나리오에 쓰는 모든 입력을 그룹별로 모은다 (접으면 결과가 전체 폭 사용)
 interface Props {
   collapsed: boolean;
   onToggle: () => void;
@@ -54,14 +54,14 @@ export default function DashboardSidebar(props: Props) {
   const hasSpouse = params.hasSpouse;
   const setParam = (data: Partial<SimulationParamsState>) => store.setSimulationParams(data);
 
-  // 국민연금 개시 나이는 출생연도별 법정 나이로 고정 (늦추려면 「수령 시작」 연기). 예전 저장값(예: 70세)도 맞춘다
+  // 국민연금 개시 나이는 출생연도별 법정 나이로 고정
   const selfStatutory = statutoryStartAgeOf(params, "SELF");
   const spouseStatutory = statutoryStartAgeOf(params, "SPOUSE");
-  // 출생연도: 온보딩에서 주민번호 앞자리로 저장된 값, 없으면 올해 − 나이 (생일 전이면 1년 차이 가능)
   const thisYear = new Date().getFullYear();
   const selfBirth = params.birthYear || thisYear - params.currentAge;
   const spouseBirth = params.spouseBirthYear || thisYear - (params.spouseAge ?? params.currentAge);
   const setSimulationParams = store.setSimulationParams;
+
   useEffect(() => {
     const fix: Partial<SimulationParamsState> = {};
     if (params.nationalPensionStartAge !== selfStatutory) fix.nationalPensionStartAge = selfStatutory;
@@ -91,15 +91,24 @@ export default function DashboardSidebar(props: Props) {
       <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} style={styles.range} />
     </div>
   );
+
   const number = (label: string, value: number, onChange: (v: number) => void, hint?: string, placeholder?: string) => (
     <div style={styles.field}>
       <label style={styles.label}>
         {label} {hint && <span style={styles.hint}>{hint}</span>}
       </label>
-      <input type="number" min={0} className="premium-input" style={styles.input} placeholder={placeholder ?? "0"} value={value || ""}
-        onChange={(e) => onChange(Number(e.target.value))} />
+      <input
+        type="number"
+        min={0}
+        className="premium-input"
+        style={styles.input}
+        placeholder={placeholder ?? "0"}
+        value={value || ""}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
     </div>
   );
+
   const deferSelect = (label: string, value: number, baseAge: number, key: "nationalPensionDeferYears" | "spouseNationalPensionDeferYears") => (
     <div style={styles.field}>
       <label style={styles.label}>{label}</label>
@@ -112,11 +121,11 @@ export default function DashboardSidebar(props: Props) {
       </select>
     </div>
   );
+
   const accounts = [
     ...store.retirementPensions.map((p) => ({ id: p.id, name: `${p.pensionType} 퇴직연금` })),
     ...store.personalPensions.map((p) => ({ id: p.id, name: `개인연금저축 (${p.savingsType})` })),
     ...store.pensionInsurances.map((i) => ({ id: i.id, name: `연금보험 (${i.insuranceType})` })),
-    // 배우자 계좌 (가구 기준 시나리오)
     ...(hasSpouse
       ? [
           ...store.spouse.retirementPensions.map((p) => ({ id: p.id, name: `배우자 ${p.pensionType} 퇴직연금` })),
@@ -125,157 +134,163 @@ export default function DashboardSidebar(props: Props) {
         ]
       : []),
   ];
+
   const coveredCallAsset = params.coveredCallAsset || 5000;
   const coveredCallRate = params.coveredCallDividendRate || 9.0;
   const coveredCallPriceReturn = params.coveredCallPriceReturnRate ?? 0.0;
 
+  // 공통 툴 버튼 렌더러
+  const renderToolButton = (
+    onClick: (() => void) | undefined,
+    icon: string,
+    title: string,
+    accentColor: string,
+    id?: string,
+    tooltip?: string
+  ) => {
+    if (!onClick) return null;
+    return (
+      <button
+        type="button"
+        id={id}
+        onClick={onClick}
+        className="premium-button-secondary"
+        style={{
+          width: "100%",
+          padding: "6px 10px",
+          fontSize: "0.75rem",
+          fontWeight: 600,
+          textAlign: "left",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          borderColor: `rgba(${accentColor}, 0.35)`,
+          color: `rgb(${accentColor})`,
+          background: `rgba(${accentColor}, 0.06)`,
+          borderRadius: "6px",
+          cursor: "pointer",
+          transition: "all 0.15s ease",
+          marginBottom: "4px",
+        }}
+        title={tooltip || title}
+      >
+        <span style={{ fontSize: "0.85rem" }}>{icon}</span>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
+      </button>
+    );
+  };
+
   return (
     <aside style={styles.sidebar} className="dash-sidebar">
+      {/* 헤더 */}
       <div style={styles.header}>
-        <span style={styles.headerTitle}>⚙️ 입력 옵션</span>
+        <span style={styles.headerTitle}>⚙️ 설정 & 분석 툴킷</span>
         <button type="button" onClick={props.onToggle} style={styles.collapseButton} title="입력 옵션 접기">
           ◀ 접기
         </button>
       </div>
 
-      {props.onOpenQuickDiagnosisModal && (
-        <button
-          type="button"
-          id="sidebar-btn-quick-diagnosis"
-          onClick={props.onOpenQuickDiagnosisModal}
-          className="premium-button"
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            fontSize: "0.8rem",
-            fontWeight: 800,
-            background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            boxShadow: "0 2px 8px rgba(99, 102, 241, 0.35)",
-            border: "none",
-            borderRadius: "var(--radius-sm, 8px)",
-            cursor: "pointer",
-            marginBottom: "6px",
-          }}
-          title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
-        >
-          <span>⚡</span>
-          <span>30초 퀵 간편 진단</span>
-        </button>
-      )}
+      {/* 🚀 빠른 실행: 퀵 진단 & 페르소나 & 스냅샷 */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "4px" }}>
+        {props.onOpenQuickDiagnosisModal && (
+          <button
+            type="button"
+            id="sidebar-btn-quick-diagnosis"
+            onClick={props.onOpenQuickDiagnosisModal}
+            className="premium-button"
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              fontSize: "0.8rem",
+              fontWeight: 800,
+              background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              boxShadow: "0 2px 8px rgba(99, 102, 241, 0.35)",
+              border: "none",
+              borderRadius: "var(--radius-sm, 8px)",
+              cursor: "pointer",
+            }}
+            title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
+          >
+            <span>⚡</span>
+            <span>30초 퀵 간편 진단</span>
+          </button>
+        )}
 
-      {props.onOpenPersonaModal && (
-        <button
-          type="button"
-          id="sidebar-btn-persona"
-          onClick={props.onOpenPersonaModal}
-          className="premium-button"
-          style={{
-            width: "100%",
-            padding: "8px 12px",
-            fontSize: "0.8rem",
-            fontWeight: 800,
-            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            boxShadow: "0 2px 8px rgba(139, 92, 246, 0.35)",
-            border: "none",
-            borderRadius: "var(--radius-sm, 8px)",
-            cursor: "pointer",
-            marginBottom: "8px",
-          }}
-          title="대표 가구 페르소나 데이터 불러오기"
-        >
-          <span>👥</span>
-          <span>페르소나 체험</span>
-        </button>
-      )}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+          {props.onOpenPersonaModal && (
+            <button
+              type="button"
+              id="sidebar-btn-persona"
+              onClick={props.onOpenPersonaModal}
+              className="premium-button-secondary"
+              style={{
+                padding: "6px 8px",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                background: "rgba(139, 92, 246, 0.08)",
+                color: "#8b5cf6",
+                borderColor: "rgba(139, 92, 246, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
+                borderRadius: "var(--radius-sm, 6px)",
+                cursor: "pointer",
+              }}
+              title="대표 가구 페르소나 데이터 불러오기"
+            >
+              <span>👥</span>
+              <span>페르소나 체험</span>
+            </button>
+          )}
 
+          {props.onOpenShareSnapshotModal && (
+            <button
+              type="button"
+              onClick={props.onOpenShareSnapshotModal}
+              className="premium-button-secondary"
+              style={{
+                padding: "6px 8px",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                background: "rgba(14, 165, 233, 0.08)",
+                color: "#0284c7",
+                borderColor: "rgba(14, 165, 233, 0.3)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
+                borderRadius: "var(--radius-sm, 6px)",
+                cursor: "pointer",
+              }}
+              title="은퇴 시뮬레이션 설정 링크 공유"
+            >
+              <span>🔗</span>
+              <span>가족 공유 링크</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 1. 기본 설정 & 생애 지출 곡선 (기초 시뮬레이션 파라미터) */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <details open style={styles.group}>
-        <summary style={styles.summary}>기본</summary>
+        <summary style={styles.summary}>
+          <span>📋</span> 기본 설정 & 생애 지출 곡선
+        </summary>
+        
         {slider("본인 기대수명", params.expectedLifeExpectancy, "세", 75, 105, 1, (v) => setParam({ expectedLifeExpectancy: v }))}
         {hasSpouse && slider("배우자 기대수명", params.spouseLifeExpectancy, "세", 75, 105, 1, (v) => setParam({ spouseLifeExpectancy: v }))}
         {slider("물가상승률", params.inflationRate, "%", 0.5, 6, 0.1, (v) => setParam({ inflationRate: v }))}
-        <p style={styles.note}>기본 3% (최근 30년 평균 약 2.7%)</p>
-      </details>
 
-      <details open style={styles.group}>
-        <summary style={styles.summary}>국민연금</summary>
-        {deferSelect(`본인 수령 시작 (${selfBirth}년생 · 법정 ${selfStatutory}세)`, params.nationalPensionDeferYears, selfStatutory, "nationalPensionDeferYears")}
-        {hasSpouse &&
-          deferSelect(
-            `배우자 수령 시작 (${spouseBirth}년생 · 법정 ${spouseStatutory}세)`,
-            params.spouseNationalPensionDeferYears,
-            spouseStatutory,
-            "spouseNationalPensionDeferYears"
-          )}
-        <p style={styles.note}>
-          법정 개시 나이는 출생연도로 정해집니다 (1965~68년생 64세, 1969년생 이후 65세). 최대 {NPS_RULES.maxDeferralYears}년 연기,
-          1년마다 +{(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%. 시뮬레이션과 모든 시나리오에 같이 적용됩니다.
-          {(!params.birthYear || (hasSpouse && !params.spouseBirthYear)) && " 출생연도가 다르면 「정보 재입력」에서 주민번호 앞자리로 나이를 다시 입력하세요."}
-        </p>
-        {props.onOpenNpsBoostModal && (
-          <button
-            type="button"
-            onClick={props.onOpenNpsBoostModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(245, 158, 11, 0.4)",
-              color: "#f59e0b",
-              background: "rgba(245, 158, 11, 0.06)",
-              marginBottom: "4px",
-            }}
-          >
-            <span>🪜</span>
-            <span>국민연금 증액 로드맵 (반납·추납·임의계속·연기)</span>
-          </button>
-        )}
-        {props.onOpenBepModal && (
-          <button
-            type="button"
-            id="sidebar-btn-nps-bep"
-            onClick={props.onOpenBepModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(249, 115, 22, 0.4)",
-              color: "#f97316",
-              background: "rgba(249, 115, 22, 0.06)",
-            }}
-            title="국민연금 조기 vs 정상 vs 연기 손익분기점(BEP) 인터랙티브 비교기"
-          >
-            <span>⚖️</span>
-            <span>조기 vs 정상 vs 연기 손익분기(BEP) ⚡</span>
-          </button>
-        )}
-      </details>
-
-      <details open style={styles.group}>
-        <summary style={styles.summary}>연금 규모 & 지출 패턴 설계</summary>
         <div style={styles.field}>
-          <label style={styles.label}>{hasSpouse ? "인출 시작 나이 (본인 나이 기준)" : "인출 시작 나이"}</label>
+          <label style={styles.label}>{hasSpouse ? "인출 시작 나이 (본인 기준)" : "인출 시작 나이"}</label>
           <input
             type="number"
             min={55}
@@ -292,9 +307,10 @@ export default function DashboardSidebar(props: Props) {
             }}
           />
           <p style={{ ...styles.note, marginTop: 4 }}>
-            * 퇴직·개인연금은 소득세법상 만 55세부터 인출(수령) 가능합니다. (최소 만 55세)
+            * 퇴직·개인연금은 소득세법상 만 55세부터 인출 가능합니다. (최소 만 55세)
           </p>
         </div>
+
         <div style={styles.field}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
             <label style={styles.label}>지출 패턴 (인출 설계)</label>
@@ -357,7 +373,7 @@ export default function DashboardSidebar(props: Props) {
           </select>
         </div>
 
-        {/* 연령대별 맞춤형 (AGE_BANDS) 상세 설정 */}
+        {/* 연령대별 맞춤형 생활비 슬라이더 */}
         {params.spendingPattern === "AGE_BANDS" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8, margin: "6px 0 10px" }}>
             <span style={{ fontSize: "0.75rem", color: "var(--text-accent)", fontWeight: 700 }}>
@@ -438,744 +454,174 @@ export default function DashboardSidebar(props: Props) {
           </div>
         )}
 
-        {params.spendingPattern === "ACTIVE_FOCUSED" && (
-          <>
-            {slider("초기 활동기 유지 기간", params.activePhaseYears ?? 5, "년", 1, 10, 1, (v) => setParam({ activePhaseYears: v }))}
-            {slider("활동기 이후 연간 체감률", params.annualDeclineRate ?? 2.0, "%", 0.5, 5.0, 0.5, (v) => setParam({ annualDeclineRate: v }))}
-          </>
-        )}
-
-        {/* 가구 사적연금 소진 나이 (본인 나이 기준). 배우자 칸은 가구 평탄화에서 쓰지 않아 두지 않는다 */}
         <div style={styles.field}>
-          <label style={styles.label}>{hasSpouse ? "사적연금 수령 종료 나이 (본인 나이 기준)" : "사적연금 수령 종료 나이"}</label>
-          <input type="number" min={0} className="premium-input" style={styles.input} value={params.privatePensionEndAge || ""}
+          <label style={styles.label}>{hasSpouse ? "사적연금 수령 종료 나이 (본인 기준)" : "사적연금 수령 종료 나이"}</label>
+          <input
+            type="number"
+            min={0}
+            className="premium-input"
+            style={styles.input}
+            value={params.privatePensionEndAge || ""}
             placeholder={`비우면 ${params.expectedLifeExpectancy}세(기대수명)`}
-            onChange={(e) => setParam({ privatePensionEndAge: Number(e.target.value) })} />
+            onChange={(e) => setParam({ privatePensionEndAge: Number(e.target.value) })}
+          />
         </div>
-        <p style={styles.note}>
-          현재 비용 수준(현재가치) 기준으로 60대 활동기에서 70·80·90대로 갈수록 노후 생활비가 자연스럽게 체감하는 맞춤 지출 곡선으로 설계됩니다.
-          부부 통합 시뮬레이션 및 AI 진단 리포트에 일원화되어 적용됩니다.
-        </p>
-      {props.onOpenSavingsPlanModal && (
-          <button
-            type="button"
-            onClick={props.onOpenSavingsPlanModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(56, 189, 248, 0.4)",
-              color: "#38bdf8",
-              background: "rgba(56, 189, 248, 0.06)",
-              marginBottom: "4px",
-            }}
-          >
-            <span>🎯</span>
-            <span>부족액 역산 적립 플랜</span>
-          </button>
-        )}
-        {props.onOpenDbDcModal && (
-          <button
-            type="button"
-            onClick={props.onOpenDbDcModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(245, 158, 11, 0.4)",
-              color: "#f59e0b",
-              background: "rgba(245, 158, 11, 0.08)",
-              marginBottom: "4px",
-            }}
-          >
-            <span>⚖️</span>
-            <span>퇴직연금 DB/DC 전환·임금피크 타이밍</span>
-          </button>
-        )}
-        {props.onOpenThreeBucketModal && (
-          <button
-            type="button"
-            onClick={props.onOpenThreeBucketModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(6, 182, 212, 0.4)",
-              color: "#06b6d4",
-              background: "rgba(6, 182, 212, 0.08)",
-              marginBottom: "4px",
-            }}
-          >
-            <span>🪣</span>
-            <span>3-Bucket 현금 버퍼 플래너</span>
-          </button>
-        )}
-        {props.onOpenPensionTransferModal && (
-          <button
-            type="button"
-            onClick={props.onOpenPensionTransferModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(16, 185, 129, 0.4)",
-              color: "#10b981",
-              background: "rgba(16, 185, 129, 0.08)",
-            }}
-          >
-            <span>🔄</span>
-            <span>개인연금(IRP) 금융사 갈아타기 실익</span>
-          </button>
-        )}
-        {props.onOpenRetirementRoadmapModal && (
-          <button
-            type="button"
-            onClick={props.onOpenRetirementRoadmapModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(99, 102, 241, 0.4)",
-              color: "#818cf8",
-              background: "rgba(99, 102, 241, 0.08)",
-            }}
-          >
-            <span>🧭</span>
-            <span>은퇴 생애 D-Day 로드맵 & 체크리스트</span>
-          </button>
-        )}
-        {props.onOpenScenarioComparisonModal && (
-          <button
-            type="button"
-            onClick={props.onOpenScenarioComparisonModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(168, 85, 247, 0.4)",
-              color: "#c084fc",
-              background: "rgba(168, 85, 247, 0.08)",
-            }}
-          >
-            <span>📊</span>
-            <span>복수 은퇴 시나리오 비교함 (A vs B vs C)</span>
-          </button>
-        )}
-        {props.onOpenAccountTaxMatrixModal && (
-          <button
-            type="button"
-            onClick={props.onOpenAccountTaxMatrixModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(20, 184, 166, 0.4)",
-              color: "#2dd4bf",
-              background: "rgba(20, 184, 166, 0.08)",
-            }}
-          >
-            <span>📑</span>
-            <span>2026 절세 계좌 4총사 자산배분 매트릭스</span>
-          </button>
-        )}
-        {props.onOpenCashflowTrackerModal && (
-          <button
-            type="button"
-            onClick={props.onOpenCashflowTrackerModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(59, 130, 246, 0.4)",
-              color: "#60a5fa",
-              background: "rgba(59, 130, 246, 0.08)",
-            }}
-          >
-            <span>💳</span>
-            <span>실전 은퇴 가계부 & 런웨이 트래커</span>
-          </button>
-        )}
-        {props.onOpenInteractiveAdvisorModal && (
-          <button
-            type="button"
-            onClick={props.onOpenInteractiveAdvisorModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(168, 85, 247, 0.4)",
-              color: "#c084fc",
-              background: "rgba(168, 85, 247, 0.08)",
-            }}
-          >
-            <span>🤖</span>
-            <span>1:1 대화형 AI 인터랙티브 은퇴 상담</span>
-          </button>
-        )}
-        {props.onOpenTaxAndHealthStatementModal && (
-          <button
-            type="button"
-            onClick={props.onOpenTaxAndHealthStatementModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(16, 185, 129, 0.4)",
-              color: "#34d399",
-              background: "rgba(16, 185, 129, 0.08)",
-            }}
-          >
-            <span>📑</span>
-            <span>은퇴 세무·건보 통합 A4 명세서</span>
-          </button>
-        )}
-        {props.onOpenDividendCalendarModal && (
-          <button
-            type="button"
-            onClick={props.onOpenDividendCalendarModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(99, 102, 241, 0.4)",
-              color: "#a5b4fc",
-              background: "rgba(99, 102, 241, 0.08)",
-            }}
-          >
-            <span>📅</span>
-            <span>월별 배당 캘린더 & 인출 스케줄러</span>
-          </button>
-        )}
-        {props.onOpenStressTestModal && (
-          <button
-            type="button"
-            onClick={props.onOpenStressTestModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(239, 68, 68, 0.4)",
-              color: "#f87171",
-              background: "rgba(239, 68, 68, 0.08)",
-            }}
-          >
-            <span>⚡</span>
-            <span>3중 복합 위기 스트레스 테스트</span>
-          </button>
-        )}
-        {props.onOpenShareSnapshotModal && (
-          <button
-            type="button"
-            onClick={props.onOpenShareSnapshotModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(14, 165, 233, 0.4)",
-              color: "#38bdf8",
-              background: "rgba(14, 165, 233, 0.08)",
-            }}
-          >
-            <span>🔗</span>
-            <span>은퇴 시뮬레이션 가족 공유 스냅샷</span>
-          </button>
-        )}
-        {props.onOpenNpsRecoveryModal && (
-          <button
-            type="button"
-            onClick={props.onOpenNpsRecoveryModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(99, 102, 241, 0.4)",
-              color: "#818cf8",
-              background: "rgba(99, 102, 241, 0.08)",
-            }}
-          >
-            <span>⚖️</span>
-            <span>국민연금 추납 vs 반납 실익 역산기</span>
-          </button>
-        )}
-        {props.onOpenRebalancingOrderModal && (
-          <button
-            type="button"
-            onClick={props.onOpenRebalancingOrderModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "6px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              borderColor: "rgba(16, 185, 129, 0.4)",
-              color: "#34d399",
-              background: "rgba(16, 185, 129, 0.08)",
-            }}
-          >
-            <span>📊</span>
-            <span>은퇴 자산 리밸런싱 주문 가이드</span>
-          </button>
-        )}
       </details>
 
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 2. 공·사적 연금 자산 최적화 (Agent 1 연계 도구) */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <details open style={styles.group}>
-        <summary style={styles.summary}>세금·건보료</summary>
+        <summary style={styles.summary}>
+          <span>🏛️</span> 공·사적 연금 최적화
+        </summary>
+        
+        {deferSelect(`본인 국민연금 수령 (${selfBirth}년생 · 법정 ${selfStatutory}세)`, params.nationalPensionDeferYears, selfStatutory, "nationalPensionDeferYears")}
+        {hasSpouse &&
+          deferSelect(
+            `배우자 국민연금 수령 (${spouseBirth}년생 · 법정 ${spouseStatutory}세)`,
+            params.spouseNationalPensionDeferYears,
+            spouseStatutory,
+            "spouseNationalPensionDeferYears"
+          )}
+        <p style={styles.note}>
+          출생연도별 법정 개시 연령 기준 최대 {NPS_RULES.maxDeferralYears}년 연기(+{(NPS_RULES.deferralBonusPerYear * 100).toFixed(1)}%/년) 반영.
+        </p>
+
+        {/* 관련 특화 분석 툴킷 */}
+        <div style={{ marginTop: "6px" }}>
+          {renderToolButton(props.onOpenNpsBoostModal, "🪜", "국민연금 증액 로드맵 (반납·추납·임의계속)", "245, 158, 11")}
+          {renderToolButton(props.onOpenNpsRecoveryModal, "⚖️", "국민연금 추납 vs 반납 실익 역산기", "99, 102, 241")}
+          {renderToolButton(props.onOpenBepModal, "⚖️", "조기 vs 정상 vs 연기 손익분기(BEP)", "249, 115, 22", "sidebar-btn-nps-bep")}
+          {renderToolButton(props.onOpenDbDcModal, "💼", "퇴직연금 DB/DC 전환·임금피크 타이밍", "234, 88, 12")}
+          {renderToolButton(props.onOpenPensionTransferModal, "🔄", "개인연금(IRP) 금융사 갈아타기 실익", "16, 185, 129")}
+        </div>
+      </details>
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 3. 절세 & 건강보험료 수비 (Agent 2 연계 도구) */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      <details open style={styles.group}>
+        <summary style={styles.summary}>
+          <span>🛡️</span> 절세 & 건강보험료 수비
+        </summary>
+
         {slider("연금저축 세액공제 비율", Math.round(props.personalTaxCreditRatio * 100), "%", 0, 100, 5, (v) => props.setPersonalTaxCreditRatio(v / 100))}
         {slider("퇴직소득세율", Math.round(props.retirementLumpSumTaxRate * 100), "%", 1, 25, 1, (v) => props.setRetirementLumpSumTaxRate(v / 100))}
         {number("기타 연 소득", props.otherIncomeAnnual, props.setOtherIncomeAnnual, "(만원/년)")}
         {number("재산세 과세표준", params.propertyTaxBase, (v) => setParam({ propertyTaxBase: v }), "(만원 · 연 1.2% 근사)")}
         {number("금융소득 이자+배당", params.financialIncome, (v) => setParam({ financialIncome: v }), "(만원/년 · 1,000만원 초과분 7.09%)")}
+
+        {/* 관련 특화 분석 툴킷 */}
+        <div style={{ marginTop: "6px" }}>
+          {renderToolButton(props.onOpenTaxAndHealthStatementModal, "📑", "은퇴 세무·건보 통합 A4 명세서", "16, 185, 129")}
+          {renderToolButton(props.onOpenTax15Modal, "⚖️", "사적연금 1,500만 절세 한도 최적화", "56, 189, 248")}
+          {renderToolButton(props.onOpenHealthBillModal, "🏥", "은퇴 후 지역건보료 모의 고지서", "52, 211, 153")}
+          {renderToolButton(props.onOpenIsaTransferModal, "💎", "ISA 만기 연금 전환 절세 플래너", "168, 85, 247")}
+          {renderToolButton(props.onOpenAccountTaxMatrixModal, "📑", "2026 절세 계좌 4총사 자산배분 매트릭스", "20, 184, 166")}
+        </div>
       </details>
 
-      <details style={styles.group}>
-        <summary style={styles.summary}>S3 커스텀 · 계좌별 인출</summary>
-        <p style={styles.note}>계좌별 개시·기간은 인출전략 S3(사용자 정의 커스텀 전략) 탭에만 적용됩니다.</p>
-        {accounts.length === 0 ? (
-          <p style={styles.note}>등록된 퇴직·개인연금이 없습니다.</p>
-        ) : (
-          accounts.map((a) => {
-            const start = props.s3StartAges[a.id] || 60;
-            const period = props.s3Periods[a.id] || 10;
-            return (
-              <div key={a.id} style={styles.account}>
-                <span style={styles.accountName}>{a.name}</span>
-                {slider("개시", start, "세", 55, 80, 1, (v) => props.setS3StartAges({ ...props.s3StartAges, [a.id]: v }))}
-                {slider("기간", period, "년", 5, 30, 1, (v) => props.setS3Periods({ ...props.s3Periods, [a.id]: v }))}
-              </div>
-            );
-          })
-        )}
-      </details>
-
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 4. 인출 전략 & 자산 런웨이 방어 (Agent 3 연계 도구) */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <details open style={styles.group}>
-        <summary style={styles.summary}>▼ S4 하이브리드 · 배당</summary>
+        <summary style={styles.summary}>
+          <span>📈</span> 인출 전략 & 자산 런웨이 방어
+        </summary>
 
-        {props.onOpenDividendStrategyModal && (
-          <button
-            type="button"
-            onClick={props.onOpenDividendStrategyModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "7px 10px",
-              fontSize: "0.76rem",
-              fontWeight: 700,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "6px",
-              borderColor: "rgba(99, 102, 241, 0.4)",
-              color: "var(--text-accent)",
-              background: "rgba(99, 102, 241, 0.12)",
-              borderRadius: "6px",
-              marginTop: "8px",
-              marginBottom: "10px",
-              cursor: "pointer",
-            }}
-            title="대표적인 연금 배당 투자 포트폴리오 4선 추천 및 분배율 원클릭 적용"
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span>💡</span>
-              <span>배당금 투자 전략 추천</span>
-            </span>
-            <span style={{ fontSize: "0.7rem", color: "var(--text-accent)" }}>가이드 ➔</span>
-          </button>
-        )}
-
-        {props.onOpenPortfolioBacktestModal && (
-          <button
-            type="button"
-            onClick={props.onOpenPortfolioBacktestModal}
-            className="premium-button-secondary"
-            style={{
-              width: "100%",
-              padding: "7px 10px",
-              fontSize: "0.76rem",
-              fontWeight: 700,
-              textAlign: "left",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "6px",
-              borderColor: "rgba(16, 185, 129, 0.4)",
-              color: "var(--success-light, #10b981)",
-              background: "rgba(16, 185, 129, 0.1)",
-              borderRadius: "6px",
-              marginTop: "4px",
-              marginBottom: "10px",
-              cursor: "pointer",
-            }}
-            title="은퇴 자산 포트폴리오의 10년 시장 시나리오 백테스트 및 배당 복리 효과 검증"
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span>📊</span>
-              <span>포트폴리오 10년 백테스트</span>
-            </span>
-            <span style={{ fontSize: "0.7rem", color: "var(--success-light, #10b981)" }}>시뮬레이션 ➔</span>
-          </button>
-        )}
-
-        {slider("커버드콜 투자금", coveredCallAsset, "만원", 0, 50000, 500, (v) => setParam({ coveredCallAsset: v }))}
-        {slider("예상 연 분배율", coveredCallRate, "%", 2, 15, 0.5, (v) => setParam({ coveredCallDividendRate: v }))}
-        {slider("예상 가격수익률(NAV 변동)", coveredCallPriceReturn, "%", -10, 5, 0.5, (v) => setParam({ coveredCallPriceReturnRate: v }))}
-        <div style={{ display: "flex", gap: "4px", marginBottom: "8px" }}>
-          {[
-            { label: "보수 (-5%)", val: -5.0 },
-            { label: "중립 (0%)", val: 0.0 },
-            { label: "낙관 (+2%)", val: 2.0 },
-          ].map((sc) => (
-            <button
-              key={sc.label}
-              type="button"
-              onClick={() => setParam({ coveredCallPriceReturnRate: sc.val })}
-              style={{
-                flex: 1,
-                padding: "3px 4px",
-                fontSize: "0.68rem",
-                borderRadius: "4px",
-                border: `1px solid ${coveredCallPriceReturn === sc.val ? "var(--primary)" : "var(--border)"}`,
-                background: coveredCallPriceReturn === sc.val ? "rgba(99, 102, 241, 0.15)" : "transparent",
-                color: coveredCallPriceReturn === sc.val ? "var(--text-accent)" : "var(--text-muted)",
-                cursor: "pointer",
-              }}
-            >
-              {sc.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 금감원 2026 커버드콜 핵심위험 고지 */}
-        <div
-          style={{
-            padding: "8px 10px",
-            borderRadius: "6px",
-            backgroundColor: "rgba(245, 158, 11, 0.08)",
-            border: "1px solid rgba(245, 158, 11, 0.25)",
-            fontSize: "0.69rem",
-            color: "var(--text-secondary)",
-            lineHeight: 1.5,
-            marginBottom: "8px",
-          }}
-        >
-          <div style={{ fontWeight: 700, color: "#f59e0b", marginBottom: "2px" }}>⚠️ 커버드콜 핵심 투자 유의사항</div>
-          • 분배율은 확정 수익이 아니며, 기초자산 하락 시 원금(NAV) 침식이 발생할 수 있습니다.<br />
-          • 옵션 프리미엄 수취 대가로 주가 상승 참여가 제한(상승 캡)됩니다.
-        </div>
-
-        {/* 배당 투자 계좌 유형 선택 */}
-        <div style={{ marginTop: "6px", marginBottom: "8px" }}>
-          <label style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>
-            배당 투자 계좌 유형
-          </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+        {/* S4 하이브리드 배당 파라미터 */}
+        <div style={{ backgroundColor: "rgba(99, 102, 241, 0.04)", border: "1px solid var(--border)", borderRadius: "8px", padding: "8px", marginBottom: "8px" }}>
+          <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--text-accent)", display: "block", marginBottom: "6px" }}>
+            S4 하이브리드 배당 설정
+          </span>
+          {slider("커버드콜 투자금", coveredCallAsset, "만원", 0, 50000, 500, (v) => setParam({ coveredCallAsset: v }))}
+          {slider("예상 연 분배율", coveredCallRate, "%", 2, 15, 0.5, (v) => setParam({ coveredCallDividendRate: v }))}
+          {slider("예상 가격수익률(NAV)", coveredCallPriceReturn, "%", -10, 5, 0.5, (v) => setParam({ coveredCallPriceReturnRate: v }))}
+          
+          <div style={{ display: "flex", gap: "4px", margin: "6px 0 8px" }}>
             {[
-              { id: "TAXABLE", label: "일반 위탁계좌", sub: "15.4% 원천징수" },
-              { id: "PENSION", label: "연금저축/IRP", sub: "3.3~5.5% 절세" },
-            ].map((acc) => {
-              const isSelected = (params.coveredCallAccountType || "TAXABLE") === acc.id;
-              return (
-                <button
-                  key={acc.id}
-                  type="button"
-                  onClick={() => setParam({ coveredCallAccountType: acc.id as any })}
-                  style={{
-                    padding: "6px 4px",
-                    borderRadius: "6px",
-                    border: `1px solid ${isSelected ? "var(--primary)" : "var(--border)"}`,
-                    backgroundColor: isSelected ? "rgba(99, 102, 241, 0.12)" : "transparent",
-                    color: isSelected ? "var(--text-primary)" : "var(--text-secondary)",
-                    cursor: "pointer",
-                    textAlign: "center",
-                  }}
-                >
-                  <div style={{ fontSize: "0.74rem", fontWeight: isSelected ? 700 : 500 }}>{acc.label}</div>
-                  <div style={{ fontSize: "0.66rem", color: isSelected ? "var(--text-accent)" : "var(--text-muted)" }}>{acc.sub}</div>
-                </button>
-              );
-            })}
+              { label: "보수 (-5%)", val: -5.0 },
+              { label: "중립 (0%)", val: 0.0 },
+              { label: "낙관 (+2%)", val: 2.0 },
+            ].map((sc) => (
+              <button
+                key={sc.label}
+                type="button"
+                onClick={() => setParam({ coveredCallPriceReturnRate: sc.val })}
+                style={{
+                  flex: 1,
+                  padding: "3px 4px",
+                  fontSize: "0.68rem",
+                  borderRadius: "4px",
+                  border: `1px solid ${coveredCallPriceReturn === sc.val ? "var(--primary)" : "var(--border)"}`,
+                  background: coveredCallPriceReturn === sc.val ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                  color: coveredCallPriceReturn === sc.val ? "var(--text-accent)" : "var(--text-muted)",
+                  cursor: "pointer",
+                }}
+              >
+                {sc.label}
+              </button>
+            ))}
           </div>
-          {params.coveredCallAccountType === "PENSION" && (
-            <div style={{ marginTop: 6, fontSize: "0.68rem", color: "#10b981", lineHeight: 1.4, padding: "4px 6px", borderRadius: 4, backgroundColor: "rgba(16, 185, 129, 0.08)" }}>
-              💡 <strong>연금계좌 혜택</strong>: 금융소득 1,000만원 기준에서 제외되어 건보료 피부양자가 안전하게 방어되며, 인출 시 3.3~5.5% 저율과세됩니다. (IRP는 안전자산 30% 의무 적용)
-            </div>
-          )}
+
+          <label style={{ ...styles.checkbox, margin: "6px 0" }}>
+            <input type="checkbox" checked={params.isCoupleDivided || false} onChange={(e) => setParam({ isCoupleDivided: e.target.checked })} />
+            부부 명의 분산 (인당 1,000만원 한도 방어)
+          </label>
         </div>
 
-        <label style={styles.checkbox}>
-          <input type="checkbox" checked={params.isCoupleDivided || false} onChange={(e) => setParam({ isCoupleDivided: e.target.checked })} />
-          부부 명의 분산 (인당 배당 1,000만원 한도)
-        </label>
-        <div style={{ marginTop: "8px" }}>
-          <label style={{ fontSize: "0.74rem", fontWeight: 600, color: "var(--text-muted)", display: "block", marginBottom: "4px" }}>
-            배당금 운용 정책
-          </label>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            {[
-              { id: "REINVEST", label: "🔄 잉여 배당 재투자 (스노우볼)", desc: "생활비 부족분만 인출하고 잉여는 원금 재투자" },
-              { id: "BUFFER", label: "🛡️ 배당 비상자금 풀 (안전적립)", desc: "잉여 배당금을 안전자산(연 2.5%)에 누적" },
-              { id: "PAYOUT", label: "💸 전액 현금화 소비 (소진형)", desc: "매년 발생하는 배당금을 전액 생활비로 소비" },
-            ].map((opt) => {
-              const isSelected = (params.dividendPolicy || "PAYOUT") === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setParam({ dividendPolicy: opt.id as any })}
-                  style={{
-                    textAlign: "left",
-                    padding: "6px 8px",
-                    borderRadius: "4px",
-                    border: `1px solid ${isSelected ? "var(--primary)" : "var(--border)"}`,
-                    backgroundColor: isSelected ? "rgba(99, 102, 241, 0.12)" : "transparent",
-                    color: isSelected ? "var(--text-primary)" : "var(--text-secondary)",
-                    cursor: "pointer",
-                    fontSize: "0.72rem",
-                  }}
-                >
-                  <div style={{ fontWeight: isSelected ? 700 : 500 }}>{opt.label}</div>
-                  <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "2px" }}>{opt.desc}</div>
-                </button>
-              );
-            })}
+        {/* S3 커스텀 계좌별 인출 (접이식) */}
+        <details style={{ marginBottom: "8px", border: "1px dashed var(--border)", borderRadius: "6px", padding: "6px" }}>
+          <summary style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)", cursor: "pointer" }}>
+            ⚙️ S3 계좌별 인출 시점 세부 설정 ({accounts.length}개 계좌)
+          </summary>
+          <div style={{ marginTop: "6px" }}>
+            {accounts.length === 0 ? (
+              <p style={styles.note}>등록된 퇴직·개인연금이 없습니다.</p>
+            ) : (
+              accounts.map((a) => {
+                const start = props.s3StartAges[a.id] || 60;
+                const period = props.s3Periods[a.id] || 10;
+                return (
+                  <div key={a.id} style={styles.account}>
+                    <span style={styles.accountName}>{a.name}</span>
+                    {slider("개시", start, "세", 55, 80, 1, (v) => props.setS3StartAges({ ...props.s3StartAges, [a.id]: v }))}
+                    {slider("기간", period, "년", 5, 30, 1, (v) => props.setS3Periods({ ...props.s3Periods, [a.id]: v }))}
+                  </div>
+                );
+              })
+            )}
           </div>
+        </details>
+
+        {/* 자산 런웨이 방어 & 포트폴리오 툴킷 */}
+        <div style={{ marginTop: "6px" }}>
+          {renderToolButton(props.onOpenThreeBucketModal, "🪣", "3-Bucket 현금 버퍼 플래너", "6, 182, 212")}
+          {renderToolButton(props.onOpenDividendStrategyModal, "💡", "배당금 투자 전략 & 실전 ETF 추천", "99, 102, 241")}
+          {renderToolButton(props.onOpenDividendCalendarModal, "📅", "월별 배당 캘린더 & 인출 스케줄러", "165, 180, 252")}
+          {renderToolButton(props.onOpenPortfolioBacktestModal, "📊", "은퇴 포트폴리오 10년 백테스트", "16, 185, 129")}
+          {renderToolButton(props.onOpenRebalancingOrderModal, "📋", "은퇴 자산 리밸런싱 주문 가이드", "52, 211, 153")}
+          {renderToolButton(props.onOpenIncomeBridgeModal, "🌉", "소득 공백기(크레바스) 브릿지 플래너", "56, 189, 248")}
+          {renderToolButton(props.onOpenSurvivorCareModal, "🕊️", "홀로 남은 배우자 생애 케어", "251, 113, 133")}
+          {renderToolButton(props.onOpenReverseMortgageModal, "🏠", "주택연금(역모기지) 결합 시뮬레이션", "251, 191, 36")}
+          {renderToolButton(props.onOpenStressTestModal, "⚡", "3중 복합 위기 스트레스 테스트", "248, 113, 113")}
+          {renderToolButton(props.onOpenCashflowTrackerModal, "💳", "실전 은퇴 가계부 & 런웨이 트래커", "96, 165, 250")}
+          {renderToolButton(props.onOpenSavingsPlanModal, "🎯", "부족액 역산 적립 플랜", "56, 189, 248")}
         </div>
       </details>
 
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* 5. 시나리오 비교 & AI 종합 처방 (Agent 4 연계 도구) */}
+      {/* ───────────────────────────────────────────────────────────── */}
       <details open style={styles.group}>
-        <summary style={styles.summary}>은퇴 자산 수비 & 절세 도구</summary>
-        <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "8px" }}>
-          {props.onOpenTax15Modal && (
-            <button
-              type="button"
-              onClick={props.onOpenTax15Modal}
-              className="premium-button-secondary"
-              style={{
-                width: "100%",
-                padding: "6px 10px",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                borderColor: "rgba(56, 189, 248, 0.4)",
-                color: "#38bdf8",
-                background: "rgba(56, 189, 248, 0.06)",
-              }}
-            >
-              <span>⚖️</span>
-              <span>사적연금 1,500만 절세 한도</span>
-            </button>
-          )}
-
-          {props.onOpenHealthBillModal && (
-            <button
-              type="button"
-              onClick={props.onOpenHealthBillModal}
-              className="premium-button-secondary"
-              style={{
-                width: "100%",
-                padding: "6px 10px",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                borderColor: "rgba(16, 185, 129, 0.4)",
-                color: "#34d399",
-                background: "rgba(16, 185, 129, 0.06)",
-              }}
-            >
-              <span>🏥</span>
-              <span>지역건보료 모의 고지서</span>
-            </button>
-          )}
-
-          {props.onOpenReverseMortgageModal && (
-            <button
-              type="button"
-              onClick={props.onOpenReverseMortgageModal}
-              className="premium-button-secondary"
-              style={{
-                width: "100%",
-                padding: "6px 10px",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                borderColor: "rgba(251, 191, 36, 0.4)",
-                color: "#fbbf24",
-                background: "rgba(251, 191, 36, 0.06)",
-              }}
-            >
-              <span>🏠</span>
-              <span>주택연금(역모기지) 결합</span>
-            </button>
-          )}
-
-          {props.onOpenIncomeBridgeModal && (
-            <button
-              type="button"
-              onClick={props.onOpenIncomeBridgeModal}
-              className="premium-button-secondary"
-              style={{
-                width: "100%",
-                padding: "6px 10px",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                borderColor: "rgba(56, 189, 248, 0.4)",
-                color: "#38bdf8",
-                background: "rgba(56, 189, 248, 0.06)",
-              }}
-            >
-              <span>🌉</span>
-              <span>소득 공백기(크레바스) 플래너</span>
-            </button>
-          )}
-
-          {props.onOpenSurvivorCareModal && (
-            <button
-              type="button"
-              onClick={props.onOpenSurvivorCareModal}
-              className="premium-button-secondary"
-              style={{
-                width: "100%",
-                padding: "6px 10px",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                borderColor: "rgba(244, 63, 94, 0.4)",
-                color: "#fb7185",
-                background: "rgba(244, 63, 94, 0.06)",
-              }}
-            >
-              <span>🕊️</span>
-              <span>홀로 남은 배우자 생애 케어</span>
-            </button>
-          )}
-
-          {props.onOpenIsaTransferModal && (
-            <button
-              type="button"
-              onClick={props.onOpenIsaTransferModal}
-              className="premium-button-secondary"
-              style={{
-                width: "100%",
-                padding: "6px 10px",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                textAlign: "left",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                borderColor: "rgba(168, 85, 247, 0.4)",
-                color: "#c084fc",
-                background: "rgba(168, 85, 247, 0.06)",
-              }}
-            >
-              <span>💎</span>
-              <span>ISA 만기 연금 전환 절세</span>
-            </button>
-          )}
+        <summary style={styles.summary}>
+          <span>🔮</span> 시나리오 비교 & AI 종합 진단
+        </summary>
+        <div style={{ marginTop: "6px" }}>
+          {renderToolButton(props.onOpenScenarioComparisonModal, "📊", "복수 은퇴 시나리오 비교함 (A vs B vs C)", "192, 132, 252")}
+          {renderToolButton(props.onOpenRetirementRoadmapModal, "🧭", "은퇴 생애 D-Day 로드맵 & 체크리스트", "129, 140, 248")}
+          {renderToolButton(props.onOpenInteractiveAdvisorModal, "🤖", "1:1 대화형 AI 인터랙티브 은퇴 상담", "168, 85, 247")}
         </div>
       </details>
     </aside>
@@ -1211,28 +657,37 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "8px",
   },
   railText: { writingMode: "vertical-rl", fontSize: "0.8rem", letterSpacing: "0.1em" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  headerTitle: { fontWeight: 700, fontSize: "0.95rem", color: "var(--text-primary)" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" },
+  headerTitle: { fontWeight: 700, fontSize: "0.92rem", color: "var(--text-primary)" },
   collapseButton: {
     background: "transparent",
     border: "1px solid var(--border)",
     borderRadius: "var(--radius-sm)",
     color: "var(--text-secondary)",
     fontSize: "0.72rem",
-    padding: "4px 8px",
+    padding: "3px 6px",
     cursor: "pointer",
   },
   group: { borderTop: "1px solid var(--border)", paddingTop: "8px" },
-  summary: { cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", color: "var(--text-accent)", marginBottom: "6px" },
-  field: { display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px" },
+  summary: {
+    cursor: "pointer",
+    fontWeight: 700,
+    fontSize: "0.82rem",
+    color: "var(--text-accent)",
+    marginBottom: "6px",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  },
+  field: { display: "flex", flexDirection: "column", gap: "3px", marginBottom: "8px" },
   labelRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  label: { fontSize: "0.78rem", fontWeight: 600, color: "var(--text-primary)" },
+  label: { fontSize: "0.76rem", fontWeight: 600, color: "var(--text-primary)" },
   hint: { fontSize: "0.68rem", fontWeight: 400, color: "var(--text-muted)" },
-  value: { fontSize: "0.78rem", fontWeight: 700, color: "var(--primary)" },
+  value: { fontSize: "0.76rem", fontWeight: 700, color: "var(--primary)" },
   range: { width: "100%", cursor: "pointer", accentColor: "var(--primary)" },
-  input: { fontSize: "0.8rem", padding: "6px 8px" },
-  note: { fontSize: "0.7rem", color: "var(--text-muted)", lineHeight: 1.5, margin: "0 0 4px" },
+  input: { fontSize: "0.78rem", padding: "5px 8px" },
+  note: { fontSize: "0.68rem", color: "var(--text-muted)", lineHeight: 1.45, margin: "0 0 4px" },
   account: { borderBottom: "1px dashed var(--border)", paddingBottom: "6px", marginBottom: "6px" },
-  accountName: { fontSize: "0.75rem", fontWeight: 600, color: "var(--text-secondary)" },
-  checkbox: { display: "flex", alignItems: "center", gap: "6px", fontSize: "0.75rem", color: "var(--text-secondary)", cursor: "pointer" },
+  accountName: { fontSize: "0.74rem", fontWeight: 600, color: "var(--text-secondary)" },
+  checkbox: { display: "flex", alignItems: "center", gap: "6px", fontSize: "0.74rem", color: "var(--text-secondary)", cursor: "pointer" },
 };

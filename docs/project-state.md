@@ -5,6 +5,8 @@
 - PostgreSQL 16 local database set up with `pgvector` extension.
 - Prisma 7 models created and successfully migrated (with HNSW vector index).
 - Database singleton client pool configured and validated.
+- **[Completed]** Sprint 48: 5대 UI/UX 기준(Hallmark, a11y, 모션, 계층화) 대시보드 리팩토링 (FEAT-076, PR #59).
+- **[Completed]** Sprint 49: 모바일 바텀시트, AI 어드바이저 및 온보딩 5대 UI/UX 전면 리뉴얼 (후보 A/B/C 통합, FEAT-077, PR #60).
 - **[Completed]** Story S1-1: Zustand client state store, Landing page, Onboarding wizard, and save API.
 - **[Completed]** Story S1-2: Pension Calculation Engine (calculating 3-tier payouts and 2026 reform schedules) and Dashboard UI integrated with Recharts Donut & Stacked Area charts.
 - **[Completed]** Story S1-3: YouTube Expert Content Crawler and RAG Chat Q&A API using pgvector and OpenAI.

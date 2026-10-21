@@ -1,4 +1,5 @@
 "use client";
+// 다층 연금 가구 분석 및 AI 맞춤 리밸런싱 포트폴리오 진단 리포트 페이지
 
 import React, { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
@@ -173,10 +174,6 @@ export default function AiAdvisorPage() {
 
   return (
     <main style={styles.container}>
-      {/* Background decoration */}
-      <div style={styles.bgGlow1} />
-      <div style={styles.bgGlow2} />
-
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
@@ -203,12 +200,15 @@ export default function AiAdvisorPage() {
               className="premium-button"
               style={{
                 padding: "8px 16px",
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                display: "flex",
+                minHeight: "40px",
+                background: "var(--surface-accent)",
+                color: "var(--text-primary)",
+                border: "1px solid var(--border)",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "6px",
                 fontWeight: 700,
-                border: "none",
+                borderRadius: "10px",
               }}
               id="btn-header-persona"
               title="대표 가구 페르소나 데이터 불러오기"
@@ -220,7 +220,12 @@ export default function AiAdvisorPage() {
             <Link
               href="/onboarding"
               className="premium-button-secondary"
-              style={{ padding: "8px 16px" }}
+              style={{
+                padding: "8px 16px",
+                minHeight: "40px",
+                display: "inline-flex",
+                alignItems: "center",
+              }}
               id="btn-re-onboard"
             >
               정보 재입력
@@ -262,6 +267,7 @@ export default function AiAdvisorPage() {
                 className="premium-button"
                 style={{
                   padding: "12px 22px",
+                  minHeight: "44px",
                   fontSize: "0.95rem",
                   background: "var(--gradient-brand)",
                   boxShadow: "var(--shadow-brand)",
@@ -271,7 +277,7 @@ export default function AiAdvisorPage() {
                   gap: 8,
                 }}
               >
-                {loading ? "🔄 AI 종합 진단 분석 중..." : source === "ai" ? "🔮 AI 맞춤 진단 다시 받기" : "🔮 AI 맞춤 정밀 진단 받기"}
+                {loading ? "🔄 AI 종합 진단 분석 중..." : source === "ai" ? "⚡ AI 맞춤 진단 다시 받기" : "⚡ AI 맞춤 정밀 진단 받기"}
               </button>
 
               <button
@@ -281,6 +287,7 @@ export default function AiAdvisorPage() {
                 className="premium-button-secondary"
                 style={{
                   padding: "12px 18px",
+                  minHeight: "44px",
                   fontSize: "0.92rem",
                   fontWeight: 700,
                   display: "inline-flex",
@@ -541,28 +548,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: "var(--background)",
     position: "relative",
     overflowX: "hidden",
-  },
-  bgGlow1: {
-    position: "absolute",
-    top: "-10%",
-    left: "5%",
-    width: "50vw",
-    height: "50vw",
-    background: "radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(0, 0, 0, 0) 70%)",
-    borderRadius: "50%",
-    zIndex: 0,
-    pointerEvents: "none",
-  },
-  bgGlow2: {
-    position: "absolute",
-    top: "30%",
-    right: "-5%",
-    width: "45vw",
-    height: "45vw",
-    background: "radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, rgba(0, 0, 0, 0) 70%)",
-    borderRadius: "50%",
-    zIndex: 0,
-    pointerEvents: "none",
   },
   header: {
     borderBottom: "1px solid var(--border)",

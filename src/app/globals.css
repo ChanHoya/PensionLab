@@ -284,6 +284,7 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   justify-content: center;
   gap: 6px;
   padding: 10px 20px;
+  min-height: 40px;
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 600;
@@ -291,7 +292,7 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease, box-shadow 0.15s ease;
   background: var(--gradient-brand);
   color: #ffffff;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
@@ -303,7 +304,14 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.45);
   transform: translateY(-1px);
 }
-.premium-button:active { transform: translateY(0); filter: brightness(0.98); }
+.premium-button:active {
+  transform: scale(0.98) translateY(0);
+  filter: brightness(0.96);
+}
+.premium-button:focus-visible {
+  outline: 2px solid var(--primary-300, #a5b4fc);
+  outline-offset: 2px;
+}
 
 /* ── Secondary Button ───────────────────────────────────── */
 .premium-button-secondary {
@@ -312,13 +320,14 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   justify-content: center;
   gap: 6px;
   padding: 10px 20px;
+  min-height: 40px;
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 600;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   background: var(--surface-2);
   color: var(--text-secondary);
   text-decoration: none;
@@ -328,6 +337,39 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
   border-color: rgba(99, 102, 241, 0.4);
   color: var(--primary-400);
   background: rgba(99, 102, 241, 0.08);
+}
+.premium-button-secondary:active {
+  transform: scale(0.98);
+  filter: brightness(0.96);
+}
+.premium-button-secondary:focus-visible {
+  outline: 2px solid var(--primary-400);
+  outline-offset: 2px;
+}
+
+/* ── Strategy Comparison Card Interaction ── */
+.strat-compare-card {
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.strat-compare-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.strat-compare-card:active {
+  transform: scale(0.99);
+}
+.strat-compare-card:focus-visible {
+  outline: 2px solid var(--primary-400);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-button,
+  .premium-button-secondary,
+  .strat-compare-card {
+    transition: none !important;
+    transform: none !important;
+  }
 }
 
 /* ── Input (ETF Lens dark form field) ───────────────────── */

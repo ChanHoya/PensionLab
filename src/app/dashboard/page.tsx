@@ -324,12 +324,12 @@ export default function DashboardPage() {
 
   // 백업·복원 버튼 (창 제목과 같은 줄 제일 오른쪽 배치)
   const backupActions = (
-    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
       <button
         id="btn-export-data"
         onClick={handleExportData}
         className="premium-button"
-        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+        style={{ fontSize: "0.8rem", padding: "8px 14px", minHeight: "38px", fontWeight: 700 }}
         title="은퇴 설계 데이터 JSON 파일로 내보내기"
       >
         📤 백업 (JSON)
@@ -338,7 +338,7 @@ export default function DashboardPage() {
         id="btn-import-data"
         onClick={() => document.getElementById("input-file-import")?.click()}
         className="premium-button-secondary"
-        style={{ fontSize: "0.75rem", padding: "6px 12px", fontWeight: 700 }}
+        style={{ fontSize: "0.8rem", padding: "8px 14px", minHeight: "38px", fontWeight: 700 }}
         title="저장된 JSON 백업 파일 불러오기"
       >
         📥 복원 (JSON)
@@ -633,10 +633,6 @@ export default function DashboardPage() {
 
   return (
     <main style={styles.container} className="dash-page">
-      {/* Background decoration */}
-      <div style={styles.bgGlow1} />
-      <div style={styles.bgGlow2} />
-
       {/* Header */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
@@ -727,28 +723,44 @@ export default function DashboardPage() {
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">
-        {/* AI 진단 리포트 안내 배너 */}
+        {/* 가구 연금 종합 진단 & 핵심 리밸런싱 리포트 안내 배너 */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            padding: "12px 18px",
-            borderRadius: "var(--radius-lg, 12px)",
-            background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(236, 72, 153, 0.1) 100%)",
-            border: "1px solid rgba(99, 102, 241, 0.3)",
-            gap: 12,
+            padding: "14px 20px",
+            borderRadius: "var(--radius-md, 10px)",
+            backgroundColor: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderLeft: "4px solid var(--primary)",
+            boxShadow: "var(--shadow-sm)",
+            gap: 14,
             flexWrap: "wrap",
           }}
           className="animate-fade-in"
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "1.3rem" }}>🔮</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "8px",
+                backgroundColor: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "1.1rem",
+              }}
+            >
+              📊
+            </div>
             <div>
-              <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                AI 종합 진단 & 10대 핵심 리밸런싱 리포트
+              <div style={{ fontSize: "0.92rem", fontWeight: 700, color: "var(--text-primary)" }}>
+                가구 연금 종합 진단 & 10대 핵심 리밸런싱 리포트
               </div>
-              <div style={{ fontSize: "0.76rem", color: "var(--text-secondary)" }}>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)", marginTop: 2 }}>
                 가구 현금흐름 결손 분석,{" "}
                 <GlossaryTooltip termId="INCOME_CREVASSE" onOpenModal={(m) => setActiveModal(m as DashboardModalType)}>
                   소득 공백기
@@ -766,17 +778,17 @@ export default function DashboardPage() {
             id="btn-goto-ai-advisor-banner"
             className="premium-button"
             style={{
-              padding: "7px 16px",
+              padding: "8px 18px",
+              minHeight: "38px",
               fontSize: "0.82rem",
               fontWeight: 700,
-              background: "var(--gradient-brand)",
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
             }}
           >
             <span>진단 리포트 보기</span>
-            <span>↗</span>
+            <span>→</span>
           </Link>
         </div>
 
@@ -873,12 +885,23 @@ export default function DashboardPage() {
                 {strategies.map((strat) => (
                   <div
                     key={strat.strategyId}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`${strat.strategyId} ${strat.strategyName} 전략 선택`}
+                    className="strat-compare-card"
                     style={{
                       ...styles.stratCompareCard,
                       border: strat.strategyId === activeTab ? "2px solid var(--primary)" : "1px solid var(--border)",
-                      backgroundColor: strat.strategyId === activeTab ? "rgba(99, 102, 241, 0.03)" : "var(--surface)"
+                      backgroundColor: strat.strategyId === activeTab ? "rgba(99, 102, 241, 0.04)" : "var(--surface)",
+                      boxShadow: strat.strategyId === activeTab ? "0 0 0 1px var(--primary)" : "none",
                     }}
                     onClick={() => setActiveTab(strat.strategyId as ScenarioTab)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setActiveTab(strat.strategyId as ScenarioTab);
+                      }
+                    }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <span style={styles.compareId}>{strat.strategyId} 전략</span>

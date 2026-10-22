@@ -130,3 +130,6 @@ These laws are enforced across all skills and agents. Violations should be flagg
    - 하나의 논리적 변경 단위가 완료되면 지체 없이 커밋한다. "이 커밋을 한 문장으로 명확히 설명할 수 있는가?"를 기준으로 삼는다.
 5. **에러를 읽어라, 추측하지 마라**:
    - 오류 발생 시 기억이나 어설픈 추측으로 수정을 시도하지 않고, 실제 터미널 출력/브라우저 콘솔의 전체 스택 트레이스를 정밀 확인한 후 근본 원인을 교정한다.
+6. **기본 UI/UX 5대 스킬 파이프라인 준수**:
+   - 프론트엔드 UI/UX 작업 시 `frontend-design`(사전 방향성) → `ui-ux-pro-max`(토큰 시스템) → `hallmark`(AI 클리셰 제거) → `emil-design-eng`(스프링 모션) → `web-design-guidelines`(접근성/사용성 검증)의 5대 스킬 기준을 필수 적용한다.
+

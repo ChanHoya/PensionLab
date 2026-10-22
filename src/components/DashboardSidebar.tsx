@@ -154,11 +154,12 @@ export default function DashboardSidebar(props: Props) {
         type="button"
         id={id}
         onClick={onClick}
-        className="premium-button-secondary"
+        className="premium-button-secondary tool-action-btn"
         style={{
           width: "100%",
-          padding: "6px 10px",
-          fontSize: "0.75rem",
+          padding: "8px 10px",
+          minHeight: "36px",
+          fontSize: "0.78rem",
           fontWeight: 600,
           textAlign: "left",
           display: "flex",
@@ -169,12 +170,11 @@ export default function DashboardSidebar(props: Props) {
           background: `rgba(${accentColor}, 0.06)`,
           borderRadius: "6px",
           cursor: "pointer",
-          transition: "all 0.15s ease",
           marginBottom: "4px",
         }}
         title={tooltip || title}
       >
-        <span style={{ fontSize: "0.85rem" }}>{icon}</span>
+        <span style={{ fontSize: "0.88rem" }}>{icon}</span>
         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
       </button>
     );
@@ -595,28 +595,37 @@ export default function DashboardSidebar(props: Props) {
           </div>
         </details>
 
-        {/* 자산 런웨이 방어 & 포트폴리오 툴킷 */}
+        {/* 자산 런웨이 방어 & 포트폴리오 툴킷: 핵심 도구 3종 우선 노출 + 심화 도구 접이식 계층화 */}
         <div style={{ marginTop: "6px" }}>
           {renderToolButton(props.onOpenThreeBucketModal, "🪣", "3-Bucket 현금 버퍼 플래너", "6, 182, 212")}
           {renderToolButton(props.onOpenDividendStrategyModal, "💡", "배당금 투자 전략 & 실전 ETF 추천", "99, 102, 241")}
-          {renderToolButton(props.onOpenDividendCalendarModal, "📅", "월별 배당 캘린더 & 인출 스케줄러", "165, 180, 252")}
-          {renderToolButton(props.onOpenPortfolioBacktestModal, "📊", "은퇴 포트폴리오 10년 백테스트", "16, 185, 129")}
-          {renderToolButton(props.onOpenRebalancingOrderModal, "📋", "은퇴 자산 리밸런싱 주문 가이드", "52, 211, 153")}
           {renderToolButton(props.onOpenIncomeBridgeModal, "🌉", "소득 공백기(크레바스) 브릿지 플래너", "56, 189, 248")}
-          {renderToolButton(props.onOpenSurvivorCareModal, "🕊️", "홀로 남은 배우자 생애 케어", "251, 113, 133")}
-          {renderToolButton(props.onOpenReverseMortgageModal, "🏠", "주택연금(역모기지) 결합 시뮬레이션", "251, 191, 36")}
-          {renderToolButton(props.onOpenStressTestModal, "⚡", "3중 복합 위기 스트레스 테스트", "248, 113, 113")}
-          {renderToolButton(props.onOpenCashflowTrackerModal, "💳", "실전 은퇴 가계부 & 런웨이 트래커", "96, 165, 250")}
-          {renderToolButton(props.onOpenSavingsPlanModal, "🎯", "부족액 역산 적립 플랜", "56, 189, 248")}
+
+          {/* 추가 심화 분석 툴킷 (접이식) */}
+          <details style={{ marginTop: "6px", border: "1px dashed var(--border)", borderRadius: "6px", padding: "6px 8px" }}>
+            <summary style={{ fontSize: "0.74rem", fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", padding: "2px 0" }}>
+              🛠️ 심화 런웨이 분석 도구 (8종) 펼치기
+            </summary>
+            <div style={{ marginTop: "6px", display: "flex", flexDirection: "column", gap: "2px" }}>
+              {renderToolButton(props.onOpenDividendCalendarModal, "📅", "월별 배당 캘린더 & 인출 스케줄러", "165, 180, 252")}
+              {renderToolButton(props.onOpenPortfolioBacktestModal, "📊", "은퇴 포트폴리오 10년 백테스트", "16, 185, 129")}
+              {renderToolButton(props.onOpenRebalancingOrderModal, "📋", "은퇴 자산 리밸런싱 주문 가이드", "52, 211, 153")}
+              {renderToolButton(props.onOpenSurvivorCareModal, "🕊️", "홀로 남은 배우자 생애 케어", "251, 113, 133")}
+              {renderToolButton(props.onOpenReverseMortgageModal, "🏠", "주택연금(역모기지) 결합 시뮬레이션", "251, 191, 36")}
+              {renderToolButton(props.onOpenStressTestModal, "⚡", "3중 복합 위기 스트레스 테스트", "248, 113, 113")}
+              {renderToolButton(props.onOpenCashflowTrackerModal, "💳", "실전 은퇴 가계부 & 런웨이 트래커", "96, 165, 250")}
+              {renderToolButton(props.onOpenSavingsPlanModal, "🎯", "부족액 역산 적립 플랜", "56, 189, 248")}
+            </div>
+          </details>
         </div>
       </details>
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* 5. 시나리오 비교 & AI 종합 처방 (Agent 4 연계 도구) */}
+      {/* 5. 시나리오 비교 & 종합 진단 (Agent 4 연계 도구) */}
       {/* ───────────────────────────────────────────────────────────── */}
       <details open style={styles.group}>
         <summary style={styles.summary}>
-          <span>🔮</span> 시나리오 비교 & AI 종합 진단
+          <span>🎯</span> 시나리오 비교 & 종합 진단
         </summary>
         <div style={{ marginTop: "6px" }}>
           {renderToolButton(props.onOpenScenarioComparisonModal, "📊", "복수 은퇴 시나리오 비교함 (A vs B vs C)", "192, 132, 252")}

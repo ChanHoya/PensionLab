@@ -286,12 +286,14 @@
      - 기대수명 90세 장수 시 0년 연기 4.63억(명목) ➔ 5년 연기 5.43억(명목, +7,990만원) 대폭 증대 정상 산출 확인.
      - `npm run build` 빌드 성공 (0 errors).
 
-- **[Completed]** Sprint 48: 5대 UI/UX 기준(Hallmark, a11y, 모션, 계층화) 대시보드 리팩토링 (FEAT-076):
-  1. Hallmark AI 클리셰 제거: 대시보드 내 네온 보라색 글로우 구체(`bgGlow1`, `bgGlow2`) 및 🔮 마법 구슬 배너를 전면 제거하고 신뢰도 높은 금융 전문 서피스로 개편함.
-  2. Frontend Design 계층화: 사이드바 27개 모달 버튼을 은퇴 준비 단계별 4대 아코디언 그룹으로 정리함.
-  3. Web Design Guidelines 접근성 강화: 버튼 터치 타깃 최소 높이 38~40px 확보 및 고대비 `:focus-visible` 포커스 링 적용함.
-  4. UI-UX Pro Max 시맨틱 토큰화: 하드코딩 투명도 색상을 CSS 변수로 통일하고 4단계 타이포그래피 스케일 규격화함.
-  5. Emil Design Engineering 스프링 모션: 물리 기반 마이크로 스케일(`active:scale-[0.98]`) 피드백 및 사이드바 부드러운 상태 전환 안착 구현함.
+- **[Completed]** Sprint 48: 5대 UI/UX 기준(Hallmark, Frontend Design, Web Design Guidelines, UI-UX Pro Max, Emil Design Engineering) 기반 대시보드 리팩토링 및 클로드 디자인 스킬 파이프라인 정립 (FP-035)
+  1. 5대 디자인 스킬 전역 및 워크스페이스 등록: `frontend-design`, `ui-ux-pro-max`, `hallmark`, `emil-design-eng`, `web-design-guidelines` 스킬 생성 및 ETF_One 서비스 동기화 완료.
+  2. 코어 규칙 반영: `AGENTS.md` 및 `GEMINI.md`에 '기본 UI/UX 5대 스킬 파이프라인 준수' 규칙 명시.
+  3. Hallmark (AI 양산형 클리셰 제거): 대시보드 배경의 보라색 네온 글로우 2종(`bgGlow1`, `bgGlow2`) 제거, `🔮` 마법 구슬 배너를 단정한 금융 전문 카드 서피스(`var(--surface)`, `📊` 배지)로 리뉴얼.
+  4. Frontend Design (정보 계층화): 사이드바 4번 섹션 도구 11개를 핵심 3종(3-Bucket, 배당 전략, 소득 공백기) 상시 노출 + 심화 도구 8종 접이식 아코디언(`<details>`)으로 계층화하여 인지 부하 감소.
+  5. Web Design Guidelines (a11y & 터치 타깃): 상단 백업·복원 버튼(최소 38px) 및 사이드바 버튼(최소 36px) 터치 타깃 확장, 전략 비교 카드에 키보드 조작(`role="button"`, `tabIndex={0}`, `onKeyDown`) 및 고대비 `:focus-visible` 링 완비.
+  6. UI-UX Pro Max & Emil Design Engineering: 임의의 rgba 색상을 시맨틱 토큰으로 일원화, 버튼 및 전략 카드에 물리적 스프링 누름 피드백(`active:scale(0.98)`) 및 `prefers-reduced-motion` 모션 접근성 완비.
+  7. 검증 및 배포: `npm run build` 정적 빌드 22/22 완료, 브라우저 서브에이전트 실화면 렌더링 검증, `feat/dashboard-5-design-skills` 브랜치 푸시 및 GitHub PR #59 머지 완료.
 
 - **[Completed]** Sprint 49: 모바일 바텀시트, AI 어드바이저 및 온보딩 5대 UI/UX 전면 리뉴얼 (후보 A/B/C 통합, FEAT-077):
   1. 후보 A (모바일 최적화 및 바텀시트):

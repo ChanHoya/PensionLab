@@ -274,12 +274,10 @@
   1) 사이드바 재배치 (`src/components/DashboardSidebar.tsx`): 16+개 설정과 도구를 5대 핵심 목적별 그룹(`🚀 빠른 실행`, `📋 기본 설정 & 생애 지출 곡선`, `🏛️ 공·사적 연금 최적화`, `🛡️ 절세 & 건강보험료 수비`, `📈 인출 전략 & 자산 런웨이 방어`, `🔮 시나리오 비교 & AI 종합 진단`)으로 구조화
   2) Agent 1~4 서비스 파사드 (`src/services/agents/`): Agent 1(데이터 수집 및 PII 정제), Agent 2(결정론적 수리/세무 엔진), Agent 3(인출 전략/리스크 진단), Agent 4(AI 종합 처방) 파사드 단일 인터페이스 구축 (Sprint 46)
 
-- **[FEAT-076] 5대 UI/UX 기준(Hallmark, a11y, 모션, 계층화) 대시보드 리팩토링**:
-  1) Hallmark AI 클리셰 제거: 대시보드 배경 네온 보라색 구체(`bgGlow`) 및 사이버틱 그라디언트 배너 제거, 차분하고 신뢰도 높은 금융 전문 서피스로 전면 개편.
-  2) Frontend Design 정보 계층 구조화: 사이드바 27개 모달 버튼을 은퇴 준비 단계별 4대 카테고리 아코디언 탭으로 정리하여 인지 부하 해소.
-  3) Web Design Guidelines 접근성 강화: 버튼 터치 타깃 최소 높이 38~40px 확보 및 고대비 `:focus-visible` 포커스 링 적용.
-  4) UI-UX Pro Max 시맨틱 토큰화: 하드코딩 투명도 색상을 CSS 변수로 통일하고 4단계 타이포그래피 스케일 규격화.
-  5) Emil Design Engineering 스프링 모션: 물리 기반 마이크로 스케일(`active:scale-[0.98]`) 피드백 및 사이드바 부드러운 상태 전환 안착 구현 (Sprint 48)
+- **[FEAT-076] 5대 UI/UX 기준 기반 대시보드 리팩토링 및 디자인 스킬 파이프라인**:
+  1) 5대 디자인 스킬 시스템 구축: `frontend-design`, `ui-ux-pro-max`, `hallmark`, `emil-design-eng`, `web-design-guidelines` 스킬 정의 및 `AGENTS.md` / `GEMINI.md` 파이프라인 규격화
+  2) Hallmark & Frontend Design 적용: 대시보드 보라색 네온 글로우 구체 제거, 마법 구슬 배너를 단정한 금융 전문 카드 서피스로 개편, 사이드바 도구 버튼을 핵심 우선 노출 + 심화 접이식 아코디언으로 계층화하여 인지 부하 대폭 절감
+  3) Web Design Guidelines & Emil Design Engineering 적용: 버튼 최소 높이 38~40px 터치 타깃 확보, 전략 비교 카드 키보드 접근성(`role="button"`, `tabIndex={0}`, `onKeyDown`) 및 고대비 `:focus-visible` 링 완비, 버튼 및 카드 물리적 스프링 클릭 피드백(`active:scale(0.98)`) 및 `prefers-reduced-motion` 모션 접근성 탑재 (Sprint 48)
 
 - **[FEAT-077] 모바일 바텀시트, AI 어드바이저 및 온보딩 5대 UI/UX 전면 리뉴얼 (후보 A/B/C 통합)**:
   1) 모바일 반응형 & 바텀시트 (후보 A): 모바일 뷰포트(390px~430px) 가로 오버플로우 방지 및 모달을 화면 하단 앵커링 바텀시트(`rounded-t-2xl`, 상단 드래그 인디케이터 핸들 바, 닫기 버튼 44px 터치 타깃)로 전환.

@@ -5,6 +5,8 @@
 - PostgreSQL 16 local database set up with `pgvector` extension.
 - Prisma 7 models created and successfully migrated (with HNSW vector index).
 - Database singleton client pool configured and validated.
+- **[Completed]** Sprint 48: 5대 UI/UX 기준(Hallmark, a11y, 모션, 계층화) 대시보드 리팩토링 (FEAT-076, PR #59).
+- **[Completed]** Sprint 49: 모바일 바텀시트, AI 어드바이저 및 온보딩 5대 UI/UX 전면 리뉴얼 (후보 A/B/C 통합, FEAT-077, PR #60).
 - **[Completed]** Story S1-1: Zustand client state store, Landing page, Onboarding wizard, and save API.
 - **[Completed]** Story S1-2: Pension Calculation Engine (calculating 3-tier payouts and 2026 reform schedules) and Dashboard UI integrated with Recharts Donut & Stacked Area charts.
 - **[Completed]** Story S1-3: YouTube Expert Content Crawler and RAG Chat Q&A API using pgvector and OpenAI.
@@ -285,13 +287,31 @@
      - `npm run build` 빌드 성공 (0 errors).
 
 - **[Completed]** Sprint 48: 5대 UI/UX 기준(Hallmark, Frontend Design, Web Design Guidelines, UI-UX Pro Max, Emil Design Engineering) 기반 대시보드 리팩토링 및 클로드 디자인 스킬 파이프라인 정립 (FP-035)
-  1. 5대 디자인 스킬 전역 및 워크스페이스 등록: `frontend-design`, `ui-ux-pro-max`, `hallmark`, `emil-design-eng`, `web-design-guidelines` 스킬 생성 및 ETF_One 서비스 동기화.
+  1. 5대 디자인 스킬 전역 및 워크스페이스 등록: `frontend-design`, `ui-ux-pro-max`, `hallmark`, `emil-design-eng`, `web-design-guidelines` 스킬 생성 및 ETF_One 서비스 동기화 완료.
   2. 코어 규칙 반영: `AGENTS.md` 및 `GEMINI.md`에 '기본 UI/UX 5대 스킬 파이프라인 준수' 규칙 명시.
   3. Hallmark (AI 양산형 클리셰 제거): 대시보드 배경의 보라색 네온 글로우 2종(`bgGlow1`, `bgGlow2`) 제거, `🔮` 마법 구슬 배너를 단정한 금융 전문 카드 서피스(`var(--surface)`, `📊` 배지)로 리뉴얼.
   4. Frontend Design (정보 계층화): 사이드바 4번 섹션 도구 11개를 핵심 3종(3-Bucket, 배당 전략, 소득 공백기) 상시 노출 + 심화 도구 8종 접이식 아코디언(`<details>`)으로 계층화하여 인지 부하 감소.
   5. Web Design Guidelines (a11y & 터치 타깃): 상단 백업·복원 버튼(최소 38px) 및 사이드바 버튼(최소 36px) 터치 타깃 확장, 전략 비교 카드에 키보드 조작(`role="button"`, `tabIndex={0}`, `onKeyDown`) 및 고대비 `:focus-visible` 링 완비.
   6. UI-UX Pro Max & Emil Design Engineering: 임의의 rgba 색상을 시맨틱 토큰으로 일원화, 버튼 및 전략 카드에 물리적 스프링 누름 피드백(`active:scale(0.98)`) 및 `prefers-reduced-motion` 모션 접근성 완비.
-  7. 검증 및 배포: `npm run build` 정적 빌드 22/22 완료, 브라우저 서브에이전트 실화면 렌더링 검증, `feat/dashboard-5-design-skills` 브랜치 푸시 및 GitHub PR #59 생성 완료.
+  7. 검증 및 배포: `npm run build` 정적 빌드 22/22 완료, 브라우저 서브에이전트 실화면 렌더링 검증, `feat/dashboard-5-design-skills` 브랜치 푸시 및 GitHub PR #59 머지 완료.
+
+- **[Completed]** Sprint 49: 모바일 바텀시트, AI 어드바이저 및 온보딩 5대 UI/UX 전면 리뉴얼 (후보 A/B/C 통합, FEAT-077):
+  1. 후보 A (모바일 최적화 및 바텀시트):
+     - 모바일 뷰포트(390px~430px) 가로 오버플로우 방지 (`html, body, main`에 `max-width: 100vw; overflow-x: hidden`).
+     - 모달을 화면 바닥에 안착되는 바텀시트(`rounded-t-2xl`, 상단 드래그 인디케이터 핸들 바)로 전환.
+     - 모달 닫기 버튼 44px 및 슬라이더 터치 높이 32px 확보.
+  2. 후보 B (AI 어드바이저 리뉴얼):
+     - `src/app/dashboard/ai-advisor/page.tsx` 내 배경 보라색 구체(`bgGlow`) 전면 제거.
+     - 헤더 페르소나 버튼에 하드코딩된 보라색 그라디언트를 시맨틱 토큰(`var(--surface-accent)`)으로 교체.
+     - AI 맞춤 정밀 진단 버튼에 `⚡` 전문 아이콘 적용 및 최소 44px 터치 높이 확보.
+  3. 후보 C (온보딩 위저드 전환율 극대화):
+     - `src/app/onboarding/page.tsx` 내 `bgGlow` 제거.
+     - 최종 단계 액션 버튼에 하드코딩된 핑크/보라 그라디언트 및 `🔮` 클리셰 제거.
+     - '자산관리 바로가기'(보조) vs 'AI 종합 진단 받기 ⚡'(주요) 간 명확한 시각적 위계 및 터치 타깃 44px 확보.
+  4. 검증 완료:
+     - `npm run build` 정적 페이지 22/22 빌드 통과(0 errors).
+     - 브라우저 서브에이전트를 통한 모바일(390x844) 가로 오버플로우 없음, 바텀시트 모달 렌더링, AI 어드바이저 및 온보딩 클리셰 제거 검증 완료.
+
 
 
 

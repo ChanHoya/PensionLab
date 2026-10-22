@@ -1,4 +1,5 @@
 "use client";
+// 다층 연금 자산 정보 입력 및 금감원 자료 연동 온보딩 마법사 페이지
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -725,10 +726,6 @@ export default function OnboardingPage() {
 
   return (
     <main style={styles.container}>
-      {/* Background decoration */}
-      <div style={styles.bgGlow1} />
-      <div style={styles.bgGlow2} />
-
       <header style={styles.header}>
         <div style={styles.headerContent}>
           {/* 좌: 로고 + 부제목 + 개인정보 안심보장 */}
@@ -2473,19 +2470,31 @@ export default function OnboardingPage() {
               onClick={prevStep}
               disabled={stepIndex === 0}
               className="premium-button-secondary"
-              style={{ opacity: stepIndex === 0 ? 0.5 : 1, cursor: stepIndex === 0 ? "not-allowed" : "pointer" }}
+              style={{
+                opacity: stepIndex === 0 ? 0.5 : 1,
+                cursor: stepIndex === 0 ? "not-allowed" : "pointer",
+                minHeight: "44px",
+                padding: "10px 18px",
+                fontSize: "0.92rem",
+              }}
             >
               이전 단계
             </button>
 
             {/* 마지막 단계(전체 연금 내역)에서 종합 분석하기 → 시뮬레이션 화면 */}
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
               {stepIndex < lastStepIndex && (
                 <button
                   type="button"
                   onClick={nextStep}
                   disabled={fssAnalyzing}
                   className={step.group === visibleSteps[lastStepIndex].group ? "premium-button-secondary" : "premium-button"}
+                  style={{
+                    minHeight: "44px",
+                    padding: "10px 22px",
+                    fontSize: "0.95rem",
+                    fontWeight: 700,
+                  }}
                 >
                   {fssAnalyzing ? "분석 중..." : step.kind === "FSS" && hasFssFiles ? "분석하고 다음 단계" : "다음 단계"}
                 </button>
@@ -2496,8 +2505,13 @@ export default function OnboardingPage() {
                     type="button"
                     onClick={() => handleFinish("/dashboard")}
                     disabled={isSubmitting}
-                    className="premium-button"
-                    style={{ background: "var(--gradient-brand)" }}
+                    className="premium-button-secondary"
+                    style={{
+                      minHeight: "44px",
+                      padding: "12px 20px",
+                      fontSize: "0.95rem",
+                      fontWeight: 700,
+                    }}
                   >
                     {isSubmitting ? "저장 중..." : "자산관리 바로가기 📊"}
                   </button>
@@ -2507,11 +2521,16 @@ export default function OnboardingPage() {
                     disabled={isSubmitting}
                     className="premium-button"
                     style={{
-                      background: "var(--gradient-secondary, linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%))",
+                      background: "var(--gradient-brand)",
+                      boxShadow: "var(--shadow-brand)",
                       color: "#ffffff",
+                      minHeight: "44px",
+                      padding: "12px 24px",
+                      fontSize: "0.95rem",
+                      fontWeight: 700,
                     }}
                   >
-                    {isSubmitting ? "저장 중..." : "AI 종합 진단 받기 🔮"}
+                    {isSubmitting ? "저장 중..." : "AI 종합 진단 받기 ⚡"}
                   </button>
                 </>
               )}
@@ -2569,26 +2588,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: "var(--background)",
     position: "relative",
     overflow: "hidden",
-  },
-  bgGlow1: {
-    position: "fixed",
-    top: "-15%",
-    left: "-10%",
-    width: "55%",
-    height: "55%",
-    background: "radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)",
-    zIndex: 0,
-    pointerEvents: "none",
-  },
-  bgGlow2: {
-    position: "fixed",
-    bottom: "-15%",
-    right: "-10%",
-    width: "60%",
-    height: "60%",
-    background: "radial-gradient(circle, rgba(139, 92, 246, 0.10) 0%, transparent 70%)",
-    zIndex: 0,
-    pointerEvents: "none",
   },
   header: {
     position: "sticky",

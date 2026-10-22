@@ -276,8 +276,14 @@
 
 - **[FEAT-076] 5대 UI/UX 기준 기반 대시보드 리팩토링 및 디자인 스킬 파이프라인**:
   1) 5대 디자인 스킬 시스템 구축: `frontend-design`, `ui-ux-pro-max`, `hallmark`, `emil-design-eng`, `web-design-guidelines` 스킬 정의 및 `AGENTS.md` / `GEMINI.md` 파이프라인 규격화
-  2) Hallmark & Frontend Design 적용: 대시보드 보라색 네온 글로우 구체 제거, 마법 구슬 배너를 단정한 금융 전문 카드 서피스로 개편, 사이드바 11개 도구 버튼을 핵심 3종 + 심화 8종 접이식 아코디언으로 계층화하여 인지 부하 대폭 절감
+  2) Hallmark & Frontend Design 적용: 대시보드 보라색 네온 글로우 구체 제거, 마법 구슬 배너를 단정한 금융 전문 카드 서피스로 개편, 사이드바 도구 버튼을 핵심 우선 노출 + 심화 접이식 아코디언으로 계층화하여 인지 부하 대폭 절감
   3) Web Design Guidelines & Emil Design Engineering 적용: 버튼 최소 높이 38~40px 터치 타깃 확보, 전략 비교 카드 키보드 접근성(`role="button"`, `tabIndex={0}`, `onKeyDown`) 및 고대비 `:focus-visible` 링 완비, 버튼 및 카드 물리적 스프링 클릭 피드백(`active:scale(0.98)`) 및 `prefers-reduced-motion` 모션 접근성 탑재 (Sprint 48)
+
+- **[FEAT-077] 모바일 바텀시트, AI 어드바이저 및 온보딩 5대 UI/UX 전면 리뉴얼 (후보 A/B/C 통합)**:
+  1) 모바일 반응형 & 바텀시트 (후보 A): 모바일 뷰포트(390px~430px) 가로 오버플로우 방지 및 모달을 화면 하단 앵커링 바텀시트(`rounded-t-2xl`, 상단 드래그 인디케이터 핸들 바, 닫기 버튼 44px 터치 타깃)로 전환.
+  2) AI 어드바이저 리뉴얼 (후보 B): `bgGlow` 제거, 페르소나 버튼 및 헤더 버튼 시맨틱 토큰화, `🔮` 클리셰 제거 및 44px 터치 높이 확보.
+  3) 온보딩 위저드 전환율 극대화 (후보 C): `bgGlow` 제거, 이전/다음/최종 CTA 버튼 터치 타깃 44px 확보, '자산관리 바로가기'(보조) vs 'AI 종합 진단 받기 ⚡'(주요) 간 선명한 시각적 위계 확립 (Sprint 49)
+
 
 
 

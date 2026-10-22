@@ -86,7 +86,7 @@ DATABASE_URL="postgresql://pensionlab_db_user:[PASSWORD]@dpg-[RENDER_HOST].singa
    - **DATABASE_URL**: Render에서 복사한 External Connection String 주소 끝에 `?sslmode=require` 를 붙여 입력합니다.
      - 예: `postgresql://pensionlab_db_user:[PASSWORD]@dpg-[RENDER_HOST].singapore-postgres.render.com/pensionlab_db?sslmode=require`
    - **Gemini_API_KEY**: 사용자의 Google Gemini API Key
-   - **NEXT_PUBLIC_APP_URL**: Toss Payments 등의 리다이렉트 URL 처리를 위해 Vercel에서 발급될 도메인 주소 (예: `https://pensionlabor.vercel.app`)
+   - **NEXT_PUBLIC_APP_URL**: Toss Payments 등의 리다이렉트 URL 처리를 위해 Vercel에서 발급될 도메인 주소 (예: `https://pensionlab.vercel.app`)
 4. **Deploy 실행**:
    - **Deploy** 버튼을 클릭하여 빌드를 시작합니다.
    - `package.json`의 빌드 단계에서 `prisma generate && next build` 가 자동 작동하여 최적화된 프로덕션 빌드가 완성됩니다.

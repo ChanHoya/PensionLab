@@ -241,7 +241,7 @@ export default function PensionTransferBenefitModal({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
               gap: '16px',
               backgroundColor: 'var(--surface-2, #f8fafc)',
               padding: '18px',
@@ -251,12 +251,12 @@ export default function PensionTransferBenefitModal({
           >
             {/* 현재 연금 적립금 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginBottom: '8px', minHeight: '24px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
                   현재 연금 적립금
-                  <GlossaryTooltip termId="PENSION_ACCOUNT_TRANSFER" />
+                  <GlossaryTooltip termId="PENSION_ACCOUNT_TRANSFER" iconOnly />
                 </span>
-                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)', whiteSpace: 'nowrap' }}>
                   {inputs.currentBalance.toLocaleString()}만원
                 </span>
               </div>
@@ -269,7 +269,7 @@ export default function PensionTransferBenefitModal({
                 onChange={(e) => setInputs({ ...inputs, currentBalance: Number(e.target.value) })}
                 style={{ width: '100%', accentColor: '#10b981', cursor: 'pointer' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', whiteSpace: 'nowrap' }}>
                 <span>500만원</span>
                 <span>1억원</span>
                 <span>2억원</span>
@@ -278,9 +278,9 @@ export default function PensionTransferBenefitModal({
 
             {/* 월 추가 납입액 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)' }}>월 추가 납입액</span>
-                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginBottom: '8px', minHeight: '24px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', whiteSpace: 'nowrap' }}>월 추가 납입액</span>
+                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)', whiteSpace: 'nowrap' }}>
                   {inputs.monthlyContribution.toLocaleString()}만원
                 </span>
               </div>
@@ -293,7 +293,7 @@ export default function PensionTransferBenefitModal({
                 onChange={(e) => setInputs({ ...inputs, monthlyContribution: Number(e.target.value) })}
                 style={{ width: '100%', accentColor: '#10b981', cursor: 'pointer' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', whiteSpace: 'nowrap' }}>
                 <span>0원</span>
                 <span>50만원</span>
                 <span>150만원</span>
@@ -302,9 +302,9 @@ export default function PensionTransferBenefitModal({
 
             {/* 잔여 운용 기간 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)' }}>잔여 운용 기간</span>
-                <span style={{ fontWeight: 800, color: '#0d9488' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginBottom: '8px', minHeight: '24px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', whiteSpace: 'nowrap' }}>잔여 운용 기간</span>
+                <span style={{ fontWeight: 800, color: '#0d9488', whiteSpace: 'nowrap' }}>
                   {inputs.holdingYears}년
                 </span>
               </div>
@@ -317,7 +317,7 @@ export default function PensionTransferBenefitModal({
                 onChange={(e) => setInputs({ ...inputs, holdingYears: Number(e.target.value) })}
                 style={{ width: '100%', accentColor: '#0d9488', cursor: 'pointer' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', whiteSpace: 'nowrap' }}>
                 <span>3년</span>
                 <span>15년</span>
                 <span>30년</span>
@@ -326,9 +326,9 @@ export default function PensionTransferBenefitModal({
 
             {/* 목표 수익률 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)' }}>새 금융사 목표 수익률</span>
-                <span style={{ fontWeight: 800, color: '#059669' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginBottom: '8px', minHeight: '24px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', whiteSpace: 'nowrap' }}>새 금융사 목표 수익률</span>
+                <span style={{ fontWeight: 800, color: '#059669', whiteSpace: 'nowrap' }}>
                   연 {inputs.newReturnRate}%
                 </span>
               </div>
@@ -341,7 +341,7 @@ export default function PensionTransferBenefitModal({
                 onChange={(e) => setInputs({ ...inputs, newReturnRate: Number(e.target.value) })}
                 style={{ width: '100%', accentColor: '#10b981', cursor: 'pointer' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', whiteSpace: 'nowrap' }}>
                 <span>3.0%(안정)</span>
                 <span>6.5%(배당/TDF)</span>
                 <span>10.0%(지수)</span>

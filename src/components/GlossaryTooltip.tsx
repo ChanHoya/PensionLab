@@ -1,5 +1,7 @@
 "use client";
 
+// 금융·세제 용어 쉬운 설명 팝오버 툴팁 컴포넌트
+
 import React, { useState, useRef, useEffect } from "react";
 import { GLOSSARY_TERMS, GlossaryTerm, getGlossaryTerm } from "@/config/glossary";
 
@@ -8,6 +10,8 @@ interface GlossaryTooltipProps {
   children?: React.ReactNode;
   onOpenModal?: (modalId: string) => void;
   showIcon?: boolean;
+  showTerm?: boolean;
+  iconOnly?: boolean;
 }
 
 export default function GlossaryTooltip({
@@ -15,6 +19,8 @@ export default function GlossaryTooltip({
   children,
   onOpenModal,
   showIcon = true,
+  showTerm = false,
+  iconOnly = false,
 }: GlossaryTooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
@@ -56,14 +62,19 @@ export default function GlossaryTooltip({
 
   const catStyle = categoryColors[termData.category] || categoryColors.general;
 
+  const hasExplicitChildren = Boolean(children);
+  const shouldRenderText = !iconOnly && (hasExplicitChildren || showTerm);
+
   return (
     <span
       ref={containerRef}
       style={{
         position: "relative",
-        display: "inline-block",
+        display: "inline-flex",
+        alignItems: "center",
         cursor: "pointer",
-        lineHeight: "inherit",
+        lineHeight: 1,
+        verticalAlign: "middle",
       }}
       onClick={(e) => {
         e.stopPropagation();
@@ -71,28 +82,37 @@ export default function GlossaryTooltip({
       }}
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
+      title="클릭하여 쉬운 설명 보기"
     >
-      <span
-        style={{
-          borderBottom: "1.5px dashed var(--accent, #6366f1)",
-          color: "inherit",
-          fontWeight: 600,
-          transition: "all 0.15s ease",
-          paddingBottom: "1px",
-        }}
-        title="클릭하여 쉬운 설명 보기"
-      >
-        {children || termData.term}
-      </span>
-      {showIcon && (
+      {shouldRenderText && (
         <span
           style={{
-            fontSize: "0.72rem",
+            borderBottom: "1.5px dashed var(--accent, #6366f1)",
+            color: "inherit",
+            fontWeight: 600,
+            transition: "all 0.15s ease",
+            paddingBottom: "1px",
+          }}
+        >
+          {children || termData.term}
+        </span>
+      )}
+      {(showIcon || !shouldRenderText) && (
+        <span
+          style={{
+            fontSize: "0.75rem",
             color: "var(--accent, #6366f1)",
-            marginLeft: "2px",
-            verticalAlign: "super",
-            opacity: 0.85,
+            marginLeft: shouldRenderText ? "3px" : "0",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "16px",
+            height: "16px",
+            borderRadius: "50%",
+            backgroundColor: "rgba(99, 102, 241, 0.12)",
+            border: "1px solid rgba(99, 102, 241, 0.25)",
             fontWeight: 700,
+            transition: "all 0.15s ease",
           }}
         >
           ⓘ

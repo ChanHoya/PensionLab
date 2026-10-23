@@ -233,7 +233,7 @@ export default function CashflowTrackerModal({
                 <div style={styles.kpiCard}>
                   <div style={styles.kpiLabel}>
                     월 순현금흐름 (수입 - 지출)
-                    <GlossaryTooltip termId="CASHFLOW_RUNWAY" />
+                    <GlossaryTooltip termId="CASHFLOW_RUNWAY" iconOnly />
                   </div>
                   <div
                     style={{

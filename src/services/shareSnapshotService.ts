@@ -69,7 +69,11 @@ export function decodeSnapshot(encoded: string): ShareableSnapshotData | null {
  * 현재 브라우저 URL 기반 전체 공유 링크 생성
  */
 export function generateShareUrl(data: ShareableSnapshotData, origin?: string): string {
-  const base = origin || (typeof window !== "undefined" ? window.location.origin : "https://pension-lab.vercel.app");
+  const base =
+    origin ||
+    (typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_APP_URL || "https://my-pensionlab.vercel.app");
   const encoded = encodeSnapshot(data);
   return `${base}/dashboard?snapshot=${encoded}`;
 }

@@ -130,7 +130,10 @@
   2. 복수 은퇴 시나리오 비교함 (A vs B vs C) (`ScenarioComparisonModal.tsx`) - 인디고(A안: 기준), 불꽃 오렌지(B안: 조기은퇴), 에메랄드(C안: 연기연금) 컬러 테마 분리, 100세+ 종신 안심/경고 배지, 핵심 장점/주의점 리스트 및 원클릭 대시보드 반영.
   3. 은퇴 생애 D-Day 타임라인 & 실행 체크리스트 (`RetirementRoadmapModal.tsx`) - 상단 3대 D-Day 지표 + 프로그레스 바, 연령대별 마일스톤 사이드바, 체크 시 실시간 저장 및 연관 분석 도구 바로가기 연동.
   4. 개인연금(IRP/연금저축) 금융사 갈아타기 실익 분석기 (`PensionTransferBenefitModal.tsx`) - 상단 에메랄드 히어로 카드(+6,533만원 추가 확보), 4대 파라미터 슬라이더, 기존 유지 vs 갈아타기 비교 카드, 연도별 복리 성장 차트.
-  5. 은퇴자 맞춤 3-Bucket 현금 버퍼 플래너 (`ThreeBucketPlanModal.tsx`) - Safety Runway 방어 배너(최대 7년 방어), 3색 자산배분 바(시안/인디고/에메랄드), 3대 버킷 카드(단기현금/중기인컴/장기성장) 및 3단계 리밸런싱 가이드.
+- **[Completed]** UI/UX 정밀 보정 및 서비스 도메인 연동 설정:
+  1. `SlidingTabs.tsx` & `globals.css`: 탭 인디케이터 x좌표 계산을 `offsetLeft`/`offsetWidth` 및 `left: 0`, `justify-content: center`로 정밀 보정하여 탭 선택 하이라이트 위치 치우침(4~5px 오차) 완벽 해결 (DOM 실측 diff 0.00px 달성).
+  2. `GlossaryTooltip.tsx` & `PensionTransferBenefitModal.tsx` & `ThreeBucketPlanModal.tsx` & `CashflowTrackerModal.tsx`: 슬라이더 패널 내 용어 툴팁의 긴 텍스트 줄바꿈 버그를 `iconOnly` 및 `minHeight: 24px`, `align-items: center`, `white-space: nowrap` 적용으로 전면 해결하여 4개 슬라이더 라벨과 수치가 수평선상에 단일 행으로 가지런히 정렬되도록 일원화.
+  3. 서비스 도메인 연동 (`my-nestlab.vercel.app`, `my-pensionlab.vercel.app`): `next.config.ts` 보안 및 API CORS 헤더 구성, `layout.tsx` metadataBase 및 OpenGraph canonical URL 지정, `shareSnapshotService.ts` origin 자동 감지 및 fallback 도메인 최신화 완료.
 
 ## Active Sprint / Story
 - **Sprint 47 (대기 / 준비 중)**: Agent Definition.md 4단계 계층(Agent 1~4) 기반 코드베이스 점검 및 리팩토링/신규 기능 확장

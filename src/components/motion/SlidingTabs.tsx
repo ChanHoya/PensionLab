@@ -2,6 +2,8 @@
 
 import React, { useRef, useEffect, useState, useLayoutEffect } from 'react';
 
+// 부드러운 알약 슬라이딩 인디케이터 기반 탭 전환 모션 컴포넌트
+
 export interface TabItem {
   id: string;
   label: React.ReactNode;
@@ -37,11 +39,9 @@ export const SlidingTabs: React.FC<SlidingTabsProps> = ({
       `[data-tab-id="${activeTabId}"]`
     );
     if (activeBtn) {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const btnRect = activeBtn.getBoundingClientRect();
       setIndicatorStyle({
-        left: btnRect.left - containerRect.left,
-        width: btnRect.width,
+        left: activeBtn.offsetLeft,
+        width: activeBtn.offsetWidth,
         opacity: 1,
       });
     }
@@ -53,6 +53,11 @@ export const SlidingTabs: React.FC<SlidingTabsProps> = ({
 
   useEffect(() => {
     window.addEventListener('resize', updateIndicator);
+    if (typeof document !== 'undefined' && 'fonts' in document) {
+      document.fonts.ready.then(() => {
+        updateIndicator();
+      });
+    }
     return () => window.removeEventListener('resize', updateIndicator);
   }, [activeTabId]);
 
@@ -74,6 +79,7 @@ export const SlidingTabs: React.FC<SlidingTabsProps> = ({
       <div
         className="t-sliding-indicator"
         style={{
+          left: 0,
           transform: `translateX(${indicatorStyle.left}px)`,
           width: `${indicatorStyle.width}px`,
           opacity: indicatorStyle.opacity,
@@ -94,6 +100,7 @@ export const SlidingTabs: React.FC<SlidingTabsProps> = ({
               ...paddingStyle,
               display: 'inline-flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '6px',
             }}
             onClick={() => onChange(tab.id)}

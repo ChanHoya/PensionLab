@@ -244,12 +244,12 @@ export default function ThreeBucketPlanModal({
           >
             {/* 총 은퇴 준비 자산 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginBottom: '8px', minHeight: '24px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
                   총 은퇴 준비 자산
-                  <GlossaryTooltip termId="PENSION_ACCOUNT_TRANSFER" />
+                  <GlossaryTooltip termId="PENSION_ACCOUNT_TRANSFER" iconOnly />
                 </span>
-                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)', whiteSpace: 'nowrap' }}>
                   {inputs.totalRetirementAssets.toLocaleString()}만원
                 </span>
               </div>
@@ -262,7 +262,7 @@ export default function ThreeBucketPlanModal({
                 onChange={(e) => setInputs({ ...inputs, totalRetirementAssets: Number(e.target.value) })}
                 style={{ width: '100%', accentColor: '#06b6d4', cursor: 'pointer' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', whiteSpace: 'nowrap' }}>
                 <span>1억원</span>
                 <span>7억원</span>
                 <span>15억원</span>
@@ -271,9 +271,9 @@ export default function ThreeBucketPlanModal({
 
             {/* 월 목표 은퇴 생활비 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)' }}>월 목표 은퇴 생활비</span>
-                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginBottom: '8px', minHeight: '24px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', whiteSpace: 'nowrap' }}>월 목표 은퇴 생활비</span>
+                <span style={{ fontWeight: 800, color: 'var(--text-primary, #0f172a)', whiteSpace: 'nowrap' }}>
                   {inputs.targetMonthlySpending.toLocaleString()}만원
                 </span>
               </div>
@@ -286,7 +286,7 @@ export default function ThreeBucketPlanModal({
                 onChange={(e) => setInputs({ ...inputs, targetMonthlySpending: Number(e.target.value) })}
                 style={{ width: '100%', accentColor: '#06b6d4', cursor: 'pointer' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', whiteSpace: 'nowrap' }}>
                 <span>150만원</span>
                 <span>400만원</span>
                 <span>800만원</span>
@@ -295,12 +295,12 @@ export default function ThreeBucketPlanModal({
 
             {/* 확정 공적연금 */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', marginBottom: '8px', minHeight: '24px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary, #475569)', display: 'inline-flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}>
                   확정 공적연금(국민/기초)
-                  <GlossaryTooltip termId="NPS_BEP" />
+                  <GlossaryTooltip termId="NPS_BEP" iconOnly />
                 </span>
-                <span style={{ fontWeight: 800, color: '#059669' }}>
+                <span style={{ fontWeight: 800, color: '#059669', whiteSpace: 'nowrap' }}>
                   {inputs.guaranteedMonthlyPension.toLocaleString()}만원
                 </span>
               </div>
@@ -313,7 +313,7 @@ export default function ThreeBucketPlanModal({
                 onChange={(e) => setInputs({ ...inputs, guaranteedMonthlyPension: Number(e.target.value) })}
                 style={{ width: '100%', accentColor: '#10b981', cursor: 'pointer' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '2px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted, #64748b)', marginTop: '4px', whiteSpace: 'nowrap' }}>
                 <span>0원</span>
                 <span>150만원</span>
                 <span>300만원</span>

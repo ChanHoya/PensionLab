@@ -162,13 +162,16 @@ export default function OnboardingPage() {
   const [fssAnalyzing, setFssAnalyzing] = useState(false);
   const [fssError, setFssError] = useState("");
 
-  // Sprint 45: 원스톱 인스턴트 온보딩 상태
+  // Sprint 45 & 50: 원스톱 인스턴트 온보딩 상태 (본인 / 배우자 탭 구분)
+  const [instantTarget, setInstantTarget] = useState<Who>("SELF");
+  const [instantSelfUploaded, setInstantSelfUploaded] = useState(false);
+  const [instantSpouseUploaded, setInstantSpouseUploaded] = useState(false);
   const [instantAnalyzing, setInstantAnalyzing] = useState(false);
   const [instantSuccess, setInstantSuccess] = useState<string | null>(null);
   const [instantError, setInstantError] = useState<string | null>(null);
   const [isInstantDragging, setIsInstantDragging] = useState(false);
 
-  const handleInstantFileDrop = async (fileList: FileList | File[]) => {
+  const handleInstantFileDrop = async (fileList: FileList | File[], targetWho: Who = instantTarget) => {
     const files = Array.from(fileList);
     if (files.length === 0) return;
     setInstantAnalyzing(true);
@@ -176,12 +179,17 @@ export default function OnboardingPage() {
     setInstantSuccess(null);
 
     try {
+      // 배우자 자료 등록 시 자동으로 배우자 유무 플래그(hasSpouse) 활성화
+      if (targetWho === "SPOUSE") {
+        store.setSimulationParams({ hasSpouse: true });
+      }
+
       let appliedCount = 0;
       for (const file of files) {
         const name = file.name.toLowerCase();
         if (name.endsWith(".xlsx") || name.endsWith(".csv") || name.endsWith(".txt") || name.endsWith(".tsv")) {
           const parsed = await parseFssExcelOrCsvText(file);
-          applyParsedFss(parsed, "SELF");
+          applyParsedFss(parsed, targetWho);
           appliedCount++;
         } else if (name.endsWith(".pdf")) {
           const text = await extractPdfText(file);
@@ -193,7 +201,7 @@ export default function OnboardingPage() {
           });
           if (!res.ok) throw new Error("PDF 분석 중 서버 오류가 발생했습니다.");
           const parsedPdf = await res.json();
-          applyParsedFss(parsedPdf, "SELF");
+          applyParsedFss(parsedPdf, targetWho);
           appliedCount++;
         }
       }
@@ -202,15 +210,19 @@ export default function OnboardingPage() {
         throw new Error("지원되는 형식(.xlsx, .csv, .txt, .pdf)의 금감원 통합연금포털 파일을 올려주세요.");
       }
 
+      if (targetWho === "SELF") {
+        setInstantSelfUploaded(true);
+      } else {
+        setInstantSpouseUploaded(true);
+      }
+
       const generatedUserId = `instant_${Date.now()}`;
       if (typeof window !== "undefined") {
         localStorage.setItem("pensionlab_user_id", generatedUserId);
       }
 
-      setInstantSuccess("🎉 금감원 연금 데이터 자동 분석 완료! 3초 후 대시보드로 즉시 이동합니다...");
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 2500);
+      const targetLabel = targetWho === "SELF" ? "본인" : "배우자";
+      setInstantSuccess(`🎉 ${targetLabel} 금감원 연금 데이터 자동 분석 완료! (${appliedCount}개 파일 반영)`);
     } catch (err: any) {
       console.error("Instant onboarding error:", err);
       setInstantError(err.message || "파일 분석 중 오류가 발생했습니다.");
@@ -975,8 +987,8 @@ export default function OnboardingPage() {
 
 
           <div key={step.key} style={styles.formBody}>
-            {/* STEP 0: 기본 정보 및 노후 재무 목표 */}
-            {step.kind === "INFO" && (
+            {/* STEP 0: 기본 정보 및 금감원 자료 업로드 시 원스톱 인스턴트 온보딩 드롭존 */}
+            {(step.kind === "INFO" || step.kind === "FSS") && (
               <div
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -987,7 +999,7 @@ export default function OnboardingPage() {
                   e.preventDefault();
                   setIsInstantDragging(false);
                   if (e.dataTransfer.files) {
-                    handleInstantFileDrop(e.dataTransfer.files);
+                    handleInstantFileDrop(e.dataTransfer.files, instantTarget);
                   }
                 }}
                 onClick={() => {
@@ -1000,16 +1012,20 @@ export default function OnboardingPage() {
                   padding: "16px 20px",
                   borderRadius: "14px",
                   border: isInstantDragging
-                    ? "2px dashed #6366f1"
-                    : "1px dashed rgba(99, 102, 241, 0.4)",
+                    ? `2px dashed ${instantTarget === "SELF" ? "#6366f1" : "#ec4899"}`
+                    : `1px dashed ${instantTarget === "SELF" ? "rgba(99, 102, 241, 0.45)" : "rgba(236, 72, 153, 0.45)"}`,
                   background: isInstantDragging
-                    ? "rgba(99, 102, 241, 0.12)"
-                    : "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.04) 100%)",
+                    ? instantTarget === "SELF"
+                      ? "rgba(99, 102, 241, 0.12)"
+                      : "rgba(236, 72, 153, 0.12)"
+                    : instantTarget === "SELF"
+                    ? "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.04) 100%)"
+                    : "linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(244, 114, 182, 0.04) 100%)",
                   cursor: instantAnalyzing ? "wait" : "pointer",
-                  transition: "all 0.2s ease",
+                  transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
                   textAlign: "center",
                 }}
-                title="금감원 통합연금포털 엑셀(.xlsx), CSV, TXT 또는 PDF 파일을 드롭하면 3초 만에 대시보드로 직행합니다."
+                title={`${instantTarget === "SELF" ? "본인" : "배우자"} 금감원 통합연금포털 엑셀(.xlsx), CSV, TXT 또는 PDF 파일을 드롭하면 3초 만에 분석됩니다.`}
               >
                 <input
                   id="instant-fss-file-input"
@@ -1019,47 +1035,177 @@ export default function OnboardingPage() {
                   style={{ display: "none" }}
                   onChange={(e) => {
                     if (e.target.files) {
-                      handleInstantFileDrop(e.target.files);
+                      handleInstantFileDrop(e.target.files, instantTarget);
                       e.target.value = "";
                     }
                   }}
                 />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "1.8rem" }}>⚡</span>
+
+                {/* 본인 / 배우자 선택 탭 바 */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "12px",
+                    paddingBottom: "10px",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <button
+                      type="button"
+                      id="btn-instant-target-self"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInstantTarget("SELF");
+                        setInstantSuccess(null);
+                        setInstantError(null);
+                      }}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        border: instantTarget === "SELF" ? "1px solid #6366f1" : "1px solid rgba(255, 255, 255, 0.12)",
+                        background: instantTarget === "SELF" ? "rgba(99, 102, 241, 0.25)" : "rgba(255, 255, 255, 0.03)",
+                        color: instantTarget === "SELF" ? "#818cf8" : "var(--text-secondary, #94a3b8)",
+                        fontSize: "0.82rem",
+                        fontWeight: instantTarget === "SELF" ? 700 : 500,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>👤</span> 본인 자료
+                      {instantSelfUploaded && (
+                        <span style={{ fontSize: "0.7rem", color: "#34d399", fontWeight: 700 }}>✓ 등록완료</span>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      id="btn-instant-target-spouse"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInstantTarget("SPOUSE");
+                        setInstantSuccess(null);
+                        setInstantError(null);
+                      }}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: "8px",
+                        border: instantTarget === "SPOUSE" ? "1px solid #ec4899" : "1px solid rgba(255, 255, 255, 0.12)",
+                        background: instantTarget === "SPOUSE" ? "rgba(236, 72, 153, 0.25)" : "rgba(255, 255, 255, 0.03)",
+                        color: instantTarget === "SPOUSE" ? "#f472b6" : "var(--text-secondary, #94a3b8)",
+                        fontSize: "0.82rem",
+                        fontWeight: instantTarget === "SPOUSE" ? 700 : 500,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>👥</span> 배우자 자료
+                      {instantSpouseUploaded && (
+                        <span style={{ fontSize: "0.7rem", color: "#34d399", fontWeight: 700 }}>✓ 등록완료</span>
+                      )}
+                    </button>
+                  </div>
+
+                  <span
+                    style={{
+                      fontSize: "0.7rem",
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      background: instantTarget === "SELF" ? "#6366f1" : "#ec4899",
+                      color: "#fff",
+                      fontWeight: 700,
+                    }}
+                  >
+                    FAST PASS · {instantTarget === "SELF" ? "본인용" : "배우자용"}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
+                  <span style={{ fontSize: "1.8rem" }}>
+                    {instantTarget === "SELF" ? "⚡" : "💖"}
+                  </span>
                   <div style={{ textAlign: "left" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <strong style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
-                        3초 원스톱 인스턴트 온보딩 (금감원 파일 드롭존)
+                        {instantTarget === "SELF" ? "본인" : "배우자"} 3초 원스톱 인스턴트 온보딩 (금감원 파일 드롭존)
                       </strong>
-                      <span
-                        style={{
-                          fontSize: "0.7rem",
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          background: "#6366f1",
-                          color: "#fff",
-                          fontWeight: 700,
-                        }}
-                      >
-                        FAST PASS
-                      </span>
                     </div>
                     <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "var(--muted-foreground, #94a3b8)" }}>
-                      금감원 통합연금포털 엑셀(.xlsx), CSV, PDF 파일을 이곳에 끌어다 놓으세요. 3초 만에 1/2/3층 연금을 자동 파싱하고 대시보드로 직행합니다.
+                      {instantTarget === "SELF"
+                        ? "본인의 금감원 통합연금포털 엑셀(.xlsx), CSV, TXT, PDF 파일을 이곳에 끌어다 놓으세요. 3초 만에 1/2/3층 연금을 자동 파싱합니다."
+                        : "배우자의 금감원 통합연금포털 엑셀(.xlsx), CSV, TXT, PDF 파일을 이곳에 끌어다 놓으세요. 배우자 연금 데이터가 자동으로 연동됩니다."}
                     </p>
                   </div>
                 </div>
 
                 {instantAnalyzing && (
-                  <div style={{ marginTop: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#818cf8", fontSize: "0.85rem", fontWeight: 600 }}>
-                    <span style={{ display: "inline-block", width: "16px", height: "16px", border: "2px solid #818cf8", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }}></span>
-                    금감원 연금 데이터 고속 분석 중...
+                  <div style={{ marginTop: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: instantTarget === "SELF" ? "#818cf8" : "#f472b6", fontSize: "0.85rem", fontWeight: 600 }}>
+                    <span style={{ display: "inline-block", width: "16px", height: "16px", border: `2px solid ${instantTarget === "SELF" ? "#818cf8" : "#f472b6"}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }}></span>
+                    {instantTarget === "SELF" ? "본인" : "배우자"} 연금 데이터 고속 분석 중...
                   </div>
                 )}
 
                 {instantSuccess && (
-                  <div style={{ marginTop: "12px", color: "#34d399", fontSize: "0.85rem", fontWeight: 700 }}>
-                    {instantSuccess}
+                  <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                    <div style={{ color: "#34d399", fontSize: "0.88rem", fontWeight: 700 }}>
+                      {instantSuccess}
+                    </div>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                      <button
+                        type="button"
+                        id="btn-instant-go-dashboard"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push("/dashboard");
+                        }}
+                        style={{
+                          padding: "6px 14px",
+                          fontSize: "0.8rem",
+                          fontWeight: 700,
+                          borderRadius: "6px",
+                          background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+                          color: "#ffffff",
+                          border: "none",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 8px rgba(99, 102, 241, 0.4)",
+                        }}
+                      >
+                        대시보드로 즉시 이동 🚀
+                      </button>
+                      {instantTarget === "SELF" && !instantSpouseUploaded && (
+                        <button
+                          type="button"
+                          id="btn-instant-switch-spouse"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInstantTarget("SPOUSE");
+                            setInstantSuccess(null);
+                          }}
+                          style={{
+                            padding: "6px 14px",
+                            fontSize: "0.8rem",
+                            fontWeight: 700,
+                            borderRadius: "6px",
+                            background: "rgba(236, 72, 153, 0.15)",
+                            border: "1px solid rgba(236, 72, 153, 0.4)",
+                            color: "#f472b6",
+                            cursor: "pointer",
+                          }}
+                        >
+                          배우자 자료 이어서 등록 👥
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 

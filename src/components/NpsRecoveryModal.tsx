@@ -73,38 +73,100 @@ export default function NpsRecoveryModal({
   // 반환원금에 따른 복원 가입기간 산출 헬퍼 (약 12.5만원당 1개월 복원)
   const calcRestoredMonths = (won: number) => Math.min(144, Math.max(6, Math.round(won / 125000)));
 
-  // 본인(Self) 추납 및 반납 선택 토글 상태 (디폴트: 둘 다 선택)
-  const [selfHasAdditionalPayment, setSelfHasAdditionalPayment] = useState<boolean>(true);
-  const [selfHasReturnRefund, setSelfHasReturnRefund] = useState<boolean>(true);
+  // 본인(Self) 추납 및 반납 선택 토글 상태 (기본정보에서 시뮬레이션 반영 여부에 따라 디폴트 선택 연동)
+  const [selfHasAdditionalPayment, setSelfHasAdditionalPayment] = useState<boolean>(() =>
+    Boolean(store.additionalPayment.applyToSimulation)
+  );
+  const [selfHasReturnRefund, setSelfHasReturnRefund] = useState<boolean>(() =>
+    Boolean(store.returnRepayment.applyToSimulation)
+  );
   const [selfAdditionalMonths, setSelfAdditionalMonths] = useState<number>(
     store.additionalPayment.requestedMonths || 60
   );
-  const [selfBaseIncomeWon, setSelfBaseIncomeWon] = useState<number>(
-    store.additionalPayment.baseIncome ? store.additionalPayment.baseIncome * 10000 : 3000000
+  // 등록된 기준소득월액 최우선 연동
+  const initialSelfBaseIncome =
+    store.nationalPension.currentStandardMonthlyIncome && store.nationalPension.currentStandardMonthlyIncome > 0
+      ? store.nationalPension.currentStandardMonthlyIncome * 10000
+      : store.additionalPayment.baseIncome && store.additionalPayment.baseIncome > 0
+      ? store.additionalPayment.baseIncome * 10000
+      : 3000000;
+  const [selfBaseIncomeWon, setSelfBaseIncomeWon] = useState<number>(initialSelfBaseIncome);
+  const [selfAdditionalPaymentMode, setSelfAdditionalPaymentMode] = useState<"LUMP" | "INSTALLMENT">(
+    store.additionalPayment.paymentMode || "LUMP"
   );
+  const [selfAdditionalInstallments, setSelfAdditionalInstallments] = useState<number>(
+    store.additionalPayment.installments || 12
+  );
+
   const [selfRefundYearPeriod, setSelfRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
   const initialSelfPrincipal = store.returnRepayment.refundAmount ? store.returnRepayment.refundAmount * 10000 : 5000000;
   const [selfRefundPrincipalWon, setSelfRefundPrincipalWon] = useState<number>(initialSelfPrincipal);
-  const [selfRefundYearsPassed, setSelfRefundYearsPassed] = useState<number>(25);
+  const [selfRefundYearsPassed, setSelfRefundYearsPassed] = useState<number>(
+    store.returnRepayment.refundYm
+      ? Math.max(1, 2026 - Number(store.returnRepayment.refundYm.slice(0, 4)))
+      : 25
+  );
   const [selfRestoredMonths, setSelfRestoredMonths] = useState<number>(
     store.returnRepayment.restoredMonths || calcRestoredMonths(initialSelfPrincipal)
   );
+  const [selfRefundNoticeAmountWon, setSelfRefundNoticeAmountWon] = useState<number>(
+    store.returnRepayment.noticeAmount > 0 ? store.returnRepayment.noticeAmount * 10000 : 0
+  );
+  const [selfRefundPaymentMode, setSelfRefundPaymentMode] = useState<"LUMP" | "INSTALLMENT">(
+    store.returnRepayment.installments > 1 ? "INSTALLMENT" : "LUMP"
+  );
+  const [selfRefundInstallments, setSelfRefundInstallments] = useState<number>(
+    store.returnRepayment.installments || 1
+  );
 
-  // 배우자(Spouse) 추납 및 반납 선택 토글 상태 (디폴트: 둘 다 선택)
-  const [spouseHasAdditionalPayment, setSpouseHasAdditionalPayment] = useState<boolean>(true);
-  const [spouseHasReturnRefund, setSpouseHasReturnRefund] = useState<boolean>(true);
+  // 배우자(Spouse) 추납 및 반납 선택 토글 상태 (기본정보에서 시뮬레이션 반영 여부에 따라 디폴트 선택 연동)
+  const [spouseHasAdditionalPayment, setSpouseHasAdditionalPayment] = useState<boolean>(() =>
+    Boolean(store.spouse.additionalPayment.applyToSimulation)
+  );
+  const [spouseHasReturnRefund, setSpouseHasReturnRefund] = useState<boolean>(() =>
+    Boolean(store.spouse.returnRepayment.applyToSimulation)
+  );
   const [spouseAdditionalMonths, setSpouseAdditionalMonths] = useState<number>(
     store.spouse.additionalPayment.requestedMonths || 60
   );
-  const [spouseBaseIncomeWon, setSpouseBaseIncomeWon] = useState<number>(
-    store.spouse.additionalPayment.baseIncome ? store.spouse.additionalPayment.baseIncome * 10000 : 2500000
+  // 배우자 등록된 기준소득월액 최우선 연동
+  const initialSpouseBaseIncome =
+    store.spouse.nationalPension.currentStandardMonthlyIncome && store.spouse.nationalPension.currentStandardMonthlyIncome > 0
+      ? store.spouse.nationalPension.currentStandardMonthlyIncome * 10000
+      : store.spouse.additionalPayment.baseIncome && store.spouse.additionalPayment.baseIncome > 0
+      ? store.spouse.additionalPayment.baseIncome * 10000
+      : 2500000;
+  const [spouseBaseIncomeWon, setSpouseBaseIncomeWon] = useState<number>(initialSpouseBaseIncome);
+  const [spouseAdditionalPaymentMode, setSpouseAdditionalPaymentMode] = useState<"LUMP" | "INSTALLMENT">(
+    store.spouse.additionalPayment.paymentMode || "LUMP"
   );
+  const [spouseAdditionalInstallments, setSpouseAdditionalInstallments] = useState<number>(
+    store.spouse.additionalPayment.installments || 12
+  );
+
   const [spouseRefundYearPeriod, setSpouseRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
-  const initialSpousePrincipal = store.spouse.returnRepayment.refundAmount ? store.spouse.returnRepayment.refundAmount * 10000 : 4000000;
+  // 배우자 반납금 실데이터 (1994년 반환일시금 원금 1,318,312원, 공단 고지액 3,418,930원, 12회 분납, 30개월 복원)
+  const initialSpousePrincipal = store.spouse.returnRepayment.refundAmount
+    ? store.spouse.returnRepayment.refundAmount * 10000
+    : 1318312;
   const [spouseRefundPrincipalWon, setSpouseRefundPrincipalWon] = useState<number>(initialSpousePrincipal);
-  const [spouseRefundYearsPassed, setSpouseRefundYearsPassed] = useState<number>(24);
+  const [spouseRefundYearsPassed, setSpouseRefundYearsPassed] = useState<number>(
+    store.spouse.returnRepayment.refundYm
+      ? Math.max(1, 2026 - Number(store.spouse.returnRepayment.refundYm.slice(0, 4)))
+      : 28
+  );
   const [spouseRestoredMonths, setSpouseRestoredMonths] = useState<number>(
-    store.spouse.returnRepayment.restoredMonths || calcRestoredMonths(initialSpousePrincipal)
+    store.spouse.returnRepayment.restoredMonths || 30
+  );
+  const initialSpouseNoticeAmount = store.spouse.returnRepayment.noticeAmount > 0
+    ? store.spouse.returnRepayment.noticeAmount * 10000
+    : 3418930;
+  const [spouseRefundNoticeAmountWon, setSpouseRefundNoticeAmountWon] = useState<number>(initialSpouseNoticeAmount);
+  const [spouseRefundPaymentMode, setSpouseRefundPaymentMode] = useState<"LUMP" | "INSTALLMENT">(
+    store.spouse.returnRepayment.installments > 1 || initialSpouseNoticeAmount > 0 ? "INSTALLMENT" : "LUMP"
+  );
+  const [spouseRefundInstallments, setSpouseRefundInstallments] = useState<number>(
+    store.spouse.returnRepayment.installments || 12
   );
 
   // 본인 입력 객체
@@ -117,11 +179,16 @@ export default function NpsRecoveryModal({
       hasAdditionalPayment: selfHasAdditionalPayment,
       baseIncomeWon: selfBaseIncomeWon,
       additionalMonths: selfAdditionalMonths,
+      additionalPaymentMode: selfAdditionalPaymentMode,
+      additionalInstallments: selfAdditionalInstallments,
       hasReturnRefund: selfHasReturnRefund,
       refundYearPeriod: selfRefundYearPeriod,
       refundPrincipalWon: selfRefundPrincipalWon,
       refundYearsPassed: selfRefundYearsPassed,
       restoredMonths: selfRestoredMonths,
+      noticeAmountWon: selfRefundNoticeAmountWon,
+      refundPaymentMode: selfRefundPaymentMode,
+      refundInstallments: selfRefundInstallments,
     }),
     [
       selfAge,
@@ -131,11 +198,16 @@ export default function NpsRecoveryModal({
       selfHasAdditionalPayment,
       selfBaseIncomeWon,
       selfAdditionalMonths,
+      selfAdditionalPaymentMode,
+      selfAdditionalInstallments,
       selfHasReturnRefund,
       selfRefundYearPeriod,
       selfRefundPrincipalWon,
       selfRefundYearsPassed,
       selfRestoredMonths,
+      selfRefundNoticeAmountWon,
+      selfRefundPaymentMode,
+      selfRefundInstallments,
     ]
   );
 
@@ -149,11 +221,16 @@ export default function NpsRecoveryModal({
       hasAdditionalPayment: spouseHasAdditionalPayment,
       baseIncomeWon: spouseBaseIncomeWon,
       additionalMonths: spouseAdditionalMonths,
+      additionalPaymentMode: spouseAdditionalPaymentMode,
+      additionalInstallments: spouseAdditionalInstallments,
       hasReturnRefund: spouseHasReturnRefund,
       refundYearPeriod: spouseRefundYearPeriod,
       refundPrincipalWon: spouseRefundPrincipalWon,
       refundYearsPassed: spouseRefundYearsPassed,
       restoredMonths: spouseRestoredMonths,
+      noticeAmountWon: spouseRefundNoticeAmountWon,
+      refundPaymentMode: spouseRefundPaymentMode,
+      refundInstallments: spouseRefundInstallments,
     }),
     [
       spouseAge,
@@ -163,11 +240,16 @@ export default function NpsRecoveryModal({
       spouseHasAdditionalPayment,
       spouseBaseIncomeWon,
       spouseAdditionalMonths,
+      spouseAdditionalPaymentMode,
+      spouseAdditionalInstallments,
       spouseHasReturnRefund,
       spouseRefundYearPeriod,
       spouseRefundPrincipalWon,
       spouseRefundYearsPassed,
       spouseRestoredMonths,
+      spouseRefundNoticeAmountWon,
+      spouseRefundPaymentMode,
+      spouseRefundInstallments,
     ]
   );
 
@@ -242,6 +324,21 @@ export default function NpsRecoveryModal({
 
   const currentRefundYearsPassed = isSpouseTab ? spouseRefundYearsPassed : selfRefundYearsPassed;
   const setCurrentRefundYearsPassed = isSpouseTab ? setSpouseRefundYearsPassed : setSelfRefundYearsPassed;
+
+  const currentAdditionalPaymentMode = isSpouseTab ? spouseAdditionalPaymentMode : selfAdditionalPaymentMode;
+  const setCurrentAdditionalPaymentMode = isSpouseTab ? setSpouseAdditionalPaymentMode : setSelfAdditionalPaymentMode;
+
+  const currentAdditionalInstallments = isSpouseTab ? spouseAdditionalInstallments : selfAdditionalInstallments;
+  const setCurrentAdditionalInstallments = isSpouseTab ? setSpouseAdditionalInstallments : setSelfAdditionalInstallments;
+
+  const currentRefundPaymentMode = isSpouseTab ? spouseRefundPaymentMode : selfRefundPaymentMode;
+  const setCurrentRefundPaymentMode = isSpouseTab ? setSpouseRefundPaymentMode : setSelfRefundPaymentMode;
+
+  const currentRefundInstallments = isSpouseTab ? spouseRefundInstallments : selfRefundInstallments;
+  const setCurrentRefundInstallments = isSpouseTab ? setSpouseRefundInstallments : setSelfRefundInstallments;
+
+  const currentRefundNoticeAmountWon = isSpouseTab ? spouseRefundNoticeAmountWon : selfRefundNoticeAmountWon;
+  const setCurrentRefundNoticeAmountWon = isSpouseTab ? setSpouseRefundNoticeAmountWon : setSelfRefundNoticeAmountWon;
 
   const activeAge = isSpouseTab ? spouseAge : selfAge;
   const activeNpsStartAge = isSpouseTab ? spouseNpsStartAge : selfNpsStartAge;
@@ -781,6 +878,46 @@ export default function NpsRecoveryModal({
                       <span>300만원(평균 A값)</span>
                       <span>617만원(상한)</span>
                     </div>
+
+                    {/* 추납 납부 방식 선택 (일시납 또는 분할납부) */}
+                    <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "10px" }}>
+                      <label style={{ fontSize: "0.82rem", color: "var(--text-primary, #ffffff)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                        납부 방식
+                      </label>
+                      <select
+                        disabled={!currentHasAdditionalPayment}
+                        value={currentAdditionalPaymentMode === "LUMP" ? "LUMP" : `INST_${currentAdditionalInstallments}`}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "LUMP") {
+                            setCurrentAdditionalPaymentMode("LUMP");
+                          } else {
+                            setCurrentAdditionalPaymentMode("INSTALLMENT");
+                            const n = Number(v.replace("INST_", ""));
+                            setCurrentAdditionalInstallments(n);
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: "5px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.78rem",
+                          background: "var(--surface, #1f2937)",
+                          color: "var(--text-primary, #ffffff)",
+                          border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
+                        }}
+                      >
+                        <option value="LUMP">일시납 (이자 가산 없음)</option>
+                        <option value="INST_12">12개월 분할납부 (1년 정기예금 이자 가산)</option>
+                        <option value="INST_24">24개월 분할납부</option>
+                        <option value="INST_60">60개월 분할납부 (최대 5년)</option>
+                      </select>
+                    </div>
+                    {currentAdditionalPaymentMode === "INSTALLMENT" && additionalPayment && additionalPayment.installments > 1 && (
+                      <div style={{ fontSize: "0.74rem", color: isSpouseTab ? "#f472b6" : "#818cf8", background: "rgba(99,102,241,0.08)", padding: "6px 10px", borderRadius: "6px", marginTop: "6px" }}>
+                        월 <strong>{Math.round(additionalPayment.monthlyInstallmentWon / 10000).toLocaleString()}만원</strong>씩 {additionalPayment.installments}회 분납 (분납이자 +{Math.round(additionalPayment.interestCostWon / 10000)}만원 포함)
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -894,6 +1031,90 @@ export default function NpsRecoveryModal({
                       <span>35년</span>
                     </div>
                   </div>
+
+                  {/* 반납 납부 방식 선택 (일시납 또는 분할납부) */}
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "2px" }}>
+                    <label style={{ fontSize: "0.82rem", color: "var(--text-primary, #ffffff)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                      납부 방식
+                    </label>
+                    <select
+                      disabled={!currentHasReturnRefund}
+                      value={currentRefundPaymentMode === "LUMP" ? "LUMP" : `INST_${currentRefundInstallments}`}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        if (v === "LUMP") {
+                          setCurrentRefundPaymentMode("LUMP");
+                        } else {
+                          setCurrentRefundPaymentMode("INSTALLMENT");
+                          const n = Number(v.replace("INST_", ""));
+                          setCurrentRefundInstallments(n);
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "5px 8px",
+                        borderRadius: "6px",
+                        fontSize: "0.78rem",
+                        background: "var(--surface, #1f2937)",
+                        color: "var(--text-primary, #ffffff)",
+                        border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
+                      }}
+                    >
+                      <option value="LUMP">일시납 (반납이자만 가산)</option>
+                      <option value="INST_3">3회 분할납부</option>
+                      <option value="INST_12">12회 분할납부 (실고지서 분납)</option>
+                      <option value="INST_24">24회 분할납부</option>
+                    </select>
+                  </div>
+
+                  {/* 공단 고지액 직접지정 */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "2px" }}>
+                    <label style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+                      공단 고지액 직접지정
+                    </label>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      <input
+                        type="number"
+                        placeholder="미입력 시 자동계산"
+                        value={currentRefundNoticeAmountWon || ""}
+                        onChange={(e) => setCurrentRefundNoticeAmountWon(Number(e.target.value))}
+                        style={{
+                          width: "120px",
+                          padding: "3px 6px",
+                          fontSize: "0.76rem",
+                          borderRadius: "4px",
+                          border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
+                          background: "var(--surface, #1f2937)",
+                          color: "#ffffff",
+                          textAlign: "right",
+                        }}
+                      />
+                      <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>원</span>
+                    </div>
+                  </div>
+
+                  {/* 이자 및 분납 결과 요약 박스 */}
+                  {returnRepayment && (
+                    <div style={{ fontSize: "0.73rem", color: "#34d399", background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", padding: "7px 10px", borderRadius: "6px", display: "flex", flexDirection: "column", gap: "3px" }}>
+                      <div>
+                        {currentRefundNoticeAmountWon > 0 ? "📋 공단 고지액 반영: " : "📋 공단 정기예금 복리이자 산출: "}
+                        총 <strong>{Math.round(returnRepayment.totalCostWon / 10000).toLocaleString()}만원</strong>
+                        {returnRepayment.installments > 1 && ` (월 약 ${Math.round(returnRepayment.monthlyInstallmentWon / 10000).toLocaleString()}만원 × ${returnRepayment.installments}회)`}
+                      </div>
+                      <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                        반환원금 {Math.round(returnRepayment.principalCostWon / 10000).toLocaleString()}만 + 반납이자 {Math.round(returnRepayment.interestCostWon / 10000).toLocaleString()}만원
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 배우자 탭 1994년 104.4만원 vs 1,318,312원 설명 안내문 */}
+                  {isSpouseTab && (
+                    <div style={{ fontSize: "0.72rem", color: "var(--text-secondary, #94a3b8)", background: "rgba(236,72,153,0.06)", border: "1px solid rgba(236,72,153,0.2)", padding: "8px 10px", borderRadius: "6px", lineHeight: 1.45 }}>
+                      ℹ️ <strong>1994년 104.4만원 vs 1,318,312원 차이 안내</strong><br />
+                      1994년 납부하셨던 기여금 원금은 104.4만원이었으나, 공단에서 반환일시금을 지급할 당시 법정이자가 가산되어 실제 수령액이 <strong>1,318,312원</strong>이었습니다.
+                      공단 반납 고지서의 원금은 이 1,318,312원이며, 여기에 1년 만기 정기예금 연복리 이자(2,100,618원)가 가산되어 총 3,418,930원(12회 분납)으로 고지된 것입니다.
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -965,9 +1186,13 @@ export default function NpsRecoveryModal({
                     {activeScenarioType === "BOTH"
                       ? `추납 ${Math.round(additionalPayment.totalCostWon / 10000)}만 + 반납 ${Math.round((returnRepayment?.totalCostWon || 0) / 10000)}만`
                       : activeScenarioType === "ADDITIONAL_ONLY"
-                      ? `월 ${Math.round(additionalPayment.monthlyPremiumWon / 10000)}만원 × ${additionalPayment.months}개월`
+                      ? additionalPayment.installments > 1
+                        ? `월 ${Math.round(additionalPayment.monthlyInstallmentWon / 10000)}만 × ${additionalPayment.installments}회 (원금 ${Math.round(additionalPayment.principalCostWon / 10000)}만 + 이자)`
+                        : `월 ${Math.round(additionalPayment.monthlyPremiumWon / 10000)}만원 × ${additionalPayment.months}개월 (일시납)`
                       : activeScenarioType === "RETURN_ONLY"
-                      ? `원금 ${Math.round(currentRefundPrincipalWon / 10000)}만 + 복리이자 가산`
+                      ? returnRepayment && returnRepayment.installments > 1
+                        ? `월 ${Math.round(returnRepayment.monthlyInstallmentWon / 10000)}만 × ${returnRepayment.installments}회 (원금 ${Math.round(returnRepayment.principalCostWon / 10000)}만 + 반납이자)`
+                        : `원금 ${Math.round((returnRepayment?.principalCostWon || currentRefundPrincipalWon) / 10000)}만 + 반납이자 ${Math.round((returnRepayment?.interestCostWon || 0) / 10000)}만`
                       : "선택된 납부 옵션 없음"}
                   </div>
                 </div>

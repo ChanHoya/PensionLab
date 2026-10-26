@@ -1,7 +1,6 @@
 // 국민연금 추납(추후납부) 및 반납(반환일시금) 실익 역산과 부부 합산 시너지 분석 계산 엔진
-/**
- * 2026년 국민연금 개정 기준소득월액 및 연도별 소득대체율 적용
- */
+import { depositRateForYear } from "@/config/npsRules";
+import { installmentInterestFactor } from "@/services/additionalPaymentCalculator";
 
 export interface RecoveryOptionInput {
   currentAge: number;
@@ -13,6 +12,8 @@ export interface RecoveryOptionInput {
   hasAdditionalPayment?: boolean; // 추납 신청 여부 (기본값: true)
   baseIncomeWon: number; // 추납 기준소득월액 (기본값: 2026년 중위/평균 약 300만원)
   additionalMonths: number; // 추납 희망 개월수 (1~119개월)
+  additionalPaymentMode?: "LUMP" | "INSTALLMENT";
+  additionalInstallments?: number; // 분납 횟수 (기본 12회)
 
   // 반납 옵션 (선택적)
   hasReturnRefund: boolean; // 과거 반환일시금 수령 이력 여부 (기본값: true)
@@ -20,8 +21,9 @@ export interface RecoveryOptionInput {
   refundPrincipalWon: number; // 과거 수령했던 반환일시금 원금 (원)
   refundYearsPassed: number; // 수령 후 경과 년수 (이자 가산용)
   restoredMonths?: number; // 반납 시 복원 개월수 (기본값: 원금 기반 추정)
-  paymentMode?: "LUMP" | "INSTALLMENT";
-  installments?: number;
+  noticeAmountWon?: number; // 공단 반납 고지액 (있으면 실고지액 최우선 적용)
+  refundPaymentMode?: "LUMP" | "INSTALLMENT";
+  refundInstallments?: number; // 분납 횟수 (1 = 일시납, 3, 12, 24 등)
 }
 
 export interface PaybackMilestones {
@@ -45,7 +47,11 @@ export interface RecoveryAnalysisResult {
   additionalPayment: {
     months: number;
     monthlyPremiumWon: number; // 매월 보험료 (기준소득 × 9%)
-    totalCostWon: number; // 일시납 총비용
+    totalCostWon: number; // 총비용 (일시 또는 분납이자 포함)
+    principalCostWon: number; // 순수 보험료 원금
+    interestCostWon: number; // 분납이자
+    installments: number; // 분할 횟수
+    monthlyInstallmentWon: number; // 회차별 월 납부액
     monthlyIncreaseWon: number; // 개시 후 매월 연금 증가액
     annualIncreaseWon: number; // 연간 증가액
     breakEvenYears: number; // 원금 회수 소요 기간 (년)
@@ -60,7 +66,11 @@ export interface RecoveryAnalysisResult {
   returnRepayment?: {
     restoredMonths: number;
     applicableReplacementRate: number; // 복원되는 소득대체율 (%)
-    totalCostWon: number; // 원금 + 정기예금 이자 가산 총비용
+    totalCostWon: number; // 원금 + 정기예금 이자 + 분납이자 가산 총비용
+    principalCostWon: number; // 반환일시금 원금
+    interestCostWon: number; // 가산된 이자 총액 (정기예금 연복리 + 분납이자)
+    installments: number; // 분할 횟수
+    monthlyInstallmentWon: number; // 회차별 월 납부액
     monthlyIncreaseWon: number; // 개시 후 매월 연금 증가액
     annualIncreaseWon: number; // 연간 증가액
     breakEvenYears: number; // 원금 회수 소요 기간 (년)
@@ -131,11 +141,16 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
     hasAdditionalPayment = true,
     baseIncomeWon = 3000000,
     additionalMonths = 60,
+    additionalPaymentMode = "LUMP",
+    additionalInstallments = 12,
     hasReturnRefund = false,
     refundYearPeriod = "PRE_1998",
     refundPrincipalWon = 5000000,
     refundYearsPassed = 25,
     restoredMonths: customRestoredMonths,
+    noticeAmountWon,
+    refundPaymentMode = "LUMP",
+    refundInstallments = 12,
   } = input;
 
   const receivingYears = Math.max(0, lifeExpectancy - npsStartAge);
@@ -144,6 +159,10 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
   let clampedMonths = 0;
   let monthlyPremiumWon = 0;
   let totalCostWon = 0;
+  let addPrincipalCostWon = 0;
+  let addInterestCostWon = 0;
+  const addInstallments = additionalPaymentMode === "INSTALLMENT" ? Math.max(1, additionalInstallments || 12) : 1;
+  let addMonthlyInstallmentWon = 0;
   let monthlyIncreaseWon = 0;
   let annualIncreaseWon = 0;
   let breakEvenYears = 0;
@@ -159,7 +178,23 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
   if (hasAdditionalPayment) {
     clampedMonths = Math.min(119, Math.max(1, additionalMonths));
     monthlyPremiumWon = Math.round(baseIncomeWon * 0.09);
-    totalCostWon = monthlyPremiumWon * clampedMonths;
+    addPrincipalCostWon = monthlyPremiumWon * clampedMonths;
+
+    if (addInstallments > 1) {
+      // 분납이자: 2026년 공단 고시 1년 만기 정기예금 이자율(2.2%) 적용
+      const depositRate2026 = depositRateForYear(2026);
+      for (let k = 0; k < addInstallments; k++) {
+        addInterestCostWon +=
+          (addPrincipalCostWon / addInstallments) *
+          (installmentInterestFactor(depositRate2026, k + 1) - 1);
+      }
+      addInterestCostWon = Math.round(addInterestCostWon);
+      totalCostWon = addPrincipalCostWon + addInterestCostWon;
+      addMonthlyInstallmentWon = Math.round(totalCostWon / addInstallments);
+    } else {
+      totalCostWon = addPrincipalCostWon;
+      addMonthlyInstallmentWon = totalCostWon;
+    }
 
     monthlyIncreaseWon = Math.round((monthlyIncreasePerYear / 12) * clampedMonths);
     annualIncreaseWon = monthlyIncreaseWon * 12;
@@ -178,9 +213,38 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
   let combinedScenario: RecoveryAnalysisResult["combinedScenario"] = undefined;
 
   if (hasReturnRefund) {
-    const avgInterestRate = 0.035;
-    const interestMultiplier = Math.pow(1 + avgInterestRate, refundYearsPassed);
-    const returnTotalCostWon = Math.round(refundPrincipalWon * interestMultiplier);
+    const returnInstallments = refundPaymentMode === "INSTALLMENT" ? Math.max(1, refundInstallments || 12) : 1;
+    let lumpSumWon = 0;
+    const returnPrincipalCostWon = refundPrincipalWon;
+
+    if (noticeAmountWon && noticeAmountWon > 0) {
+      // 실제 공단 고지액이 입력된 경우 (실데이터 최우선 반영)
+      lumpSumWon = noticeAmountWon;
+    } else {
+      // 공단 고시 연도별 1년 만기 정기예금 이자율(연 단위 복리) 적용
+      let compoundFactor = 1;
+      const startYear = Math.max(1988, 2026 - Math.max(1, refundYearsPassed));
+      for (let y = startYear; y <= 2025; y++) {
+        compoundFactor *= (1 + depositRateForYear(y) / 100);
+      }
+      // 신청 당해연도(2026년) 9개월 경과분 반영
+      compoundFactor *= (1 + (depositRateForYear(2026) / 100) * 0.75);
+      lumpSumWon = Math.round(refundPrincipalWon * compoundFactor);
+    }
+
+    let returnInstallmentInterestWon = 0;
+    if (returnInstallments > 1 && (!noticeAmountWon || noticeAmountWon === 0)) {
+      // 고지액이 없는 추정 상태에서 분납 선택 시, 2026년 정기예금 이자율(2.2%)로 분납이자 가산
+      const depositRate2026 = depositRateForYear(2026);
+      for (let k = 0; k < returnInstallments; k++) {
+        returnInstallmentInterestWon +=
+          (lumpSumWon / returnInstallments) *
+          (installmentInterestFactor(depositRate2026, k + 1) - 1);
+      }
+    }
+    const returnTotalCostWon = Math.round(lumpSumWon + returnInstallmentInterestWon);
+    const returnInterestCostWon = Math.max(0, returnTotalCostWon - returnPrincipalCostWon);
+    const returnMonthlyInstallmentWon = Math.round(returnTotalCostWon / returnInstallments);
 
     let applicableReplacementRate = 40;
     let bonusMultiplier = 1.0;
@@ -199,7 +263,7 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
     const calcMonthsFromPrincipal = (won: number) => Math.min(144, Math.max(6, Math.round(won / 125000)));
 
     const restoredMonths =
-      customRestoredMonths && customRestoredMonths !== 36
+      customRestoredMonths && customRestoredMonths > 0
         ? Math.min(180, Math.max(1, customRestoredMonths))
         : calcMonthsFromPrincipal(refundPrincipalWon);
 
@@ -224,6 +288,10 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
       restoredMonths,
       applicableReplacementRate,
       totalCostWon: returnTotalCostWon,
+      principalCostWon: returnPrincipalCostWon,
+      interestCostWon: returnInterestCostWon,
+      installments: returnInstallments,
+      monthlyInstallmentWon: returnMonthlyInstallmentWon,
       monthlyIncreaseWon: returnMonthlyIncreaseWon,
       annualIncreaseWon: returnAnnualIncreaseWon,
       breakEvenYears: returnBreakEvenYears,
@@ -389,6 +457,10 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
       months: clampedMonths,
       monthlyPremiumWon,
       totalCostWon,
+      principalCostWon: addPrincipalCostWon,
+      interestCostWon: addInterestCostWon,
+      installments: addInstallments,
+      monthlyInstallmentWon: addMonthlyInstallmentWon,
       monthlyIncreaseWon,
       annualIncreaseWon,
       breakEvenYears,

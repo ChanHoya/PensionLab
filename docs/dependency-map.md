@@ -192,8 +192,9 @@ graph TD
   AIAdvisor --> ShareSnapshotModal
   AIAdvisor --> StressTestModal
 
-  %% Sprint 45 Additions (NPS Recovery, Rebalancing Orders, Instant Onboarding)
+  %% Sprint 45/50 Additions (NPS Recovery, Rebalancing Orders, Instant Onboarding)
   NpsRecoveryModal[src/components/NpsRecoveryModal.tsx] --> NpsRecoveryCalc[src/services/npsRecoveryCalculator.ts]
+  NpsRecoveryModal --> Store
   RebalancingOrderModal[src/components/RebalancingOrderModal.tsx] --> RebalancingOrderService[src/services/rebalancingOrderService.ts]
 
   ModalManager --> NpsRecoveryModal

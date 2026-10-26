@@ -669,173 +669,229 @@ export default function NpsRecoveryModal({
                 </div>
               </div>
 
-              {/* Detailed Parameter Sliders Grid */}
+              {/* Detailed Parameter Sliders Grid (좌: 추납 2슬라이더, 우: 반납 2슬라이더+선택) */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
                   gap: "16px",
-                  background: "var(--modal-subbox-bg, var(--surface-2, rgba(255, 255, 255, 0.03)))",
-                  padding: "16px",
-                  borderRadius: "12px",
-                  border: "1px solid var(--modal-subbox-border, var(--border, rgba(255, 255, 255, 0.08)))",
                 }}
               >
-                {/* 추납 희망 개월수 */}
-                <div style={{ opacity: currentHasAdditionalPayment ? 1 : 0.45 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
-                      추납 희망 기간 (최대 119개월)
-                    </label>
-                    <span
-                      style={{
-                        fontSize: "0.85rem",
-                        color: isSpouseTab ? "#f472b6" : "#818cf8",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {currentAdditionalMonths}개월 ({(currentAdditionalMonths / 12).toFixed(1)}년)
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={119}
-                    disabled={!currentHasAdditionalPayment}
-                    value={currentAdditionalMonths}
-                    onChange={(e) => setCurrentAdditionalMonths(Number(e.target.value))}
-                    style={{
-                      width: "100%",
-                      accentColor: isSpouseTab ? "#ec4899" : "#6366f1",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: "0.7rem",
-                      color: "var(--text-secondary, #94a3b8)",
-                      marginTop: "2px",
-                    }}
-                  >
-                    <span>1개월</span>
-                    <span>60개월(5년)</span>
-                    <span>119개월(10년 미만)</span>
-                  </div>
-                </div>
-
-                {/* 추납 기준소득월액 */}
-                <div style={{ opacity: currentHasAdditionalPayment ? 1 : 0.45 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
-                      신청 시 기준소득월액 (보험료 9%)
-                    </label>
-                    <span
-                      style={{
-                        fontSize: "0.85rem",
-                        color: isSpouseTab ? "#f472b6" : "#a855f7",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {Math.round(currentBaseIncomeWon / 10000).toLocaleString()}만원/월 (보험료{" "}
-                      {Math.round((currentBaseIncomeWon * 0.09) / 10000)}만원)
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min={1000000}
-                    max={6170000}
-                    step={100000}
-                    disabled={!currentHasAdditionalPayment}
-                    value={currentBaseIncomeWon}
-                    onChange={(e) => setCurrentBaseIncomeWon(Number(e.target.value))}
-                    style={{
-                      width: "100%",
-                      accentColor: isSpouseTab ? "#db2777" : "#a855f7",
-                    }}
-                  />
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      fontSize: "0.7rem",
-                      color: "var(--text-secondary, #94a3b8)",
-                      marginTop: "2px",
-                    }}
-                  >
-                    <span>100만원</span>
-                    <span>300만원(평균 A값)</span>
-                    <span>617만원(상한)</span>
-                  </div>
-                </div>
-
-                {/* 반납 옵션 세부 설정 */}
-                <div style={{ opacity: currentHasReturnRefund ? 1 : 0.45 }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                      <label style={{ fontSize: "0.78rem", color: "var(--text-primary, #ffffff)", fontWeight: 600, minWidth: "60px" }}>
-                        반납 시기
+                {/* 좌측 카드: 추납 파라미터 */}
+                <div
+                  style={{
+                    background: "var(--modal-subbox-bg, var(--surface-2, rgba(255, 255, 255, 0.03)))",
+                    padding: "16px 18px",
+                    borderRadius: "12px",
+                    border: "1px solid var(--modal-subbox-border, var(--border, rgba(255, 255, 255, 0.08)))",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                    opacity: currentHasAdditionalPayment ? 1 : 0.45,
+                    transition: "opacity 0.2s ease",
+                  }}
+                >
+                  {/* 추납 희망 개월수 */}
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px", whiteSpace: "nowrap", gap: "8px" }}>
+                      <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
+                        추납 희망 기간 (최대 119개월)
                       </label>
-                      <select
-                        disabled={!currentHasReturnRefund}
-                        value={currentRefundYearPeriod}
-                        onChange={(e) => setCurrentRefundYearPeriod(e.target.value as any)}
+                      <span
                         style={{
-                          flex: 1,
-                          padding: "6px 8px",
-                          borderRadius: "6px",
-                          fontSize: "0.78rem",
-                          background: "var(--surface, #1f2937)",
-                          color: "var(--text-primary, #ffffff)",
-                          border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
+                          fontSize: "0.85rem",
+                          color: isSpouseTab ? "#f472b6" : "#818cf8",
+                          fontWeight: 700,
                         }}
                       >
-                        <option value="PRE_1998">1998년 이전 (소득대체율 70% 복원)</option>
-                        <option value="1999_2007">1999~2007년 (소득대체율 60% 복원)</option>
-                        <option value="POST_2008">2008년 이후 (소득대체율 50~40%)</option>
-                      </select>
+                        {currentAdditionalMonths}개월 ({(currentAdditionalMonths / 12).toFixed(1)}년)
+                      </span>
                     </div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={119}
+                      disabled={!currentHasAdditionalPayment}
+                      value={currentAdditionalMonths}
+                      onChange={(e) => setCurrentAdditionalMonths(Number(e.target.value))}
+                      style={{
+                        width: "100%",
+                        accentColor: isSpouseTab ? "#ec4899" : "#6366f1",
+                        display: "block",
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: "0.7rem",
+                        color: "var(--text-secondary, #94a3b8)",
+                        marginTop: "2px",
+                      }}
+                    >
+                      <span>1개월</span>
+                      <span>60개월(5년)</span>
+                      <span>119개월(최대)</span>
+                    </div>
+                  </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
-                          <span>반환 원금</span>
-                          <span style={{ fontWeight: 700, color: "#34d399" }}>
-                            {Math.round(currentRefundPrincipalWon / 10000)}만원
-                            <span style={{ fontSize: "0.68rem", color: "#94a3b8", marginLeft: "4px" }}>
-                              (약 {calcRestoredMonths(currentRefundPrincipalWon)}개월 복원)
-                            </span>
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min={1000000}
-                          max={20000000}
-                          step={100000}
-                          disabled={!currentHasReturnRefund}
-                          value={currentRefundPrincipalWon}
-                          onChange={(e) => handleRefundPrincipalChange(Number(e.target.value))}
-                          style={{ width: "100%", accentColor: "#10b981" }}
-                        />
-                      </div>
+                  {/* 추납 기준소득월액 */}
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px", whiteSpace: "nowrap", gap: "8px" }}>
+                      <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
+                        신청 시 기준소득월액
+                      </label>
+                      <span
+                        style={{
+                          fontSize: "0.85rem",
+                          color: isSpouseTab ? "#f472b6" : "#a855f7",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {Math.round(currentBaseIncomeWon / 10000).toLocaleString()}만원/월{" "}
+                        <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#94a3b8" }}>
+                          (보험료: {Math.round((currentBaseIncomeWon * 0.09) / 10000)}만원)
+                        </span>
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1000000}
+                      max={6170000}
+                      step={100000}
+                      disabled={!currentHasAdditionalPayment}
+                      value={currentBaseIncomeWon}
+                      onChange={(e) => setCurrentBaseIncomeWon(Number(e.target.value))}
+                      style={{
+                        width: "100%",
+                        accentColor: isSpouseTab ? "#db2777" : "#a855f7",
+                        display: "block",
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: "0.7rem",
+                        color: "var(--text-secondary, #94a3b8)",
+                        marginTop: "2px",
+                      }}
+                    >
+                      <span>100만원</span>
+                      <span>300만원(평균 A값)</span>
+                      <span>617만원(상한)</span>
+                    </div>
+                  </div>
+                </div>
 
-                      <div>
-                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
-                          <span>경과 년수</span>
-                          <span style={{ fontWeight: 700, color: "#34d399" }}>
-                            {currentRefundYearsPassed}년 경과
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min={5}
-                          max={35}
-                          disabled={!currentHasReturnRefund}
-                          value={currentRefundYearsPassed}
-                          onChange={(e) => setCurrentRefundYearsPassed(Number(e.target.value))}
-                          style={{ width: "100%", accentColor: "#10b981" }}
-                        />
-                      </div>
+                {/* 우측 카드: 반납 파라미터 */}
+                <div
+                  style={{
+                    background: "var(--modal-subbox-bg, var(--surface-2, rgba(255, 255, 255, 0.03)))",
+                    padding: "16px 18px",
+                    borderRadius: "12px",
+                    border: "1px solid var(--modal-subbox-border, var(--border, rgba(255, 255, 255, 0.08)))",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                    opacity: currentHasReturnRefund ? 1 : 0.45,
+                    transition: "opacity 0.2s ease",
+                  }}
+                >
+                  {/* 반납 시기 선택 */}
+                  <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                    <label style={{ fontSize: "0.85rem", color: "var(--text-primary, #ffffff)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                      반납 시기
+                    </label>
+                    <select
+                      disabled={!currentHasReturnRefund}
+                      value={currentRefundYearPeriod}
+                      onChange={(e) => setCurrentRefundYearPeriod(e.target.value as any)}
+                      style={{
+                        flex: 1,
+                        padding: "5px 8px",
+                        borderRadius: "6px",
+                        fontSize: "0.78rem",
+                        background: "var(--surface, #1f2937)",
+                        color: "var(--text-primary, #ffffff)",
+                        border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
+                      }}
+                    >
+                      <option value="PRE_1998">1998년 이전 (소득대체율 70% 복원)</option>
+                      <option value="1999_2007">1999~2007년 (소득대체율 60% 복원)</option>
+                      <option value="POST_2008">2008년 이후 (소득대체율 50~40%)</option>
+                    </select>
+                  </div>
+
+                  {/* 반환 원금 */}
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px", whiteSpace: "nowrap", gap: "8px" }}>
+                      <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
+                        반환 원금
+                      </label>
+                      <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#34d399" }}>
+                        {Math.round(currentRefundPrincipalWon / 10000).toLocaleString()}만원{" "}
+                        <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#94a3b8" }}>
+                          (약 {calcRestoredMonths(currentRefundPrincipalWon)}개월 복원)
+                        </span>
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1000000}
+                      max={20000000}
+                      step={100000}
+                      disabled={!currentHasReturnRefund}
+                      value={currentRefundPrincipalWon}
+                      onChange={(e) => handleRefundPrincipalChange(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: "#10b981", display: "block" }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: "0.7rem",
+                        color: "var(--text-secondary, #94a3b8)",
+                        marginTop: "2px",
+                      }}
+                    >
+                      <span>100만원</span>
+                      <span>1,000만원</span>
+                      <span>2,000만원</span>
+                    </div>
+                  </div>
+
+                  {/* 경과 년수 */}
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px", whiteSpace: "nowrap", gap: "8px" }}>
+                      <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
+                        반납 후 경과 년수
+                      </label>
+                      <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#34d399" }}>
+                        {currentRefundYearsPassed}년 경과
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={5}
+                      max={35}
+                      disabled={!currentHasReturnRefund}
+                      value={currentRefundYearsPassed}
+                      onChange={(e) => setCurrentRefundYearsPassed(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: "#10b981", display: "block" }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontSize: "0.7rem",
+                        color: "var(--text-secondary, #94a3b8)",
+                        marginTop: "2px",
+                      }}
+                    >
+                      <span>5년</span>
+                      <span>20년</span>
+                      <span>35년</span>
                     </div>
                   </div>
                 </div>
@@ -1085,8 +1141,17 @@ export default function NpsRecoveryModal({
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 10, right: 20, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                      <XAxis dataKey="age" stroke="#94a3b8" tickFormatter={(v) => `${v}세`} />
-                      <YAxis stroke="#94a3b8" tickFormatter={(v) => `${(v / 10000).toFixed(0)}억`} />
+                      <XAxis
+                        dataKey="age"
+                        stroke="#94a3b8"
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tickFormatter={(v) => `${v}세`}
+                      />
+                      <YAxis
+                        stroke="#94a3b8"
+                        tick={{ fontSize: 10, fill: "#94a3b8" }}
+                        tickFormatter={(v) => `${(v / 10000).toFixed(0)}억`}
+                      />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "rgba(15, 23, 42, 0.95)",
@@ -1097,7 +1162,7 @@ export default function NpsRecoveryModal({
                         formatter={(val: any) => [`${Math.round(Number(val)).toLocaleString()}만원`, ""]}
                         labelFormatter={(label) => `${label}세`}
                       />
-                      <Legend />
+                      <Legend wrapperStyle={{ fontSize: "0.75rem", paddingTop: "6px" }} />
                       {displayBreakEvenAge > 0 && displayBreakEvenAge > activeNpsStartAge && (
                         <ReferenceLine
                           x={Math.round(displayBreakEvenAge)}

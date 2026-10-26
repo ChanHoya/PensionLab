@@ -52,9 +52,9 @@ interface StepDef {
 }
 
 const STEPS: StepDef[] = [
+  { key: "fss", kind: "FSS", who: "SELF", group: "info", tab: "금감원 자료 업로드" },
   { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "적용대상" },
   { key: "goal", kind: "GOAL", who: "SELF", group: "info", tab: "재무목표" },
-  { key: "fss", kind: "FSS", who: "SELF", group: "info", tab: "금감원 자료 업로드" },
   { key: "national-self", kind: "NATIONAL", who: "SELF", group: "national", tab: "본인" },
   { key: "national-spouse", kind: "NATIONAL", who: "SPOUSE", group: "national", tab: "배우자", spouseOnly: true },
   { key: "basic", kind: "BASIC", who: "SELF", group: "national", tab: "기초연금" },
@@ -279,6 +279,26 @@ export default function OnboardingPage() {
 
   // 금감원 자료 분석 결과를 한 사람의 1~3층 입력값에 채운다 (목록은 새로 읽은 계약으로 교체)
   const applyParsedFss = (parsedData: any, target: Who) => {
+    // 기본 인적정보(나이 자동 인식 및 은퇴/기대수명 기본값 설정)
+    const detectedAge =
+      parsedData.basicInfo?.age ||
+      (parsedData.basicInfo?.birthYear ? new Date().getFullYear() - parsedData.basicInfo.birthYear : null);
+
+    if (target === "SELF") {
+      const currentParams = store.simulationParams;
+      store.setSimulationParams({
+        currentAge: detectedAge && detectedAge >= 18 && detectedAge <= 99 ? detectedAge : currentParams.currentAge || 35,
+        retirementAge: 60,
+        expectedLifeExpectancy: 85,
+      });
+    } else if (target === "SPOUSE") {
+      if (detectedAge && detectedAge >= 18 && detectedAge <= 99) {
+        store.setSimulationParams({
+          spouseAge: detectedAge,
+        });
+      }
+    }
+
     const current = pensionsOf(usePensionStore.getState(), target).nationalPension;
     if (parsedData.nationalPension) {
       const months = parsedData.nationalPension.contributionMonths || 0;

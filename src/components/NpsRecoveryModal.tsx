@@ -70,6 +70,9 @@ export default function NpsRecoveryModal({
     propSpouseMonthlyPensionWon ||
     (store.spouse.nationalPension.expectedMonthlyPension ? store.spouse.nationalPension.expectedMonthlyPension * 10000 : 800000);
 
+  // 반환원금에 따른 복원 가입기간 산출 헬퍼 (약 12.5만원당 1개월 복원)
+  const calcRestoredMonths = (won: number) => Math.min(144, Math.max(6, Math.round(won / 125000)));
+
   // 본인(Self) 추납 및 반납 선택 토글 상태 (디폴트: 둘 다 선택)
   const [selfHasAdditionalPayment, setSelfHasAdditionalPayment] = useState<boolean>(true);
   const [selfHasReturnRefund, setSelfHasReturnRefund] = useState<boolean>(true);
@@ -80,12 +83,11 @@ export default function NpsRecoveryModal({
     store.additionalPayment.baseIncome ? store.additionalPayment.baseIncome * 10000 : 3000000
   );
   const [selfRefundYearPeriod, setSelfRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
-  const [selfRefundPrincipalWon, setSelfRefundPrincipalWon] = useState<number>(
-    store.returnRepayment.refundAmount ? store.returnRepayment.refundAmount * 10000 : 5000000
-  );
+  const initialSelfPrincipal = store.returnRepayment.refundAmount ? store.returnRepayment.refundAmount * 10000 : 5000000;
+  const [selfRefundPrincipalWon, setSelfRefundPrincipalWon] = useState<number>(initialSelfPrincipal);
   const [selfRefundYearsPassed, setSelfRefundYearsPassed] = useState<number>(25);
   const [selfRestoredMonths, setSelfRestoredMonths] = useState<number>(
-    store.returnRepayment.restoredMonths || 36
+    store.returnRepayment.restoredMonths || calcRestoredMonths(initialSelfPrincipal)
   );
 
   // 배우자(Spouse) 추납 및 반납 선택 토글 상태 (디폴트: 둘 다 선택)
@@ -98,12 +100,11 @@ export default function NpsRecoveryModal({
     store.spouse.additionalPayment.baseIncome ? store.spouse.additionalPayment.baseIncome * 10000 : 2500000
   );
   const [spouseRefundYearPeriod, setSpouseRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
-  const [spouseRefundPrincipalWon, setSpouseRefundPrincipalWon] = useState<number>(
-    store.spouse.returnRepayment.refundAmount ? store.spouse.returnRepayment.refundAmount * 10000 : 4000000
-  );
+  const initialSpousePrincipal = store.spouse.returnRepayment.refundAmount ? store.spouse.returnRepayment.refundAmount * 10000 : 4000000;
+  const [spouseRefundPrincipalWon, setSpouseRefundPrincipalWon] = useState<number>(initialSpousePrincipal);
   const [spouseRefundYearsPassed, setSpouseRefundYearsPassed] = useState<number>(24);
   const [spouseRestoredMonths, setSpouseRestoredMonths] = useState<number>(
-    store.spouse.returnRepayment.restoredMonths || 36
+    store.spouse.returnRepayment.restoredMonths || calcRestoredMonths(initialSpousePrincipal)
   );
 
   // 본인 입력 객체
@@ -201,6 +202,16 @@ export default function NpsRecoveryModal({
 
   const currentRefundPrincipalWon = isSpouseTab ? spouseRefundPrincipalWon : selfRefundPrincipalWon;
   const setCurrentRefundPrincipalWon = isSpouseTab ? setSpouseRefundPrincipalWon : setSelfRefundPrincipalWon;
+
+  const handleRefundPrincipalChange = (val: number) => {
+    if (isSpouseTab) {
+      setSpouseRefundPrincipalWon(val);
+      setSpouseRestoredMonths(calcRestoredMonths(val));
+    } else {
+      setSelfRefundPrincipalWon(val);
+      setSelfRestoredMonths(calcRestoredMonths(val));
+    }
+  };
 
   const currentRefundYearsPassed = isSpouseTab ? spouseRefundYearsPassed : selfRefundYearsPassed;
   const setCurrentRefundYearsPassed = isSpouseTab ? setSpouseRefundYearsPassed : setSelfRefundYearsPassed;
@@ -734,6 +745,9 @@ export default function NpsRecoveryModal({
                           <span>반환 원금</span>
                           <span style={{ fontWeight: 700, color: "#34d399" }}>
                             {Math.round(currentRefundPrincipalWon / 10000)}만원
+                            <span style={{ fontSize: "0.68rem", color: "#94a3b8", marginLeft: "4px" }}>
+                              (약 {calcRestoredMonths(currentRefundPrincipalWon)}개월 복원)
+                            </span>
                           </span>
                         </div>
                         <input
@@ -743,7 +757,7 @@ export default function NpsRecoveryModal({
                           step={500000}
                           disabled={!currentHasReturnRefund}
                           value={currentRefundPrincipalWon}
-                          onChange={(e) => setCurrentRefundPrincipalWon(Number(e.target.value))}
+                          onChange={(e) => handleRefundPrincipalChange(Number(e.target.value))}
                           style={{ width: "100%", accentColor: "#10b981" }}
                         />
                       </div>
@@ -894,10 +908,10 @@ export default function NpsRecoveryModal({
                     기대수명({activeLifeExpectancy}세) 순수익
                   </div>
                   <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f472b6", marginTop: "4px" }}>
-                    +{(displayNetProfitWon / 10000).toLocaleString()}만원
+                    {displayNetProfitWon >= 0 ? "+" : ""}{(displayNetProfitWon / 10000).toLocaleString()}만원
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
-                    순수익률 +{displayRoiPercent}% (실효 IRR 연 {displayIrr}%)
+                    순수익률 {displayRoiPercent >= 0 ? "+" : ""}{displayRoiPercent}% (실효 IRR 연 {displayIrr}%)
                   </div>
                 </div>
               </div>
@@ -1473,10 +1487,10 @@ export default function NpsRecoveryModal({
                 >
                   <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>가구 생애 총 순이익</div>
                   <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#f472b6", marginTop: "4px" }}>
-                    +{(coupleResult.couple.netProfitWon / 10000).toLocaleString()}만원
+                    {coupleResult.couple.netProfitWon >= 0 ? "+" : ""}{(coupleResult.couple.netProfitWon / 10000).toLocaleString()}만원
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
-                    가구 합산 투자 수익률 +{coupleResult.couple.roiPercent}%
+                    가구 합산 투자 수익률 {coupleResult.couple.roiPercent >= 0 ? "+" : ""}{coupleResult.couple.roiPercent}%
                   </div>
                 </div>
               </div>

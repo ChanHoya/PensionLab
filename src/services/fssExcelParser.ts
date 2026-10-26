@@ -4,6 +4,11 @@
  */
 
 export interface ParsedPensionData {
+  basicInfo?: {
+    age?: number | null;
+    birthYear?: number | null;
+    name?: string | null;
+  };
   nationalPension?: {
     contributionMonths: number | null;
     totalPaidAmount: number | null;
@@ -73,6 +78,52 @@ export function parsePensionTextContent(content: string): ParsedPensionData {
   };
 
   const lines = content.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+  // 0. 기본 인적정보(나이, 생년월일) 파싱
+  let detectedAge: number | null = null;
+  let detectedBirthYear: number | null = null;
+
+  for (const line of lines) {
+    const clean = line.replace(/[,"]/g, " ");
+
+    // 만 나이 매칭 (예: 만 42세, 나이: 42, 연령: 42세)
+    const ageMatch =
+      clean.match(/(?:만\s*|현재\s*|가입자\s*)?(?:연령|나이)\s*[:=]?\s*만?\s*(\d{1,2})\s*세?/i) ||
+      clean.match(/만\s*(\d{1,2})\s*세/);
+    if (ageMatch && !detectedAge) {
+      const a = parseInt(ageMatch[1], 10);
+      if (a >= 18 && a <= 99) {
+        detectedAge = a;
+      }
+    }
+
+    // 생년월일 또는 주민번호 앞자리 매칭 (예: 1988-05-12, 1988.05.12, 880512-*******)
+    const birthMatch =
+      clean.match(/생년월일\s*[:=]?\s*(\d{2,4})[./년\s-]/i) ||
+      clean.match(/(?:주민등록번호|식별번호)\s*[:=]?\s*(\d{2,4})[01]\d[0-3]\d/i) ||
+      clean.match(/\b(19\d{2}|20[0-2]\d)[-./](?:0[1-9]|1[0-2])[-./](?:0[1-9]|[12]\d|3[01])\b/);
+    if (birthMatch && !detectedBirthYear) {
+      let y = parseInt(birthMatch[1], 10);
+      if (y < 100) {
+        y = y > 30 ? 1900 + y : 2000 + y;
+      }
+      if (y >= 1930 && y <= 2015) {
+        detectedBirthYear = y;
+      }
+    }
+  }
+
+  if (!detectedAge && detectedBirthYear) {
+    const currentYear = new Date().getFullYear();
+    detectedAge = currentYear - detectedBirthYear;
+  }
+
+  if (detectedAge || detectedBirthYear) {
+    result.basicInfo = {
+      age: detectedAge,
+      birthYear: detectedBirthYear,
+    };
+  }
 
   // 1. 국민연금 파싱
   let npMonths: number | null = null;

@@ -195,11 +195,17 @@ export function calculateNpsRecovery(input: RecoveryOptionInput): RecoveryAnalys
       bonusMultiplier = 1.25;
     }
 
-    const restoredMonths = customRestoredMonths
-      ? Math.min(180, Math.max(1, customRestoredMonths))
-      : Math.min(120, Math.max(12, Math.round(refundPrincipalWon / 100000)));
+    // 반환원금에 비례한 복원 가입기간 산출 (당시 퇴직금 수준 감안: 약 12.5만원당 1개월 복원)
+    const calcMonthsFromPrincipal = (won: number) => Math.min(144, Math.max(6, Math.round(won / 125000)));
 
-    const baseMonthlyInc = (restoredMonths / 12) * monthlyIncreasePerYear * bonusMultiplier;
+    const restoredMonths =
+      customRestoredMonths && customRestoredMonths !== 36
+        ? Math.min(180, Math.max(1, customRestoredMonths))
+        : calcMonthsFromPrincipal(refundPrincipalWon);
+
+    // 경과년수가 길수록 과거 소득의 현재가치 재평가율 반영 (A값 및 물가변동 재평가율 가산)
+    const revaluationFactor = 1 + Math.min(0.35, Math.max(0, (refundYearsPassed - 10) * 0.008));
+    const baseMonthlyInc = (restoredMonths / 12) * monthlyIncreasePerYear * bonusMultiplier * revaluationFactor;
     const returnMonthlyIncreaseWon = Math.round(baseMonthlyInc);
     const returnAnnualIncreaseWon = returnMonthlyIncreaseWon * 12;
 

@@ -42,7 +42,17 @@ export default function NpsHistoryUpload({ who }: { who: Who }) {
 
   return (
     <div style={styles.box}>
-      <div style={styles.title}>📄 국민연금 가입내역조회 PDF로 자동 입력</div>
+      <div style={styles.titleRow}>
+        <div style={styles.title}>📄 국민연금 가입내역조회 PDF로 자동 입력</div>
+        <a
+          href="https://www.nps.or.kr/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={styles.npsLink}
+        >
+          https://www.nps.or.kr/ ↗
+        </a>
+      </div>
       <p style={styles.desc}>
         국민연금공단 홈페이지 「조회 &gt; 가입내역조회」 결과 화면을 <strong>인쇄 → PDF로 저장</strong>해 올리면 국민연금 예상액·가입기간과 최초 가입년월·공백 기간·가입 상태·반환일시금
         내역을 채웁니다. 증명서 발급 PDF는 암호화되어 있어 읽을 수 없습니다. 채운 뒤 값을 꼭 확인하세요.
@@ -81,7 +91,24 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: "8px",
   },
+  titleRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: "8px",
+  },
   title: { fontSize: "0.9rem", fontWeight: 700, color: "var(--primary)" },
+  npsLink: {
+    fontSize: "0.8rem",
+    color: "var(--primary, #6366f1)",
+    textDecoration: "underline",
+    fontWeight: 600,
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+  },
   desc: { fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 },
   error: { fontSize: "0.8rem", color: "var(--danger, #ef4444)", margin: 0 },
   ok: { fontSize: "0.85rem", color: "var(--success-light, #10b981)", fontWeight: 600, margin: 0 },

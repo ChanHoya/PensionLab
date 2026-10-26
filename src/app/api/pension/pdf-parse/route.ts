@@ -41,6 +41,10 @@ ${pdfText}
 
 [JSON Schema]
 {
+  "basicInfo": {
+    "age": number or null, // 만 나이 (예: 35)
+    "birthYear": number or null // 출생연도 4자리 (예: 1989)
+  },
   "nationalPension": {
     "contributionMonths": number or null, // 현재 누적 가입 개월수 (예: 120개월 ➔ 120)
     "totalPaidAmount": number or null, // 현재까지 총 납부 금액 (만원 단위, 예: 130,601,700 원 ➔ 13060)

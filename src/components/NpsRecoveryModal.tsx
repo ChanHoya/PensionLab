@@ -184,6 +184,29 @@ export default function NpsRecoveryModal({
   const isSpouseTab = activeTab === "SPOUSE";
   const isCoupleTab = activeTab === "COUPLE";
 
+  // 실데이터 여부 판별 (기본정보에 사용자가 입력했거나 조회 데이터가 존재하는지 여부)
+  const hasRealSelfAdditional = Boolean(
+    store.additionalPayment.requestedMonths > 0 ||
+    store.additionalPayment.gapMonths > 0 ||
+    Boolean(store.additionalPayment.firstEnrollYm)
+  );
+  const hasRealSelfReturn = Boolean(
+    store.returnRepayment.refundAmount > 0 ||
+    store.returnRepayment.restoredMonths > 0
+  );
+  const hasRealSpouseAdditional = Boolean(
+    store.spouse.additionalPayment.requestedMonths > 0 ||
+    store.spouse.additionalPayment.gapMonths > 0 ||
+    Boolean(store.spouse.additionalPayment.firstEnrollYm)
+  );
+  const hasRealSpouseReturn = Boolean(
+    store.spouse.returnRepayment.refundAmount > 0 ||
+    store.spouse.returnRepayment.restoredMonths > 0
+  );
+
+  const isCurrentAdditionalReal = isSpouseTab ? hasRealSpouseAdditional : hasRealSelfAdditional;
+  const isCurrentReturnReal = isSpouseTab ? hasRealSpouseReturn : hasRealSelfReturn;
+
   // 활성 탭 파라미터 접근자
   const currentHasAdditionalPayment = isSpouseTab ? spouseHasAdditionalPayment : selfHasAdditionalPayment;
   const setCurrentHasAdditionalPayment = isSpouseTab ? setSpouseHasAdditionalPayment : setSelfHasAdditionalPayment;
@@ -535,10 +558,25 @@ export default function NpsRecoveryModal({
                       }}
                     />
                     <div>
-                      <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
-                        {isSpouseTab ? "배우자" : "본인"} 국민연금 추납(추후납부) 적용
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
+                          {isSpouseTab ? "배우자" : "본인"} 국민연금 추납(추후납부)
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            padding: "2px 7px",
+                            borderRadius: "4px",
+                            fontWeight: 700,
+                            background: isCurrentAdditionalReal ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                            border: isCurrentAdditionalReal ? "1px solid #10b981" : "1px solid rgba(148, 163, 184, 0.35)",
+                            color: isCurrentAdditionalReal ? "#10b981" : "#94a3b8",
+                          }}
+                        >
+                          {isCurrentAdditionalReal ? "추납(실데이터) 적용" : "추납(예시)"}
+                        </span>
                       </div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
                         과거 미납·납부예외·경력단절 기간 가입기간 추가 납부
                       </div>
                     </div>
@@ -589,10 +627,25 @@ export default function NpsRecoveryModal({
                       style={{ width: "18px", height: "18px", accentColor: "#10b981", cursor: "pointer" }}
                     />
                     <div>
-                      <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
-                        과거 반환일시금 반납(복원) 적용
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
+                          과거 반환일시금 반납(복원)
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            padding: "2px 7px",
+                            borderRadius: "4px",
+                            fontWeight: 700,
+                            background: isCurrentReturnReal ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                            border: isCurrentReturnReal ? "1px solid #10b981" : "1px solid rgba(148, 163, 184, 0.35)",
+                            color: isCurrentReturnReal ? "#10b981" : "#94a3b8",
+                          }}
+                        >
+                          {isCurrentReturnReal ? "반납(실데이터) 적용" : "반납(예시)"}
+                        </span>
                       </div>
-                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)", marginTop: "2px" }}>
                         1998년 이전 70% 등 과거 초고소득대체율 원상 복원
                       </div>
                     </div>
@@ -754,7 +807,7 @@ export default function NpsRecoveryModal({
                           type="range"
                           min={1000000}
                           max={20000000}
-                          step={500000}
+                          step={100000}
                           disabled={!currentHasReturnRefund}
                           value={currentRefundPrincipalWon}
                           onChange={(e) => handleRefundPrincipalChange(Number(e.target.value))}
@@ -1347,7 +1400,7 @@ export default function NpsRecoveryModal({
                     <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#818cf8", display: "flex", alignItems: "center", gap: "4px" }}>
                       <span>👤</span> 본인 옵션 ({selfAge}세)
                     </div>
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem", flexWrap: "wrap" }}>
                       <input
                         type="checkbox"
                         checked={selfHasAdditionalPayment}
@@ -1355,12 +1408,25 @@ export default function NpsRecoveryModal({
                         style={{ width: "16px", height: "16px", accentColor: "#6366f1" }}
                       />
                       <span style={{ fontWeight: 600 }}>본인 추납 적용</span>
+                      <span
+                        style={{
+                          fontSize: "0.68rem",
+                          padding: "1px 6px",
+                          borderRadius: "4px",
+                          fontWeight: 700,
+                          background: hasRealSelfAdditional ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                          border: hasRealSelfAdditional ? "1px solid #10b981" : "1px solid rgba(148, 163, 184, 0.35)",
+                          color: hasRealSelfAdditional ? "#10b981" : "#94a3b8",
+                        }}
+                      >
+                        {hasRealSelfAdditional ? "추납(실데이터) 적용" : "추납(예시)"}
+                      </span>
                       <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
                         ({selfAdditionalMonths}개월 / 월 {Math.round((selfBaseIncomeWon * 0.09) / 10000)}만원)
                       </span>
                     </label>
 
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem", flexWrap: "wrap" }}>
                       <input
                         type="checkbox"
                         checked={selfHasReturnRefund}
@@ -1368,6 +1434,19 @@ export default function NpsRecoveryModal({
                         style={{ width: "16px", height: "16px", accentColor: "#10b981" }}
                       />
                       <span style={{ fontWeight: 600 }}>본인 반납 적용</span>
+                      <span
+                        style={{
+                          fontSize: "0.68rem",
+                          padding: "1px 6px",
+                          borderRadius: "4px",
+                          fontWeight: 700,
+                          background: hasRealSelfReturn ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                          border: hasRealSelfReturn ? "1px solid #10b981" : "1px solid rgba(148, 163, 184, 0.35)",
+                          color: hasRealSelfReturn ? "#10b981" : "#94a3b8",
+                        }}
+                      >
+                        {hasRealSelfReturn ? "반납(실데이터) 적용" : "반납(예시)"}
+                      </span>
                       <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
                         (원금 {Math.round(selfRefundPrincipalWon / 10000)}만원 / {selfRefundYearPeriod === "PRE_1998" ? "70%" : "60%"} 복원)
                       </span>
@@ -1389,7 +1468,7 @@ export default function NpsRecoveryModal({
                     <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f472b6", display: "flex", alignItems: "center", gap: "4px" }}>
                       <span>👥</span> 배우자 옵션 ({spouseAge}세)
                     </div>
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem", flexWrap: "wrap" }}>
                       <input
                         type="checkbox"
                         checked={spouseHasAdditionalPayment}
@@ -1397,12 +1476,25 @@ export default function NpsRecoveryModal({
                         style={{ width: "16px", height: "16px", accentColor: "#ec4899" }}
                       />
                       <span style={{ fontWeight: 600 }}>배우자 추납 적용</span>
+                      <span
+                        style={{
+                          fontSize: "0.68rem",
+                          padding: "1px 6px",
+                          borderRadius: "4px",
+                          fontWeight: 700,
+                          background: hasRealSpouseAdditional ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                          border: hasRealSpouseAdditional ? "1px solid #10b981" : "1px solid rgba(148, 163, 184, 0.35)",
+                          color: hasRealSpouseAdditional ? "#10b981" : "#94a3b8",
+                        }}
+                      >
+                        {hasRealSpouseAdditional ? "추납(실데이터) 적용" : "추납(예시)"}
+                      </span>
                       <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
                         ({spouseAdditionalMonths}개월 / 월 {Math.round((spouseBaseIncomeWon * 0.09) / 10000)}만원)
                       </span>
                     </label>
 
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem", flexWrap: "wrap" }}>
                       <input
                         type="checkbox"
                         checked={spouseHasReturnRefund}
@@ -1410,6 +1502,19 @@ export default function NpsRecoveryModal({
                         style={{ width: "16px", height: "16px", accentColor: "#10b981" }}
                       />
                       <span style={{ fontWeight: 600 }}>배우자 반납 적용</span>
+                      <span
+                        style={{
+                          fontSize: "0.68rem",
+                          padding: "1px 6px",
+                          borderRadius: "4px",
+                          fontWeight: 700,
+                          background: hasRealSpouseReturn ? "rgba(16, 185, 129, 0.15)" : "rgba(148, 163, 184, 0.15)",
+                          border: hasRealSpouseReturn ? "1px solid #10b981" : "1px solid rgba(148, 163, 184, 0.35)",
+                          color: hasRealSpouseReturn ? "#10b981" : "#94a3b8",
+                        }}
+                      >
+                        {hasRealSpouseReturn ? "반납(실데이터) 적용" : "반납(예시)"}
+                      </span>
                       <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
                         (원금 {Math.round(spouseRefundPrincipalWon / 10000)}만원 / {spouseRefundYearPeriod === "PRE_1998" ? "70%" : "60%"} 복원)
                       </span>

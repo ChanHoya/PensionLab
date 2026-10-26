@@ -1,9 +1,8 @@
-// 국민연금 본인/배우자 추납 및 반납 실익 역산과 원금 회수 마일스톤을 분석하는 모달 컴포넌트
+// 국민연금 본인/배우자 추납 및 반납 선택적 시뮬레이션과 부부 합산 실익을 분석하는 모달 컴포넌트
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import {
-  calculateNpsRecovery,
   calculateCoupleRecovery,
   RecoveryOptionInput,
   RecoveryAnalysisResult,
@@ -58,24 +57,27 @@ export default function NpsRecoveryModal({
   const selfAge = propCurrentAge || store.simulationParams.currentAge || 55;
   const selfNpsStartAge = propNpsStartAge || store.simulationParams.nationalPensionStartAge || 65;
   const selfLifeExpectancy = propExpectedLifeExpectancy || store.simulationParams.expectedLifeExpectancy || 88;
-  const selfMonthlyPension = propCurrentMonthlyPensionWon || (store.nationalPension.expectedMonthlyPension ? store.nationalPension.expectedMonthlyPension * 10000 : 1200000);
+  const selfMonthlyPension =
+    propCurrentMonthlyPensionWon ||
+    (store.nationalPension.expectedMonthlyPension ? store.nationalPension.expectedMonthlyPension * 10000 : 1200000);
 
   // 배우자 기본 인구통계 파라미터
   const hasSpouse = store.simulationParams.hasSpouse;
   const spouseAge = propSpouseAge || store.simulationParams.spouseAge || Math.max(20, selfAge - 2);
   const spouseNpsStartAge = propSpouseNpsStartAge || store.simulationParams.spouseNationalPensionStartAge || 65;
   const spouseLifeExpectancy = propSpouseLifeExpectancy || store.simulationParams.spouseLifeExpectancy || 90;
-  const spouseMonthlyPension = propSpouseMonthlyPensionWon || (store.spouse.nationalPension.expectedMonthlyPension ? store.spouse.nationalPension.expectedMonthlyPension * 10000 : 800000);
+  const spouseMonthlyPension =
+    propSpouseMonthlyPensionWon ||
+    (store.spouse.nationalPension.expectedMonthlyPension ? store.spouse.nationalPension.expectedMonthlyPension * 10000 : 800000);
 
-  // 본인(Self) 추납 및 반납 상태
+  // 본인(Self) 추납 및 반납 선택 토글 상태 (디폴트: 둘 다 선택)
+  const [selfHasAdditionalPayment, setSelfHasAdditionalPayment] = useState<boolean>(true);
+  const [selfHasReturnRefund, setSelfHasReturnRefund] = useState<boolean>(true);
   const [selfAdditionalMonths, setSelfAdditionalMonths] = useState<number>(
     store.additionalPayment.requestedMonths || 60
   );
   const [selfBaseIncomeWon, setSelfBaseIncomeWon] = useState<number>(
     store.additionalPayment.baseIncome ? store.additionalPayment.baseIncome * 10000 : 3000000
-  );
-  const [selfHasReturnRefund, setSelfHasReturnRefund] = useState<boolean>(
-    store.additionalPayment.receivedLumpSumRefund || (store.returnRepayment.refundAmount > 0)
   );
   const [selfRefundYearPeriod, setSelfRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
   const [selfRefundPrincipalWon, setSelfRefundPrincipalWon] = useState<number>(
@@ -86,15 +88,14 @@ export default function NpsRecoveryModal({
     store.returnRepayment.restoredMonths || 36
   );
 
-  // 배우자(Spouse) 추납 및 반납 상태
+  // 배우자(Spouse) 추납 및 반납 선택 토글 상태 (디폴트: 둘 다 선택)
+  const [spouseHasAdditionalPayment, setSpouseHasAdditionalPayment] = useState<boolean>(true);
+  const [spouseHasReturnRefund, setSpouseHasReturnRefund] = useState<boolean>(true);
   const [spouseAdditionalMonths, setSpouseAdditionalMonths] = useState<number>(
     store.spouse.additionalPayment.requestedMonths || 60
   );
   const [spouseBaseIncomeWon, setSpouseBaseIncomeWon] = useState<number>(
     store.spouse.additionalPayment.baseIncome ? store.spouse.additionalPayment.baseIncome * 10000 : 2500000
-  );
-  const [spouseHasReturnRefund, setSpouseHasReturnRefund] = useState<boolean>(
-    store.spouse.additionalPayment.receivedLumpSumRefund || (store.spouse.returnRepayment.refundAmount > 0)
   );
   const [spouseRefundYearPeriod, setSpouseRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
   const [spouseRefundPrincipalWon, setSpouseRefundPrincipalWon] = useState<number>(
@@ -112,6 +113,7 @@ export default function NpsRecoveryModal({
       npsStartAge: selfNpsStartAge,
       lifeExpectancy: selfLifeExpectancy,
       currentMonthlyPension: selfMonthlyPension,
+      hasAdditionalPayment: selfHasAdditionalPayment,
       baseIncomeWon: selfBaseIncomeWon,
       additionalMonths: selfAdditionalMonths,
       hasReturnRefund: selfHasReturnRefund,
@@ -125,6 +127,7 @@ export default function NpsRecoveryModal({
       selfNpsStartAge,
       selfLifeExpectancy,
       selfMonthlyPension,
+      selfHasAdditionalPayment,
       selfBaseIncomeWon,
       selfAdditionalMonths,
       selfHasReturnRefund,
@@ -142,6 +145,7 @@ export default function NpsRecoveryModal({
       npsStartAge: spouseNpsStartAge,
       lifeExpectancy: spouseLifeExpectancy,
       currentMonthlyPension: spouseMonthlyPension,
+      hasAdditionalPayment: spouseHasAdditionalPayment,
       baseIncomeWon: spouseBaseIncomeWon,
       additionalMonths: spouseAdditionalMonths,
       hasReturnRefund: spouseHasReturnRefund,
@@ -155,6 +159,7 @@ export default function NpsRecoveryModal({
       spouseNpsStartAge,
       spouseLifeExpectancy,
       spouseMonthlyPension,
+      spouseHasAdditionalPayment,
       spouseBaseIncomeWon,
       spouseAdditionalMonths,
       spouseHasReturnRefund,
@@ -179,14 +184,17 @@ export default function NpsRecoveryModal({
   const isCoupleTab = activeTab === "COUPLE";
 
   // 활성 탭 파라미터 접근자
+  const currentHasAdditionalPayment = isSpouseTab ? spouseHasAdditionalPayment : selfHasAdditionalPayment;
+  const setCurrentHasAdditionalPayment = isSpouseTab ? setSpouseHasAdditionalPayment : setSelfHasAdditionalPayment;
+
+  const currentHasReturnRefund = isSpouseTab ? spouseHasReturnRefund : selfHasReturnRefund;
+  const setCurrentHasReturnRefund = isSpouseTab ? setSpouseHasReturnRefund : setSelfHasReturnRefund;
+
   const currentAdditionalMonths = isSpouseTab ? spouseAdditionalMonths : selfAdditionalMonths;
   const setCurrentAdditionalMonths = isSpouseTab ? setSpouseAdditionalMonths : setSelfAdditionalMonths;
 
   const currentBaseIncomeWon = isSpouseTab ? spouseBaseIncomeWon : selfBaseIncomeWon;
   const setCurrentBaseIncomeWon = isSpouseTab ? setSpouseBaseIncomeWon : setSelfBaseIncomeWon;
-
-  const currentHasReturnRefund = isSpouseTab ? spouseHasReturnRefund : selfHasReturnRefund;
-  const setCurrentHasReturnRefund = isSpouseTab ? setSpouseHasReturnRefund : setSelfHasReturnRefund;
 
   const currentRefundYearPeriod = isSpouseTab ? spouseRefundYearPeriod : selfRefundYearPeriod;
   const setCurrentRefundYearPeriod = isSpouseTab ? setSpouseRefundYearPeriod : setSelfRefundYearPeriod;
@@ -197,9 +205,6 @@ export default function NpsRecoveryModal({
   const currentRefundYearsPassed = isSpouseTab ? spouseRefundYearsPassed : selfRefundYearsPassed;
   const setCurrentRefundYearsPassed = isSpouseTab ? setSpouseRefundYearsPassed : setSelfRefundYearsPassed;
 
-  const currentRestoredMonths = isSpouseTab ? spouseRestoredMonths : selfRestoredMonths;
-  const setCurrentRestoredMonths = isSpouseTab ? setSpouseRestoredMonths : setSelfRestoredMonths;
-
   const activeAge = isSpouseTab ? spouseAge : selfAge;
   const activeNpsStartAge = isSpouseTab ? spouseNpsStartAge : selfNpsStartAge;
   const activeLifeExpectancy = isSpouseTab ? spouseLifeExpectancy : selfLifeExpectancy;
@@ -208,20 +213,51 @@ export default function NpsRecoveryModal({
     additionalPayment,
     returnRepayment,
     combinedScenario,
+    activeScenarioType,
     paybackMilestones,
     distributionByAge,
     chartData,
     recommendation,
   } = activeResult;
 
-  // 주요 표시 대상 (반납 활성화 시 결합 시나리오, 아닐 시 추납 시나리오)
-  const displayCostWon = combinedScenario ? combinedScenario.totalCostWon : additionalPayment.totalCostWon;
-  const displayMonthlyIncreaseWon = combinedScenario ? combinedScenario.monthlyIncreaseWon : additionalPayment.monthlyIncreaseWon;
-  const displayBreakEvenAge = combinedScenario ? combinedScenario.breakEvenAge : additionalPayment.breakEvenAge;
-  const displayBreakEvenYears = combinedScenario ? combinedScenario.breakEvenYears : additionalPayment.breakEvenYears;
-  const displayNetProfitWon = combinedScenario ? combinedScenario.netProfitWon : additionalPayment.netProfitWon;
-  const displayRoiPercent = combinedScenario ? combinedScenario.roiPercent : additionalPayment.roiPercent;
-  const displayIrr = combinedScenario ? combinedScenario.annualEquivalentReturn : additionalPayment.annualEquivalentReturn;
+  // 주요 표시 대상 (결합, 추납 단독, 반납 단독, 미선택)
+  let displayCostWon = 0;
+  let displayMonthlyIncreaseWon = 0;
+  let displayBreakEvenAge = activeNpsStartAge;
+  let displayBreakEvenYears = 0;
+  let displayNetProfitWon = 0;
+  let displayRoiPercent = 0;
+  let displayIrr = 0;
+  let displayTitle = "추납 및 반납 미적용 (기존 상태 유지)";
+
+  if (activeScenarioType === "BOTH" && combinedScenario) {
+    displayCostWon = combinedScenario.totalCostWon;
+    displayMonthlyIncreaseWon = combinedScenario.monthlyIncreaseWon;
+    displayBreakEvenAge = combinedScenario.breakEvenAge;
+    displayBreakEvenYears = combinedScenario.breakEvenYears;
+    displayNetProfitWon = combinedScenario.netProfitWon;
+    displayRoiPercent = combinedScenario.roiPercent;
+    displayIrr = combinedScenario.annualEquivalentReturn;
+    displayTitle = "추납 + 반납 동시 적용 (최대 시너지)";
+  } else if (activeScenarioType === "ADDITIONAL_ONLY") {
+    displayCostWon = additionalPayment.totalCostWon;
+    displayMonthlyIncreaseWon = additionalPayment.monthlyIncreaseWon;
+    displayBreakEvenAge = additionalPayment.breakEvenAge;
+    displayBreakEvenYears = additionalPayment.breakEvenYears;
+    displayNetProfitWon = additionalPayment.netProfitWon;
+    displayRoiPercent = additionalPayment.roiPercent;
+    displayIrr = additionalPayment.annualEquivalentReturn;
+    displayTitle = "추납 단독 적용";
+  } else if (activeScenarioType === "RETURN_ONLY" && returnRepayment) {
+    displayCostWon = returnRepayment.totalCostWon;
+    displayMonthlyIncreaseWon = returnRepayment.monthlyIncreaseWon;
+    displayBreakEvenAge = returnRepayment.breakEvenAge;
+    displayBreakEvenYears = returnRepayment.breakEvenYears;
+    displayNetProfitWon = returnRepayment.netProfitWon;
+    displayRoiPercent = returnRepayment.roiPercent;
+    displayIrr = returnRepayment.annualEquivalentReturn;
+    displayTitle = "과거 반납 복원 단독 적용";
+  }
 
   return (
     <div
@@ -244,7 +280,7 @@ export default function NpsRecoveryModal({
       <div
         style={{
           width: "100%",
-          maxWidth: "1080px",
+          maxWidth: "1120px",
           maxHeight: "92vh",
           backgroundColor: "var(--surface, #111827)",
           borderRadius: "16px",
@@ -319,7 +355,7 @@ export default function NpsRecoveryModal({
           </div>
 
           <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary, #94a3b8)" }}>
-            과거 미납·경단 기간 추납과 1998년 이전 70% 소득대체율 반납 실익을 골든크로스(원금 회수 나이) 및 다각도 수령 분포로 분석합니다.
+            추납과 반납을 각각 선택적으로 켜고 끄며 둘 중 하나 또는 둘 다 적용했을 때의 실익과 골든크로스를 정밀 비교합니다.
           </p>
 
           {/* Tab Buttons (본인 / 배우자 / 부부 합산 시너지) */}
@@ -445,7 +481,127 @@ export default function NpsRecoveryModal({
           {/* TAB 1 & 2: 본인 또는 배우자 개별 분석 뷰 */}
           {!isCoupleTab && (
             <>
-              {/* Controls Grid */}
+              {/* Option Selector Toggle Bar (추납 ON/OFF & 반납 ON/OFF) */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                }}
+              >
+                {/* 1. 추납 적용 토글 카드 */}
+                <div
+                  onClick={() => setCurrentHasAdditionalPayment(!currentHasAdditionalPayment)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    border: currentHasAdditionalPayment
+                      ? `2px solid ${isSpouseTab ? "#ec4899" : "#6366f1"}`
+                      : "1px solid var(--border, rgba(255, 255, 255, 0.1))",
+                    background: currentHasAdditionalPayment
+                      ? isSpouseTab
+                        ? "rgba(236, 72, 153, 0.08)"
+                        : "rgba(99, 102, 241, 0.08)"
+                      : "var(--surface-2, rgba(255, 255, 255, 0.02))",
+                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="checkbox"
+                      checked={currentHasAdditionalPayment}
+                      onChange={(e) => setCurrentHasAdditionalPayment(e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        accentColor: isSpouseTab ? "#ec4899" : "#6366f1",
+                        cursor: "pointer",
+                      }}
+                    />
+                    <div>
+                      <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
+                        {isSpouseTab ? "배우자" : "본인"} 국민연금 추납(추후납부) 적용
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+                        과거 미납·납부예외·경력단절 기간 가입기간 추가 납부
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      fontWeight: 700,
+                      background: currentHasAdditionalPayment
+                        ? isSpouseTab
+                          ? "#ec4899"
+                          : "#6366f1"
+                        : "rgba(148, 163, 184, 0.2)",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {currentHasAdditionalPayment ? "적용 중 ON" : "미적용 OFF"}
+                  </span>
+                </div>
+
+                {/* 2. 반납 적용 토글 카드 */}
+                <div
+                  onClick={() => setCurrentHasReturnRefund(!currentHasReturnRefund)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    border: currentHasReturnRefund
+                      ? "2px solid #10b981"
+                      : "1px solid var(--border, rgba(255, 255, 255, 0.1))",
+                    background: currentHasReturnRefund
+                      ? "rgba(16, 185, 129, 0.08)"
+                      : "var(--surface-2, rgba(255, 255, 255, 0.02))",
+                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <input
+                      type="checkbox"
+                      checked={currentHasReturnRefund}
+                      onChange={(e) => setCurrentHasReturnRefund(e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ width: "18px", height: "18px", accentColor: "#10b981", cursor: "pointer" }}
+                    />
+                    <div>
+                      <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
+                        과거 반환일시금 반납(복원) 적용
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+                        1998년 이전 70% 등 과거 초고소득대체율 원상 복원
+                      </div>
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      padding: "2px 8px",
+                      borderRadius: "6px",
+                      fontWeight: 700,
+                      background: currentHasReturnRefund ? "#10b981" : "rgba(148, 163, 184, 0.2)",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {currentHasReturnRefund ? "적용 중 ON" : "미적용 OFF"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Detailed Parameter Sliders Grid */}
               <div
                 style={{
                   display: "grid",
@@ -458,7 +614,7 @@ export default function NpsRecoveryModal({
                 }}
               >
                 {/* 추납 희망 개월수 */}
-                <div>
+                <div style={{ opacity: currentHasAdditionalPayment ? 1 : 0.45 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
                       추납 희망 기간 (최대 119개월)
@@ -477,6 +633,7 @@ export default function NpsRecoveryModal({
                     type="range"
                     min={1}
                     max={119}
+                    disabled={!currentHasAdditionalPayment}
                     value={currentAdditionalMonths}
                     onChange={(e) => setCurrentAdditionalMonths(Number(e.target.value))}
                     style={{
@@ -500,7 +657,7 @@ export default function NpsRecoveryModal({
                 </div>
 
                 {/* 추납 기준소득월액 */}
-                <div>
+                <div style={{ opacity: currentHasAdditionalPayment ? 1 : 0.45 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                     <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
                       신청 시 기준소득월액 (보험료 9%)
@@ -521,6 +678,7 @@ export default function NpsRecoveryModal({
                     min={1000000}
                     max={6170000}
                     step={100000}
+                    disabled={!currentHasAdditionalPayment}
                     value={currentBaseIncomeWon}
                     onChange={(e) => setCurrentBaseIncomeWon(Number(e.target.value))}
                     style={{
@@ -543,102 +701,116 @@ export default function NpsRecoveryModal({
                   </div>
                 </div>
 
-                {/* 반납 옵션 토글 및 세부 설정 */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      cursor: "pointer",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      color: "var(--text-primary, #ffffff)",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={currentHasReturnRefund}
-                      onChange={(e) => setCurrentHasReturnRefund(e.target.checked)}
-                      style={{ width: "18px", height: "18px", accentColor: "#10b981" }}
-                    />
-                    과거 반환일시금 수령 이력 있음 (반납 분석 활성화)
-                  </label>
+                {/* 반납 옵션 세부 설정 */}
+                <div style={{ opacity: currentHasReturnRefund ? 1 : 0.45 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <label style={{ fontSize: "0.78rem", color: "var(--text-primary, #ffffff)", fontWeight: 600, minWidth: "60px" }}>
+                        반납 시기
+                      </label>
+                      <select
+                        disabled={!currentHasReturnRefund}
+                        value={currentRefundYearPeriod}
+                        onChange={(e) => setCurrentRefundYearPeriod(e.target.value as any)}
+                        style={{
+                          flex: 1,
+                          padding: "6px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.78rem",
+                          background: "var(--surface, #1f2937)",
+                          color: "var(--text-primary, #ffffff)",
+                          border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
+                        }}
+                      >
+                        <option value="PRE_1998">1998년 이전 (소득대체율 70% 복원)</option>
+                        <option value="1999_2007">1999~2007년 (소득대체율 60% 복원)</option>
+                        <option value="POST_2008">2008년 이후 (소득대체율 50~40%)</option>
+                      </select>
+                    </div>
 
-                  {currentHasReturnRefund && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                        background: "rgba(16, 185, 129, 0.08)",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(16, 185, 129, 0.2)",
-                      }}
-                    >
-                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <label style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)", minWidth: "60px" }}>
-                          적용 시기
-                        </label>
-                        <select
-                          value={currentRefundYearPeriod}
-                          onChange={(e) => setCurrentRefundYearPeriod(e.target.value as any)}
-                          style={{
-                            flex: 1,
-                            padding: "6px 8px",
-                            borderRadius: "6px",
-                            fontSize: "0.78rem",
-                            background: "var(--surface, #1f2937)",
-                            color: "var(--text-primary, #ffffff)",
-                            border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
-                          }}
-                        >
-                          <option value="PRE_1998">1998년 이전 (소득대체율 70% 복원)</option>
-                          <option value="1999_2007">1999~2007년 (소득대체율 60% 복원)</option>
-                          <option value="POST_2008">2008년 이후 (소득대체율 50~40%)</option>
-                        </select>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
+                          <span>반환 원금</span>
+                          <span style={{ fontWeight: 700, color: "#34d399" }}>
+                            {Math.round(currentRefundPrincipalWon / 10000)}만원
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={1000000}
+                          max={20000000}
+                          step={500000}
+                          disabled={!currentHasReturnRefund}
+                          value={currentRefundPrincipalWon}
+                          onChange={(e) => setCurrentRefundPrincipalWon(Number(e.target.value))}
+                          style={{ width: "100%", accentColor: "#10b981" }}
+                        />
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
-                            <span>반환 원금</span>
-                            <span style={{ fontWeight: 700, color: "#34d399" }}>
-                              {Math.round(currentRefundPrincipalWon / 10000)}만원
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min={1000000}
-                            max={20000000}
-                            step={500000}
-                            value={currentRefundPrincipalWon}
-                            onChange={(e) => setCurrentRefundPrincipalWon(Number(e.target.value))}
-                            style={{ width: "100%", accentColor: "#10b981" }}
-                          />
+                      <div>
+                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
+                          <span>경과 년수</span>
+                          <span style={{ fontWeight: 700, color: "#34d399" }}>
+                            {currentRefundYearsPassed}년 경과
+                          </span>
                         </div>
-
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
-                            <span>경과 년수</span>
-                            <span style={{ fontWeight: 700, color: "#34d399" }}>
-                              {currentRefundYearsPassed}년 경과
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min={5}
-                            max={35}
-                            value={currentRefundYearsPassed}
-                            onChange={(e) => setCurrentRefundYearsPassed(Number(e.target.value))}
-                            style={{ width: "100%", accentColor: "#10b981" }}
-                          />
-                        </div>
+                        <input
+                          type="range"
+                          min={5}
+                          max={35}
+                          disabled={!currentHasReturnRefund}
+                          value={currentRefundYearsPassed}
+                          onChange={(e) => setCurrentRefundYearsPassed(Number(e.target.value))}
+                          style={{ width: "100%", accentColor: "#10b981" }}
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
+              </div>
+
+              {/* Status Banner */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  background:
+                    activeScenarioType === "BOTH"
+                      ? "rgba(168, 85, 247, 0.12)"
+                      : activeScenarioType === "ADDITIONAL_ONLY"
+                      ? "rgba(99, 102, 241, 0.12)"
+                      : activeScenarioType === "RETURN_ONLY"
+                      ? "rgba(16, 185, 129, 0.12)"
+                      : "rgba(148, 163, 184, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <span style={{ fontSize: "0.82rem", fontWeight: 700 }}>
+                  선택 시나리오:{" "}
+                  <strong
+                    style={{
+                      color:
+                        activeScenarioType === "BOTH"
+                          ? "#c084fc"
+                          : activeScenarioType === "ADDITIONAL_ONLY"
+                          ? "#818cf8"
+                          : activeScenarioType === "RETURN_ONLY"
+                          ? "#34d399"
+                          : "#94a3b8",
+                    }}
+                  >
+                    {displayTitle}
+                  </strong>
+                </span>
+                <span style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+                  {activeScenarioType === "NONE"
+                    ? "상단 체크박스를 선택하여 시뮬레이션을 시작하세요"
+                    : `총 투자 원금 ${Math.round(displayCostWon / 10000).toLocaleString()}만원 대비 평생 실익 분석`}
+                </span>
               </div>
 
               {/* 4 Key KPI Cards */}
@@ -658,16 +830,18 @@ export default function NpsRecoveryModal({
                     padding: "16px",
                   }}
                 >
-                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
-                    {combinedScenario ? "추납 + 반납 총 투자비용" : "추납 일시납 총비용"}
-                  </div>
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>총 투자(납부) 비용</div>
                   <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#818cf8", marginTop: "4px" }}>
                     {Math.round(displayCostWon / 10000).toLocaleString()}만원
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
-                    {combinedScenario
+                    {activeScenarioType === "BOTH"
                       ? `추납 ${Math.round(additionalPayment.totalCostWon / 10000)}만 + 반납 ${Math.round((returnRepayment?.totalCostWon || 0) / 10000)}만`
-                      : `월 ${Math.round(additionalPayment.monthlyPremiumWon / 10000)}만원 × ${additionalPayment.months}개월`}
+                      : activeScenarioType === "ADDITIONAL_ONLY"
+                      ? `월 ${Math.round(additionalPayment.monthlyPremiumWon / 10000)}만원 × ${additionalPayment.months}개월`
+                      : activeScenarioType === "RETURN_ONLY"
+                      ? `원금 ${Math.round(currentRefundPrincipalWon / 10000)}만 + 복리이자 가산`
+                      : "선택된 납부 옵션 없음"}
                   </div>
                 </div>
 
@@ -700,10 +874,10 @@ export default function NpsRecoveryModal({
                 >
                   <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>원금 회수 나이 (골든크로스)</div>
                   <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#fbbf24", marginTop: "4px" }}>
-                    {displayBreakEvenAge}세
+                    {displayBreakEvenAge > 0 ? `${displayBreakEvenAge}세` : "-"}
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
-                    개시 후 {displayBreakEvenYears}년 만에 완벽 원금 회수
+                    {displayBreakEvenYears > 0 ? `개시 후 ${displayBreakEvenYears}년 만에 완벽 원금 회수` : "수급 옵션 미적용"}
                   </div>
                 </div>
 
@@ -767,9 +941,11 @@ export default function NpsRecoveryModal({
                   >
                     <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>50% 반액 회수</div>
                     <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#818cf8", marginTop: "2px" }}>
-                      {paybackMilestones.halfPaybackAge}세
+                      {paybackMilestones.halfPaybackAge > 0 ? `${paybackMilestones.halfPaybackAge}세` : "-"}
                     </div>
-                    <div style={{ fontSize: "0.68rem", color: "#64748b" }}>개시 후 약 {(paybackMilestones.halfPaybackAge - activeNpsStartAge).toFixed(1)}년</div>
+                    <div style={{ fontSize: "0.68rem", color: "#64748b" }}>
+                      {displayBreakEvenYears > 0 ? `개시 후 약 ${(paybackMilestones.halfPaybackAge - activeNpsStartAge).toFixed(1)}년` : "-"}
+                    </div>
                   </div>
 
                   <div
@@ -782,7 +958,7 @@ export default function NpsRecoveryModal({
                   >
                     <div style={{ fontSize: "0.72rem", color: "#fbbf24", fontWeight: 600 }}>100% 원금 전액 회수</div>
                     <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#f59e0b", marginTop: "2px" }}>
-                      {paybackMilestones.breakEvenAge}세 🌟
+                      {paybackMilestones.breakEvenAge > 0 ? `${paybackMilestones.breakEvenAge}세 🌟` : "-"}
                     </div>
                     <div style={{ fontSize: "0.68rem", color: "#d97706" }}>골든크로스 달성</div>
                   </div>
@@ -797,7 +973,7 @@ export default function NpsRecoveryModal({
                   >
                     <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>200% 더블 달성</div>
                     <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#34d399", marginTop: "2px" }}>
-                      {paybackMilestones.doubleReturnAge}세
+                      {paybackMilestones.doubleReturnAge > 0 ? `${paybackMilestones.doubleReturnAge}세` : "-"}
                     </div>
                     <div style={{ fontSize: "0.68rem", color: "#64748b" }}>순이익 = 원금의 100%</div>
                   </div>
@@ -812,7 +988,7 @@ export default function NpsRecoveryModal({
                   >
                     <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>300% 트리플 달성</div>
                     <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f472b6", marginTop: "2px" }}>
-                      {paybackMilestones.tripleReturnAge}세
+                      {paybackMilestones.tripleReturnAge > 0 ? `${paybackMilestones.tripleReturnAge}세` : "-"}
                     </div>
                     <div style={{ fontSize: "0.68rem", color: "#64748b" }}>원금의 3배 누적 수령</div>
                   </div>
@@ -851,29 +1027,33 @@ export default function NpsRecoveryModal({
                         labelFormatter={(label) => `${label}세`}
                       />
                       <Legend />
-                      <ReferenceLine
-                        x={Math.round(displayBreakEvenAge)}
-                        stroke="#fbbf24"
-                        strokeDasharray="4 4"
-                        label={{ value: `골든크로스 ${displayBreakEvenAge}세`, fill: "#fbbf24", fontSize: 11 }}
-                      />
+                      {displayBreakEvenAge > 0 && displayBreakEvenAge > activeNpsStartAge && (
+                        <ReferenceLine
+                          x={Math.round(displayBreakEvenAge)}
+                          stroke="#fbbf24"
+                          strokeDasharray="4 4"
+                          label={{ value: `골든크로스 ${displayBreakEvenAge}세`, fill: "#fbbf24", fontSize: 11 }}
+                        />
+                      )}
                       <Line
                         type="monotone"
                         dataKey="withoutRecovery"
-                        name="현재 유지 (미추납)"
+                        name="현재 유지 (미적용)"
                         stroke="#94a3b8"
                         strokeWidth={2}
                         dot={false}
                       />
-                      <Line
-                        type="monotone"
-                        dataKey="withAdditionalPayment"
-                        name="추납 진행 (순이익)"
-                        stroke={isSpouseTab ? "#ec4899" : "#6366f1"}
-                        strokeWidth={3}
-                        dot={false}
-                      />
-                      {returnRepayment && (
+                      {currentHasAdditionalPayment && (
+                        <Line
+                          type="monotone"
+                          dataKey="withAdditionalPayment"
+                          name="추납 진행 (순이익)"
+                          stroke={isSpouseTab ? "#ec4899" : "#6366f1"}
+                          strokeWidth={3}
+                          dot={false}
+                        />
+                      )}
+                      {currentHasReturnRefund && (
                         <Line
                           type="monotone"
                           dataKey="withReturnRepayment"
@@ -884,7 +1064,7 @@ export default function NpsRecoveryModal({
                           dot={false}
                         />
                       )}
-                      {combinedScenario && (
+                      {currentHasAdditionalPayment && currentHasReturnRefund && (
                         <Line
                           type="monotone"
                           dataKey="withCombined"
@@ -1047,6 +1227,183 @@ export default function NpsRecoveryModal({
           {/* TAB 3: 부부 합산 시너지 뷰 */}
           {isCoupleTab && (
             <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* Couple 4 Options Selection Control Panel */}
+              <div
+                style={{
+                  background: "var(--surface-2, rgba(255, 255, 255, 0.04))",
+                  border: "1px solid var(--border, rgba(255, 255, 255, 0.1))",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
+                      ⚙️ 부부 가구 추납·반납 적용 옵션 선택기
+                    </h4>
+                    <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--text-secondary, #94a3b8)" }}>
+                      본인과 배우자 각각의 추납 및 반납을 자유롭게 켜고 끄며 가구 최적의 수령 조합을 비교하세요.
+                    </p>
+                  </div>
+                  {/* Preset Quick Buttons */}
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfHasAdditionalPayment(true);
+                        setSelfHasReturnRefund(true);
+                        setSpouseHasAdditionalPayment(true);
+                        setSpouseHasReturnRefund(true);
+                      }}
+                      style={{
+                        padding: "4px 10px",
+                        fontSize: "0.75rem",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(16, 185, 129, 0.4)",
+                        background: "rgba(16, 185, 129, 0.15)",
+                        color: "#34d399",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      모두 적용 (기본)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfHasAdditionalPayment(true);
+                        setSelfHasReturnRefund(false);
+                        setSpouseHasAdditionalPayment(true);
+                        setSpouseHasReturnRefund(false);
+                      }}
+                      style={{
+                        padding: "4px 10px",
+                        fontSize: "0.75rem",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(99, 102, 241, 0.4)",
+                        background: "rgba(99, 102, 241, 0.15)",
+                        color: "#818cf8",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      추납만 모두 적용
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelfHasAdditionalPayment(false);
+                        setSelfHasReturnRefund(true);
+                        setSpouseHasAdditionalPayment(false);
+                        setSpouseHasReturnRefund(true);
+                      }}
+                      style={{
+                        padding: "4px 10px",
+                        fontSize: "0.75rem",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(16, 185, 129, 0.4)",
+                        background: "rgba(16, 185, 129, 0.15)",
+                        color: "#10b981",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      반납만 모두 적용
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4 Interactive Toggle Checkboxes in 2 Columns */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  {/* Column 1: 본인 옵션 */}
+                  <div
+                    style={{
+                      background: "rgba(99, 102, 241, 0.05)",
+                      border: "1px solid rgba(99, 102, 241, 0.2)",
+                      borderRadius: "10px",
+                      padding: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#818cf8", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span>👤</span> 본인 옵션 ({selfAge}세)
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                      <input
+                        type="checkbox"
+                        checked={selfHasAdditionalPayment}
+                        onChange={(e) => setSelfHasAdditionalPayment(e.target.checked)}
+                        style={{ width: "16px", height: "16px", accentColor: "#6366f1" }}
+                      />
+                      <span style={{ fontWeight: 600 }}>본인 추납 적용</span>
+                      <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                        ({selfAdditionalMonths}개월 / 월 {Math.round((selfBaseIncomeWon * 0.09) / 10000)}만원)
+                      </span>
+                    </label>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                      <input
+                        type="checkbox"
+                        checked={selfHasReturnRefund}
+                        onChange={(e) => setSelfHasReturnRefund(e.target.checked)}
+                        style={{ width: "16px", height: "16px", accentColor: "#10b981" }}
+                      />
+                      <span style={{ fontWeight: 600 }}>본인 반납 적용</span>
+                      <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                        (원금 {Math.round(selfRefundPrincipalWon / 10000)}만원 / {selfRefundYearPeriod === "PRE_1998" ? "70%" : "60%"} 복원)
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Column 2: 배우자 옵션 */}
+                  <div
+                    style={{
+                      background: "rgba(236, 72, 153, 0.05)",
+                      border: "1px solid rgba(236, 72, 153, 0.2)",
+                      borderRadius: "10px",
+                      padding: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f472b6", display: "flex", alignItems: "center", gap: "4px" }}>
+                      <span>👥</span> 배우자 옵션 ({spouseAge}세)
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                      <input
+                        type="checkbox"
+                        checked={spouseHasAdditionalPayment}
+                        onChange={(e) => setSpouseHasAdditionalPayment(e.target.checked)}
+                        style={{ width: "16px", height: "16px", accentColor: "#ec4899" }}
+                      />
+                      <span style={{ fontWeight: 600 }}>배우자 추납 적용</span>
+                      <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                        ({spouseAdditionalMonths}개월 / 월 {Math.round((spouseBaseIncomeWon * 0.09) / 10000)}만원)
+                      </span>
+                    </label>
+
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.82rem" }}>
+                      <input
+                        type="checkbox"
+                        checked={spouseHasReturnRefund}
+                        onChange={(e) => setSpouseHasReturnRefund(e.target.checked)}
+                        style={{ width: "16px", height: "16px", accentColor: "#10b981" }}
+                      />
+                      <span style={{ fontWeight: 600 }}>배우자 반납 적용</span>
+                      <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
+                        (원금 {Math.round(spouseRefundPrincipalWon / 10000)}만원 / {spouseRefundYearPeriod === "PRE_1998" ? "70%" : "60%"} 복원)
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               {/* Couple Header Summary Cards */}
               <div
                 style={{
@@ -1068,7 +1425,7 @@ export default function NpsRecoveryModal({
                     {Math.round(coupleResult.couple.totalCostWon / 10000).toLocaleString()}만원
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
-                    본인 {Math.round((coupleResult.self.combinedScenario ? coupleResult.self.combinedScenario.totalCostWon : coupleResult.self.additionalPayment.totalCostWon) / 10000)}만 + 배우자 {Math.round((coupleResult.spouse.combinedScenario ? coupleResult.spouse.combinedScenario.totalCostWon : coupleResult.spouse.additionalPayment.totalCostWon) / 10000)}만
+                    선택된 옵션 기준 총 투자액
                   </div>
                 </div>
 
@@ -1099,10 +1456,10 @@ export default function NpsRecoveryModal({
                 >
                   <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>부부 가구 손익분기 (골든크로스)</div>
                   <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#fbbf24", marginTop: "4px" }}>
-                    개시 후 {coupleResult.couple.breakEvenYearsAvg}년 만에 회수
+                    {coupleResult.couple.breakEvenYearsAvg > 0 ? `개시 후 ${coupleResult.couple.breakEvenYearsAvg}년` : "-"}
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
-                    본인 {coupleResult.self.additionalPayment.breakEvenAge}세 / 배우자 {coupleResult.spouse.additionalPayment.breakEvenAge}세
+                    가구 납부 원금 100% 회수 시점
                   </div>
                 </div>
 
@@ -1145,35 +1502,72 @@ export default function NpsRecoveryModal({
                     <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#818cf8" }}>
                       👤 본인 추납·반납 실익
                     </h4>
-                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>현재 {selfAge}세 / 개시 {selfNpsStartAge}세</span>
+                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                      {selfHasAdditionalPayment && selfHasReturnRefund
+                        ? "추납+반납 둘 다 적용"
+                        : selfHasAdditionalPayment
+                        ? "추납만 적용"
+                        : selfHasReturnRefund
+                        ? "반납만 적용"
+                        : "미적용"}
+                    </span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.82rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#94a3b8" }}>추납 신청 기간</span>
-                      <span style={{ fontWeight: 600 }}>{selfAdditionalMonths}개월</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>납부 총비용</span>
                       <span style={{ fontWeight: 600, color: "#818cf8" }}>
-                        {Math.round((coupleResult.self.combinedScenario ? coupleResult.self.combinedScenario.totalCostWon : coupleResult.self.additionalPayment.totalCostWon) / 10000).toLocaleString()}만원
+                        {Math.round(
+                          (coupleResult.self.activeScenarioType === "BOTH" && coupleResult.self.combinedScenario
+                            ? coupleResult.self.combinedScenario.totalCostWon
+                            : coupleResult.self.activeScenarioType === "ADDITIONAL_ONLY"
+                            ? coupleResult.self.additionalPayment.totalCostWon
+                            : coupleResult.self.returnRepayment
+                            ? coupleResult.self.returnRepayment.totalCostWon
+                            : 0) / 10000
+                        ).toLocaleString()}
+                        만원
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>월 연금 증액</span>
                       <span style={{ fontWeight: 700, color: "#34d399" }}>
-                        +{(coupleResult.self.additionalPayment.monthlyIncreaseWon / 10000).toFixed(1)}만원/월
+                        +{
+                          (
+                            (coupleResult.self.activeScenarioType === "BOTH" && coupleResult.self.combinedScenario
+                              ? coupleResult.self.combinedScenario.monthlyIncreaseWon
+                              : coupleResult.self.activeScenarioType === "ADDITIONAL_ONLY"
+                              ? coupleResult.self.additionalPayment.monthlyIncreaseWon
+                              : coupleResult.self.returnRepayment
+                              ? coupleResult.self.returnRepayment.monthlyIncreaseWon
+                              : 0) / 10000
+                          ).toFixed(1)
+                        }
+                        만원/월
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>원금 회수 나이</span>
                       <span style={{ fontWeight: 700, color: "#fbbf24" }}>
-                        {coupleResult.self.additionalPayment.breakEvenAge}세 (개시 후 {coupleResult.self.additionalPayment.breakEvenYears}년)
+                        {coupleResult.self.paybackMilestones.breakEvenAge > 0
+                          ? `${coupleResult.self.paybackMilestones.breakEvenAge}세`
+                          : "-"}
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>기대수명 순수익</span>
                       <span style={{ fontWeight: 700, color: "#f472b6" }}>
-                        +{(coupleResult.self.additionalPayment.netProfitWon / 10000).toLocaleString()}만원 (+{coupleResult.self.additionalPayment.roiPercent}%)
+                        +{
+                          Math.round(
+                            (coupleResult.self.activeScenarioType === "BOTH" && coupleResult.self.combinedScenario
+                              ? coupleResult.self.combinedScenario.netProfitWon
+                              : coupleResult.self.activeScenarioType === "ADDITIONAL_ONLY"
+                              ? coupleResult.self.additionalPayment.netProfitWon
+                              : coupleResult.self.returnRepayment
+                              ? coupleResult.self.returnRepayment.netProfitWon
+                              : 0) / 10000
+                          ).toLocaleString()
+                        }
+                        만원
                       </span>
                     </div>
                   </div>
@@ -1192,35 +1586,72 @@ export default function NpsRecoveryModal({
                     <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#f472b6" }}>
                       👥 배우자 추납·반납 실익
                     </h4>
-                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>현재 {spouseAge}세 / 개시 {spouseNpsStartAge}세</span>
+                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                      {spouseHasAdditionalPayment && spouseHasReturnRefund
+                        ? "추납+반납 둘 다 적용"
+                        : spouseHasAdditionalPayment
+                        ? "추납만 적용"
+                        : spouseHasReturnRefund
+                        ? "반납만 적용"
+                        : "미적용"}
+                    </span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.82rem" }}>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ color: "#94a3b8" }}>추납 신청 기간</span>
-                      <span style={{ fontWeight: 600 }}>{spouseAdditionalMonths}개월</span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>납부 총비용</span>
                       <span style={{ fontWeight: 600, color: "#f472b6" }}>
-                        {Math.round((coupleResult.spouse.combinedScenario ? coupleResult.spouse.combinedScenario.totalCostWon : coupleResult.spouse.additionalPayment.totalCostWon) / 10000).toLocaleString()}만원
+                        {Math.round(
+                          (coupleResult.spouse.activeScenarioType === "BOTH" && coupleResult.spouse.combinedScenario
+                            ? coupleResult.spouse.combinedScenario.totalCostWon
+                            : coupleResult.spouse.activeScenarioType === "ADDITIONAL_ONLY"
+                            ? coupleResult.spouse.additionalPayment.totalCostWon
+                            : coupleResult.spouse.returnRepayment
+                            ? coupleResult.spouse.returnRepayment.totalCostWon
+                            : 0) / 10000
+                        ).toLocaleString()}
+                        만원
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>월 연금 증액</span>
                       <span style={{ fontWeight: 700, color: "#34d399" }}>
-                        +{(coupleResult.spouse.additionalPayment.monthlyIncreaseWon / 10000).toFixed(1)}만원/월
+                        +{
+                          (
+                            (coupleResult.spouse.activeScenarioType === "BOTH" && coupleResult.spouse.combinedScenario
+                              ? coupleResult.spouse.combinedScenario.monthlyIncreaseWon
+                              : coupleResult.spouse.activeScenarioType === "ADDITIONAL_ONLY"
+                              ? coupleResult.spouse.additionalPayment.monthlyIncreaseWon
+                              : coupleResult.spouse.returnRepayment
+                              ? coupleResult.spouse.returnRepayment.monthlyIncreaseWon
+                              : 0) / 10000
+                          ).toFixed(1)
+                        }
+                        만원/월
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>원금 회수 나이</span>
                       <span style={{ fontWeight: 700, color: "#fbbf24" }}>
-                        {coupleResult.spouse.additionalPayment.breakEvenAge}세 (개시 후 {coupleResult.spouse.additionalPayment.breakEvenYears}년)
+                        {coupleResult.spouse.paybackMilestones.breakEvenAge > 0
+                          ? `${coupleResult.spouse.paybackMilestones.breakEvenAge}세`
+                          : "-"}
                       </span>
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
                       <span style={{ color: "#94a3b8" }}>기대수명 순수익</span>
                       <span style={{ fontWeight: 700, color: "#f472b6" }}>
-                        +{(coupleResult.spouse.additionalPayment.netProfitWon / 10000).toLocaleString()}만원 (+{coupleResult.spouse.additionalPayment.roiPercent}%)
+                        +{
+                          Math.round(
+                            (coupleResult.spouse.activeScenarioType === "BOTH" && coupleResult.spouse.combinedScenario
+                              ? coupleResult.spouse.combinedScenario.netProfitWon
+                              : coupleResult.spouse.activeScenarioType === "ADDITIONAL_ONLY"
+                              ? coupleResult.spouse.additionalPayment.netProfitWon
+                              : coupleResult.spouse.returnRepayment
+                              ? coupleResult.spouse.returnRepayment.netProfitWon
+                              : 0) / 10000
+                          ).toLocaleString()
+                        }
+                        만원
                       </span>
                     </div>
                   </div>

@@ -54,4 +54,11 @@
   - [x] `npm run build` 빌드 검증 및 렌더링 에러 0건 확인.
   - [x] 브라우저 서브에이전트 또는 화면 렌더링 검증 수행.
 
+## Sprint 50-2: 추납 및 반납 개별 선택 토글 및 부부 합산 4대 옵션 다각도 시뮬레이션
+- [x] `src/services/npsRecoveryCalculator.ts` 추납 선택 플래그(`hasAdditionalPayment`) 추가 및 4개 조합(추납 단독, 반납 단독, 둘 다, 미선택) 엔진 지원.
+- [x] `src/components/NpsRecoveryModal.tsx` 개별 탭(본인/배우자) 추납 ON/OFF 체크박스 및 디폴트 둘 다 선택 연동.
+- [x] `src/components/NpsRecoveryModal.tsx` 부부 합산 시너지 탭 내 본인 추납/반납, 배우자 추납/반납 4대 옵션 선택기 패널 신설.
+- [x] 옵션 변경 시 가구 총비용, 월 증액, 골든크로스, 순수익 및 Recharts 차트 실시간 갱신 검증.
+- [x] `npm run build` 및 브라우저 서브에이전트 화면 렌더링 검증.
+
 

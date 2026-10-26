@@ -274,6 +274,10 @@ export default function DashboardModalManager({
         npsStartAge={store.simulationParams.nationalPensionStartAge || 65}
         expectedLifeExpectancy={store.simulationParams.expectedLifeExpectancy || 88}
         currentMonthlyPensionWon={(guaranteedMonthlyPension || 120) * 10000}
+        spouseAge={store.simulationParams.spouseAge}
+        spouseNpsStartAge={store.simulationParams.spouseNationalPensionStartAge}
+        spouseLifeExpectancy={store.simulationParams.spouseLifeExpectancy}
+        spouseMonthlyPensionWon={store.spouse.nationalPension.expectedMonthlyPension ? store.spouse.nationalPension.expectedMonthlyPension * 10000 : undefined}
       />
 
       <RebalancingOrderModal

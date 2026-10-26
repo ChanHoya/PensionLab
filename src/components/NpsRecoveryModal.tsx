@@ -1,11 +1,15 @@
+// 국민연금 본인/배우자 추납 및 반납 실익 역산과 원금 회수 마일스톤을 분석하는 모달 컴포넌트
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   calculateNpsRecovery,
+  calculateCoupleRecovery,
   RecoveryOptionInput,
   RecoveryAnalysisResult,
+  CoupleRecoveryResult,
 } from "@/services/npsRecoveryCalculator";
+import { usePensionStore } from "@/store/usePensionStore";
 import {
   ResponsiveContainer,
   LineChart,
@@ -25,56 +29,199 @@ interface NpsRecoveryModalProps {
   npsStartAge?: number;
   expectedLifeExpectancy?: number;
   currentMonthlyPensionWon?: number;
+  spouseAge?: number;
+  spouseNpsStartAge?: number;
+  spouseLifeExpectancy?: number;
+  spouseMonthlyPensionWon?: number;
 }
+
+type TabKey = "SELF" | "SPOUSE" | "COUPLE";
 
 export default function NpsRecoveryModal({
   isOpen,
   onClose,
-  currentAge = 55,
-  npsStartAge = 65,
-  expectedLifeExpectancy = 88,
-  currentMonthlyPensionWon = 1200000,
+  currentAge: propCurrentAge,
+  npsStartAge: propNpsStartAge,
+  expectedLifeExpectancy: propExpectedLifeExpectancy,
+  currentMonthlyPensionWon: propCurrentMonthlyPensionWon,
+  spouseAge: propSpouseAge,
+  spouseNpsStartAge: propSpouseNpsStartAge,
+  spouseLifeExpectancy: propSpouseLifeExpectancy,
+  spouseMonthlyPensionWon: propSpouseMonthlyPensionWon,
 }: NpsRecoveryModalProps) {
-  // 사용자가 인터랙티브하게 조절할 수 있는 상태값
-  const [additionalMonths, setAdditionalMonths] = useState<number>(60); // 1 ~ 119개월
-  const [baseIncomeWon, setBaseIncomeWon] = useState<number>(3000000); // 100만 ~ 617만원 (2026년 기준소득 상한)
-  const [hasReturnRefund, setHasReturnRefund] = useState<boolean>(false);
-  const [refundYearPeriod, setRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
-  const [refundPrincipalWon, setRefundPrincipalWon] = useState<number>(5000000); // 500만원
-  const [refundYearsPassed, setRefundYearsPassed] = useState<number>(25);
+  const store = usePensionStore();
 
-  const input: RecoveryOptionInput = useMemo(
+  // 활성 탭 (본인 / 배우자 / 부부 합산 시너지)
+  const [activeTab, setActiveTab] = useState<TabKey>("SELF");
+
+  // 본인 기본 인구통계 파라미터
+  const selfAge = propCurrentAge || store.simulationParams.currentAge || 55;
+  const selfNpsStartAge = propNpsStartAge || store.simulationParams.nationalPensionStartAge || 65;
+  const selfLifeExpectancy = propExpectedLifeExpectancy || store.simulationParams.expectedLifeExpectancy || 88;
+  const selfMonthlyPension = propCurrentMonthlyPensionWon || (store.nationalPension.expectedMonthlyPension ? store.nationalPension.expectedMonthlyPension * 10000 : 1200000);
+
+  // 배우자 기본 인구통계 파라미터
+  const hasSpouse = store.simulationParams.hasSpouse;
+  const spouseAge = propSpouseAge || store.simulationParams.spouseAge || Math.max(20, selfAge - 2);
+  const spouseNpsStartAge = propSpouseNpsStartAge || store.simulationParams.spouseNationalPensionStartAge || 65;
+  const spouseLifeExpectancy = propSpouseLifeExpectancy || store.simulationParams.spouseLifeExpectancy || 90;
+  const spouseMonthlyPension = propSpouseMonthlyPensionWon || (store.spouse.nationalPension.expectedMonthlyPension ? store.spouse.nationalPension.expectedMonthlyPension * 10000 : 800000);
+
+  // 본인(Self) 추납 및 반납 상태
+  const [selfAdditionalMonths, setSelfAdditionalMonths] = useState<number>(
+    store.additionalPayment.requestedMonths || 60
+  );
+  const [selfBaseIncomeWon, setSelfBaseIncomeWon] = useState<number>(
+    store.additionalPayment.baseIncome ? store.additionalPayment.baseIncome * 10000 : 3000000
+  );
+  const [selfHasReturnRefund, setSelfHasReturnRefund] = useState<boolean>(
+    store.additionalPayment.receivedLumpSumRefund || (store.returnRepayment.refundAmount > 0)
+  );
+  const [selfRefundYearPeriod, setSelfRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
+  const [selfRefundPrincipalWon, setSelfRefundPrincipalWon] = useState<number>(
+    store.returnRepayment.refundAmount ? store.returnRepayment.refundAmount * 10000 : 5000000
+  );
+  const [selfRefundYearsPassed, setSelfRefundYearsPassed] = useState<number>(25);
+  const [selfRestoredMonths, setSelfRestoredMonths] = useState<number>(
+    store.returnRepayment.restoredMonths || 36
+  );
+
+  // 배우자(Spouse) 추납 및 반납 상태
+  const [spouseAdditionalMonths, setSpouseAdditionalMonths] = useState<number>(
+    store.spouse.additionalPayment.requestedMonths || 60
+  );
+  const [spouseBaseIncomeWon, setSpouseBaseIncomeWon] = useState<number>(
+    store.spouse.additionalPayment.baseIncome ? store.spouse.additionalPayment.baseIncome * 10000 : 2500000
+  );
+  const [spouseHasReturnRefund, setSpouseHasReturnRefund] = useState<boolean>(
+    store.spouse.additionalPayment.receivedLumpSumRefund || (store.spouse.returnRepayment.refundAmount > 0)
+  );
+  const [spouseRefundYearPeriod, setSpouseRefundYearPeriod] = useState<"PRE_1998" | "1999_2007" | "POST_2008">("PRE_1998");
+  const [spouseRefundPrincipalWon, setSpouseRefundPrincipalWon] = useState<number>(
+    store.spouse.returnRepayment.refundAmount ? store.spouse.returnRepayment.refundAmount * 10000 : 4000000
+  );
+  const [spouseRefundYearsPassed, setSpouseRefundYearsPassed] = useState<number>(24);
+  const [spouseRestoredMonths, setSpouseRestoredMonths] = useState<number>(
+    store.spouse.returnRepayment.restoredMonths || 36
+  );
+
+  // 본인 입력 객체
+  const selfInput: RecoveryOptionInput = useMemo(
     () => ({
-      currentAge,
-      npsStartAge,
-      lifeExpectancy: expectedLifeExpectancy,
-      currentMonthlyPension: currentMonthlyPensionWon,
-      baseIncomeWon,
-      additionalMonths,
-      hasReturnRefund,
-      refundYearPeriod,
-      refundPrincipalWon,
-      refundYearsPassed,
+      currentAge: selfAge,
+      npsStartAge: selfNpsStartAge,
+      lifeExpectancy: selfLifeExpectancy,
+      currentMonthlyPension: selfMonthlyPension,
+      baseIncomeWon: selfBaseIncomeWon,
+      additionalMonths: selfAdditionalMonths,
+      hasReturnRefund: selfHasReturnRefund,
+      refundYearPeriod: selfRefundYearPeriod,
+      refundPrincipalWon: selfRefundPrincipalWon,
+      refundYearsPassed: selfRefundYearsPassed,
+      restoredMonths: selfRestoredMonths,
     }),
     [
-      currentAge,
-      npsStartAge,
-      expectedLifeExpectancy,
-      currentMonthlyPensionWon,
-      baseIncomeWon,
-      additionalMonths,
-      hasReturnRefund,
-      refundYearPeriod,
-      refundPrincipalWon,
-      refundYearsPassed,
+      selfAge,
+      selfNpsStartAge,
+      selfLifeExpectancy,
+      selfMonthlyPension,
+      selfBaseIncomeWon,
+      selfAdditionalMonths,
+      selfHasReturnRefund,
+      selfRefundYearPeriod,
+      selfRefundPrincipalWon,
+      selfRefundYearsPassed,
+      selfRestoredMonths,
     ]
   );
 
-  const result: RecoveryAnalysisResult = useMemo(() => calculateNpsRecovery(input), [input]);
+  // 배우자 입력 객체
+  const spouseInput: RecoveryOptionInput = useMemo(
+    () => ({
+      currentAge: spouseAge,
+      npsStartAge: spouseNpsStartAge,
+      lifeExpectancy: spouseLifeExpectancy,
+      currentMonthlyPension: spouseMonthlyPension,
+      baseIncomeWon: spouseBaseIncomeWon,
+      additionalMonths: spouseAdditionalMonths,
+      hasReturnRefund: spouseHasReturnRefund,
+      refundYearPeriod: spouseRefundYearPeriod,
+      refundPrincipalWon: spouseRefundPrincipalWon,
+      refundYearsPassed: spouseRefundYearsPassed,
+      restoredMonths: spouseRestoredMonths,
+    }),
+    [
+      spouseAge,
+      spouseNpsStartAge,
+      spouseLifeExpectancy,
+      spouseMonthlyPension,
+      spouseBaseIncomeWon,
+      spouseAdditionalMonths,
+      spouseHasReturnRefund,
+      spouseRefundYearPeriod,
+      spouseRefundPrincipalWon,
+      spouseRefundYearsPassed,
+      spouseRestoredMonths,
+    ]
+  );
+
+  // 통합 시뮬레이션 결과 연산
+  const coupleResult: CoupleRecoveryResult = useMemo(
+    () => calculateCoupleRecovery(selfInput, spouseInput),
+    [selfInput, spouseInput]
+  );
 
   if (!isOpen) return null;
 
-  const { additionalPayment, returnRepayment, chartData, recommendation } = result;
+  const activeResult: RecoveryAnalysisResult =
+    activeTab === "SPOUSE" ? coupleResult.spouse : coupleResult.self;
+  const isSpouseTab = activeTab === "SPOUSE";
+  const isCoupleTab = activeTab === "COUPLE";
+
+  // 활성 탭 파라미터 접근자
+  const currentAdditionalMonths = isSpouseTab ? spouseAdditionalMonths : selfAdditionalMonths;
+  const setCurrentAdditionalMonths = isSpouseTab ? setSpouseAdditionalMonths : setSelfAdditionalMonths;
+
+  const currentBaseIncomeWon = isSpouseTab ? spouseBaseIncomeWon : selfBaseIncomeWon;
+  const setCurrentBaseIncomeWon = isSpouseTab ? setSpouseBaseIncomeWon : setSelfBaseIncomeWon;
+
+  const currentHasReturnRefund = isSpouseTab ? spouseHasReturnRefund : selfHasReturnRefund;
+  const setCurrentHasReturnRefund = isSpouseTab ? setSpouseHasReturnRefund : setSelfHasReturnRefund;
+
+  const currentRefundYearPeriod = isSpouseTab ? spouseRefundYearPeriod : selfRefundYearPeriod;
+  const setCurrentRefundYearPeriod = isSpouseTab ? setSpouseRefundYearPeriod : setSelfRefundYearPeriod;
+
+  const currentRefundPrincipalWon = isSpouseTab ? spouseRefundPrincipalWon : selfRefundPrincipalWon;
+  const setCurrentRefundPrincipalWon = isSpouseTab ? setSpouseRefundPrincipalWon : setSelfRefundPrincipalWon;
+
+  const currentRefundYearsPassed = isSpouseTab ? spouseRefundYearsPassed : selfRefundYearsPassed;
+  const setCurrentRefundYearsPassed = isSpouseTab ? setSpouseRefundYearsPassed : setSelfRefundYearsPassed;
+
+  const currentRestoredMonths = isSpouseTab ? spouseRestoredMonths : selfRestoredMonths;
+  const setCurrentRestoredMonths = isSpouseTab ? setSpouseRestoredMonths : setSelfRestoredMonths;
+
+  const activeAge = isSpouseTab ? spouseAge : selfAge;
+  const activeNpsStartAge = isSpouseTab ? spouseNpsStartAge : selfNpsStartAge;
+  const activeLifeExpectancy = isSpouseTab ? spouseLifeExpectancy : selfLifeExpectancy;
+
+  const {
+    additionalPayment,
+    returnRepayment,
+    combinedScenario,
+    paybackMilestones,
+    distributionByAge,
+    chartData,
+    recommendation,
+  } = activeResult;
+
+  // 주요 표시 대상 (반납 활성화 시 결합 시나리오, 아닐 시 추납 시나리오)
+  const displayCostWon = combinedScenario ? combinedScenario.totalCostWon : additionalPayment.totalCostWon;
+  const displayMonthlyIncreaseWon = combinedScenario ? combinedScenario.monthlyIncreaseWon : additionalPayment.monthlyIncreaseWon;
+  const displayBreakEvenAge = combinedScenario ? combinedScenario.breakEvenAge : additionalPayment.breakEvenAge;
+  const displayBreakEvenYears = combinedScenario ? combinedScenario.breakEvenYears : additionalPayment.breakEvenYears;
+  const displayNetProfitWon = combinedScenario ? combinedScenario.netProfitWon : additionalPayment.netProfitWon;
+  const displayRoiPercent = combinedScenario ? combinedScenario.roiPercent : additionalPayment.roiPercent;
+  const displayIrr = combinedScenario ? combinedScenario.annualEquivalentReturn : additionalPayment.annualEquivalentReturn;
 
   return (
     <div
@@ -97,34 +244,34 @@ export default function NpsRecoveryModal({
       <div
         style={{
           width: "100%",
-          maxWidth: "1000px",
-          maxHeight: "90vh",
-          backgroundColor: "var(--surface)",
+          maxWidth: "1080px",
+          maxHeight: "92vh",
+          backgroundColor: "var(--surface, #111827)",
           borderRadius: "16px",
-          border: "1px solid var(--border)",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+          border: "1px solid var(--border, rgba(255, 255, 255, 0.12))",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          color: "var(--text-primary)",
+          color: "var(--text-primary, #f9fafb)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
+        {/* Header with Title and Tabs */}
         <div
           style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            padding: "18px 24px 14px",
+            borderBottom: "1px solid var(--border, rgba(255, 255, 255, 0.1))",
             background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.05) 100%)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
           }}
         >
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "1.4rem" }}>⚖️</span>
-              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "1.35rem" }}>⚖️</span>
+              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
                 국민연금 추납(추후납부) vs 반납 실익 역산기
               </h2>
               <span
@@ -133,379 +280,996 @@ export default function NpsRecoveryModal({
                   padding: "2px 8px",
                   borderRadius: "9999px",
                   background: "rgba(99, 102, 241, 0.15)",
-                  color: "var(--text-accent, #6366f1)",
+                  color: "var(--text-accent, #818cf8)",
                   fontWeight: 600,
                   border: "1px solid rgba(99, 102, 241, 0.3)",
                 }}
               >
                 2026 연금개혁 산식
               </span>
+              {!hasSpouse && (
+                <span
+                  style={{
+                    fontSize: "0.7rem",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    background: "rgba(148, 163, 184, 0.15)",
+                    color: "var(--text-secondary, #94a3b8)",
+                  }}
+                >
+                  단독가구(배우자 모의체험 가능)
+                </span>
+              )}
             </div>
-            <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
-              과거 미납·경단 기간 추납과 1998년 이전 70% 소득대체율 반납 실익을 골든크로스(원금 회수 나이)로 분석합니다.
-            </p>
+            <button
+              onClick={onClose}
+              aria-label="닫기"
+              style={{
+                background: "none",
+                border: "none",
+                fontSize: "1.4rem",
+                cursor: "pointer",
+                color: "var(--text-muted, #94a3b8)",
+                padding: "4px 8px",
+                borderRadius: "8px",
+              }}
+            >
+              ✕
+            </button>
           </div>
-          <button
-            onClick={onClose}
+
+          <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--text-secondary, #94a3b8)" }}>
+            과거 미납·경단 기간 추납과 1998년 이전 70% 소득대체율 반납 실익을 골든크로스(원금 회수 나이) 및 다각도 수령 분포로 분석합니다.
+          </p>
+
+          {/* Tab Buttons (본인 / 배우자 / 부부 합산 시너지) */}
+          <div
             style={{
-              background: "none",
-              border: "none",
-              fontSize: "1.5rem",
-              cursor: "pointer",
-              color: "var(--text-muted)",
-              padding: "4px 8px",
-              borderRadius: "8px",
+              display: "flex",
+              gap: "8px",
+              background: "var(--surface-2, rgba(255, 255, 255, 0.04))",
+              padding: "4px",
+              borderRadius: "10px",
+              border: "1px solid var(--border, rgba(255, 255, 255, 0.08))",
+              width: "fit-content",
             }}
           >
-            ✕
-          </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("SELF")}
+              style={{
+                padding: "8px 18px",
+                fontSize: "0.85rem",
+                fontWeight: activeTab === "SELF" ? 700 : 500,
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                background:
+                  activeTab === "SELF"
+                    ? "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
+                    : "transparent",
+                color: activeTab === "SELF" ? "#ffffff" : "var(--text-secondary, #94a3b8)",
+                boxShadow: activeTab === "SELF" ? "0 2px 8px rgba(99, 102, 241, 0.35)" : "none",
+                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>👤</span> 본인 분석
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  padding: "1px 6px",
+                  borderRadius: "9999px",
+                  background: activeTab === "SELF" ? "rgba(255,255,255,0.2)" : "rgba(99,102,241,0.15)",
+                }}
+              >
+                {selfAge}세
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("SPOUSE")}
+              style={{
+                padding: "8px 18px",
+                fontSize: "0.85rem",
+                fontWeight: activeTab === "SPOUSE" ? 700 : 500,
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                background:
+                  activeTab === "SPOUSE"
+                    ? "linear-gradient(135deg, #ec4899 0%, #db2777 100%)"
+                    : "transparent",
+                color: activeTab === "SPOUSE" ? "#ffffff" : "var(--text-secondary, #94a3b8)",
+                boxShadow: activeTab === "SPOUSE" ? "0 2px 8px rgba(236, 72, 153, 0.35)" : "none",
+                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>👥</span> 배우자 분석
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  padding: "1px 6px",
+                  borderRadius: "9999px",
+                  background: activeTab === "SPOUSE" ? "rgba(255,255,255,0.2)" : "rgba(236,72,153,0.15)",
+                }}
+              >
+                {spouseAge}세
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab("COUPLE")}
+              style={{
+                padding: "8px 18px",
+                fontSize: "0.85rem",
+                fontWeight: activeTab === "COUPLE" ? 700 : 500,
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                background:
+                  activeTab === "COUPLE"
+                    ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
+                    : "transparent",
+                color: activeTab === "COUPLE" ? "#ffffff" : "var(--text-secondary, #94a3b8)",
+                boxShadow: activeTab === "COUPLE" ? "0 2px 8px rgba(16, 185, 129, 0.35)" : "none",
+                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>📊</span> 부부 합산 시너지
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
-        <div style={{ padding: "24px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: "24px" }}>
-          {/* Controls Grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: "16px",
-              background: "var(--modal-subbox-bg, var(--surface-2))",
-              padding: "16px",
-              borderRadius: "12px",
-              border: "1px solid var(--modal-subbox-border, var(--border))",
-            }}
-          >
-            {/* 추납 희망 개월수 */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                  추납 희망 기간 (최대 119개월)
-                </label>
-                <span style={{ fontSize: "0.85rem", color: "#6366f1", fontWeight: 700 }}>
-                  {additionalMonths}개월 ({(additionalMonths / 12).toFixed(1)}년)
-                </span>
-              </div>
-              <input
-                type="range"
-                min={1}
-                max={119}
-                value={additionalMonths}
-                onChange={(e) => setAdditionalMonths(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#6366f1" }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                <span>1개월</span>
-                <span>60개월(5년)</span>
-                <span>119개월(10년 미만)</span>
-              </div>
-            </div>
-
-            {/* 추납 기준소득월액 */}
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                  신청 시 기준소득월액 (보험료 9%)
-                </label>
-                <span style={{ fontSize: "0.85rem", color: "#a855f7", fontWeight: 700 }}>
-                  {Math.round(baseIncomeWon / 10000).toLocaleString()}만원/월 (보험료 {Math.round((baseIncomeWon * 0.09) / 10000)}만원)
-                </span>
-              </div>
-              <input
-                type="range"
-                min={1000000}
-                max={6170000}
-                step={100000}
-                value={baseIncomeWon}
-                onChange={(e) => setBaseIncomeWon(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#a855f7" }}
-              />
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "2px" }}>
-                <span>100만원</span>
-                <span>300만원(평균 A값)</span>
-                <span>617만원(상한)</span>
-              </div>
-            </div>
-
-            {/* 반납 옵션 토글 */}
-            <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary)" }}>
-                <input
-                  type="checkbox"
-                  checked={hasReturnRefund}
-                  onChange={(e) => setHasReturnRefund(e.target.checked)}
-                  style={{ width: "18px", height: "18px", accentColor: "#10b981" }}
-                />
-                과거 반환일시금 수령 이력 있음 (반납 분석 활성화)
-              </label>
-              {hasReturnRefund && (
-                <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
-                  <select
-                    value={refundYearPeriod}
-                    onChange={(e) => setRefundYearPeriod(e.target.value as any)}
+        <div
+          style={{
+            padding: "20px 24px",
+            overflowY: "auto",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+          }}
+        >
+          {/* TAB 1 & 2: 본인 또는 배우자 개별 분석 뷰 */}
+          {!isCoupleTab && (
+            <>
+              {/* Controls Grid */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: "16px",
+                  background: "var(--modal-subbox-bg, var(--surface-2, rgba(255, 255, 255, 0.03)))",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  border: "1px solid var(--modal-subbox-border, var(--border, rgba(255, 255, 255, 0.08)))",
+                }}
+              >
+                {/* 추납 희망 개월수 */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
+                      추납 희망 기간 (최대 119개월)
+                    </label>
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        color: isSpouseTab ? "#f472b6" : "#818cf8",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {currentAdditionalMonths}개월 ({(currentAdditionalMonths / 12).toFixed(1)}년)
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1}
+                    max={119}
+                    value={currentAdditionalMonths}
+                    onChange={(e) => setCurrentAdditionalMonths(Number(e.target.value))}
                     style={{
-                      flex: 1,
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.8rem",
-                      background: "var(--surface)",
-                      color: "var(--text-primary)",
-                      border: "1px solid var(--border)",
+                      width: "100%",
+                      accentColor: isSpouseTab ? "#ec4899" : "#6366f1",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "0.7rem",
+                      color: "var(--text-secondary, #94a3b8)",
+                      marginTop: "2px",
                     }}
                   >
-                    <option value="PRE_1998">1998년 이전 (소득대체율 70%)</option>
-                    <option value="1999_2007">1999~2007년 (소득대체율 60%)</option>
-                    <option value="POST_2008">2008년 이후 (소득대체율 50~40%)</option>
-                  </select>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Key KPI Cards */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "12px",
-            }}
-          >
-            <div
-              style={{
-                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.02) 100%)",
-                border: "1px solid rgba(99, 102, 241, 0.25)",
-                borderRadius: "12px",
-                padding: "16px",
-              }}
-            >
-              <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>추납 일시납 총비용</div>
-              <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#818cf8", marginTop: "4px" }}>
-                {(additionalPayment.totalCostWon / 10000).toLocaleString()}만원
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "2px" }}>
-                월 {Math.round(additionalPayment.monthlyPremiumWon / 10000)}만원 × {additionalPayment.months}개월
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%)",
-                border: "1px solid rgba(16, 185, 129, 0.25)",
-                borderRadius: "12px",
-                padding: "16px",
-              }}
-            >
-              <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>평생 월 수령 증가액</div>
-              <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#34d399", marginTop: "4px" }}>
-                +{(additionalPayment.monthlyIncreaseWon / 10000).toFixed(1)}만원/월
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "2px" }}>
-                연간 +{Math.round(additionalPayment.annualIncreaseWon / 10000).toLocaleString()}만원 증액
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%)",
-                border: "1px solid rgba(245, 158, 11, 0.25)",
-                borderRadius: "12px",
-                padding: "16px",
-              }}
-            >
-              <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>원금 회수 나이 (골든크로스)</div>
-              <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#fbbf24", marginTop: "4px" }}>
-                {additionalPayment.breakEvenAge}세
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "2px" }}>
-                개시 후 {additionalPayment.breakEvenYears}년 만에 완벽 원금 회수
-              </div>
-            </div>
-
-            <div
-              style={{
-                background: "linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(236, 72, 153, 0.02) 100%)",
-                border: "1px solid rgba(236, 72, 153, 0.25)",
-                borderRadius: "12px",
-                padding: "16px",
-              }}
-            >
-              <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>기대수명({expectedLifeExpectancy}세) 순수익</div>
-              <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f472b6", marginTop: "4px" }}>
-                +{(additionalPayment.netProfitWon / 10000).toLocaleString()}만원
-              </div>
-              <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "2px" }}>
-                순수익률 +{additionalPayment.roiPercent}% (IRR 연 {additionalPayment.annualEquivalentReturn}%)
-              </div>
-            </div>
-          </div>
-
-          {/* Golden Crossover Chart */}
-          <div
-            style={{
-              background: "rgba(255, 255, 255, 0.02)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "12px",
-              padding: "16px",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-              <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
-                📈 나이별 실질 순누적 수령액 비교 곡선 (원금 차감 후 순이익)
-              </h3>
-              <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>단위: 만원</span>
-            </div>
-            <div style={{ height: "260px", width: "100%" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 20, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                  <XAxis dataKey="age" stroke="#94a3b8" tickFormatter={(v) => `${v}세`} />
-                  <YAxis stroke="#94a3b8" tickFormatter={(v) => `${(v / 10000).toFixed(0)}억`} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "rgba(15, 23, 42, 0.95)",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: "8px",
-                      color: "#fff",
-                    }}
-                    formatter={(val: any) => [`${Math.round(Number(val)).toLocaleString()}만원`, ""]}
-                    labelFormatter={(label) => `${label}세`}
-                  />
-                  <Legend />
-                  <ReferenceLine
-                    x={Math.round(additionalPayment.breakEvenAge)}
-                    stroke="#fbbf24"
-                    strokeDasharray="4 4"
-                    label={{ value: `골든크로스 ${additionalPayment.breakEvenAge}세`, fill: "#fbbf24", fontSize: 11 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="withoutRecovery"
-                    name="현재 유지 (미추납)"
-                    stroke="#94a3b8"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="withAdditionalPayment"
-                    name="추납 진행 (순이익)"
-                    stroke="#6366f1"
-                    strokeWidth={3}
-                    dot={false}
-                  />
-                  {returnRepayment && (
-                    <Line
-                      type="monotone"
-                      dataKey="withReturnRepayment"
-                      name="과거 반납 복원 (초고수익)"
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      dot={false}
-                    />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Comparison Table & Advice */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: "16px",
-            }}
-          >
-            {/* Table */}
-            <div
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "12px",
-                padding: "16px",
-              }}
-            >
-              <h4 style={{ margin: "0 0 12px 0", fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary)" }}>
-                📋 제도별 실익 및 조건 비교
-              </h4>
-              <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left", color: "var(--text-secondary)", background: "var(--modal-table-th, var(--surface-2))" }}>
-                    <th style={{ padding: "8px 4px" }}>구분</th>
-                    <th style={{ padding: "8px 4px" }}>추납(추후납부)</th>
-                    <th style={{ padding: "8px 4px" }}>반납(일시금 반환)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td style={{ padding: "8px 4px", color: "var(--text-secondary)" }}>신청 한도</td>
-                    <td style={{ padding: "8px 4px", color: "var(--text-accent, #6366f1)", fontWeight: 600 }}>최대 119개월 (10년 미만)</td>
-                    <td style={{ padding: "8px 4px", color: "var(--success, #10b981)", fontWeight: 600 }}>수령했던 전체 기간 복원</td>
-                  </tr>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td style={{ padding: "8px 4px", color: "var(--text-secondary)" }}>적용 소득대체율</td>
-                    <td style={{ padding: "8px 4px", color: "var(--text-primary)" }}>현재 연도(약 41.5% 수준)</td>
-                    <td style={{ padding: "8px 4px", color: "var(--success, #10b981)", fontWeight: 700 }}>
-                      과거 시절(최대 70%) 통째 복원
-                    </td>
-                  </tr>
-                  <tr style={{ borderBottom: "1px solid var(--border)" }}>
-                    <td style={{ padding: "8px 4px", color: "var(--text-secondary)" }}>분할납부 여부</td>
-                    <td style={{ padding: "8px 4px", color: "var(--text-primary)" }}>최대 60회 분할 가능</td>
-                    <td style={{ padding: "8px 4px", color: "var(--text-primary)" }}>최대 24회 분할 가능</td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "8px 4px", color: "var(--text-secondary)" }}>수익비 평가</td>
-                    <td style={{ padding: "8px 4px", color: "#f59e0b", fontWeight: 700 }}>약 1.5~2.2배 (우수)</td>
-                    <td style={{ padding: "8px 4px", color: "var(--success, #10b981)", fontWeight: 700 }}>
-                      약 2.5~3.8배 (최상급)
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Action Checklist */}
-            <div
-              style={{
-                background: "var(--modal-subbox-bg, var(--surface-2))",
-                border: "1px solid var(--modal-subbox-border, var(--border))",
-                borderRadius: "12px",
-                padding: "16px",
-              }}
-            >
-              <h4 style={{ margin: "0 0 8px 0", fontSize: "0.9rem", fontWeight: 700, color: "var(--text-accent, #6366f1)" }}>
-                💡 공단 실행 가이드 & 전략 소견
-              </h4>
-              <p style={{ margin: "0 0 12px 0", fontSize: "0.8rem", color: "var(--text-primary)", lineHeight: 1.5 }}>
-                {recommendation.primaryAdvice}
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                {recommendation.actionChecklist.map((item, idx) => (
-                  <div key={idx} style={{ display: "flex", gap: "6px", fontSize: "0.75rem", color: "var(--text-secondary)" }}>
-                    <span style={{ color: "var(--text-accent, #6366f1)", fontWeight: 700 }}>✓</span>
-                    <span>{item}</span>
+                    <span>1개월</span>
+                    <span>60개월(5년)</span>
+                    <span>119개월(10년 미만)</span>
                   </div>
-                ))}
+                </div>
+
+                {/* 추납 기준소득월액 */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-primary, #ffffff)" }}>
+                      신청 시 기준소득월액 (보험료 9%)
+                    </label>
+                    <span
+                      style={{
+                        fontSize: "0.85rem",
+                        color: isSpouseTab ? "#f472b6" : "#a855f7",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {Math.round(currentBaseIncomeWon / 10000).toLocaleString()}만원/월 (보험료{" "}
+                      {Math.round((currentBaseIncomeWon * 0.09) / 10000)}만원)
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1000000}
+                    max={6170000}
+                    step={100000}
+                    value={currentBaseIncomeWon}
+                    onChange={(e) => setCurrentBaseIncomeWon(Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      accentColor: isSpouseTab ? "#db2777" : "#a855f7",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "0.7rem",
+                      color: "var(--text-secondary, #94a3b8)",
+                      marginTop: "2px",
+                    }}
+                  >
+                    <span>100만원</span>
+                    <span>300만원(평균 A값)</span>
+                    <span>617만원(상한)</span>
+                  </div>
+                </div>
+
+                {/* 반납 옵션 토글 및 세부 설정 */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      cursor: "pointer",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      color: "var(--text-primary, #ffffff)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={currentHasReturnRefund}
+                      onChange={(e) => setCurrentHasReturnRefund(e.target.checked)}
+                      style={{ width: "18px", height: "18px", accentColor: "#10b981" }}
+                    />
+                    과거 반환일시금 수령 이력 있음 (반납 분석 활성화)
+                  </label>
+
+                  {currentHasReturnRefund && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                        background: "rgba(16, 185, 129, 0.08)",
+                        padding: "10px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(16, 185, 129, 0.2)",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <label style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)", minWidth: "60px" }}>
+                          적용 시기
+                        </label>
+                        <select
+                          value={currentRefundYearPeriod}
+                          onChange={(e) => setCurrentRefundYearPeriod(e.target.value as any)}
+                          style={{
+                            flex: 1,
+                            padding: "6px 8px",
+                            borderRadius: "6px",
+                            fontSize: "0.78rem",
+                            background: "var(--surface, #1f2937)",
+                            color: "var(--text-primary, #ffffff)",
+                            border: "1px solid var(--border, rgba(255, 255, 255, 0.2))",
+                          }}
+                        >
+                          <option value="PRE_1998">1998년 이전 (소득대체율 70% 복원)</option>
+                          <option value="1999_2007">1999~2007년 (소득대체율 60% 복원)</option>
+                          <option value="POST_2008">2008년 이후 (소득대체율 50~40%)</option>
+                        </select>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
+                            <span>반환 원금</span>
+                            <span style={{ fontWeight: 700, color: "#34d399" }}>
+                              {Math.round(currentRefundPrincipalWon / 10000)}만원
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={1000000}
+                            max={20000000}
+                            step={500000}
+                            value={currentRefundPrincipalWon}
+                            onChange={(e) => setCurrentRefundPrincipalWon(Number(e.target.value))}
+                            style={{ width: "100%", accentColor: "#10b981" }}
+                          />
+                        </div>
+
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.72rem" }}>
+                            <span>경과 년수</span>
+                            <span style={{ fontWeight: 700, color: "#34d399" }}>
+                              {currentRefundYearsPassed}년 경과
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={5}
+                            max={35}
+                            value={currentRefundYearsPassed}
+                            onChange={(e) => setCurrentRefundYearsPassed(Number(e.target.value))}
+                            style={{ width: "100%", accentColor: "#10b981" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 4 Key KPI Cards */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "12px",
+                }}
+              >
+                {/* 1. 납부 총비용 */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.02) 100%)",
+                    border: "1px solid rgba(99, 102, 241, 0.25)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                    {combinedScenario ? "추납 + 반납 총 투자비용" : "추납 일시납 총비용"}
+                  </div>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#818cf8", marginTop: "4px" }}>
+                    {Math.round(displayCostWon / 10000).toLocaleString()}만원
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    {combinedScenario
+                      ? `추납 ${Math.round(additionalPayment.totalCostWon / 10000)}만 + 반납 ${Math.round((returnRepayment?.totalCostWon || 0) / 10000)}만`
+                      : `월 ${Math.round(additionalPayment.monthlyPremiumWon / 10000)}만원 × ${additionalPayment.months}개월`}
+                  </div>
+                </div>
+
+                {/* 2. 평생 월 수령 증가액 */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                    border: "1px solid rgba(16, 185, 129, 0.25)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>평생 월 수령 증가액</div>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#34d399", marginTop: "4px" }}>
+                    +{(displayMonthlyIncreaseWon / 10000).toFixed(1)}만원/월
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    연간 +{Math.round((displayMonthlyIncreaseWon * 12) / 10000).toLocaleString()}만원 평생 증액
+                  </div>
+                </div>
+
+                {/* 3. 원금 회수 나이 (골든크로스) */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%)",
+                    border: "1px solid rgba(245, 158, 11, 0.25)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>원금 회수 나이 (골든크로스)</div>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#fbbf24", marginTop: "4px" }}>
+                    {displayBreakEvenAge}세
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    개시 후 {displayBreakEvenYears}년 만에 완벽 원금 회수
+                  </div>
+                </div>
+
+                {/* 4. 기대수명 순수익 & 회수배수 */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(236, 72, 153, 0.02) 100%)",
+                    border: "1px solid rgba(236, 72, 153, 0.25)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                    기대수명({activeLifeExpectancy}세) 순수익
+                  </div>
+                  <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f472b6", marginTop: "4px" }}>
+                    +{(displayNetProfitWon / 10000).toLocaleString()}만원
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    순수익률 +{displayRoiPercent}% (실효 IRR 연 {displayIrr}%)
+                  </div>
+                </div>
+              </div>
+
+              {/* Payback Milestones Timeline Progress Bar */}
+              <div
+                style={{
+                  background: "var(--surface-2, rgba(255, 255, 255, 0.03))",
+                  border: "1px solid var(--border, rgba(255, 255, 255, 0.08))",
+                  borderRadius: "12px",
+                  padding: "16px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                  <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
+                    ⏳ 납부 원금 회수 마일스톤 (누적 수령액 달성 시점)
+                  </h4>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-secondary, #94a3b8)" }}>
+                    증액 후 총 예상 월 연금액:{" "}
+                    <strong style={{ color: "#34d399" }}>
+                      {Math.round(paybackMilestones.monthlyPensionWonAfterRecovery / 10000).toLocaleString()}만원/월
+                    </strong>
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(4, 1fr)",
+                    gap: "8px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "rgba(99, 102, 241, 0.08)",
+                      border: "1px solid rgba(99, 102, 241, 0.2)",
+                      borderRadius: "8px",
+                      padding: "10px 6px",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>50% 반액 회수</div>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#818cf8", marginTop: "2px" }}>
+                      {paybackMilestones.halfPaybackAge}세
+                    </div>
+                    <div style={{ fontSize: "0.68rem", color: "#64748b" }}>개시 후 약 {(paybackMilestones.halfPaybackAge - activeNpsStartAge).toFixed(1)}년</div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "rgba(245, 158, 11, 0.12)",
+                      border: "1px solid rgba(245, 158, 11, 0.35)",
+                      borderRadius: "8px",
+                      padding: "10px 6px",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", color: "#fbbf24", fontWeight: 600 }}>100% 원금 전액 회수</div>
+                    <div style={{ fontSize: "1.15rem", fontWeight: 800, color: "#f59e0b", marginTop: "2px" }}>
+                      {paybackMilestones.breakEvenAge}세 🌟
+                    </div>
+                    <div style={{ fontSize: "0.68rem", color: "#d97706" }}>골든크로스 달성</div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "rgba(16, 185, 129, 0.08)",
+                      border: "1px solid rgba(16, 185, 129, 0.2)",
+                      borderRadius: "8px",
+                      padding: "10px 6px",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>200% 더블 달성</div>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#34d399", marginTop: "2px" }}>
+                      {paybackMilestones.doubleReturnAge}세
+                    </div>
+                    <div style={{ fontSize: "0.68rem", color: "#64748b" }}>순이익 = 원금의 100%</div>
+                  </div>
+
+                  <div
+                    style={{
+                      background: "rgba(236, 72, 153, 0.08)",
+                      border: "1px solid rgba(236, 72, 153, 0.2)",
+                      borderRadius: "8px",
+                      padding: "10px 6px",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>300% 트리플 달성</div>
+                    <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f472b6", marginTop: "2px" }}>
+                      {paybackMilestones.tripleReturnAge}세
+                    </div>
+                    <div style={{ fontSize: "0.68rem", color: "#64748b" }}>원금의 3배 누적 수령</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Golden Crossover Chart */}
+              <div
+                style={{
+                  background: "var(--surface-2, rgba(255, 255, 255, 0.02))",
+                  border: "1px solid var(--border, rgba(255, 255, 255, 0.08))",
+                  borderRadius: "12px",
+                  padding: "16px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 600 }}>
+                    📈 {isSpouseTab ? "배우자" : "본인"} 나이별 실질 순누적 수령액 비교 곡선 (원금 차감 후 순이익)
+                  </h3>
+                  <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>단위: 만원</span>
+                </div>
+                <div style={{ height: "260px", width: "100%" }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 10, right: 20, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                      <XAxis dataKey="age" stroke="#94a3b8" tickFormatter={(v) => `${v}세`} />
+                      <YAxis stroke="#94a3b8" tickFormatter={(v) => `${(v / 10000).toFixed(0)}억`} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(15, 23, 42, 0.95)",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          borderRadius: "8px",
+                          color: "#fff",
+                        }}
+                        formatter={(val: any) => [`${Math.round(Number(val)).toLocaleString()}만원`, ""]}
+                        labelFormatter={(label) => `${label}세`}
+                      />
+                      <Legend />
+                      <ReferenceLine
+                        x={Math.round(displayBreakEvenAge)}
+                        stroke="#fbbf24"
+                        strokeDasharray="4 4"
+                        label={{ value: `골든크로스 ${displayBreakEvenAge}세`, fill: "#fbbf24", fontSize: 11 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="withoutRecovery"
+                        name="현재 유지 (미추납)"
+                        stroke="#94a3b8"
+                        strokeWidth={2}
+                        dot={false}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="withAdditionalPayment"
+                        name="추납 진행 (순이익)"
+                        stroke={isSpouseTab ? "#ec4899" : "#6366f1"}
+                        strokeWidth={3}
+                        dot={false}
+                      />
+                      {returnRepayment && (
+                        <Line
+                          type="monotone"
+                          dataKey="withReturnRepayment"
+                          name="과거 반납 복원 (초고수익)"
+                          stroke="#10b981"
+                          strokeWidth={2.5}
+                          strokeDasharray="5 5"
+                          dot={false}
+                        />
+                      )}
+                      {combinedScenario && (
+                        <Line
+                          type="monotone"
+                          dataKey="withCombined"
+                          name="추납+반납 동시 진행 (최대수혜)"
+                          stroke="#a855f7"
+                          strokeWidth={3}
+                          dot={false}
+                        />
+                      )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Age Distribution Table & Advice */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  gap: "16px",
+                }}
+              >
+                {/* Expected Age Distribution Matrix */}
+                <div
+                  style={{
+                    background: "var(--surface, #1e293b)",
+                    border: "1px solid var(--border, rgba(255, 255, 255, 0.1))",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <h4 style={{ margin: "0 0 10px 0", fontSize: "0.9rem", fontWeight: 700, color: "var(--text-primary, #ffffff)" }}>
+                    📊 기대수명 구간별 납부금액 대비 수령 분포
+                  </h4>
+                  <table style={{ width: "100%", fontSize: "0.8rem", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr
+                        style={{
+                          borderBottom: "1px solid var(--border, rgba(255, 255, 255, 0.1))",
+                          textAlign: "left",
+                          color: "var(--text-secondary, #94a3b8)",
+                        }}
+                      >
+                        <th style={{ padding: "8px 4px" }}>목표 연령</th>
+                        <th style={{ padding: "8px 4px", textAlign: "right" }}>누적 추가수령</th>
+                        <th style={{ padding: "8px 4px", textAlign: "right" }}>원금 차감 순이익</th>
+                        <th style={{ padding: "8px 4px", textAlign: "right" }}>원금 회수율</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {distributionByAge.map((item, idx) => (
+                        <tr
+                          key={idx}
+                          style={{
+                            borderBottom: "1px solid var(--border, rgba(255, 255, 255, 0.06))",
+                          }}
+                        >
+                          <td style={{ padding: "8px 4px", color: "var(--text-primary, #ffffff)" }}>
+                            {item.label}
+                          </td>
+                          <td style={{ padding: "8px 4px", textAlign: "right", color: "#818cf8", fontWeight: 600 }}>
+                            {Math.round(item.cumulativeReceivedWon / 10000).toLocaleString()}만원
+                          </td>
+                          <td
+                            style={{
+                              padding: "8px 4px",
+                              textAlign: "right",
+                              color: item.netProfitWon >= 0 ? "#34d399" : "#f87171",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {item.netProfitWon >= 0 ? "+" : ""}
+                            {Math.round(item.netProfitWon / 10000).toLocaleString()}만원
+                          </td>
+                          <td
+                            style={{
+                              padding: "8px 4px",
+                              textAlign: "right",
+                              color: item.recoveryRatioPercent >= 100 ? "#fbbf24" : "#94a3b8",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {item.recoveryRatioPercent}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p style={{ margin: "8px 0 0 0", fontSize: "0.72rem", color: "var(--text-muted, #94a3b8)" }}>
+                    * 수령 도중 조기 사망하더라도 배우자 또는 유족에게 60% 유족연금이 종신 승계되므로 가구 손실이 방어됩니다.
+                  </p>
+                </div>
+
+                {/* Action Checklist & Strategy Note */}
+                <div
+                  style={{
+                    background: "var(--modal-subbox-bg, var(--surface-2, rgba(255, 255, 255, 0.03)))",
+                    border: "1px solid var(--modal-subbox-border, var(--border, rgba(255, 255, 255, 0.08)))",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <h4
+                    style={{
+                      margin: "0 0 8px 0",
+                      fontSize: "0.9rem",
+                      fontWeight: 700,
+                      color: isSpouseTab ? "#f472b6" : "var(--text-accent, #818cf8)",
+                    }}
+                  >
+                    💡 {isSpouseTab ? "배우자 맞춤 가이드 & 전략 소견" : "본인 공단 실행 가이드 & 전략 소견"}
+                  </h4>
+                  <p
+                    style={{
+                      margin: "0 0 12px 0",
+                      fontSize: "0.8rem",
+                      color: "var(--text-primary, #ffffff)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {recommendation.primaryAdvice}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {recommendation.actionChecklist.map((item, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "flex",
+                          gap: "6px",
+                          fontSize: "0.75rem",
+                          color: "var(--text-secondary, #94a3b8)",
+                        }}
+                      >
+                        <span style={{ color: isSpouseTab ? "#ec4899" : "#6366f1", fontWeight: 700 }}>✓</span>
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                    {isSpouseTab && (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "6px",
+                          fontSize: "0.75rem",
+                          color: "#fbbf24",
+                          marginTop: "4px",
+                        }}
+                      >
+                        <span style={{ fontWeight: 700 }}>★</span>
+                        <span>
+                          전업주부 경력단절 배우자는 임의가입 후 과거 경단 기간 추납 시 10년 수급 자격(월 약 40~60만원 종신 연금)을 바로 완성할 수 있습니다.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* TAB 3: 부부 합산 시너지 뷰 */}
+          {isCoupleTab && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              {/* Couple Header Summary Cards */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                  gap: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0.02) 100%)",
+                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>부부 합산 총 납부비용</div>
+                  <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#818cf8", marginTop: "4px" }}>
+                    {Math.round(coupleResult.couple.totalCostWon / 10000).toLocaleString()}만원
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    본인 {Math.round((coupleResult.self.combinedScenario ? coupleResult.self.combinedScenario.totalCostWon : coupleResult.self.additionalPayment.totalCostWon) / 10000)}만 + 배우자 {Math.round((coupleResult.spouse.combinedScenario ? coupleResult.spouse.combinedScenario.totalCostWon : coupleResult.spouse.additionalPayment.totalCostWon) / 10000)}만
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0.02) 100%)",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>부부 합산 평생 월 증액</div>
+                  <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#34d399", marginTop: "4px" }}>
+                    +{(coupleResult.couple.monthlyIncreaseWon / 10000).toFixed(1)}만원/월
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    가구 연간 +{Math.round(coupleResult.couple.annualIncreaseWon / 10000).toLocaleString()}만원 평생 증액
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.02) 100%)",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>부부 가구 손익분기 (골든크로스)</div>
+                  <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#fbbf24", marginTop: "4px" }}>
+                    개시 후 {coupleResult.couple.breakEvenYearsAvg}년 만에 회수
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    본인 {coupleResult.self.additionalPayment.breakEvenAge}세 / 배우자 {coupleResult.spouse.additionalPayment.breakEvenAge}세
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(236, 72, 153, 0.12) 0%, rgba(236, 72, 153, 0.02) 100%)",
+                    border: "1px solid rgba(236, 72, 153, 0.3)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>가구 생애 총 순이익</div>
+                  <div style={{ fontSize: "1.45rem", fontWeight: 800, color: "#f472b6", marginTop: "4px" }}>
+                    +{(coupleResult.couple.netProfitWon / 10000).toLocaleString()}만원
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    가구 합산 투자 수익률 +{coupleResult.couple.roiPercent}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Side-by-Side Comparison: Self vs Spouse */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  gap: "16px",
+                }}
+              >
+                {/* 본인 요약 카드 */}
+                <div
+                  style={{
+                    background: "var(--surface, #1e293b)",
+                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#818cf8" }}>
+                      👤 본인 추납·반납 실익
+                    </h4>
+                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>현재 {selfAge}세 / 개시 {selfNpsStartAge}세</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.82rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>추납 신청 기간</span>
+                      <span style={{ fontWeight: 600 }}>{selfAdditionalMonths}개월</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>납부 총비용</span>
+                      <span style={{ fontWeight: 600, color: "#818cf8" }}>
+                        {Math.round((coupleResult.self.combinedScenario ? coupleResult.self.combinedScenario.totalCostWon : coupleResult.self.additionalPayment.totalCostWon) / 10000).toLocaleString()}만원
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>월 연금 증액</span>
+                      <span style={{ fontWeight: 700, color: "#34d399" }}>
+                        +{(coupleResult.self.additionalPayment.monthlyIncreaseWon / 10000).toFixed(1)}만원/월
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>원금 회수 나이</span>
+                      <span style={{ fontWeight: 700, color: "#fbbf24" }}>
+                        {coupleResult.self.additionalPayment.breakEvenAge}세 (개시 후 {coupleResult.self.additionalPayment.breakEvenYears}년)
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>기대수명 순수익</span>
+                      <span style={{ fontWeight: 700, color: "#f472b6" }}>
+                        +{(coupleResult.self.additionalPayment.netProfitWon / 10000).toLocaleString()}만원 (+{coupleResult.self.additionalPayment.roiPercent}%)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 배우자 요약 카드 */}
+                <div
+                  style={{
+                    background: "var(--surface, #1e293b)",
+                    border: "1px solid rgba(236, 72, 153, 0.3)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#f472b6" }}>
+                      👥 배우자 추납·반납 실익
+                    </h4>
+                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>현재 {spouseAge}세 / 개시 {spouseNpsStartAge}세</span>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "0.82rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>추납 신청 기간</span>
+                      <span style={{ fontWeight: 600 }}>{spouseAdditionalMonths}개월</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>납부 총비용</span>
+                      <span style={{ fontWeight: 600, color: "#f472b6" }}>
+                        {Math.round((coupleResult.spouse.combinedScenario ? coupleResult.spouse.combinedScenario.totalCostWon : coupleResult.spouse.additionalPayment.totalCostWon) / 10000).toLocaleString()}만원
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>월 연금 증액</span>
+                      <span style={{ fontWeight: 700, color: "#34d399" }}>
+                        +{(coupleResult.spouse.additionalPayment.monthlyIncreaseWon / 10000).toFixed(1)}만원/월
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>원금 회수 나이</span>
+                      <span style={{ fontWeight: 700, color: "#fbbf24" }}>
+                        {coupleResult.spouse.additionalPayment.breakEvenAge}세 (개시 후 {coupleResult.spouse.additionalPayment.breakEvenYears}년)
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ color: "#94a3b8" }}>기대수명 순수익</span>
+                      <span style={{ fontWeight: 700, color: "#f472b6" }}>
+                        +{(coupleResult.spouse.additionalPayment.netProfitWon / 10000).toLocaleString()}만원 (+{coupleResult.spouse.additionalPayment.roiPercent}%)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Couple Health Insurance & Tax Synergy Banner */}
+              <div
+                style={{
+                  background: "rgba(16, 185, 129, 0.08)",
+                  border: "1px solid rgba(16, 185, 129, 0.25)",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                }}
+              >
+                <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#34d399" }}>
+                  🛡️ 부부 명의 분산 및 건강보험료 피부양자(연 2,000만원) 안전지대 진단
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--text-secondary, #94a3b8)", lineHeight: 1.5 }}>
+                  한 사람에게 연금을 과도하게 집중시키면 연 2,000만원(월 166.7만원) 초과 시 건강보험 피부양자 자격이 박탈되어 매월 15~30만원의 건보료가 새로 부과될 수 있습니다.
+                  본인과 배우자가 각각 추납과 반납을 분산 실행하여 <strong>부부 각각 월 100~150만원대(연 2,000만원 이하)의 평생 종신 연금</strong>을 형성하면 피부양자 탈락을 방어하면서 가구 합산 월 {Math.round(coupleResult.couple.combinedMonthlyPensionWon / 10000).toLocaleString()}만원의 최고 효율 비과세/절세 연금 수령이 완성됩니다.
+                </p>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}
         <div
           style={{
-            padding: "16px 24px",
-            borderTop: "1px solid var(--border)",
+            padding: "14px 24px",
+            borderTop: "1px solid var(--border, rgba(255, 255, 255, 0.1))",
             display: "flex",
-            justifyContent: "flex-end",
-            background: "var(--modal-header-bg, var(--surface))",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: "var(--modal-header-bg, var(--surface, #111827))",
           }}
         >
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted, #94a3b8)" }}>
+            * 본 역산기는 2026 연금개혁 산식 및 공단 표준 재평가율을 반영한 정밀 추정치입니다.
+          </span>
           <button
             onClick={onClose}
             className="premium-button"
             style={{
-              padding: "8px 20px",
+              padding: "8px 22px",
               borderRadius: "8px",
               fontSize: "0.85rem",
               fontWeight: 600,

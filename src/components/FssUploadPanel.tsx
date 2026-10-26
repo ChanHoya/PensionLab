@@ -103,21 +103,28 @@ export default function FssUploadPanel({
       {dropzone}
 
       {/* 3. 본인/배우자 연금정보 파일 개별 업로드 박스 (유사 박스 포맷) */}
-      <div style={styles.individualBox}>
+      <div
+        style={{
+          ...styles.individualBox,
+          borderColor: who === "SELF" ? "rgba(99, 102, 241, 0.45)" : "rgba(236, 72, 153, 0.45)",
+          background: who === "SELF"
+            ? "linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, rgba(168, 85, 247, 0.02) 100%)"
+            : "linear-gradient(135deg, rgba(236, 72, 153, 0.04) 0%, rgba(244, 114, 182, 0.02) 100%)",
+        }}
+      >
         <div style={styles.individualHeader}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "1.1rem" }}>📁</span>
-              <strong style={{ fontSize: "0.95rem", color: "var(--text-primary, #ffffff)" }}>
-                본인/배우자 연금정보 파일 개별 업로드
-              </strong>
-              <span style={styles.individualTargetBadge}>
-                {who === "SELF" ? "본인 파일" : "배우자 파일"}
-              </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", textAlign: "left", flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>📁</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <strong style={{ fontSize: "0.95rem", color: "var(--text-primary, #ffffff)" }}>
+                  본인/배우자 연금정보 파일 개별 업로드 하기.
+                </strong>
+              </div>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--text-secondary, #94a3b8)", wordBreak: "keep-all" }}>
+                항목별 파일을 하나씩 넣거나 개별 추가 업로드할 수 있습니다.
+              </p>
             </div>
-            <p style={{ margin: "4px 0 0 0", fontSize: "0.78rem", color: "var(--text-secondary, #94a3b8)" }}>
-              항목별 파일을 하나씩 넣거나 개별 추가 업로드할 수 있습니다.
-            </p>
           </div>
 
           {hasSpouse && (
@@ -274,21 +281,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    flexWrap: "wrap",
-    gap: "10px",
+    gap: "12px",
     paddingBottom: "10px",
     borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
   },
-  individualTargetBadge: {
-    fontSize: "0.72rem",
-    fontWeight: 700,
-    padding: "2px 8px",
-    borderRadius: "6px",
-    backgroundColor: "rgba(99, 102, 241, 0.2)",
-    color: "#a5b4fc",
-    border: "1px solid rgba(99, 102, 241, 0.35)",
-  },
-  whoTabs: { display: "flex", gap: "6px" },
+  whoTabs: { display: "flex", gap: "6px", flexShrink: 0, marginLeft: "auto" },
   whoTab: {
     padding: "5px 12px",
     borderRadius: "8px",

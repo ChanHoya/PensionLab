@@ -1041,111 +1041,99 @@ export default function OnboardingPage() {
                     }}
                   />
 
-                  {/* 본인 / 배우자 선택 탭 바 */}
+                  {/* 일괄 업로드 헤더 (개별 업로드 박스와 동일한 좌측 제목/설명, 우측 탭 구조) */}
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      marginBottom: "12px",
+                      marginBottom: "10px",
                       paddingBottom: "10px",
-                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                      flexWrap: "wrap",
-                      gap: "8px",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+                      gap: "12px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <button
-                        type="button"
-                        id="btn-instant-target-self"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInstantTarget("SELF");
-                          setInstantSuccess(null);
-                          setInstantError(null);
-                        }}
-                        style={{
-                          padding: "6px 14px",
-                          borderRadius: "8px",
-                          border: instantTarget === "SELF" ? "1px solid #6366f1" : "1px solid rgba(255, 255, 255, 0.12)",
-                          background: instantTarget === "SELF" ? "rgba(99, 102, 241, 0.25)" : "rgba(255, 255, 255, 0.03)",
-                          color: instantTarget === "SELF" ? "#818cf8" : "var(--text-secondary, #94a3b8)",
-                          fontSize: "0.82rem",
-                          fontWeight: instantTarget === "SELF" ? 700 : 500,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        <span>👤</span> 본인 자료
-                        {instantSelfUploaded && (
-                          <span style={{ fontSize: "0.7rem", color: "#34d399", fontWeight: 700 }}>✓ 등록완료</span>
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        id="btn-instant-target-spouse"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setInstantTarget("SPOUSE");
-                          setInstantSuccess(null);
-                          setInstantError(null);
-                        }}
-                        style={{
-                          padding: "6px 14px",
-                          borderRadius: "8px",
-                          border: instantTarget === "SPOUSE" ? "1px solid #ec4899" : "1px solid rgba(255, 255, 255, 0.12)",
-                          background: instantTarget === "SPOUSE" ? "rgba(236, 72, 153, 0.25)" : "rgba(255, 255, 255, 0.03)",
-                          color: instantTarget === "SPOUSE" ? "#f472b6" : "var(--text-secondary, #94a3b8)",
-                          fontSize: "0.82rem",
-                          fontWeight: instantTarget === "SPOUSE" ? 700 : 500,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          transition: "all 0.15s ease",
-                        }}
-                      >
-                        <span>👥</span> 배우자 자료
-                        {instantSpouseUploaded && (
-                          <span style={{ fontSize: "0.7rem", color: "#34d399", fontWeight: 700 }}>✓ 등록완료</span>
-                        )}
-                      </button>
-                    </div>
-
-                    <span
-                      style={{
-                        fontSize: "0.7rem",
-                        padding: "3px 8px",
-                        borderRadius: "6px",
-                        background: instantTarget === "SELF" ? "#6366f1" : "#ec4899",
-                        color: "#fff",
-                        fontWeight: 700,
-                      }}
-                    >
-                      FAST PASS · {instantTarget === "SELF" ? "본인용" : "배우자용"}
-                    </span>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
-                    <span style={{ fontSize: "1.8rem" }}>
-                      {instantTarget === "SELF" ? "⚡" : "💖"}
-                    </span>
-                    <div style={{ textAlign: "left" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <strong style={{ fontSize: "0.95rem", color: "var(--text-primary)" }}>
-                          {instantTarget === "SELF" ? "본인" : "배우자"} 연금정보 파일 일괄 업로드
-                        </strong>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", textAlign: "left", flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>
+                        {instantTarget === "SELF" ? "⚡" : "💖"}
+                      </span>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <strong style={{ fontSize: "0.95rem", color: "var(--text-primary, #ffffff)" }}>
+                            {instantTarget === "SELF" ? "본인" : "배우자"} 연금정보 파일 일괄 업로드 하기.
+                          </strong>
+                        </div>
+                        <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--text-secondary, #94a3b8)", wordBreak: "keep-all" }}>
+                          {instantTarget === "SELF"
+                            ? "본인의 금감원 통합연금포털 엑셀(.xlsx), CSV, TXT, PDF 파일을 이곳에 끌어다 놓으세요. 3초 만에 1/2/3층 연금을 자동 파싱합니다."
+                            : "배우자의 금감원 통합연금포털 엑셀(.xlsx), CSV, TXT, PDF 파일을 이곳에 끌어다 놓으세요. 배우자 연금 데이터가 자동으로 연동됩니다."}
+                        </p>
                       </div>
-                      <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "var(--muted-foreground, #94a3b8)" }}>
-                        {instantTarget === "SELF"
-                          ? "본인의 금감원 통합연금포털 엑셀(.xlsx), CSV, TXT, PDF 파일을 이곳에 끌어다 놓으세요. 3초 만에 1/2/3층 연금을 자동 파싱합니다."
-                          : "배우자의 금감원 통합연금포털 엑셀(.xlsx), CSV, TXT, PDF 파일을 이곳에 끌어다 놓으세요. 배우자 연금 데이터가 자동으로 연동됩니다."}
-                      </p>
                     </div>
+
+                    {store.simulationParams.hasSpouse && (
+                      <div style={{ display: "flex", gap: "6px", flexShrink: 0, marginLeft: "auto" }}>
+                        <button
+                          type="button"
+                          id="btn-instant-target-self"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInstantTarget("SELF");
+                            setInstantSuccess(null);
+                            setInstantError(null);
+                          }}
+                          style={{
+                            padding: "5px 12px",
+                            borderRadius: "8px",
+                            border: instantTarget === "SELF" ? "1px solid #6366f1" : "1px solid rgba(255, 255, 255, 0.12)",
+                            background: instantTarget === "SELF" ? "rgba(99, 102, 241, 0.25)" : "rgba(255, 255, 255, 0.03)",
+                            color: instantTarget === "SELF" ? "#818cf8" : "var(--text-secondary, #94a3b8)",
+                            fontWeight: 600,
+                            fontSize: "0.8rem",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <span>👤</span> 본인 자료
+                          {instantSelfUploaded && (
+                            <span style={{ fontSize: "0.7rem", color: "#34d399", fontWeight: 700 }}>✓</span>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          id="btn-instant-target-spouse"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInstantTarget("SPOUSE");
+                            setInstantSuccess(null);
+                            setInstantError(null);
+                          }}
+                          style={{
+                            padding: "5px 12px",
+                            borderRadius: "8px",
+                            border: instantTarget === "SPOUSE" ? "1px solid #ec4899" : "1px solid rgba(255, 255, 255, 0.12)",
+                            background: instantTarget === "SPOUSE" ? "rgba(236, 72, 153, 0.25)" : "rgba(255, 255, 255, 0.03)",
+                            color: instantTarget === "SPOUSE" ? "#f472b6" : "var(--text-secondary, #94a3b8)",
+                            fontWeight: 600,
+                            fontSize: "0.8rem",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <span>👥</span> 배우자 자료
+                          {instantSpouseUploaded && (
+                            <span style={{ fontSize: "0.7rem", color: "#34d399", fontWeight: 700 }}>✓</span>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {instantAnalyzing && (

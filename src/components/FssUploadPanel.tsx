@@ -99,10 +99,7 @@ export default function FssUploadPanel({
         </p>
       </div>
 
-      {/* 2. 일괄 업로드 드롭존 박스 (안내 박스 바로 아래 배치) */}
-      {dropzone}
-
-      {/* 3. 본인/배우자 연금정보 파일 개별 업로드 박스 (유사 박스 포맷) */}
+      {/* 2. 본인/배우자 연금정보 파일 개별 업로드 박스 */}
       <div
         style={{
           ...styles.individualBox,

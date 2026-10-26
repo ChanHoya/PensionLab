@@ -53,7 +53,7 @@ interface StepDef {
 
 const STEPS: StepDef[] = [
   { key: "fss", kind: "FSS", who: "SELF", group: "info", tab: "금감원 자료 업로드" },
-  { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "적용대상" },
+  { key: "info", kind: "INFO", who: "SELF", group: "info", tab: "적용대상 추가정보" },
   { key: "goal", kind: "GOAL", who: "SELF", group: "info", tab: "재무목표" },
   { key: "national-self", kind: "NATIONAL", who: "SELF", group: "national", tab: "본인" },
   { key: "national-spouse", kind: "NATIONAL", who: "SPOUSE", group: "national", tab: "배우자", spouseOnly: true },
@@ -1205,11 +1205,9 @@ export default function OnboardingPage() {
                 </div>
               );
 
-              // FSS 탭일 때는 FssUploadPanel 내부의 dropzone prop으로 배치
+              // FSS 탭일 때는 FssUploadPanel 내부의 dropzone prop으로 배치 (적용대상 탭에서는 렌더링하지 않음)
               (window as any).__instantDropzoneElement = instantDropzoneElement;
-              return step.kind === "INFO" ? (
-                <div style={{ marginBottom: "20px" }}>{instantDropzoneElement}</div>
-              ) : null;
+              return null;
             })()}
 
             {step.kind === "INFO" && (

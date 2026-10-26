@@ -184,24 +184,28 @@ export default function NpsRecoveryModal({
   const isSpouseTab = activeTab === "SPOUSE";
   const isCoupleTab = activeTab === "COUPLE";
 
-  // 실데이터 여부 판별 (기본정보에 사용자가 입력했거나 조회 데이터가 존재하는지 여부)
+  // 실데이터 여부 판별 (기본정보에서 대시보드 시뮬레이션에 반영 체크되었고 실제 데이터가 존재하는 경우에만 실데이터로 표기)
   const hasRealSelfAdditional = Boolean(
-    store.additionalPayment.requestedMonths > 0 ||
-    store.additionalPayment.gapMonths > 0 ||
-    Boolean(store.additionalPayment.firstEnrollYm)
+    store.additionalPayment.applyToSimulation &&
+    (store.additionalPayment.requestedMonths > 0 ||
+      store.additionalPayment.gapMonths > 0 ||
+      Boolean(store.additionalPayment.firstEnrollYm))
   );
   const hasRealSelfReturn = Boolean(
-    store.returnRepayment.refundAmount > 0 ||
-    store.returnRepayment.restoredMonths > 0
+    store.returnRepayment.applyToSimulation &&
+    (store.returnRepayment.refundAmount > 0 ||
+      store.returnRepayment.restoredMonths > 0)
   );
   const hasRealSpouseAdditional = Boolean(
-    store.spouse.additionalPayment.requestedMonths > 0 ||
-    store.spouse.additionalPayment.gapMonths > 0 ||
-    Boolean(store.spouse.additionalPayment.firstEnrollYm)
+    store.spouse.additionalPayment.applyToSimulation &&
+    (store.spouse.additionalPayment.requestedMonths > 0 ||
+      store.spouse.additionalPayment.gapMonths > 0 ||
+      Boolean(store.spouse.additionalPayment.firstEnrollYm))
   );
   const hasRealSpouseReturn = Boolean(
-    store.spouse.returnRepayment.refundAmount > 0 ||
-    store.spouse.returnRepayment.restoredMonths > 0
+    store.spouse.returnRepayment.applyToSimulation &&
+    (store.spouse.returnRepayment.refundAmount > 0 ||
+      store.spouse.returnRepayment.restoredMonths > 0)
   );
 
   const isCurrentAdditionalReal = isSpouseTab ? hasRealSpouseAdditional : hasRealSelfAdditional;

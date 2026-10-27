@@ -244,6 +244,47 @@ body { display: flex; flex-direction: column; min-height: 100vh; }
 .animate-fade-in  { animation: fadeIn  var(--transition-normal) both; }
 .animate-slide-in { animation: slideIn var(--transition-normal) both; }
 
+/* ── 온보딩 층간(단계) 수직 슬라이드 스프링 애니메이션 ── */
+@keyframes slideFloorUp {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideFloorDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-floor-up {
+  animation: slideFloorUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+.animate-floor-down {
+  animation: slideFloorDown 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-floor-up,
+  .animate-floor-down {
+    animation: fadeIn 0.15s ease-out both;
+    transform: none !important;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════
    COMPONENT CLASSES
    ══════════════════════════════════════════════════════════ */

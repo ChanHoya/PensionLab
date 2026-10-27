@@ -42,6 +42,14 @@ const GROUPS: StepGroup[] = [
   { key: "summary", badge: "4", title: "전체 연금 내역", desc: "입력한 계약을 3층 구조로 확인하고 종합 분석" },
 ];
 
+const GROUP_ORDER: Record<string, number> = {
+  info: 0,
+  national: 1,
+  retirement: 2,
+  personal: 3,
+  summary: 4,
+};
+
 interface StepDef {
   key: string;
   kind: StepKind;
@@ -139,6 +147,8 @@ export default function OnboardingPage() {
   const router = useRouter();
   const store = usePensionStore();
   const [currentStep, setCurrentStep] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<"up" | "down">("up");
+  const [animKey, setAnimKey] = useState<number>(0);
   // 배우자 없음이면 배우자 단계는 숨긴다. currentStep은 visibleSteps의 인덱스
   const visibleSteps = STEPS.filter((s) => !s.spouseOnly || store.simulationParams.hasSpouse);
   const lastStepIndex = visibleSteps.length - 1;
@@ -612,6 +622,18 @@ export default function OnboardingPage() {
   // 단계를 넘어갈 때 이전 단계의 임시 동기화 상태(PDF 파싱 결과, NPS/FSS 인증 대기 등)가
   // 다음 단계(특히 배우자 단계)로 새지 않도록 초기화한다.
   const goToStep = (i: number) => {
+    const currentGroupKey = visibleSteps[stepIndex]?.group || "info";
+    const targetGroupKey = visibleSteps[i]?.group || "info";
+    const currentOrder = GROUP_ORDER[currentGroupKey] ?? stepIndex;
+    const targetOrder = GROUP_ORDER[targetGroupKey] ?? i;
+
+    if (targetOrder !== currentOrder) {
+      setSlideDirection(targetOrder > currentOrder ? "up" : "down");
+    } else {
+      setSlideDirection(i >= stepIndex ? "up" : "down");
+    }
+    setAnimKey((prev) => prev + 1);
+
     setFssError("");
     setAddForm(null);
     setNpsSynced(false);
@@ -760,77 +782,81 @@ export default function OnboardingPage() {
     <main style={styles.container}>
       <header style={styles.header}>
         <div style={styles.headerContent}>
-          {/* 좌: 로고 + 부제목 + 개인정보 안심보장 */}
-          <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-            <div style={styles.headerLeft}>
+          {/* 좌측: 로고 + 바로 오른쪽에 부가 기능 버튼 그룹 (AI 도우미, 퀵진단 등) */}
+          <div style={styles.headerLeftGroup}>
+            <div style={styles.headerBrand}>
               <Link href="/" style={{ textDecoration: "none" }}>
                 <h1 style={styles.logo}>Pension<span className="gradient-text">Lab</span></h1>
               </Link>
-              <p style={styles.subtitle}>은퇴 준비의 첫걸음, 다층 연금 통합 시뮬레이터</p>
             </div>
-            <div style={styles.privacyChip}>
-              <span style={{ fontSize: "0.9rem" }}>🔒</span>
-              <span><strong>개인정보 안심 보장</strong> — 모든 데이터는 이 기기에만 저장됩니다.</span>
+
+            <div style={styles.headerDivider} />
+
+            {/* 부가 기능 버튼 그룹: 로고 바로 오른쪽에 배치 */}
+            <div style={styles.headerActionGroup}>
+              <AiHelper
+                pageName={`입력 화면(${group.title}${groupSteps.length > 1 ? ` · ${step.tab}` : ""})`}
+                examples={[
+                  "이 단계에서 무엇을 입력해야 하나요?",
+                  "통합연금포털 PDF는 어디서 받나요?",
+                  "추가납부(추납)와 반환일시금 반납은 어떤 차이가 있나요?",
+                ]}
+                buttonStyle={styles.compactBtn}
+              />
+              <button
+                type="button"
+                onClick={() => setQuickDiagnosisOpen(true)}
+                style={{
+                  ...styles.compactBtn,
+                  background: "linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(99, 102, 241, 0.2) 100%)",
+                  borderColor: "rgba(14, 165, 233, 0.4)",
+                  color: "#38bdf8",
+                  fontWeight: 700,
+                }}
+                title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
+              >
+                ⚡ 30초 퀵 진단
+              </button>
+              <button
+                type="button"
+                onClick={() => setPersonaModalOpen(true)}
+                style={{
+                  ...styles.compactBtn,
+                  background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.16) 100%)",
+                  borderColor: "rgba(99, 102, 241, 0.35)",
+                  color: "var(--text-accent)",
+                  fontWeight: 700,
+                }}
+                title="대한민국 대표 가구 페르소나 데이터 1초 만에 불러오기"
+              >
+                👫 페르소나 샘플
+              </button>
+              <button onClick={handleSaveData} style={styles.compactBtn} title="현재 입력 데이터를 JSON으로 저장">
+                💾 저장
+              </button>
+              <button
+                onClick={() => document.getElementById("import-file-input")?.click()}
+                style={styles.compactBtn}
+                title="저장된 JSON 백업 파일 불러오기"
+              >
+                📂 불러오기
+              </button>
+              <input
+                type="file"
+                id="import-file-input"
+                accept=".json"
+                style={{ display: "none" }}
+                onChange={handleLoadData}
+              />
+              <FullscreenToggle />
+              <ThemeToggle />
             </div>
           </div>
-          {/* 우: AI 도우미 + JSON저장 + 불러오기 + 테마토글 */}
-          <div style={styles.headerRight}>
-            <AiHelper
-              pageName={`입력 화면(${group.title}${groupSteps.length > 1 ? ` · ${step.tab}` : ""})`}
-              examples={[
-                "이 단계에서 무엇을 입력해야 하나요?",
-                "통합연금포털 PDF는 어디서 받나요?",
-                "추가납부(추납)와 반환일시금 반납은 어떤 차이가 있나요?",
-              ]}
-              buttonStyle={styles.saveBtn}
-            />
-            <button
-              type="button"
-              onClick={() => setQuickDiagnosisOpen(true)}
-              style={{
-                ...styles.saveBtn,
-                background: "linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(99, 102, 241, 0.2) 100%)",
-                borderColor: "rgba(14, 165, 233, 0.4)",
-                color: "#38bdf8",
-                fontWeight: 700,
-              }}
-              title="초보자를 위한 30초 퀵 간편 진단 (Easy Mode)"
-            >
-              ⚡ 30초 퀵 진단
-            </button>
-            <button
-              type="button"
-              onClick={() => setPersonaModalOpen(true)}
-              style={{
-                ...styles.saveBtn,
-                background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(168, 85, 247, 0.16) 100%)",
-                borderColor: "rgba(99, 102, 241, 0.35)",
-                color: "var(--text-accent)",
-                fontWeight: 700,
-              }}
-              title="대한민국 대표 가구 페르소나 데이터 1초 만에 불러오기"
-            >
-              👫 페르소나 샘플
-            </button>
-            <button onClick={handleSaveData} style={styles.saveBtn} title="현재 입력 데이터를 JSON으로 저장">
-              💾 저장
-            </button>
-            <button
-              onClick={() => document.getElementById("import-file-input")?.click()}
-              style={styles.saveBtn}
-              title="저장된 JSON 백업 파일 불러오기"
-            >
-              📂 불러오기
-            </button>
-            <input
-              type="file"
-              id="import-file-input"
-              accept=".json"
-              style={{ display: "none" }}
-              onChange={handleLoadData}
-            />
-            <FullscreenToggle />
-            <ThemeToggle />
+
+          {/* 우측: 컴팩트한 개인정보 안심 보장 칩 */}
+          <div style={styles.privacyChipCompact} title="모든 입력 데이터는 사용자 브라우저 로컬 기기에만 저장됩니다.">
+            <span style={{ fontSize: "0.85rem" }}>🔒</span>
+            <span style={styles.privacyText}><strong>개인정보 안심</strong> — 데이터 로컬 기기 보관</span>
           </div>
         </div>
       </header>
@@ -890,9 +916,14 @@ export default function OnboardingPage() {
         </aside>
 
         {/* Form Card */}
-        <section style={styles.formCard} className="glass">
-          <div style={styles.formHeader}>
-            <div style={styles.stepBadgeRow}>
+        <section style={{ ...styles.formCard, overflow: "hidden" }} className="glass">
+          <div
+            key={`${group.key}-${step.key}-${animKey}`}
+            className={slideDirection === "up" ? "animate-floor-up" : "animate-floor-down"}
+            style={{ display: "flex", flexDirection: "column", width: "100%", flex: 1 }}
+          >
+            <div style={styles.formHeader}>
+              <div style={styles.stepBadgeRow}>
               <span style={styles.stepBadge}>STEP {group.badge}</span>
               <span style={styles.formDesc}>{group.desc}</span>
             </div>
@@ -2402,6 +2433,7 @@ export default function OnboardingPage() {
               </>
             )}
           </div>
+          </div>
 
           <div style={styles.formFooterActions}>
             <button
@@ -2532,48 +2564,81 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: "sticky",
     top: 0,
     width: "100%",
-    padding: "16px 40px",
+    padding: "8px 24px",
     zIndex: 100,
     borderBottom: "1px solid var(--border)",
     backgroundColor: "var(--glass-bg)",
     backdropFilter: "var(--glass-blur)",
     WebkitBackdropFilter: "var(--glass-blur)",
-    marginBottom: "32px",
+    marginBottom: "16px",
   },
   headerContent: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    maxWidth: "1200px",
+    maxWidth: "1400px",
     margin: "0 auto",
     width: "100%",
-    gap: "16px",
+    gap: "12px",
     flexWrap: "wrap" as React.CSSProperties["flexWrap"],
   },
-  headerLeft: {
-    display: "flex",
-    flexDirection: "column" as React.CSSProperties["flexDirection"],
-    alignItems: "flex-start",
-    gap: "4px",
-  },
-  headerRight: {
+  headerLeftGroup: {
     display: "flex",
     alignItems: "center",
     gap: "12px",
     flexWrap: "wrap" as React.CSSProperties["flexWrap"],
+    minWidth: 0,
   },
-  privacyChip: {
+  headerBrand: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    flexShrink: 0,
+  },
+  headerDivider: {
+    width: "1px",
+    height: "20px",
+    backgroundColor: "var(--border)",
+    flexShrink: 0,
+  },
+  headerActionGroup: {
     display: "flex",
     alignItems: "center",
     gap: "6px",
-    padding: "6px 12px",
+    flexWrap: "wrap" as React.CSSProperties["flexWrap"],
+  },
+  privacyChipCompact: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "5px 12px",
     background: "rgba(99, 102, 241, 0.08)",
-    border: "1px solid rgba(99, 102, 241, 0.2)",
+    border: "1px solid rgba(99, 102, 241, 0.18)",
     borderRadius: "var(--radius-sm)",
-    fontSize: "0.8rem",
+    fontSize: "0.78rem",
     color: "var(--text-secondary)",
-    lineHeight: 1.4,
-    maxWidth: "380px",
+    lineHeight: 1.3,
+    flexShrink: 0,
+    whiteSpace: "nowrap" as React.CSSProperties["whiteSpace"],
+  },
+  privacyText: {
+    display: "inline-block",
+  },
+  compactBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "4px",
+    padding: "5px 10px",
+    background: "rgba(99, 102, 241, 0.10)",
+    border: "1px solid rgba(99, 102, 241, 0.25)",
+    borderRadius: "var(--radius-sm)",
+    color: "var(--text-accent)",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    height: "30px",
+    transition: "all var(--transition-fast)",
+    whiteSpace: "nowrap" as React.CSSProperties["whiteSpace"],
   },
   saveBtn: {
     display: "inline-flex",
@@ -2592,7 +2657,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   logo: {
     fontFamily: "var(--font-sans)",
-    fontSize: "1.8rem",
+    fontSize: "1.45rem",
     fontWeight: 800,
     color: "var(--text-primary)",
     letterSpacing: "-0.5px",

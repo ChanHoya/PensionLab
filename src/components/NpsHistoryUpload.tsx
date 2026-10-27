@@ -1,3 +1,4 @@
+// 국민연금공단 가입내역조회 화면 출력 PDF를 파싱하여 추납·반납 입력을 자동 완성하는 컴포넌트
 "use client";
 
 import React, { useState } from "react";
@@ -43,7 +44,10 @@ export default function NpsHistoryUpload({ who }: { who: Who }) {
   return (
     <div style={styles.box}>
       <div style={styles.titleRow}>
-        <div style={styles.title}>📄 국민연금 가입내역조회 PDF로 자동 입력</div>
+        <div style={styles.title}>
+          <span style={{ fontSize: "1.1rem" }}>📄</span>
+          <strong>국민연금 가입내역조회 PDF로 자동 입력</strong>
+        </div>
         <a
           href="https://www.nps.or.kr/"
           target="_blank"
@@ -83,33 +87,51 @@ export default function NpsHistoryUpload({ who }: { who: Who }) {
 
 const styles: { [key: string]: React.CSSProperties } = {
   box: {
-    border: "1px dashed rgba(99, 102, 241, 0.4)",
-    borderRadius: "var(--radius-sm)",
-    padding: "14px 16px",
-    backgroundColor: "rgba(99, 102, 241, 0.04)",
+    backgroundColor: "rgba(99, 102, 241, 0.06)",
+    border: "1px solid rgba(99, 102, 241, 0.2)",
+    borderLeft: "4px solid #6366f1",
+    borderRadius: "12px",
+    padding: "14px 18px",
     display: "flex",
     flexDirection: "column",
-    gap: "8px",
+    gap: "10px",
   },
   titleRow: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     flexWrap: "wrap",
-    gap: "8px",
+    gap: "10px",
   },
-  title: { fontSize: "0.9rem", fontWeight: 700, color: "var(--primary)" },
+  title: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    fontSize: "0.95rem",
+    fontWeight: 700,
+    color: "var(--text-primary, #ffffff)",
+  },
   npsLink: {
-    fontSize: "0.8rem",
-    color: "var(--primary, #6366f1)",
-    textDecoration: "underline",
-    fontWeight: 600,
-    cursor: "pointer",
     display: "inline-flex",
     alignItems: "center",
     gap: "4px",
+    fontSize: "0.82rem",
+    fontWeight: 700,
+    color: "#818cf8",
+    textDecoration: "underline",
+    backgroundColor: "rgba(99, 102, 241, 0.12)",
+    border: "1px solid rgba(99, 102, 241, 0.35)",
+    padding: "4px 10px",
+    borderRadius: "6px",
+    transition: "all 0.15s ease",
+    cursor: "pointer",
   },
-  desc: { fontSize: "0.8rem", color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 },
-  error: { fontSize: "0.8rem", color: "var(--danger, #ef4444)", margin: 0 },
+  desc: {
+    fontSize: "0.82rem",
+    color: "var(--text-secondary, #94a3b8)",
+    lineHeight: 1.5,
+    margin: 0,
+  },
+  error: { fontSize: "0.82rem", color: "var(--danger, #ef4444)", margin: 0 },
   ok: { fontSize: "0.85rem", color: "var(--success-light, #10b981)", fontWeight: 600, margin: 0 },
 };

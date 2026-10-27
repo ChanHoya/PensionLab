@@ -1,7 +1,8 @@
 // 국민연금 본인/배우자 추납 및 반납 선택적 시뮬레이션과 부부 합산 실익을 분석하는 모달 컴포넌트
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   calculateCoupleRecovery,
   RecoveryOptionInput,
@@ -49,6 +50,11 @@ export default function NpsRecoveryModal({
   spouseMonthlyPensionWon: propSpouseMonthlyPensionWon,
 }: NpsRecoveryModalProps) {
   const store = usePensionStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // 활성 탭 (본인 / 배우자 / 부부 합산 시너지)
   const [activeTab, setActiveTab] = useState<TabKey>("SELF");
@@ -394,16 +400,16 @@ export default function NpsRecoveryModal({
     displayTitle = "과거 반납 복원 단독 적용";
   }
 
-  return (
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
     <div
       style={{
         position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        backdropFilter: "blur(6px)",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.65)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -413,18 +419,19 @@ export default function NpsRecoveryModal({
       onClick={onClose}
     >
       <div
+        className="t-modal-spring"
         style={{
           width: "100%",
           maxWidth: "1120px",
           maxHeight: "92vh",
-          backgroundColor: "var(--surface, #111827)",
-          borderRadius: "16px",
-          border: "1px solid var(--border, rgba(255, 255, 255, 0.12))",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6)",
+          backgroundColor: "var(--surface)",
+          borderRadius: "20px",
+          border: "1px solid var(--border)",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          color: "var(--text-primary, #f9fafb)",
+          color: "var(--text-primary)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -2129,4 +2136,6 @@ export default function NpsRecoveryModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

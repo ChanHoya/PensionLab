@@ -8,6 +8,7 @@
 - **[Completed]** Sprint 48: 5대 UI/UX 기준(Hallmark, a11y, 모션, 계층화) 대시보드 리팩토링 (FEAT-076, PR #59).
 - **[Completed]** Sprint 49: 모바일 바텀시트, AI 어드바이저 및 온보딩 5대 UI/UX 전면 리뉴얼 (후보 A/B/C 통합, FEAT-077, PR #60).
 - **[Completed]** Sprint 50: 국민연금 추납 vs 반납 실익 역산기 본인/배우자 탭 분리 및 다각도 실익 분석 고도화 (FEAT-078).
+- **[Completed]** Sprint 51: 국민연금 가입내역조회 인디고 테마 동기화, Containing Block 좌표 왜곡 해결(React Portal 적용), 및 다크 모드 4종 팁 팝업(세무·건보 고지서, 배당캘린더, 스트레스테스트, 가족공유) 폰트 시맨틱 토큰 개선 (FEAT-079).
 - **[Completed]** Story S1-1: Zustand client state store, Landing page, Onboarding wizard, and save API.
 - **[Completed]** Story S1-2: Pension Calculation Engine (calculating 3-tier payouts and 2026 reform schedules) and Dashboard UI integrated with Recharts Donut & Stacked Area charts.
 - **[Completed]** Story S1-3: YouTube Expert Content Crawler and RAG Chat Q&A API using pgvector and OpenAI.

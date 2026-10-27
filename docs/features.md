@@ -289,7 +289,10 @@
   2) 추납 및 반납 개별 선택 토글(기본값: 둘 다 선택): 추납만 선택, 반납만 선택, 둘 다 선택, 미선택의 4가지 조합을 자유롭게 시뮬레이션하고 비활성화 시 슬라이더 자동 딤 처리 지원.
   3) 원금 회수 마일스톤 게이지: 50% 반액 회수, 100% 원금 전액 회수(골든크로스), 200% 더블 달성, 300% 트리플 달성 나이 및 개시 후 소요 기간 시각화.
   4) 기대수명 구간별(75세~95세) 납부금액 대비 수령 분포: 누적 수령액, 원금 차감 순이익, 회수율(%) 상세 테이블 및 60% 유족연금 종신 승계 안전 가이드 제공.
-  5) 부부 합산 가구 시너지 대시보드: 본인(추납/반납) 및 배우자(추납/반납) 4대 옵션 선택기 패널과 원클릭 프리셋 버튼, 가구 합산 총비용/월증액/순이익 실시간 연산, 본인 vs 배우자 나란히 비교 카드 및 건보료 피부양자(연 2,000만원) 안전지대 진단 배너 탑재 (Sprint 50)
+- **[FEAT-079] 온보딩 테마 동기화, Containing Block 팝업 왜곡 해결 및 다크 모드 4종 팁 팝업 시맨틱 토큰 개선**:
+  1) 국민연금 가입내역조회 업로드 카드 테마 일원화 (`src/components/NpsHistoryUpload.tsx`): 점선 테두리 제거 후 금융감독원 안내 패널과 동일한 인디고 실선 테두리(`1px solid rgba(99, 102, 241, 0.2)`), 좌측 4px 포인트 바(`borderLeft: 4px solid #6366f1`), 알약형 NPS 포털 링크 뱃지 버튼 및 일관된 폰트 크기/굵기 적용.
+  2) CSS Containing Block 좌표계 왜곡 해결 (`NpsBoostRoadmapModal.tsx`, `NpsRecoveryModal.tsx`): 온보딩 패널 수직 슬라이딩 트랜지션(`transform: translateY`) 하위에서 모달이 화면 우측 하단에 갇혀 찌그러지던 브라우저 W3C 스펙 버그를 React `createPortal(modalContent, document.body)`를 통해 브라우저 최상단으로 격리 및 정중앙 팝업 보장.
+  3) 다크 모드 4종 팁 팝업 폰트 시맨틱 토큰화 (`TaxAndHealthStatementModal.tsx`, `DividendCalendarModal.tsx`, `StressTestModal.tsx`, `ShareSnapshotModal.tsx`): 라이트 모드 고정 폴백 색상(#0f172a, #334155 등)을 `var(--text-primary)`, `var(--text-secondary)`, `var(--text-muted)`로 전면 교체하여 다크 모드에서도 선명한 WCAG AA 대비율 확보 및 `createPortal`과 하단 [확인 및 닫기] 버튼 일괄 연동 완료 (Sprint 51)
 
 
 

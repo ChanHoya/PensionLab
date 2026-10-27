@@ -1,6 +1,7 @@
+// 국민연금 추가납부(추납) 및 반환일시금 반납 입력·분석 패널
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { usePensionStore, pensionsOf, AdditionalPaymentState, type Who } from "@/store/usePensionStore";
 import { runAdditionalPaymentPlan, monthsBetween, firstDueYmOf, effectiveBaseIncome, isVoluntary } from "@/services/additionalPaymentCalculator";
 import { personParams } from "@/services/coupleSimulation";
@@ -8,6 +9,8 @@ import { NPS_RULES } from "@/config/npsRules";
 import AdditionalPaymentInsights from "@/components/AdditionalPaymentInsights";
 import ReturnRepaymentSection, { RefundScenarioComparison } from "@/components/ReturnRepaymentSection";
 import NpsHistoryUpload from "@/components/NpsHistoryUpload";
+import { NpsBoostRoadmapModal } from "@/components/NpsBoostRoadmapModal";
+import NpsRecoveryModal from "@/components/NpsRecoveryModal";
 
 const fmt = (v: number) => Math.round(v).toLocaleString();
 const CIRCLED = ["①", "②", "③", "④", "⑤", "⑥", "⑦"];
@@ -39,13 +42,101 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
   const showInsights = plan.months > 0 && !!ap.applyYm;
   const no = (i: number) => CIRCLED[i + (hasRefund ? 1 : 0)];
 
+  // 첨부3: 국민연금 특화 도구 모달 열림 상태
+  const [boostModalOpen, setBoostModalOpen] = useState(false);
+  const [recoveryModalOpen, setRecoveryModalOpen] = useState(false);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }} className="animate-fade-in">
-      <div style={styles.infoAlert}>
-        💡 소득이 없어 보험료를 못 낸 기간(납부예외·적용제외·군복무)을 나중에 채워 넣어 <strong>가입기간을 늘리는 제도</strong>입니다.
-        최대 {NPS_RULES.maxAdditionalMonths}개월까지 가능하며, 적은 금액으로 긴 기간을 채울수록 효율이 좋습니다.
-      </div>
+      {/* 1. 국민연금 가입내역조회 PDF로 자동 입력 (연금포털 입력박스를 상단으로 이동) */}
       <NpsHistoryUpload who={who} />
+
+      {/* 2. 팁 박스: 기본 안내문 + 첨부3 2개의 팁/분석도구 포함 */}
+      <div style={styles.infoAlert}>
+        <div style={{ marginBottom: "12px", lineHeight: 1.6 }}>
+          💡 소득이 없어 보험료를 못 낸 기간(납부예외·적용제외·군복무)을 나중에 채워 넣어 <strong>가입기간을 늘리는 제도</strong>입니다.
+          최대 {NPS_RULES.maxAdditionalMonths}개월까지 가능하며, 적은 금액으로 긴 기간을 채울수록 효율이 좋습니다.
+        </div>
+
+        {/* 팁 1: 국민연금 증액 로드맵 */}
+        <div
+          style={{
+            padding: "10px 14px",
+            borderRadius: "8px",
+            background: "rgba(245, 158, 11, 0.08)",
+            border: "1px solid rgba(245, 158, 11, 0.3)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "8px",
+            gap: "8px",
+          }}
+        >
+          <div>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f59e0b" }}>
+              🪜 국민연금 증액 로드맵 (반납·추납·임의계속)
+            </span>
+            <p style={{ fontSize: "0.74rem", color: "var(--text-secondary)", margin: 0, marginTop: "2px" }}>
+              반납 → 추납 → 임의계속가입 → 연기연금을 순서대로 쌓은 가입기간 증액 효과와 비용 비교
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBoostModalOpen(true)}
+            className="premium-button-secondary"
+            style={{
+              fontSize: "0.75rem",
+              padding: "5px 12px",
+              borderColor: "#f59e0b",
+              color: "#f59e0b",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            로드맵 보기 ➔
+          </button>
+        </div>
+
+        {/* 팁 2: 국민연금 추납 vs 반납 실익 역산기 */}
+        <div
+          style={{
+            padding: "10px 14px",
+            borderRadius: "8px",
+            background: "rgba(99, 102, 241, 0.08)",
+            border: "1px solid rgba(99, 102, 241, 0.3)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <div>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--text-accent)" }}>
+              ⚖️ 국민연금 추납 vs 반납 실익 역산기
+            </span>
+            <p style={{ fontSize: "0.74rem", color: "var(--text-secondary)", margin: 0, marginTop: "2px" }}>
+              추후납부와 반환일시금 반납 중 어떤 제도가 투자 비용 대비 평생 수령액 증가에 더 유리한지 역산 비교
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRecoveryModalOpen(true)}
+            className="premium-button-secondary"
+            style={{
+              fontSize: "0.75rem",
+              padding: "5px 12px",
+              borderColor: "var(--text-accent)",
+              color: "var(--text-accent)",
+              whiteSpace: "nowrap",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            실익 역산기 ➔
+          </button>
+        </div>
+      </div>
       {!hasNpsData && (
         <div style={styles.warnAlert}>
           ⚠ 「NPS 공단고서 상세 입력」 또는 「금융감독원 통합연금 자료 등록」 탭에서 총 예상 가입월수를 입력하지 않으면
@@ -204,6 +295,9 @@ export default function AdditionalPaymentPanel({ who = "SELF" }: { who?: Who }) 
       </div>
       {showInsights && <AdditionalPaymentInsights plan={plan} paymentMode={ap.paymentMode} isVoluntary={voluntary} sectionNo={no(3)} />}
       <RefundScenarioComparison who={who} title={`${no(showInsights ? 4 : 3)} 대안별 비교`} />
+
+      <NpsBoostRoadmapModal isOpen={boostModalOpen} onClose={() => setBoostModalOpen(false)} />
+      <NpsRecoveryModal isOpen={recoveryModalOpen} onClose={() => setRecoveryModalOpen(false)} />
     </div>
   );
 }

@@ -1,10 +1,24 @@
+// 3층 연금 구조 요약과 국민연금 추납·반납 시뮬레이션 반영 여부를 토글하는 컴포넌트
 "use client";
 
 import React from "react";
-import type { BasicPensionState, PersonData, SimulationParamsState } from "@/store/usePensionStore";
+import {
+  usePensionStore,
+  pensionsOf,
+  type BasicPensionState,
+  type PersonData,
+  type SimulationParamsState,
+  type Who,
+  type PensionStore,
+} from "@/store/usePensionStore";
 import { personParams } from "@/services/coupleSimulation";
 import { paidTotalsOf } from "@/services/paidTotals";
-import { applyNpsOptions } from "@/services/returnRepaymentCalculator";
+import {
+  applyNpsOptions,
+  calcRepaymentCost,
+  isRepaymentReady,
+} from "@/services/returnRepaymentCalculator";
+import { runAdditionalPaymentPlan } from "@/services/additionalPaymentCalculator";
 
 interface Props {
   self: PersonData;
@@ -20,6 +34,16 @@ interface Card {
   title: string;
   sub?: string; // 금융회사·상품명
   lines: string[];
+}
+
+interface NpsOptionItem {
+  id: "RETURN" | "ADDITIONAL";
+  title: string;
+  shortLabel: string;
+  months: number;
+  cost: number;
+  isApplied: boolean;
+  onToggle: () => void;
 }
 
 const fmt = (v?: number) => Math.round(v || 0).toLocaleString();
@@ -77,20 +101,117 @@ function personalCards(p: PersonData): Card[] {
   ];
 }
 
+// 국민연금 추납 및 반납 옵션 항목 추출 함수
+function getNpsOptions(
+  who: Who,
+  rawPerson: PersonData,
+  prm: SimulationParamsState,
+  store: PensionStore
+): NpsOptionItem[] {
+  const options: NpsOptionItem[] = [];
+  const rr = rawPerson.returnRepayment;
+  const ap = rawPerson.additionalPayment;
+  const nat = rawPerson.nationalPension;
+
+  // 1. 반납 정보 확인 (원금, 복원개월, 공단고지액 중 하나라도 있으면 표시)
+  const hasReturnData = (rr.restoredMonths || 0) > 0 || (rr.refundAmount || 0) > 0 || (rr.noticeAmount || 0) > 0;
+  if (hasReturnData) {
+    const returnMonths =
+      rr.restoredMonths ||
+      (rr.refundAmount > 0 ? Math.min(144, Math.max(6, Math.round((rr.refundAmount * 10000) / 125000))) : 0);
+    const returnCost =
+      rr.noticeAmount > 0
+        ? rr.noticeAmount
+        : isRepaymentReady(rr)
+        ? Math.round(calcRepaymentCost(rr).total)
+        : rr.refundAmount > 0
+        ? Math.round(rr.refundAmount * 2.5)
+        : 342;
+    const isReturnApplied = Boolean(rr.applyToSimulation && ap.receivedLumpSumRefund);
+
+    options.push({
+      id: "RETURN",
+      title: "반환일시금 반납",
+      shortLabel: "반납",
+      months: returnMonths,
+      cost: returnCost,
+      isApplied: isReturnApplied,
+      onToggle: () => {
+        const next = !isReturnApplied;
+        store.setReturnRepayment({ applyToSimulation: next }, who);
+        if (next) {
+          store.setAdditionalPayment({ receivedLumpSumRefund: true }, who);
+        }
+      },
+    });
+  }
+
+  // 2. 추납 정보 확인 (중단개월 또는 희망개월이 있고 소득 또는 신청월 정보가 있을 때)
+  const hasAddData =
+    ((ap.gapMonths || 0) > 0 || (ap.requestedMonths || 0) > 0) &&
+    ((ap.baseIncome || 0) > 0 || (nat.currentStandardMonthlyIncome || 0) > 0 || Boolean(ap.applyYm));
+  if (hasAddData) {
+    const addMonths = ap.requestedMonths || ap.gapMonths || 0;
+    const plan = ap.applyYm ? runAdditionalPaymentPlan(ap, nat, prm) : null;
+    const addCost =
+      plan && plan.cost.total > 0
+        ? Math.round(plan.cost.total)
+        : Math.round(addMonths * (ap.baseIncome || nat.currentStandardMonthlyIncome || 300) * 0.09);
+    const isAddApplied = Boolean(ap.applyToSimulation);
+
+    options.push({
+      id: "ADDITIONAL",
+      title: "국민연금 추납",
+      shortLabel: "추납",
+      months: addMonths,
+      cost: addCost,
+      isApplied: isAddApplied,
+      onToggle: () => {
+        const next = !isAddApplied;
+        const patch: Partial<typeof ap> = { applyToSimulation: next };
+        if (next && !ap.applyYm) {
+          patch.applyYm = new Date().toISOString().slice(0, 7);
+        }
+        store.setAdditionalPayment(patch, who);
+      },
+    });
+  }
+
+  return options;
+}
+
 // 입력 내용을 3층 연금 구조로 그린다: 위에서부터 3층(개인)·2층(퇴직)·1층(공적).
 // 층 폭은 가구 납부·적립 총액(국민연금 예상 납부보험료, 퇴직·개인연금 적립금 + 은퇴까지 납입액)의 크기 순서로 정한다
-export default function PensionStructureSummary({ self: selfRaw, spouse: spouseRaw, basic, params }: Props) {
+export default function PensionStructureSummary({
+  self: selfProp,
+  spouse: spouseProp,
+  basic: basicProp,
+  params: paramsProp,
+}: Props) {
+  const store = usePensionStore();
+
+  // 스토어의 최신 상태를 실시간 반영 (props와 fallback 동기화)
+  const currentParams = store.simulationParams || paramsProp;
+  const currentBasic = store.basicPension || basicProp;
+  const selfRaw = pensionsOf(store, "SELF") || selfProp;
+  const spouseRaw = (currentParams.hasSpouse ? pensionsOf(store, "SPOUSE") : null) ?? spouseProp;
+
   // 추가납부·일시금 반납을 「시뮬레이션 반영」으로 고른 경우 국민연금에 더한다 (대시보드 시뮬레이션과 같은 기준)
-  const spouseParams = personParams(params, "SPOUSE");
-  const selfApplied = applyNpsOptions(selfRaw.nationalPension, selfRaw.additionalPayment, selfRaw.returnRepayment, params);
+  const spouseParams = personParams(currentParams, "SPOUSE");
+  const selfApplied = applyNpsOptions(selfRaw.nationalPension, selfRaw.additionalPayment, selfRaw.returnRepayment, currentParams);
   const spouseApplied = spouseRaw ? applyNpsOptions(spouseRaw.nationalPension, spouseRaw.additionalPayment, spouseRaw.returnRepayment, spouseParams) : null;
   const self: PersonData = { ...selfRaw, nationalPension: selfApplied.national };
   const spouse: PersonData | null = spouseRaw && spouseApplied ? { ...spouseRaw, nationalPension: spouseApplied.national } : null;
   const appliedOf = (d: PersonData) => (d === self ? selfApplied : spouseApplied ?? undefined);
-  const people = spouse ? [{ label: "본인", data: self }, { label: "배우자", data: spouse }] : [{ label: "본인", data: self }];
+  const people = (spouse && spouseRaw)
+    ? [
+        { label: "본인", data: self, raw: selfRaw, who: "SELF" as Who, params: currentParams },
+        { label: "배우자", data: spouse, raw: spouseRaw, who: "SPOUSE" as Who, params: spouseParams },
+      ]
+    : [{ label: "본인", data: self, raw: selfRaw, who: "SELF" as Who, params: currentParams }];
   const paidOf = (p: PersonData, prm: SimulationParamsState) =>
     paidTotalsOf({ national: p.nationalPension, retirementPensions: p.retirementPensions, personalPensions: p.personalPensions, pensionInsurances: p.pensionInsurances }, prm);
-  const paid = [paidOf(self, params), ...(spouse ? [paidOf(spouse, spouseParams)] : [])];
+  const paid = [paidOf(self, currentParams), ...(spouse ? [paidOf(spouse, spouseParams)] : [])];
   const sizes = {
     personal: paid.reduce((a, t) => a + t.personal + t.insurance, 0),
     retirement: paid.reduce((a, t) => a + t.retirement, 0),
@@ -121,6 +242,8 @@ export default function PensionStructureSummary({ self: selfRaw, spouse: spouseR
           <div style={{ ...styles.people, gridTemplateColumns: `repeat(${people.length}, minmax(0, 1fr))` }}>
             {people.map((person) => {
               const cards = layer.cards(person.data);
+              const npsOptions = layer.badge === "1층" ? getNpsOptions(person.who, person.raw, person.params, store) : [];
+
               return (
                 <div key={person.label} style={styles.personCol}>
                   <div style={styles.personLabel}>{person.label}</div>
@@ -136,6 +259,109 @@ export default function PensionStructureSummary({ self: selfRaw, spouse: spouseR
                             {l}
                           </div>
                         ))}
+
+                        {/* 1층 국민연금인 경우: 추납·반납 옵션 블록 (대시보드 및 기본정보 실시간 연동) */}
+                        {layer.badge === "1층" && npsOptions.length > 0 && (
+                          <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                            {npsOptions.map((opt) => (
+                              <div
+                                key={opt.id}
+                                role="button"
+                                tabIndex={0}
+                                onClick={opt.onToggle}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    opt.onToggle();
+                                  }
+                                }}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  gap: "8px",
+                                  padding: "8px 10px",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  backgroundColor: opt.isApplied
+                                    ? "rgba(16, 185, 129, 0.08)"
+                                    : "rgba(148, 163, 184, 0.05)",
+                                  border: opt.isApplied
+                                    ? "1px solid rgba(16, 185, 129, 0.35)"
+                                    : "1px dashed rgba(148, 163, 184, 0.35)",
+                                  transition: "all 0.15s ease",
+                                }}
+                              >
+                                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                                  <div
+                                    style={{
+                                      width: "16px",
+                                      height: "16px",
+                                      borderRadius: "4px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: "11px",
+                                      fontWeight: "bold",
+                                      backgroundColor: opt.isApplied ? "#10b981" : "transparent",
+                                      border: opt.isApplied ? "none" : "1.5px solid var(--text-muted)",
+                                      color: "#ffffff",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {opt.isApplied ? "✓" : ""}
+                                  </div>
+                                  <div style={{ minWidth: 0, textAlign: "left" }}>
+                                    <div
+                                      style={{
+                                        fontSize: "0.78rem",
+                                        fontWeight: 700,
+                                        color: opt.isApplied ? "var(--text-primary)" : "var(--text-secondary)",
+                                      }}
+                                    >
+                                      {opt.isApplied
+                                        ? `${opt.shortLabel} ${opt.months}개월 반영`
+                                        : `${opt.shortLabel} 대상 ${opt.months}개월`}
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: "0.72rem",
+                                        color: opt.isApplied ? "#10b981" : "var(--text-muted)",
+                                        marginTop: "1px",
+                                      }}
+                                    >
+                                      {opt.isApplied
+                                        ? `총 ${fmt(opt.cost)}만원 납부 반영 중`
+                                        : `대상금액: ${fmt(opt.cost)}만원 · 시뮬레이션 미반영`}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    opt.onToggle();
+                                  }}
+                                  className={opt.isApplied ? "premium-button-secondary" : "premium-button-primary"}
+                                  style={{
+                                    fontSize: "0.72rem",
+                                    padding: "3px 8px",
+                                    borderRadius: "4px",
+                                    minHeight: "26px",
+                                    flexShrink: 0,
+                                    whiteSpace: "nowrap",
+                                    ...(opt.isApplied
+                                      ? { borderColor: "rgba(16, 185, 129, 0.5)", color: "#10b981", backgroundColor: "transparent" }
+                                      : {}),
+                                  }}
+                                >
+                                  {opt.isApplied ? "반영해제" : "선택하기"}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -147,7 +373,7 @@ export default function PensionStructureSummary({ self: selfRaw, spouse: spouseR
             <div style={{ ...styles.card, borderLeftColor: "#f59e0b", marginTop: 8 }}>
               <div style={styles.cardTitle}>기초연금 (가구)</div>
               <div style={styles.cardLine}>
-                {basic.applyToSimulation
+                {currentBasic.applyToSimulation
                   ? `시뮬레이션 반영 · 65세 이후 해마다 소득인정액으로 판정`
                   : "시뮬레이션 미반영 (1층 「기초연금」 탭에서 반영 여부 선택)"}
               </div>
@@ -198,3 +424,4 @@ const styles: { [key: string]: React.CSSProperties } = {
   cardSub: { fontSize: "0.76rem", color: "var(--text-accent)", marginTop: 2, fontWeight: 600 },
   cardLine: { fontSize: "0.78rem", color: "var(--text-secondary)", marginTop: 2, fontWeight: 500 },
 };
+

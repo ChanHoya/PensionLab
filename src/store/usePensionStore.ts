@@ -193,7 +193,7 @@ export interface StoreData {
   spouse: SpouseState;
 }
 
-interface PensionStore extends StoreData {
+export interface PensionStore extends StoreData {
   // Actions — who를 생략하면 본인(SELF)
   setNationalPension: (data: Partial<NationalPensionState>, who?: Who) => void;
   setBasicPension: (data: Partial<BasicPensionState>) => void;

@@ -1,6 +1,8 @@
+// 월별 배당 인컴 캘린더 & 연금 인출 스케줄러를 렌더링하는 모달 컴포넌트
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { generateDividendCalendar, DividendCalendarOverview } from "@/services/dividendCalendarService";
 
 interface DividendCalendarModalProps {
@@ -24,8 +26,13 @@ export default function DividendCalendarModal({
 }: DividendCalendarModalProps) {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [isBiweekly, setIsBiweekly] = useState<boolean>(true);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const overview: DividendCalendarOverview = generateDividendCalendar({
     coveredCallAssetManwon,
@@ -38,7 +45,7 @@ export default function DividendCalendarModal({
 
   const currentSchedule = overview.monthlySchedules.find((s) => s.month === selectedMonth) || overview.monthlySchedules[0];
 
-  return (
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
@@ -47,8 +54,9 @@ export default function DividendCalendarModal({
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        backgroundColor: "rgba(15, 23, 42, 0.75)",
-        backdropFilter: "blur(6px)",
+        backgroundColor: "rgba(0, 0, 0, 0.65)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -60,24 +68,24 @@ export default function DividendCalendarModal({
         className="t-modal-spring"
         style={{
           width: "100%",
-          maxWidth: "880px",
+          maxWidth: "920px",
           maxHeight: "92vh",
-          backgroundColor: "var(--modal-bg, #ffffff)",
-          color: "var(--modal-text, #0f172a)",
-          borderRadius: "16px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          backgroundColor: "var(--surface)",
+          color: "var(--text-primary)",
+          borderRadius: "20px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          border: "1px solid var(--modal-border, #e2e8f0)",
+          border: "1px solid var(--border)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 상단 헤더 */}
         <div
           style={{
-            padding: "16px 24px",
-            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
+            padding: "18px 24px",
+            borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -89,11 +97,11 @@ export default function DividendCalendarModal({
             <div>
               <h2
                 id="dividend-calendar-modal-title"
-                style={{ fontSize: "18px", fontWeight: "700", margin: 0, color: "var(--modal-title, #0f172a)" }}
+                style={{ fontSize: "1.15rem", fontWeight: "700", margin: 0, color: "var(--text-primary)" }}
               >
                 월별 배당 인컴 캘린더 & 연금 인출 스케줄러
               </h2>
-              <p style={{ fontSize: "12px", color: "var(--color-muted, #64748b)", margin: "2px 0 0" }}>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "3px 0 0" }}>
                 1월~12월 배당금 입금일과 생활비 인출 시차를 빈틈없이 맞추는 캐시플로우 타임라인
               </p>
             </div>
@@ -110,16 +118,16 @@ export default function DividendCalendarModal({
                 cursor: "pointer",
                 padding: "6px 12px",
                 borderRadius: "20px",
-                backgroundColor: isBiweekly ? "rgba(99, 102, 241, 0.12)" : "var(--modal-surface, #f1f5f9)",
-                color: isBiweekly ? "#4f46e5" : "var(--color-muted, #64748b)",
-                border: "1px solid var(--modal-border, #e2e8f0)",
+                backgroundColor: isBiweekly ? "rgba(99, 102, 241, 0.15)" : "rgba(255, 255, 255, 0.04)",
+                color: isBiweekly ? "#818cf8" : "var(--text-muted)",
+                border: "1px solid var(--border)",
               }}
             >
               <input
                 type="checkbox"
                 checked={isBiweekly}
                 onChange={(e) => setIsBiweekly(e.target.checked)}
-                style={{ cursor: "pointer" }}
+                style={{ cursor: "pointer", accentColor: "#6366f1" }}
               />
               격주 분배 포트폴리오 (15일/28일)
             </label>
@@ -130,14 +138,14 @@ export default function DividendCalendarModal({
                 width: "32px",
                 height: "32px",
                 borderRadius: "8px",
-                border: "1px solid var(--modal-border, #e2e8f0)",
+                border: "1px solid var(--border)",
                 background: "transparent",
                 cursor: "pointer",
                 fontSize: "16px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "var(--color-muted, #64748b)",
+                color: "var(--text-muted)",
               }}
             >
               ✕
@@ -152,8 +160,8 @@ export default function DividendCalendarModal({
             overflowX: "auto",
             gap: "6px",
             padding: "10px 24px",
-            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
-            backgroundColor: "var(--modal-surface, #f8fafc)",
+            borderBottom: "1px solid var(--border)",
+            backgroundColor: "rgba(0, 0, 0, 0.15)",
           }}
         >
           {overview.monthlySchedules.map((s) => {
@@ -167,9 +175,9 @@ export default function DividendCalendarModal({
                   flexShrink: 0,
                   padding: "8px 14px",
                   borderRadius: "10px",
-                  border: isSelected ? "2px solid #6366f1" : "1px solid var(--modal-border, #e2e8f0)",
-                  backgroundColor: isSelected ? "#6366f1" : "var(--modal-surface-card, #ffffff)",
-                  color: isSelected ? "#ffffff" : "var(--modal-text, #334155)",
+                  border: isSelected ? "2px solid #6366f1" : "1px solid var(--border)",
+                  backgroundColor: isSelected ? "#6366f1" : "rgba(255, 255, 255, 0.03)",
+                  color: isSelected ? "#ffffff" : "var(--text-secondary)",
                   cursor: "pointer",
                   display: "flex",
                   flexDirection: "column",
@@ -183,7 +191,7 @@ export default function DividendCalendarModal({
                   style={{
                     fontSize: "10px",
                     fontWeight: "600",
-                    color: isSelected ? "rgba(255, 255, 255, 0.9)" : isSurplus ? "#10b981" : "#ef4444",
+                    color: isSelected ? "rgba(255, 255, 255, 0.9)" : isSurplus ? "#34d399" : "#f87171",
                   }}
                 >
                   {isSurplus ? "+" : ""}
@@ -203,14 +211,14 @@ export default function DividendCalendarModal({
                 padding: "14px",
                 borderRadius: "12px",
                 backgroundColor: "rgba(99, 102, 241, 0.08)",
-                border: "1px solid rgba(99, 102, 241, 0.2)",
+                border: "1px solid rgba(99, 102, 241, 0.25)",
               }}
             >
-              <div style={{ fontSize: "12px", color: "#6366f1", fontWeight: "600" }}>연간 배당금 총액 (세후 15.4%)</div>
-              <div style={{ fontSize: "20px", fontWeight: "800", marginTop: "4px" }}>
+              <div style={{ fontSize: "12px", color: "#818cf8", fontWeight: "600" }}>연간 배당금 총액 (세후 15.4%)</div>
+              <div style={{ fontSize: "20px", fontWeight: "800", marginTop: "4px", color: "var(--text-primary)" }}>
                 {(overview.annualTotalDividendPostTaxWon / 10000).toLocaleString()}만 원
               </div>
-              <div style={{ fontSize: "11px", color: "var(--color-muted, #64748b)", marginTop: "2px" }}>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
                 월평균 {(overview.averageMonthlyDividendWon / 10000).toLocaleString()}만 원
               </div>
             </div>
@@ -220,14 +228,14 @@ export default function DividendCalendarModal({
                 padding: "14px",
                 borderRadius: "12px",
                 backgroundColor: "rgba(16, 185, 129, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.2)",
+                border: "1px solid rgba(16, 185, 129, 0.25)",
               }}
             >
-              <div style={{ fontSize: "12px", color: "#10b981", fontWeight: "600" }}>{selectedMonth}월 총 수입 합계</div>
-              <div style={{ fontSize: "20px", fontWeight: "800", color: "#059669", marginTop: "4px" }}>
+              <div style={{ fontSize: "12px", color: "#34d399", fontWeight: "600" }}>{selectedMonth}월 총 수입 합계</div>
+              <div style={{ fontSize: "20px", fontWeight: "800", color: "#10b981", marginTop: "4px" }}>
                 {(currentSchedule.totalIncomeWon / 10000).toLocaleString()}만 원
               </div>
-              <div style={{ fontSize: "11px", color: "#059669", marginTop: "2px" }}>
+              <div style={{ fontSize: "11px", color: "#34d399", marginTop: "2px" }}>
                 배당금 + 국민연금 + 사적연금
               </div>
             </div>
@@ -238,14 +246,14 @@ export default function DividendCalendarModal({
                 borderRadius: "12px",
                 backgroundColor: currentSchedule.netCashflowWon >= 0 ? "rgba(16, 185, 129, 0.08)" : "rgba(239, 68, 68, 0.08)",
                 border: `1px solid ${
-                  currentSchedule.netCashflowWon >= 0 ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"
+                  currentSchedule.netCashflowWon >= 0 ? "rgba(16, 185, 129, 0.25)" : "rgba(239, 68, 68, 0.25)"
                 }`,
               }}
             >
               <div
                 style={{
                   fontSize: "12px",
-                  color: currentSchedule.netCashflowWon >= 0 ? "#10b981" : "#ef4444",
+                  color: currentSchedule.netCashflowWon >= 0 ? "#34d399" : "#f87171",
                   fontWeight: "600",
                 }}
               >
@@ -256,13 +264,13 @@ export default function DividendCalendarModal({
                   fontSize: "20px",
                   fontWeight: "800",
                   marginTop: "4px",
-                  color: currentSchedule.netCashflowWon >= 0 ? "#059669" : "#dc2626",
+                  color: currentSchedule.netCashflowWon >= 0 ? "#10b981" : "#ef4444",
                 }}
               >
                 {currentSchedule.netCashflowWon >= 0 ? "+" : ""}
                 {(currentSchedule.netCashflowWon / 10000).toLocaleString()}만 원
               </div>
-              <div style={{ fontSize: "11px", color: "var(--color-muted, #64748b)", marginTop: "2px" }}>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "2px" }}>
                 {currentSchedule.netCashflowWon >= 0 ? "🎉 생활비 충당 후 흑자 발생" : "⚠️ 비연금 자산에서 보충 필요"}
               </div>
             </div>
@@ -271,13 +279,13 @@ export default function DividendCalendarModal({
           {/* 해당 월 날짜별 타임라인 스케줄러 */}
           <div
             style={{
-              border: "1px solid var(--modal-border, #e2e8f0)",
+              border: "1px solid var(--border)",
               borderRadius: "12px",
               padding: "18px",
-              backgroundColor: "var(--modal-surface-card, #ffffff)",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
             }}
           >
-            <h3 style={{ fontSize: "15px", fontWeight: "700", margin: "0 0 16px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: "700", margin: "0 0 16px", color: "var(--text-primary)" }}>
               🗓️ {selectedMonth}월 일자별 캐시플로우 타임라인
             </h3>
 
@@ -293,9 +301,9 @@ export default function DividendCalendarModal({
                     borderRadius: "10px",
                     backgroundColor: event.isIncome ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)",
                     borderLeft: `4px solid ${event.isIncome ? "#10b981" : "#ef4444"}`,
-                    borderTop: "1px solid var(--modal-border, #e2e8f0)",
-                    borderRight: "1px solid var(--modal-border, #e2e8f0)",
-                    borderBottom: "1px solid var(--modal-border, #e2e8f0)",
+                    borderTop: "1px solid var(--border)",
+                    borderRight: "1px solid var(--border)",
+                    borderBottom: "1px solid var(--border)",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -305,7 +313,7 @@ export default function DividendCalendarModal({
                         height: "44px",
                         borderRadius: "8px",
                         backgroundColor: event.isIncome ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                        color: event.isIncome ? "#059669" : "#dc2626",
+                        color: event.isIncome ? "#10b981" : "#ef4444",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -318,8 +326,8 @@ export default function DividendCalendarModal({
                     </div>
 
                     <div>
-                      <div style={{ fontSize: "14px", fontWeight: "700" }}>{event.label}</div>
-                      <div style={{ fontSize: "12px", color: "var(--color-muted, #64748b)", marginTop: "2px" }}>
+                      <div style={{ fontSize: "14px", fontWeight: "700", color: "var(--text-primary)" }}>{event.label}</div>
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "2px" }}>
                         {event.notes}
                       </div>
                     </div>
@@ -330,7 +338,7 @@ export default function DividendCalendarModal({
                       style={{
                         fontSize: "16px",
                         fontWeight: "800",
-                        color: event.isIncome ? "#059669" : "#dc2626",
+                        color: event.isIncome ? "#10b981" : "#ef4444",
                       }}
                     >
                       {event.isIncome ? "+" : "-"}
@@ -344,8 +352,8 @@ export default function DividendCalendarModal({
                         padding: "2px 6px",
                         borderRadius: "4px",
                         marginTop: "2px",
-                        backgroundColor: event.isIncome ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                        color: event.isIncome ? "#059669" : "#dc2626",
+                        backgroundColor: event.isIncome ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                        color: event.isIncome ? "#10b981" : "#ef4444",
                       }}
                     >
                       {event.isIncome ? "입금" : "출금"}
@@ -361,23 +369,45 @@ export default function DividendCalendarModal({
             style={{
               padding: "16px",
               borderRadius: "12px",
-              backgroundColor: "rgba(99, 102, 241, 0.05)",
-              border: "1px solid rgba(99, 102, 241, 0.2)",
+              backgroundColor: "rgba(99, 102, 241, 0.06)",
+              border: "1px solid rgba(99, 102, 241, 0.25)",
             }}
           >
-            <h4 style={{ margin: "0 0 8px", fontSize: "14px", color: "#4f46e5", fontWeight: "700" }}>
+            <h4 style={{ margin: "0 0 8px", fontSize: "14px", color: "#818cf8", fontWeight: "700" }}>
               💡 은퇴 인컴 스케줄러 운용 가이드
             </h4>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {overview.recommendations.map((rec, idx) => (
-                <div key={idx} style={{ fontSize: "13px", lineHeight: "1.5", color: "var(--modal-text, #334155)" }}>
+                <div key={idx} style={{ fontSize: "13px", lineHeight: "1.5", color: "var(--text-secondary)" }}>
                   {rec}
                 </div>
               ))}
             </div>
           </div>
         </div>
+
+        {/* 풋터 */}
+        <div
+          style={{
+            padding: "16px 24px",
+            borderTop: "1px solid var(--border)",
+            display: "flex",
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="premium-button"
+            style={{ padding: "8px 20px", fontSize: "0.85rem", fontWeight: 700 }}
+          >
+            확인 및 닫기
+          </button>
+        </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

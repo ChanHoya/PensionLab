@@ -1,6 +1,8 @@
+// 은퇴 시뮬레이션 부부·가족 공유 스냅샷 링크 및 메시지를 생성하는 모달 컴포넌트
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ShareableSnapshotData,
   generateShareUrl,
@@ -20,8 +22,13 @@ export default function ShareSnapshotModal({
 }: ShareSnapshotModalProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedMessage, setCopiedMessage] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const shareUrl = generateShareUrl(snapshotData);
   const shareMessage = generateShareMessage(snapshotData, shareUrl);
@@ -46,7 +53,7 @@ export default function ShareSnapshotModal({
     }
   };
 
-  return (
+  const modalContent = (
     <div
       role="dialog"
       aria-modal="true"
@@ -55,8 +62,9 @@ export default function ShareSnapshotModal({
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        backgroundColor: "rgba(15, 23, 42, 0.75)",
-        backdropFilter: "blur(6px)",
+        backgroundColor: "rgba(0, 0, 0, 0.65)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -68,24 +76,24 @@ export default function ShareSnapshotModal({
         className="t-modal-spring"
         style={{
           width: "100%",
-          maxWidth: "640px",
+          maxWidth: "680px",
           maxHeight: "92vh",
-          backgroundColor: "var(--modal-bg, #ffffff)",
-          color: "var(--modal-text, #0f172a)",
-          borderRadius: "16px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          backgroundColor: "var(--surface)",
+          color: "var(--text-primary)",
+          borderRadius: "20px",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          border: "1px solid var(--modal-border, #e2e8f0)",
+          border: "1px solid var(--border)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 상단 헤더 */}
         <div
           style={{
-            padding: "16px 24px",
-            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
+            padding: "18px 24px",
+            borderBottom: "1px solid var(--border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -97,11 +105,11 @@ export default function ShareSnapshotModal({
             <div>
               <h2
                 id="share-snapshot-modal-title"
-                style={{ fontSize: "18px", fontWeight: "700", margin: 0, color: "var(--modal-title, #0f172a)" }}
+                style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}
               >
                 은퇴 시뮬레이션 부부·가족 공유 스냅샷
               </h2>
-              <p style={{ fontSize: "12px", color: "var(--color-muted, #64748b)", margin: "2px 0 0" }}>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", margin: "3px 0 0" }}>
                 설정한 은퇴 나이와 연금 자산 시뮬레이션을 링크 하나로 배우자에게 전달
               </p>
             </div>
@@ -113,14 +121,14 @@ export default function ShareSnapshotModal({
               width: "32px",
               height: "32px",
               borderRadius: "8px",
-              border: "1px solid var(--modal-border, #e2e8f0)",
+              border: "1px solid var(--border)",
               background: "transparent",
               cursor: "pointer",
               fontSize: "16px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "var(--color-muted, #64748b)",
+              color: "var(--text-muted)",
             }}
           >
             ✕
@@ -134,34 +142,34 @@ export default function ShareSnapshotModal({
             style={{
               padding: "16px",
               borderRadius: "12px",
-              backgroundColor: "var(--modal-surface, #f8fafc)",
-              border: "1px solid var(--modal-border, #e2e8f0)",
+              backgroundColor: "rgba(255, 255, 255, 0.02)",
+              border: "1px solid var(--border)",
               display: "grid",
               gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "12px",
+              gap: "14px",
             }}
           >
             <div>
-              <span style={{ fontSize: "11px", color: "var(--color-muted, #64748b)" }}>현재/은퇴 나이</span>
-              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>현재/은퇴 나이</span>
+              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px", color: "var(--text-primary)" }}>
                 만 {snapshotData.ca}세 ➔ 만 {snapshotData.ra}세
               </div>
             </div>
             <div>
-              <span style={{ fontSize: "11px", color: "var(--color-muted, #64748b)" }}>목표 생활비</span>
-              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>목표 생활비</span>
+              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px", color: "var(--text-primary)" }}>
                 월 {snapshotData.ms.toLocaleString()}만 원
               </div>
             </div>
             <div>
-              <span style={{ fontSize: "11px", color: "var(--color-muted, #64748b)" }}>예상 국민연금</span>
-              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>예상 국민연금</span>
+              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px", color: "#10b981" }}>
                 월 {snapshotData.np.toLocaleString()}만 원
               </div>
             </div>
             <div>
-              <span style={{ fontSize: "11px", color: "var(--color-muted, #64748b)" }}>사적/퇴직연금 자산</span>
-              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px" }}>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>사적/퇴직연금 자산</span>
+              <div style={{ fontSize: "15px", fontWeight: "700", marginTop: "2px", color: "#60a5fa" }}>
                 {(snapshotData.rp + snapshotData.pp).toLocaleString()}만 원
               </div>
             </div>
@@ -169,7 +177,7 @@ export default function ShareSnapshotModal({
 
           {/* 공유 링크 복사 박스 */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <label style={{ fontSize: "13px", fontWeight: "700" }}>🌐 공유 전용 스냅샷 링크</label>
+            <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-primary)" }}>🌐 공유 전용 스냅샷 링크</label>
             <div style={{ display: "flex", gap: "8px" }}>
               <input
                 type="text"
@@ -179,10 +187,10 @@ export default function ShareSnapshotModal({
                   flex: 1,
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  border: "1px solid var(--modal-border, #cbd5e1)",
-                  backgroundColor: "var(--modal-surface-sub, #f1f5f9)",
+                  border: "1px solid var(--border)",
+                  backgroundColor: "rgba(0, 0, 0, 0.2)",
                   fontSize: "12px",
-                  color: "var(--modal-text, #334155)",
+                  color: "var(--text-secondary)",
                   outline: "none",
                 }}
               />
@@ -209,17 +217,17 @@ export default function ShareSnapshotModal({
           {/* 카카오톡 / 문자 메시지 복사 박스 */}
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <label style={{ fontSize: "13px", fontWeight: "700" }}>💬 카카오톡/문자 전송용 요약 메시지</label>
+              <label style={{ fontSize: "13px", fontWeight: "700", color: "var(--text-primary)" }}>💬 카카오톡/문자 전송용 요약 메시지</label>
               <button
                 onClick={handleCopyMessage}
                 style={{
                   padding: "4px 10px",
                   borderRadius: "6px",
-                  backgroundColor: copiedMessage ? "rgba(16, 185, 129, 0.15)" : "var(--modal-surface, #e2e8f0)",
-                  color: copiedMessage ? "#059669" : "var(--modal-text, #334155)",
+                  backgroundColor: copiedMessage ? "rgba(16, 185, 129, 0.15)" : "rgba(255, 255, 255, 0.05)",
+                  color: copiedMessage ? "#10b981" : "var(--text-secondary)",
                   fontSize: "12px",
                   fontWeight: "600",
-                  border: "none",
+                  border: "1px solid var(--border)",
                   cursor: "pointer",
                 }}
               >
@@ -234,11 +242,11 @@ export default function ShareSnapshotModal({
                 width: "100%",
                 padding: "12px",
                 borderRadius: "8px",
-                border: "1px solid var(--modal-border, #cbd5e1)",
-                backgroundColor: "var(--modal-surface-sub, #f8fafc)",
+                border: "1px solid var(--border)",
+                backgroundColor: "rgba(0, 0, 0, 0.2)",
                 fontSize: "12px",
                 lineHeight: "1.6",
-                color: "var(--modal-text, #334155)",
+                color: "var(--text-secondary)",
                 resize: "none",
                 outline: "none",
                 boxSizing: "border-box",
@@ -252,17 +260,39 @@ export default function ShareSnapshotModal({
               padding: "12px 16px",
               borderRadius: "8px",
               backgroundColor: "rgba(16, 185, 129, 0.08)",
-              border: "1px solid rgba(16, 185, 129, 0.2)",
+              border: "1px solid rgba(16, 185, 129, 0.25)",
               fontSize: "12px",
               lineHeight: "1.5",
-              color: "#065f46",
+              color: "#34d399",
             }}
           >
-            🔒 <strong>개인정보 안심 보장</strong>: 이름, 주민등록번호, 계좌번호 등 개인식별정보(PII)는 일절 포함되지
+            🔒 <strong style={{ color: "#10b981" }}>개인정보 안심 보장</strong>: 이름, 주민등록번호, 계좌번호 등 개인식별정보(PII)는 일절 포함되지
             않으며, 서버 저장 없이 순수 시뮬레이션 계산 변수만 암호화 인코딩되어 브라우저 간에 안전하게 전달됩니다.
           </div>
+        </div>
+
+        {/* 풋터 */}
+        <div
+          style={{
+            padding: "16px 24px",
+            borderTop: "1px solid var(--border)",
+            display: "flex",
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="premium-button"
+            style={{ padding: "8px 20px", fontSize: "0.85rem", fontWeight: 700 }}
+          >
+            확인 및 닫기
+          </button>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

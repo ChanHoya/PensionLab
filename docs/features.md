@@ -293,6 +293,10 @@
   1) 국민연금 가입내역조회 업로드 카드 테마 일원화 (`src/components/NpsHistoryUpload.tsx`): 점선 테두리 제거 후 금융감독원 안내 패널과 동일한 인디고 실선 테두리(`1px solid rgba(99, 102, 241, 0.2)`), 좌측 4px 포인트 바(`borderLeft: 4px solid #6366f1`), 알약형 NPS 포털 링크 뱃지 버튼 및 일관된 폰트 크기/굵기 적용.
   2) CSS Containing Block 좌표계 왜곡 해결 (`NpsBoostRoadmapModal.tsx`, `NpsRecoveryModal.tsx`): 온보딩 패널 수직 슬라이딩 트랜지션(`transform: translateY`) 하위에서 모달이 화면 우측 하단에 갇혀 찌그러지던 브라우저 W3C 스펙 버그를 React `createPortal(modalContent, document.body)`를 통해 브라우저 최상단으로 격리 및 정중앙 팝업 보장.
   3) 다크 모드 4종 팁 팝업 폰트 시맨틱 토큰화 (`TaxAndHealthStatementModal.tsx`, `DividendCalendarModal.tsx`, `StressTestModal.tsx`, `ShareSnapshotModal.tsx`): 라이트 모드 고정 폴백 색상(#0f172a, #334155 등)을 `var(--text-primary)`, `var(--text-secondary)`, `var(--text-muted)`로 전면 교체하여 다크 모드에서도 선명한 WCAG AA 대비율 확보 및 `createPortal`과 하단 [확인 및 닫기] 버튼 일괄 연동 완료 (Sprint 51)
+- **[FEAT-080] 대시보드 사이드바 팁 버튼 4대 분류별 테마 및 옅은색→짙은색 순차 컬러 스케일 적용**:
+  1) 4대 분류별 고유 테마 색상 정립: `공·사적 연금 최적화`(골드/오렌지), `절세 & 건강보험료 수비`(민트/에메랄드), `인출 전략 & 자산 런웨이 방어`(스카이/사이언 블루), `시나리오 비교 & 종합 진단`(라벤더/바이올렛 퍼플).
+  2) 동일 분류 내 순차 컬러 스케일: 위에서 아래로 갈수록 박스 배경(0.05→0.24), 테두리(0.22→0.78), 텍스트 채도/농도 및 폰트 굵기(600→750)가 옅은 색에서 점점 짙은 색으로 체계적으로 점증하도록 설계.
+  3) 다크 테마 WCAG AA 가독성 보장: 어두운 배경 위에서 폰트가 묻히지 않도록 정밀 조율된 HSL/RGB 틴트를 적용하여 시각적 인지 계층 구조와 조작 심미성을 동시 확보 (Sprint 52)
 
 
 

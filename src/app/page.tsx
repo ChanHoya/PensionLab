@@ -82,6 +82,17 @@ export default function LandingPage() {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isReferenceOpen, setIsReferenceOpen] = useState(false);
   const [quickDiagnosisOpen, setQuickDiagnosisOpen] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // 음소거 토글 핸들러 (브라우저 자동재생 정책 호환)
+  const toggleSound = () => {
+    if (videoRef.current) {
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      setIsMuted(nextMuted);
+    }
+  };
 
   const getNavStyle = (menuId: "service-intro" | "pension-library" | "reference-services") => {
     return {
@@ -182,14 +193,33 @@ export default function LandingPage() {
         </p>
       </section>
 
-      {/* 3층 연금 구조 도식화 이미지 영역 */}
-      <div style={styles.diagramContainer}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/pension_structure.png"
-          alt="튼튼한 노후를 짓는 3층 연금 마법 블록 구조"
-          style={styles.diagramImage}
-        />
+      {/* 30초 연금 컨설팅 소개 영상 자동 재생 영역 */}
+      <div style={styles.videoContainer} className="animate-fade-in">
+        <div style={styles.videoWrapper}>
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls
+            preload="auto"
+            style={styles.introVideo}
+          >
+            <source src="/pension_intro.mp4" type="video/mp4" />
+            브라우저가 비디오 재생을 지원하지 않습니다.
+          </video>
+
+          {/* 소리 켜기/끄기 플로팅 퀵 토글 버튼 */}
+          <button
+            type="button"
+            onClick={toggleSound}
+            style={styles.soundToggleBtn}
+            title={isMuted ? "소리 켜기 (소개 내레이션 듣기)" : "음소거"}
+          >
+            <span>{isMuted ? "🔇 소리 켜기" : "🔊 음소거"}</span>
+          </button>
+        </div>
       </div>
 
 
@@ -405,27 +435,55 @@ const styles: { [key: string]: React.CSSProperties } = {
     lineHeight: 1.5,
     margin: 0,
   },
-  diagramContainer: {
+  videoContainer: {
     width: "100%",
     maxWidth: "1000px",
-    backgroundColor: "#ffffff",
-    padding: "16px",
+    backgroundColor: "#0d0e1c",
+    padding: "8px",
     borderRadius: "20px",
-    border: "1px solid rgba(99, 102, 241, 0.25)",
-    boxShadow: "0 24px 48px rgba(0, 0, 0, 0.4)",
-    margin: "0 auto 16px auto",
+    border: "1px solid rgba(99, 102, 241, 0.35)",
+    boxShadow: "0 24px 60px rgba(0, 0, 0, 0.6), 0 0 24px rgba(99, 102, 241, 0.25)",
+    margin: "0 auto 20px auto",
     zIndex: 1,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
-  diagramImage: {
+  videoWrapper: {
     width: "100%",
-    height: "auto",
-    maxHeight: "560px",
+    aspectRatio: "16 / 9",
+    position: "relative" as const,
+    borderRadius: "14px",
+    overflow: "hidden",
+    backgroundColor: "#000000",
+  },
+  introVideo: {
+    width: "100%",
+    height: "100%",
     objectFit: "contain",
-    borderRadius: "12px",
+    borderRadius: "14px",
     display: "block",
+  },
+  soundToggleBtn: {
+    position: "absolute" as const,
+    top: "14px",
+    right: "14px",
+    zIndex: 10,
+    backgroundColor: "rgba(15, 23, 42, 0.8)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    border: "1px solid rgba(255, 255, 255, 0.25)",
+    color: "#ffffff",
+    padding: "6px 12px",
+    borderRadius: "20px",
+    fontSize: "0.78rem",
+    fontWeight: 700,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
+    transition: "all 0.2s ease",
   },
   libOverlay: {
     position: "fixed",

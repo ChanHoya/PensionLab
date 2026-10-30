@@ -74,53 +74,25 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.65)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9999,
-        padding: "16px",
-      }}
+      className="modal-backdrop"
       onClick={onClose}
     >
       <div
-        className="t-modal-spring"
+        className="t-modal-spring modal-container"
         style={{
           width: "100%",
           maxWidth: "840px",
           maxHeight: "92vh",
-          overflowY: "auto",
-          backgroundColor: "var(--surface)",
-          border: "1px solid var(--border)",
-          borderRadius: "20px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
-          color: "var(--text-primary)",
-          display: "flex",
-          flexDirection: "column",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 모달 헤더 */}
-        <div
-          style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.05) 100%)",
-          }}
-        >
+        <div className="modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "1.6rem" }}>⚡</span>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800 }}>
+                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "var(--text-primary)" }}>
                   초심자를 위한 30초 퀵 간편 진단
                 </h2>
                 <span
@@ -130,7 +102,7 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
                     padding: "2px 8px",
                     borderRadius: "12px",
                     backgroundColor: "rgba(99, 102, 241, 0.15)",
-                    color: "#818cf8",
+                    color: "var(--text-accent)",
                     border: "1px solid rgba(99, 102, 241, 0.3)",
                   }}
                 >
@@ -144,18 +116,10 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--text-muted)",
-              fontSize: "1.4rem",
-              cursor: "pointer",
-              padding: "4px 8px",
-              lineHeight: 1,
-            }}
+            className="modal-close-button"
             aria-label="닫기"
           >
-            ×
+            ✕
           </button>
         </div>
 
@@ -357,17 +321,17 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
                 gap: "10px",
-                padding: "12px",
-                backgroundColor: "rgba(0, 0, 0, 0.15)",
+                padding: "14px 16px",
+                backgroundColor: "var(--modal-surface-card)",
                 borderRadius: "12px",
-                border: "1px solid var(--border)",
+                border: "1px solid var(--modal-border)",
               }}
             >
               <div>
                 <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>
                   예상 은퇴 월 총 연금
                 </span>
-                <span style={{ fontSize: "1.25rem", fontWeight: 800, color: "#34d399" }}>
+                <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--success-light)" }}>
                   <NumberPopIn value={result.expectedMonthlyPension} formatter={(n) => `월 ${Number(n).toLocaleString()}만원`} />
                 </span>
               </div>
@@ -378,8 +342,8 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
                 <span
                   style={{
                     fontSize: "1.25rem",
-                    fontWeight: 800,
-                    color: result.monthlyShortfall > 0 ? "#f87171" : "#60a5fa",
+                    fontWeight: 700,
+                    color: result.monthlyShortfall > 0 ? "var(--danger)" : "var(--info)",
                   }}
                 >
                   {result.monthlyShortfall > 0 ? (
@@ -403,7 +367,8 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
                   borderRadius: "6px",
                   display: "flex",
                   overflow: "hidden",
-                  backgroundColor: "rgba(255, 255, 255, 0.08)",
+                  backgroundColor: "var(--modal-subbox-bg)",
+                  border: "1px solid var(--modal-border-subtle)",
                   marginBottom: "8px",
                 }}
               >
@@ -439,16 +404,16 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
             {/* 핵심 팁 */}
             <div
               style={{
-                backgroundColor: "rgba(99, 102, 241, 0.08)",
-                border: "1px solid rgba(99, 102, 241, 0.2)",
+                backgroundColor: "var(--modal-subbox-bg)",
+                border: "1px solid var(--modal-subbox-border)",
                 borderRadius: "10px",
-                padding: "10px 12px",
+                padding: "12px 14px",
                 fontSize: "0.75rem",
                 color: "var(--text-secondary)",
                 lineHeight: 1.45,
               }}
             >
-              <span style={{ fontWeight: 700, color: "#818cf8", display: "block", marginBottom: "4px" }}>
+              <span style={{ fontWeight: 700, color: "var(--text-accent)", display: "block", marginBottom: "4px" }}>
                 🎯 골든 액션 팁
               </span>
               {result.goldenTips[0]}
@@ -457,18 +422,7 @@ export default function QuickDiagnosisModal({ isOpen, onClose }: QuickDiagnosisM
         </div>
 
         {/* 모달 풋터 액션 바 */}
-        <div
-          style={{
-            padding: "16px 24px",
-            borderTop: "1px solid var(--border)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "12px",
-            flexWrap: "wrap",
-            backgroundColor: "rgba(0, 0, 0, 0.1)",
-          }}
-        >
+        <div className="modal-footer">
           <button
             type="button"
             onClick={handleGoToDetailedOnboarding}

@@ -457,52 +457,25 @@ export function DividendStrategyModal({
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        backgroundColor: "var(--overlay-bg, rgba(15, 23, 42, 0.65))",
-        backdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-      }}
+      className="modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="t-modal-spring"
+        className="t-modal-spring modal-container"
         style={{
           width: "100%",
           maxWidth: "1100px",
           maxHeight: "92vh",
-          backgroundColor: "var(--modal-bg, #ffffff)",
-          border: "1px solid var(--modal-border, #e2e8f0)",
-          borderRadius: "16px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          color: "var(--text-primary, #0f1127)",
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid var(--modal-border, #e2e8f0)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            background: "var(--modal-header-bg, #ffffff)",
-          }}
-        >
+        <div className="modal-header">
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <span style={{ fontSize: "1.4rem" }}>💡</span>
-              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary, #0f1127)" }}>
+              <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "var(--text-primary)" }}>
                 연금저축 & IRP 실전 배당 포트폴리오 가이드
               </h2>
               <span
@@ -511,7 +484,7 @@ export function DividendStrategyModal({
                   padding: "3px 8px",
                   borderRadius: "6px",
                   backgroundColor: "rgba(99, 102, 241, 0.12)",
-                  color: "var(--text-accent, #4f46e5)",
+                  color: "var(--text-accent)",
                   border: "1px solid rgba(99, 102, 241, 0.25)",
                   fontWeight: 600,
                 }}
@@ -519,23 +492,15 @@ export function DividendStrategyModal({
                 전문가 추천 실전 ETF 10선 매핑
               </span>
             </div>
-            <p style={{ margin: "6px 0 0 0", fontSize: "0.82rem", color: "var(--text-secondary, #334155)", lineHeight: 1.45 }}>
+            <p style={{ margin: "6px 0 0 0", fontSize: "0.82rem", color: "var(--text-secondary)", lineHeight: 1.45 }}>
               국내 금융투자 전문가(자산운용사·연금 전문가)들이 실제 추천하는 포트폴리오 4선과 실전 매수 가능 국내 상장 ETF(티커/종목코드)를 확인하고, 내 은퇴 자금에 즉시 적용하세요.
             </p>
           </div>
           <button
             onClick={onClose}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "var(--text-muted, #64748b)",
-              fontSize: "1.4rem",
-              cursor: "pointer",
-              padding: "4px 8px",
-              borderRadius: "6px",
-              lineHeight: 1,
-            }}
+            className="modal-close-button"
             title="닫기"
+            aria-label="닫기"
           >
             ✕
           </button>

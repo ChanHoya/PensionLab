@@ -75,9 +75,11 @@
   - [x] 클릭 가능한 버튼, 탭, 카드 전체에 `:active { transform: scale(0.98); }` 촉각 피드백 주입.
   - [x] 전체 폼 인풋 및 인터랙티브 요소에 WCAG AA 기준 `:focus-visible` 고대비 포커스 링 통일.
   - [x] 스킵 네비게이션(`Skip to Content`) 링크를 `layout.tsx`에 신설하여 키보드 탐색성 완비.
-- [x] 4. 모션 및 전환 (Motion Pass)
-  - [x] 기본 CSS 애니메이션 베지어 곡선을 물리 베지어 `cubic-bezier(0.22, 1, 0.36, 1)`로 표준화.
-  - [x] `prefers-reduced-motion` 미디어 쿼리 누락 요소 점검.
+- [x] 4. Step 2 모달 내부 컬러·서피스 정돈 및 UI/UX 고도화
+  - [x] 모달 헤더 인라인 AI 그라디언트 제거 및 시맨틱 플랫 서피스(`var(--modal-header-bg)`) 통일.
+  - [x] 라이트 모드 오염 `rgba(0, 0, 0, 0.15)` 및 다크 모드 `rgba(255, 255, 255, 0.04)` 서피스를 솔리드 시맨틱 토큰(`--modal-surface-card`, `--modal-subbox-bg`)으로 전환.
+  - [x] 모달 닫기 버튼 44px 터치 타깃 및 통일된 호버/포커스 링 클래스(`modal-close-button`) 적용.
+  - [x] 중첩 카드 반경(`inner = outer - gap`) 수학적 비례(20px ➔ 12px ➔ 8px) 적용.
 - [x] 5. 검증 및 배포
   - [x] `npm run build` 프로덕션 빌드 무결성 검증 (0 errors, 22/22 정적 페이지).
   - [x] 로컬 서버 구동 및 HTTP 200 / DOM 렌더링 검증 완료.

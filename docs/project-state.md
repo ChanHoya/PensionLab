@@ -11,7 +11,7 @@
 - **[Completed]** Sprint 51: 국민연금 가입내역조회 인디고 테마 동기화, Containing Block 좌표 왜곡 해결(React Portal 적용), 및 다크 모드 4종 팁 팝업(세무·건보 고지서, 배당캘린더, 스트레스테스트, 가족공유) 폰트 시맨틱 토큰 개선 (FEAT-079).
 - **[Completed]** Sprint 52: 왼쪽 사이드바 팁 버튼 4대 분류별 테마 색상(골드, 에메랄드, 스카이블루, 바이올렛) 및 동일 분류 내 옅은색에서 점점 짙은색으로 단계별 톤 스케일 시스템 구축 (FEAT-080).
 - **[Completed]** Sprint 53: 접속 첫화면(랜딩 페이지) PDF 첫페이지 대신 30초 연금 컨설팅 소개 영상(16:9 와이드, 자동 재생, 음소거 토글 컨트롤) 삽입 완료 (FEAT-081).
-- **[Completed]** Sprint 54: `redesign-skill` (elayadesign/redesign-skill) 도입 및 Geist/Geist_Mono 폰트 현대화, Tabular-nums, Text-wrap 및 Skip-to-content 접근성 고도화 (FEAT-082).
+- **[Completed]** Sprint 54: `redesign-skill` (elayadesign/redesign-skill) 전사 적용 — [Step 1] Geist/Geist_Mono 폰트 현대화, Tabular-nums, Text-wrap 및 Skip-to-content 접근성 완료 & [Step 2] 모달 헤더 AI 그라디언트 제거, 솔리드 시맨틱 서피스 토큰화, 중첩 반경 공식(20px➔12px➔8px) 및 닫기 버튼 UI/UX 고도화 (FEAT-082).
 - **[Completed]** Story S1-1: Zustand client state store, Landing page, Onboarding wizard, and save API.
 - **[Completed]** Story S1-2: Pension Calculation Engine (calculating 3-tier payouts and 2026 reform schedules) and Dashboard UI integrated with Recharts Donut & Stacked Area charts.
 - **[Completed]** Story S1-3: YouTube Expert Content Crawler and RAG Chat Q&A API using pgvector and OpenAI.

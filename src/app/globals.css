@@ -168,12 +168,12 @@
   --bg-card:            #161728;
   --modal-surface:      #161728;
   --modal-surface-sub:  #1c1f35;
-  --modal-surface-card: rgba(255, 255, 255, 0.04);
+  --modal-surface-card: #1c1f35;
   --modal-border:       #2a2d45;
   --modal-border-subtle:#1e2138;
-  --modal-subbox-bg:    #0f172a;
-  --modal-subbox-border:#1e293b;
-  --modal-table-th:     #1e293b;
+  --modal-subbox-bg:    #121324;
+  --modal-subbox-border:#2a2d45;
+  --modal-table-th:     #1e2138;
   --modal-table-border: rgba(255, 255, 255, 0.08);
   --tooltip-bg:         #0f172a;
   --tooltip-border:     #334155;
@@ -957,28 +957,97 @@ a[role="button"]:active,
   }
 }
 
-/* 8. Adaptive Modal Theme System */
+/* 8. Adaptive Modal Theme System (redesign-skill standard) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: var(--overlay-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.modal-container,
 .t-modal-panel {
   background-color: var(--modal-bg) !important;
   color: var(--text-primary) !important;
   border: 1px solid var(--modal-border) !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4) !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
+.modal-header,
 .t-modal-header {
   background-color: var(--modal-header-bg) !important;
   border-bottom: 1px solid var(--modal-border) !important;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-close-button,
+.t-modal-close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.modal-close-button:hover,
+.t-modal-close-btn:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: var(--text-primary);
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--modal-border);
+  background-color: var(--modal-header-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .t-modal-card {
   background-color: var(--modal-surface-card) !important;
   border: 1px solid var(--modal-border) !important;
+  border-radius: 12px;
   color: var(--text-primary) !important;
 }
 
 .t-modal-subbox {
   background-color: var(--modal-subbox-bg) !important;
   border: 1px solid var(--modal-subbox-border) !important;
+  border-radius: 8px;
   color: var(--text-primary) !important;
 }
 

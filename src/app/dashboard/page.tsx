@@ -720,6 +720,7 @@ export default function DashboardPage() {
             onOpenShareSnapshotModal={() => setActiveModal("shareSnapshot")}
             onOpenNpsRecoveryModal={() => setActiveModal("npsRecovery")}
             onOpenRebalancingOrderModal={() => setActiveModal("rebalancingOrder")}
+            onOpenNpsReformModal={() => setActiveModal("npsReform2026")}
           />
           {/* 결과 칸만 스크롤 (제목줄·입력 열은 고정) */}
           <div style={styles.results} className="dash-results">

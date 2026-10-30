@@ -85,5 +85,20 @@
   - [x] `npm run build` 프로덕션 빌드 무결성 검증 (0 errors, 22/22 정적 페이지).
   - [x] Headless Chrome 기반 랜딩(`/tmp/landing.png`) 및 대시보드(`/tmp/dashboard.png`) 실화면 렌더링 캡처 검증 완료.
 
+## Sprint 55: 2026 연금개혁 비교기, 온보딩/진단리포트 전사 UI 리뉴얼 & 모바일 제스처 PWA 고도화
+- [ ] **Story S55-1: 2026 국민연금 개혁 비교 시뮬레이터 신설 (후보 B)**
+  - [ ] `src/services/npsReform2026Service.ts` 계산 엔진 신설 (출생연도/세대별 보험료율 인상 스케줄 9%➔13%, 소득대체율 40%➔42%, 추가 부담액 vs 평생 연금 증액 역산).
+  - [ ] `src/components/NpsReform2026Modal.tsx` 컴포넌트 신설 (시맨틱 서피스, 44px 닫기, 중첩 반경 20px➔12px➔8px, 개혁 전후 비교 차트 및 세대별 차등 가이드).
+  - [ ] `DashboardModalManager.tsx`, `DashboardToolbar.tsx`, `DashboardSidebar.tsx` 메뉴 및 모달 연동.
+- [ ] **Story S55-2: 온보딩 위저드 & AI 진단 리포트 redesign-skill 2차 동기화 (후보 A)**
+  - [ ] `src/app/onboarding/page.tsx`: Step 0~4 인풋/슬라이더/선택 카드 서피스 토큰화 및 중첩 반경 공식 적용.
+  - [ ] `src/components/DiagnosisReport.tsx`: 10대 섹션 카드, 등급 게이지, 레이더 차트, 오프스크린 인쇄(PDF) 뷰 redesign 토큰 통일.
+  - [ ] Geist 폰트 렌더링 무결성 및 숫자 `tabular-nums` 정렬 확인.
+- [ ] **Story S55-3: 모바일 바텀시트 Emil Kowalski 스프링 제스처 & PWA 서비스워커 고도화 (후보 C)**
+  - [ ] 모달 바텀시트에 터치 드래그 인디케이터 핸들 바 스와이프 다운 닫기 인터랙션 구현 (`globals.css` 및 모달 래퍼).
+  - [ ] `public/sw.js` 오프라인 캐싱 캐시 전략 보강 및 `manifest.ts` 최적화.
+  - [ ] `npm run build` 및 Chrome Headless 모바일/데스크톱 렌더링 검증 후 세션 정리.
+
+
 
 

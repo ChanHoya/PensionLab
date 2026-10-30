@@ -30,6 +30,7 @@ export type DashboardModalType =
   | "stressTest"
   | "npsRecovery"
   | "rebalancingOrder"
+  | "npsReform2026"
   | null;
 
 interface DashboardToolbarProps {
@@ -46,6 +47,24 @@ export default function DashboardToolbar({ onOpenModal }: DashboardToolbarProps)
         flexWrap: "wrap",
       }}
     >
+      {/* 2026 국민연금 개혁 비교 (신설) */}
+      <button
+        id="btn-nps-reform-actions"
+        onClick={() => onOpenModal("npsReform2026")}
+        className="premium-button-secondary"
+        style={{
+          fontSize: "0.75rem",
+          padding: "6px 12px",
+          fontWeight: 700,
+          borderColor: "rgba(59, 130, 246, 0.5)",
+          color: "#60a5fa",
+          background: "rgba(59, 130, 246, 0.12)",
+        }}
+        title="2026 국민연금 개혁안(보험료율 9%->13% 세대별 차등 인상 및 소득대체율 40%->42%) 시나리오 비교"
+      >
+        🏛️ 2026 연금개혁
+      </button>
+
       {/* 30초 퀵 간편 진단 (초심자 진입용) */}
       <button
         id="btn-quick-diagnosis-actions"

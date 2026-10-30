@@ -46,6 +46,7 @@ interface Props {
   onOpenShareSnapshotModal?: () => void;
   onOpenNpsRecoveryModal?: () => void;
   onOpenRebalancingOrderModal?: () => void;
+  onOpenNpsReformModal?: () => void;
 }
 
 export default function DashboardSidebar(props: Props) {
@@ -555,6 +556,7 @@ export default function DashboardSidebar(props: Props) {
 
         {/* 관련 특화 분석 툴킷 (공·사적 연금: 옅은 레몬골드 → 짙은 딥오렌지) */}
         <div style={{ marginTop: "6px" }}>
+          {renderToolButton(props.onOpenNpsReformModal, "🏛️", "2026 국민연금 개혁 비교 시뮬레이터", PENSION_TOOL_TONES[0])}
           {renderToolButton(props.onOpenNpsBoostModal, "🪜", "국민연금 증액 로드맵 (반납·추납·임의계속)", PENSION_TOOL_TONES[0])}
           {renderToolButton(props.onOpenNpsRecoveryModal, "⚖️", "국민연금 추납 vs 반납 실익 역산기", PENSION_TOOL_TONES[1])}
           {renderToolButton(props.onOpenBepModal, "⚖️", "조기 vs 정상 vs 연기 손익분기(BEP)", PENSION_TOOL_TONES[2], "sidebar-btn-nps-bep")}

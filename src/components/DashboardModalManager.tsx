@@ -42,6 +42,9 @@ const StressTestModal = dynamic(() => import("./StressTestModal"), { ssr: false 
 const NpsRecoveryModal = dynamic(() => import("./NpsRecoveryModal"), { ssr: false });
 const RebalancingOrderModal = dynamic(() => import("./RebalancingOrderModal"), { ssr: false });
 
+// Sprint 55: 2026 국민연금 개혁 비교 시뮬레이터
+const NpsReform2026Modal = dynamic(() => import("./NpsReform2026Modal"), { ssr: false });
+
 interface DashboardModalManagerProps {
   activeModal: DashboardModalType;
   onClose: () => void;
@@ -284,6 +287,14 @@ export default function DashboardModalManager({
         isOpen={activeModal === "rebalancingOrder"}
         onClose={onClose}
         initialTotalAssetsWon={(totalRetirementAssets + (store.simulationParams.nonPensionAssets || 15000)) * 10000}
+      />
+
+      <NpsReform2026Modal
+        isOpen={activeModal === "npsReform2026"}
+        onClose={onClose}
+        initialAge={store.simulationParams.currentAge || 45}
+        initialIncome={3500000}
+        hasSpouse={store.simulationParams.hasSpouse || false}
       />
     </>
   );

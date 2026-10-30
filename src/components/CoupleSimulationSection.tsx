@@ -732,6 +732,10 @@ export default function CoupleSimulationSection({
               const i = rows.indexOf(r);
               const noteText = remark(r, i);
               const isEventRow = isKeyMilestone(r, i);
+              const div = isRealValue ? Math.pow(1 + infl / 100, i) : 1;
+              const selfTotal = Math.round(r.self.total / div);
+              const spouseTotal = r.spouse ? Math.round(r.spouse.total / div) : null;
+              const householdTotal = Math.round(r.household / div);
 
               return (
                 <tr
@@ -745,9 +749,9 @@ export default function CoupleSimulationSection({
                   <td style={styles.td}>{r.year}</td>
                   <td style={styles.td}>{r.self.age}세</td>
                   <td style={styles.td}>{r.spouse ? `${r.spouse.age}세` : "-"}</td>
-                  <td style={styles.td}>{fmt(r.self.total)}</td>
-                  <td style={styles.td}>{r.spouse ? fmt(r.spouse.total) : "-"}</td>
-                  <td style={styles.td}><strong>{fmt(r.household)}</strong></td>
+                  <td style={styles.td}>{fmt(selfTotal)}</td>
+                  <td style={styles.td}>{spouseTotal !== null ? fmt(spouseTotal) : "-"}</td>
+                  <td style={styles.td}><strong>{fmt(householdTotal)}</strong></td>
                   <td style={styles.td}>
                     {noteText ? (
                       <span

@@ -302,6 +302,12 @@
   2) 모던 브라우저 자동 재생 정책(Autoplay Policy) 완벽 대응: `autoPlay`, `muted`, `loop`, `playsInline`, `preload="auto"` 적용으로 접속 즉시 지연 없이 무음 자동 재생.
   3) 원클릭 사운드 토글 인터랙션: 영상 우측 상단 반투명 블러 글래스 버튼(`🔇 소리 켜기` / `🔊 음소거`)을 제공하여 사용자가 원하는 시점에 한 번의 터치/클릭으로 컨설팅 내레이션을 청취 가능.
   4) 16:9 와이드 비율의 인디고 글로우 다크 프레임(`border: 1px solid rgba(99, 102, 241, 0.35)`, `boxShadow: 0 24px 60px rgba(0,0,0,0.6)`) 적용 (Sprint 53)
+- **[FEAT-082] redesign-skill 기반 전사 타이포그래피, 서피스 토큰화 및 모달 UI/UX 고도화**:
+  1) 모던 프리미엄 폰트 Geist & Geist_Mono 마이그레이션: `Inter` 및 과도한 울트라볼드(800)를 배제하고, `next/font/google`의 최신 시스템 폰트 `Geist` 및 `Geist_Mono`로 전환, 정교한 4단계(400, 500, 600, 700) 폰트 위계 수립.
+  2) 수치 정렬성 및 한국어 가독성 강화: 대시보드와 모달 테이블 전반에 `tabular-nums lining-nums` 적용으로 자릿수 변동 시 흔들림 없는 그리드 정렬을 보장하고, 제목 `text-wrap: balance`, 본문 `text-wrap: pretty` 및 `word-break: keep-all` 적용으로 단어 잘림 방지.
+  3) 웹 접근성(WCAG AA) 및 조작감 강화: 키보드 사용자를 위한 본문 바로가기(`Skip to Content`) 링크 탑재, `:focus-visible` 고대비 포커스 링 통일, 버튼/카드 클릭 시 물리적 조작감(`:active { transform: scale(0.98); }`) 주입.
+  4) 전사 11종 전문 모달 서피스 정돈 및 수학적 중첩 반경 공식: 모달 헤더의 인라인 AI 그라디언트를 전면 걷어내고 플랫 시맨틱 서피스(`var(--modal-header-bg)`)로 통일, 다크 모드 솔리드 서피스(`--modal-surface-card: #1c1f35`) 및 라이트 모드 얼룩 제거, 닫기 버튼 44px 터치 타깃 표준화, 중첩 반경 공식(`inner = outer - gap`, 20px ➔ 12px ➔ 8px) 전면 적용.
+  5) 프로덕션 빌드(22/22) 및 Headless Chrome 실화면 렌더링 캡처 검증 완료 (Sprint 54)
 
 
 

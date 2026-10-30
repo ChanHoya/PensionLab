@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
+const geistSans = Geist({
   subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-geist-sans",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  weight: ["400", "500", "600", "700"],
 });
 
 const defaultAppUrl = process.env.NEXT_PUBLIC_APP_URL || "https://my-pensionlab.vercel.app";
@@ -48,12 +54,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={inter.variable} suppressHydrationWarning>
+    <html lang="ko" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: darkModeScript }} />
       </head>
       <body id="pensionlab-root">
-        {children}
+        <a href="#main-content" className="skip-to-content">
+          본문으로 건너뛰기
+        </a>
+        <div id="main-content" style={{ display: "contents" }}>
+          {children}
+        </div>
       </body>
     </html>
   );

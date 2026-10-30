@@ -54,11 +54,33 @@
   - [x] `npm run build` 빌드 검증 및 렌더링 에러 0건 확인.
   - [x] 브라우저 서브에이전트 또는 화면 렌더링 검증 수행.
 
+
 ## Sprint 50-2: 추납 및 반납 개별 선택 토글 및 부부 합산 4대 옵션 다각도 시뮬레이션
 - [x] `src/services/npsRecoveryCalculator.ts` 추납 선택 플래그(`hasAdditionalPayment`) 추가 및 4개 조합(추납 단독, 반납 단독, 둘 다, 미선택) 엔진 지원.
 - [x] `src/components/NpsRecoveryModal.tsx` 개별 탭(본인/배우자) 추납 ON/OFF 체크박스 및 디폴트 둘 다 선택 연동.
 - [x] `src/components/NpsRecoveryModal.tsx` 부부 합산 시너지 탭 내 본인 추납/반납, 배우자 추납/반납 4대 옵션 선택기 패널 신설.
 - [x] 옵션 변경 시 가구 총비용, 월 증액, 골든크로스, 순수익 및 Recharts 차트 실시간 갱신 검증.
 - [x] `npm run build` 및 브라우저 서브에이전트 화면 렌더링 검증.
+
+## Sprint 54: `redesign-skill` 기반 전사 디자인 정밀 진단 및 사용자 친화적 UI/UX 고도화
+- [x] 1. 타이포그래피 고도화 (Typography)
+  - [x] `src/app/layout.tsx` 내 기본 Inter 폰트를 `next/font/google`의 최신 프리미엄 폰트 `Geist` 및 `Geist_Mono`로 전환.
+  - [x] 울트라 볼드(800) 제거 및 세미볼드(600)/볼드(700) 캡핑.
+  - [x] 재무·수치 데이터 및 표에 `font-variant-numeric: tabular-nums` 전면 적용.
+  - [x] 헤딩에 `text-wrap: balance`, 본문/설명에 `text-wrap: pretty` 및 `word-break: keep-all` 적용.
+- [x] 2. 컬러 및 서피스 정돈 (Color & Surfaces)
+  - [x] 랜딩 페이지 인트로 영상 컨테이너의 하드코딩 다크(`#0d0e1c`) 스타일을 라이트/다크 시맨틱 서피스로 통일.
+  - [x] 중첩 반경 공식(`inner = outer - gap`, 20px - 8px = 12px) 정밀 적용.
+- [x] 3. 인터랙티브 상태 및 키보드 접근성 (Interactive States & a11y)
+  - [x] 클릭 가능한 버튼, 탭, 카드 전체에 `:active { transform: scale(0.98); }` 촉각 피드백 주입.
+  - [x] 전체 폼 인풋 및 인터랙티브 요소에 WCAG AA 기준 `:focus-visible` 고대비 포커스 링 통일.
+  - [x] 스킵 네비게이션(`Skip to Content`) 링크를 `layout.tsx`에 신설하여 키보드 탐색성 완비.
+- [x] 4. 모션 및 전환 (Motion Pass)
+  - [x] 기본 CSS 애니메이션 베지어 곡선을 물리 베지어 `cubic-bezier(0.22, 1, 0.36, 1)`로 표준화.
+  - [x] `prefers-reduced-motion` 미디어 쿼리 누락 요소 점검.
+- [x] 5. 검증 및 배포
+  - [x] `npm run build` 프로덕션 빌드 무결성 검증 (0 errors, 22/22 정적 페이지).
+  - [x] 로컬 서버 구동 및 HTTP 200 / DOM 렌더링 검증 완료.
+
 
 

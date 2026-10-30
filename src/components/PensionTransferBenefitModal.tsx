@@ -60,63 +60,34 @@ export default function PensionTransferBenefitModal({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(15, 23, 42, 0.72)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        padding: '16px',
-        overflowY: 'auto',
-      }}
+      className="modal-backdrop"
       onClick={onClose}
     >
       <div
+        className="t-modal-spring modal-container"
         style={{
           position: 'relative',
           width: '100%',
           maxWidth: '980px',
           maxHeight: '92vh',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: 'var(--surface, #ffffff)',
-          borderRadius: '20px',
-          border: '1px solid var(--border, rgba(226, 232, 240, 0.8))',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          overflow: 'hidden',
-          color: 'var(--text-primary, #0f172a)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid var(--border, #e2e8f0)',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(13, 148, 136, 0.04) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
+        <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <span
               style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #10b981, #0d9488)',
-                color: '#ffffff',
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                backgroundColor: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-accent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.4rem',
-                boxShadow: '0 6px 16px rgba(16, 185, 129, 0.3)',
+                fontSize: '1.3rem',
                 flexShrink: 0,
               }}
             >
@@ -124,7 +95,7 @@ export default function PensionTransferBenefitModal({
             </span>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-primary, #0f172a)' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                   개인연금(IRP/연금저축) 금융사 갈아타기 실익 분석기
                 </h2>
                 <span
@@ -141,28 +112,16 @@ export default function PensionTransferBenefitModal({
                   세금 0원 원스톱 승계
                 </span>
               </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #64748b)', margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
                 과거 가입한 저수익 연금신탁·보험을 증권사 우량 ETF/TDF로 이전할 때의 복리 자산 격차
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              border: '1px solid var(--border, #e2e8f0)',
-              backgroundColor: 'var(--surface-2, #f8fafc)',
-              color: 'var(--text-muted, #64748b)',
-              fontSize: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
+            className="modal-close-button"
             title="닫기"
+            aria-label="닫기"
           >
             ✕
           </button>

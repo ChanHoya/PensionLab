@@ -82,48 +82,20 @@ export default function StressTestModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="stress-test-modal-title"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        backgroundColor: "rgba(0, 0, 0, 0.65)",
-        backdropFilter: "blur(8px)",
-        WebkitBackdropFilter: "blur(8px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-      }}
+      className="modal-backdrop"
       onClick={onClose}
     >
       <div
-        className="t-modal-spring"
+        className="t-modal-spring modal-container"
         style={{
           width: "100%",
           maxWidth: "960px",
           maxHeight: "92vh",
-          backgroundColor: "var(--surface)",
-          color: "var(--text-primary)",
-          borderRadius: "20px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.45)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          border: "1px solid var(--border)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 상단 헤더 */}
-        <div
-          style={{
-            padding: "18px 24px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            background: "linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(249, 115, 22, 0.05) 100%)",
-          }}
-        >
+        <div className="modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "24px" }}>⚡</span>
             <div>
@@ -140,20 +112,8 @@ export default function StressTestModal({
           </div>
           <button
             onClick={onClose}
+            className="modal-close-button"
             aria-label="닫기"
-            style={{
-              width: "32px",
-              height: "32px",
-              borderRadius: "8px",
-              border: "1px solid var(--border)",
-              background: "transparent",
-              cursor: "pointer",
-              fontSize: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "var(--text-muted)",
-            }}
           >
             ✕
           </button>
@@ -166,8 +126,8 @@ export default function StressTestModal({
             overflowX: "auto",
             gap: "6px",
             padding: "10px 24px",
-            borderBottom: "1px solid var(--border)",
-            backgroundColor: "rgba(0, 0, 0, 0.15)",
+            borderBottom: "1px solid var(--modal-border)",
+            backgroundColor: "var(--modal-surface-sub)",
           }}
         >
           {scenarioList.map((s) => {

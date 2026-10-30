@@ -141,14 +141,18 @@ export default function CashflowTrackerModal({
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose} role="dialog" aria-modal="true">
+    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
       <div
-        className="t-modal-spring"
-        style={styles.modal}
+        className="t-modal-spring modal-container"
+        style={{
+          width: "100%",
+          maxWidth: "840px",
+          maxHeight: "90vh",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={styles.header}>
+        <div className="modal-header">
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={styles.iconBadge}>💳</span>
             <div>
@@ -161,7 +165,7 @@ export default function CashflowTrackerModal({
               </p>
             </div>
           </div>
-          <button style={styles.closeBtn} onClick={onClose} aria-label="닫기">
+          <button className="modal-close-button" onClick={onClose} aria-label="닫기">
             ✕
           </button>
         </div>

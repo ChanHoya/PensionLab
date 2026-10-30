@@ -41,63 +41,34 @@ export default function AccountTaxMatrixModal({ isOpen, onClose }: AccountTaxMat
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(15, 23, 42, 0.72)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        padding: '16px',
-        overflowY: 'auto',
-      }}
+      className="modal-backdrop"
       onClick={onClose}
     >
       <div
+        className="t-modal-spring modal-container"
         style={{
           position: 'relative',
           width: '100%',
           maxWidth: '960px',
           maxHeight: '92vh',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: 'var(--surface, #ffffff)',
-          borderRadius: '20px',
-          border: '1px solid var(--border, rgba(226, 232, 240, 0.8))',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          overflow: 'hidden',
-          color: 'var(--text-primary, #0f172a)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 모달 상단 헤더 */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid var(--border, #e2e8f0)',
-            background: 'linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(2, 132, 199, 0.04) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
+        <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <span
               style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #0d9488, #0284c7)',
-                color: '#ffffff',
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                backgroundColor: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-accent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.4rem',
-                boxShadow: '0 6px 16px rgba(13, 148, 136, 0.3)',
+                fontSize: '1.3rem',
                 flexShrink: 0,
               }}
             >
@@ -105,7 +76,7 @@ export default function AccountTaxMatrixModal({ isOpen, onClose }: AccountTaxMat
             </span>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-primary, #0f172a)' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                   2026 절세 계좌 4총사(ISA·연금저축·IRP·일반) 자산배분 매트릭스
                 </h2>
                 <span
@@ -119,32 +90,19 @@ export default function AccountTaxMatrixModal({ isOpen, onClose }: AccountTaxMat
                     border: '1px solid rgba(13, 148, 136, 0.3)',
                   }}
                 >
-                  Sprint 42 신규
+                  절세 매트릭스
                 </span>
               </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #64748b)', margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
                 어떤 자산(미국배당/지수/채권/국내주식)을 어느 계좌에 담아야 세후 복리가 극대화되는지 명쾌한 가이드
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              border: '1px solid var(--border, #e2e8f0)',
-              backgroundColor: 'var(--surface-2, #f8fafc)',
-              color: 'var(--text-muted, #64748b)',
-              fontSize: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              flexShrink: 0,
-            }}
+            className="modal-close-button"
             title="닫기"
+            aria-label="닫기"
           >
             ✕
           </button>

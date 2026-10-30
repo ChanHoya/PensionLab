@@ -51,63 +51,34 @@ export default function ThreeBucketPlanModal({
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(15, 23, 42, 0.72)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        padding: '16px',
-        overflowY: 'auto',
-      }}
+      className="modal-backdrop"
       onClick={onClose}
     >
       <div
+        className="t-modal-spring modal-container"
         style={{
           position: 'relative',
           width: '100%',
           maxWidth: '1020px',
           maxHeight: '92vh',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: 'var(--surface, #ffffff)',
-          borderRadius: '20px',
-          border: '1px solid var(--border, rgba(226, 232, 240, 0.8))',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          overflow: 'hidden',
-          color: 'var(--text-primary, #0f172a)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div
-          style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid var(--border, #e2e8f0)',
-            background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(59, 130, 246, 0.04) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-          }}
-        >
+        <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
             <span
               style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #06b6d4, #2563eb)',
-                color: '#ffffff',
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                backgroundColor: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-accent)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.4rem',
-                boxShadow: '0 6px 16px rgba(6, 182, 212, 0.3)',
+                fontSize: '1.3rem',
                 flexShrink: 0,
               }}
             >
@@ -115,7 +86,7 @@ export default function ThreeBucketPlanModal({
             </span>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-primary, #0f172a)' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
                   은퇴자 맞춤 3-Bucket 현금 버퍼 플래너
                 </h2>
                 <span
@@ -132,28 +103,16 @@ export default function ThreeBucketPlanModal({
                   폭락장 방패 설계
                 </span>
               </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary, #64748b)', margin: '4px 0 0 0' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
                 주식 시장이 30% 폭락해도 생활비를 헐값에 매도하지 않고 안전하게 인출하는 자산 배분 전략
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              border: '1px solid var(--border, #e2e8f0)',
-              backgroundColor: 'var(--surface-2, #f8fafc)',
-              color: 'var(--text-muted, #64748b)',
-              fontSize: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
+            className="modal-close-button"
             title="닫기"
+            aria-label="닫기"
           >
             ✕
           </button>

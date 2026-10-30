@@ -25,10 +25,24 @@
      - `npm run build`: 22/22 라우트 0 에러 정적 생성 성공.
      - Google Chrome Headless 캡처 검증: `/tmp/landing.png` (523KB), `/tmp/dashboard.png` (272KB) 생성 및 렌더링 검증 완료.
 
+- **[Completed]** Sprint 55: 2026 국민연금 개혁 비교 시뮬레이터 신설, 온보딩/AI 진단 리포트 redesign-skill 2차 동기화 & 모바일 바텀시트 제스처 PWA 고도화 (FEAT-083).
+  1. Story S55-1 (2026 국민연금 개혁 비교 시뮬레이터 신설):
+     - `src/services/npsReform2026Service.ts`: 50대(+1.0%p), 40대(+0.75%p), 30대(+0.50%p), 20대(+0.25%p) 세대별 인상 스케줄(9%➔13%) 및 소득대체율 상향(40%➔42%)에 따른 본인 추가부담 vs 평생 연금 증액분, BEP 회수기간 연산 엔진 구축.
+     - `src/components/NpsReform2026Modal.tsx`: redesign-skill 시맨틱 서피스, 44px 닫기, 중첩 반경 공식(20px➔12px➔8px), 본인/배우자 탭, Recharts 비교 바 차트 시각화.
+     - `DashboardToolbar.tsx`, `DashboardSidebar.tsx`, `DashboardModalManager.tsx` 연동 완료.
+  2. Story S55-2 (온보딩 위저드 & AI 진단 리포트 redesign-skill 2차 동기화):
+     - `src/app/onboarding/page.tsx`: Step 0~4 폼 컨테이너(20px), 인풋 박스, 미리보기 박스 및 리스트(12px), 아이템(8px) 중첩 반경 공식 및 시맨틱 서피스 적용.
+     - `src/components/DiagnosisReport.tsx`: 10대 섹션 카드, KPI 블록, 처방 툴킷 카드 서피스 토큰화 및 `tabular-nums` 정렬 강화.
+  3. Story S55-3 (모바일 바텀시트 Emil Kowalski 스프링 제스처 & PWA 서비스워커 고도화):
+     - `src/app/globals.css`: 모바일 바텀시트 진입 시 3차 베지에 곡선 스프링 모션(`t-sheet-enter`) 및 상단 드래그 핸들 바 가이드 주입.
+     - `public/sw.js`: PWA 캐시 버전 업그레이드(v2) 및 오프라인 구동 에셋 확대.
+     - `npm run build`: 22/22 정적 페이지 빌드 0 에러 및 Headless Chrome 스크린샷 렌더링 검증 완료.
+
 ## Session Handoff
-- **Last Completed Sprint**: Sprint 54 (`redesign-skill` 전사 적용 UI/UX 고도화, FEAT-082)
-- **Current State**: `main` 브랜치에 전체 코드 커밋 완료, 빌드(22/22) 및 렌더링 무결성 확인 완료.
-- **Next Planned Work**: 사용자 요구사항에 따른 다음 기능 개발 또는 추가 시뮬레이터 고도화.
+- **Last Completed Sprint**: Sprint 55 (2026 연금개혁 비교기, 온보딩/진단리포트 전사 UI 리뉴얼 & 모바일 제스처 PWA, FEAT-083)
+- **Current State**: `main` 브랜치에 코드 및 문서 커밋/푸시 완료, 빌드(22/22) 무결성 확인 완료.
+- **Next Planned Work**: 사용자 피드백 반영 또는 추가 금융 계산 엔진 고도화.
+
 
 - **[Completed]** Story S1-1: Zustand client state store, Landing page, Onboarding wizard, and save API.
 - **[Completed]** Story S1-2: Pension Calculation Engine (calculating 3-tier payouts and 2026 reform schedules) and Dashboard UI integrated with Recharts Donut & Stacked Area charts.

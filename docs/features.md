@@ -309,6 +309,13 @@
   4) 전사 11종 전문 모달 서피스 정돈 및 수학적 중첩 반경 공식: 모달 헤더의 인라인 AI 그라디언트를 전면 걷어내고 플랫 시맨틱 서피스(`var(--modal-header-bg)`)로 통일, 다크 모드 솔리드 서피스(`--modal-surface-card: #1c1f35`) 및 라이트 모드 얼룩 제거, 닫기 버튼 44px 터치 타깃 표준화, 중첩 반경 공식(`inner = outer - gap`, 20px ➔ 12px ➔ 8px) 전면 적용.
   5) 프로덕션 빌드(22/22) 및 Headless Chrome 실화면 렌더링 캡처 검증 완료 (Sprint 54)
 
+- **[FEAT-083] 2026 국민연금 개혁 비교기, 온보딩/진단리포트 전사 UI 리뉴얼 & 모바일 제스처 PWA 고도화**:
+  1) 2026 국민연금 개혁 비교 시뮬레이터 신설 (`src/services/npsReform2026Service.ts`, `src/components/NpsReform2026Modal.tsx`): 50대(+1.0%p), 40대(+0.75%p), 30대(+0.50%p), 20대(+0.25%p) 세대별 보험료율 인상 스케줄(9%➔13%)과 소득대체율 상향(40%➔42%)에 따른 본인 추가 부담액 vs 평생 연금 증액분, 회수 연수 및 손익분기점(BEP) 연산 및 Recharts 비교 차트 시각화.
+  2) 온보딩 위저드 & AI 진단 리포트 redesign-skill 2차 동기화: 온보딩 입력 폼(`src/app/onboarding/page.tsx`)의 인풋, 슬라이더, 추가 계약 박스 및 AI 종합 진단 리포트(`src/components/DiagnosisReport.tsx`) 10개 섹션 카드, KPI 지표, 처방 툴킷 카드를 redesign-skill 시맨틱 서피스 토큰과 수학적 중첩 반경 공식(20px ➔ 12px ➔ 8px)으로 일원화.
+  3) 모바일 바텀시트 Emil Kowalski 스프링 모션 & PWA 캐싱 강화: 모바일 환경(768px 이하)에서 모달 바텀시트 진입 시 쫀득한 3차 베지에 커브 애니메이션(`t-sheet-enter`) 및 상단 드래그 핸들 바 닫기 제스처 가이드라인 주입, `public/sw.js` 서비스워커 캐싱 에셋 확장을 통해 네트워크 불안정 시에도 안정적 오프라인 구동 보장 (Sprint 55)
+
+
+
 
 
 

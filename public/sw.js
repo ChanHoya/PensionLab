@@ -1,10 +1,13 @@
 // PensionLab Service Worker (PWA Offline Caching & Assets Cache)
-const CACHE_NAME = "pensionlab-cache-v1";
+const CACHE_NAME = "pensionlab-cache-v2";
 const STATIC_ASSETS = [
   "/",
   "/dashboard",
+  "/onboarding",
+  "/dashboard/ai-advisor",
   "/favicon.ico",
   "/manifest.webmanifest",
+  "/pension_intro.mp4",
 ];
 
 self.addEventListener("install", (event) => {
